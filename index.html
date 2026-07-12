@@ -117,6 +117,11 @@
     box-shadow:inset 0 0 20px rgba(25,240,255,.08);}
   .tg[data-on="1"] span{color:#fff;text-shadow:0 0 10px rgba(25,240,255,.55);}
   .tg[data-on="1"] .dot{background:var(--cyan);box-shadow:0 0 9px var(--cyan);}
+  .tgreset{display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:0;
+    background:var(--panel);border:1px solid var(--mag);border-radius:4px;}
+  .tgreset span{font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;color:var(--mag);
+    text-shadow:0 0 8px rgba(255,31,156,.4);}
+  .tgreset:active{background:var(--mag);} .tgreset:active span{color:#05050a;text-shadow:none;}
   .tg.gb{border-left-color:#585874;} .tg.gh{border-left-color:var(--cyan);}
   .tg.go2{border-left-color:var(--mag);} .tg.gv{border-left-color:var(--sulph);}
   .tg.gd{border-left-color:#f5f5ff;}
@@ -273,6 +278,7 @@
           <div class="tg gd" data-fx="embers"><span>EMBERS</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="runes"><span>RUNES</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="chimera"><span>CHIMERA</span><i class="dot"></i></div>
+          <div class="tgreset" id="resetall" title="deactivate every sigil + clear all TUNE overrides"><span>⟲ RESET</span></div>
       </div>
     </section>
     <section id="p-tune" class="panel">
@@ -2516,6 +2522,10 @@ function clearOV(){
 }
 clearOV();
 $('dice').addEventListener('click',randSeed);
+$('resetall').addEventListener('click',()=>{
+  document.querySelectorAll('.tg').forEach(tg=>{ tg.dataset.on=0; state.fx[tg.dataset.fx]=false; });
+  clearOV();
+});
 randSeed();
 
 $('go').addEventListener('click',generate);
