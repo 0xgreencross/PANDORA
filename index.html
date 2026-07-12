@@ -156,7 +156,11 @@
     .colL{display:flex;flex-direction:column;gap:9px;flex:0 1 56%;max-width:660px;}
     .colR{display:flex;flex-direction:column;gap:10px;flex:1 1 360px;min-width:360px;}
     .monitor{width:min(100%,76dvh);align-self:flex-start;}
-    #panels{flex:0 0 410px;}
+    #panels{flex:0 0 580px;}
+    .duostyle{flex-direction:column;align-items:stretch;}
+    .duostyle .field{flex:1 1 auto !important;}
+    #p-tune .seg button{padding:8px 8px;}
+    #p-tune{gap:6px;}
     .seg{flex-wrap:wrap;overflow:visible;}
     .seg button{padding:11px 14px;}
     .brand{font-size:16px;} .tab{font-size:8px;padding:13px 0 12px;}
@@ -276,7 +280,7 @@
         <label>MASK <span class="v" id="lab-ov"></span></label>
         <div class="seg" id="ovmask"></div>
       </div>
-      <div class="duo">
+      <div class="duo duostyle">
         <div class="field" style="flex:0 0 auto"><label>STYLE</label><div class="seg" id="ovstyle"></div></div>
         <div class="field" style="flex:1"><label>SIZE</label><input type="range" id="ovsize" min="0" max="31" value="16"></div>
       </div>
