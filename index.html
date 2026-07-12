@@ -199,7 +199,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 8.0 · PANTHEON<br>30 MASKS · 50 BODIES</div>
+    <div class="ver">REV 8.1 · PANTHEON<br>+ TIME IS SCAM PALETTES</div>
   </header>
 
   <div class="colL">
@@ -451,6 +451,30 @@ const SCHEMES = {
                glitch:['#ff2e6a','#ff7a2e','#ffe02e','#ffffff','#080202'] },
   CATHODE:   { stops:['#010401','#003300','#00aa00','#00ff41','#7aff9e','#e0ffe8'],
                glitch:['#00ff41','#7aff9e','#00aa00','#ffffff','#010401'] },
+
+  /* TIME IS SCAM colorways — imported from timeisscam.art */
+  KENNE:{ stops:['#000000','#1d1f2e','#690999','#e3058c','#f8057a','#4ab144'],
+               glitch:['#f8057a','#e3058c','#690999','#4ab144','#000000'] },
+  AIRNEON:{ stops:['#101010','#7100d9','#ff00c8','#0ea1f0','#00ff00','#5dffff'],
+               glitch:['#00ff00','#ff00c8','#0ea1f0','#7100d9','#101010'] },
+  DES:{ stops:['#091020','#510087','#ff00e0','#00fa00','#86ffff'],
+               glitch:['#ff00e0','#00fa00','#510087','#86ffff','#091020'] },
+  NEONMONY:{ stops:['#050508','#212121','#441cf4','#644aaa','#e613aa','#3ec819','#0ff107','#0dffff'],
+               glitch:['#0dffff','#0ff107','#441cf4','#e613aa','#050508'] },
+  MGC:{ stops:['#050508','#212121','#ff00c8','#00ff00','#5dffff'],
+               glitch:['#00ff00','#ff00c8','#5dffff','#212121','#050508'] },
+  POLE:{ stops:['#000000','#0926ee','#ff00ff','#ff7700','#00ff74'],
+               glitch:['#00ff74','#ff7700','#ff00ff','#0926ee','#000000'] },
+  FAUXRGB:{ stops:['#000000','#8700ff','#ff0085','#ff00ff','#00ff00','#00ffff'],
+               glitch:['#00ffff','#00ff00','#ff00ff','#ff0085','#000000'] },
+  TRUERGB:{ stops:['#060606','#0000ff','#ff0000','#00ff00'],
+               glitch:['#00ff00','#ff0000','#0000ff','#060606','#060606'] },
+  XPASTE:{ stops:['#020210','#09081a','#1e152b','#722fcd','#f93e9e','#99f8b5'],
+               glitch:['#f93e9e','#722fcd','#99f8b5','#1e152b','#020210'] },
+  DOE:{ stops:['#000000','#222c33','#c200a2','#0994ee','#00c374'],
+               glitch:['#0994ee','#00c374','#c200a2','#222c33','#000000'] },
+  TISNUKE:{ stops:['#050508','#292629','#5529ed','#ef472b','#f2882f','#f1da2e'],
+               glitch:['#ef472b','#5529ed','#f1da2e','#f2882f','#050508'] },
 };
 /* NO-WHITE DOCTRINE: strip the white component from any pale stop and
    renormalize its residual hue to full saturation — ramp tops go HOT, not pale.
@@ -2316,6 +2340,10 @@ buildSeg($('scheme'), [
   {v:'ACIDBURN',label:'ACID'},{v:'HOTLINE',label:'HOTLNE'},{v:'LAZER',label:'LAZER'},
   {v:'NUKEGLOW',label:'NUKE'},{v:'POISONFROG',label:'FROG'},{v:'BLACKLIGHT',label:'BLKLT'},
   {v:'EMBERGRID',label:'EMBER'},{v:'CATHODE',label:'CRT'},
+  {v:'KENNE',label:'KENNE'},{v:'AIRNEON',label:'AIRNEO'},{v:'DES',label:'DES'},
+  {v:'NEONMONY',label:'NEOMNY'},{v:'MGC',label:'MGC'},{v:'POLE',label:'POLE'},
+  {v:'FAUXRGB',label:'FAUXGB'},{v:'TRUERGB',label:'TRURGB'},{v:'XPASTE',label:'XPASTE'},
+  {v:'DOE',label:'DOE'},{v:'TISNUKE',label:'TNUKE'},
   {v:'GENESIS',label:'GEN∞'},{v:'RANDOM',label:'RND'},
 ],'scheme');
 buildSeg($('mode'), [
@@ -2353,7 +2381,7 @@ const CARD_CH=['chroma','tracking','pixelsort','grain','blocks','scanlines','ech
   'chrono','mirror','flay','autoph','weave','entropy','meta','tect',
   'panes','hilb','splice','moire','braid','lungs',
   'tunnel','kaleido','bloom','embers','runes','chimera'];
-const CARD_SCHEMES=[...SCHEME_KEYS,'GENESIS'];
+const CARD_SCHEMES=[...SCHEME_KEYS.slice(0,14),'GENESIS',...SCHEME_KEYS.slice(14)]; // originals 0-13, GENESIS pinned at 14, TIS 15+
 const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 function crc8(bytes){let c=0;
   for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c&0x80)?((c<<1)^0x07)&0xff:(c<<1)&0xff;}
