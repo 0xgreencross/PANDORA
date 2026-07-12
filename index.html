@@ -2069,6 +2069,7 @@ async function generate(){
 
 /* iOS detection (incl. iPadOS reporting as MacIntel) */
 const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isDesktop=!isIOS && !/android/i.test(navigator.userAgent);
 
 /* save: tiered. 1) native share sheet (-> Save Image -> Photos). If the webview
    blocks it (sandboxed in-app viewers reject share silently), 2) full-screen
@@ -2076,6 +2077,7 @@ const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='M
    Desktop: plain download. Never fails silently. */
 async function saveAsset(blob,name,dataURL,url){
   if(!blob)return;
+  if(isDesktop){ triggerDownloadURL(url,name); return; }   // Win/macOS/Linux: direct download
   if(navigator.share){
     try{
       const file=new File([blob], name, {type:'image/gif'});
@@ -2258,7 +2260,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 });
 $('download').addEventListener('click',saveLoop);
 $('xsave').addEventListener('click',saveX);
-$('download').textContent = (canShareFiles||isIOS) ? '⤓ PHOTOS' : '⤓ SAVE';
+$('download').textContent = isDesktop ? '⤓ DOWNLOAD' : ((canShareFiles||isIOS) ? '⤓ PHOTOS' : '⤓ SAVE');
 $('sv-close').addEventListener('click',closeSaveView);
 $('saveview').addEventListener('click',e=>{ if(e.target===$('saveview'))closeSaveView(); });
 
