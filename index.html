@@ -199,7 +199,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 8.2 · PANTHEON<br>TIS∞ GENERATIVE RULES</div>
+    <div class="ver">REV 9.0 · HYDRA<br>MULTICORE RENDER</div>
   </header>
 
   <div class="colL">
@@ -365,6 +365,7 @@ const vctx = view.getContext('2d', { willReadFrequently:false });
 const W = 1080, H = 1080;          // output resolution
 const FW = 360;                    // coarse field resolution (chunky upscale)
 
+/*CORE-BEGIN*/
 /* ---------- seeded RNG (mulberry32) ---------- */
 function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 
@@ -2121,6 +2122,7 @@ function compositeEcho(buf, ring, weights){
 /* ============================================================================
    GENERATION ORCHESTRATION
    ========================================================================== */
+/*CORE-END*/
 const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36,
   fx:{chroma:true,tracking:true,pixelsort:true,grain:true,blocks:true,scanlines:true,echo:true,
       wave:false,slice:false,vroll:false,mosh:false,ghost:false,melt:false,bleed:false,invert:false,crush:false,dropout:false,
@@ -2142,7 +2144,7 @@ const preview=vctx.createImageData(W,H);
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-async function generate(){
+async function generateSeq(){
   if(busy)return; busy=true;
   const run=++RUN;    // this render's epoch; a hijack tap stale-ifies it
   $('go').disabled=true; $('oblivion').disabled=true; $('download').setAttribute('disabled','');
@@ -2309,6 +2311,279 @@ async function generate(){
   }else{
     triggerDownload();   // desktop: auto-download
   }
+
+  setTimeout(()=>{$('prog').style.width='0%';},700);
+  $('go').disabled=false; $('oblivion').disabled=false; busy=false;
+}
+
+
+/* ============================================================================
+   REV 9 · HYDRA — multicore render.
+   The pure engine between the CORE markers ships to a Worker pool via Blob
+   (single-file doctrine: workers are built from this page's own source).
+   Frames split into contiguous blocks; each worker reconstructs the exact
+   feedback-ring state the sequential engine would have at its block start,
+   so parallel output is byte-identical to sequential. Workers render AND
+   LZW-encode all four streams; main thread concatenates chunks in order.
+   ========================================================================== */
+function detectPlatform(){
+  const ua=navigator.userAgent, cores=navigator.hardwareConcurrency||4;
+  const ios=/iP(hone|ad|od)/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const android=/android/i.test(ua);
+  let gpu='';
+  try{const c=document.createElement('canvas');
+    const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+    const ext=gl&&gl.getExtension('WEBGL_debug_renderer_info');
+    if(ext)gpu=String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL));}catch(e){}
+  let cls,workers;
+  if(ios){ cls='IPHONE'; workers=Math.min(Math.max(cores-1,1),4); }
+  else if(android){ cls='ANDROID'; workers=Math.min(Math.max(cores-1,1),4); }
+  else if(/Mac/.test(navigator.platform)){
+    const as=/Apple/i.test(gpu);
+    cls=as?'MAC·AS':'MAC·INTEL';
+    workers=as?Math.min(Math.max(cores-1,1),8):Math.min(Math.max(cores-1,1),6); // intel: thermal headroom
+  }
+  else { cls='PC'; workers=Math.min(Math.max(cores-1,1),8); }
+  return {cls,cores,workers,gpu};
+}
+const PLAT=detectPlatform();
+
+const WORKER_DRIVER=`
+self.onmessage=function(e){
+  const J=e.data;
+  try{
+    const scene=buildScene(J.seed,J.mode);
+    applyOverridesPure(scene,J.seed,J.ov);
+    const {grad,pal,near}=buildPalette(J.scheme,scene.vibe);
+    const N=J.N, corr=J.corr, fx=J.fx, DELAY=J.DELAY;
+    const dAmt=(14+corr*0.20)*scene.vibe.ditherMul;
+    const MV=Object.assign({},scene.rev4.motion,{quant:0,strobes:[]});
+    const tEff=function(th){let t=th;
+      if(MV.quant){const st=TAU/MV.quant;t=Math.floor(t/st)*st;}
+      if(MV.tw)t=t+MV.tw*Math.sin(t*MV.twk+MV.twph);return t;};
+    const gradR=scene.rev4.palMode===2?new Uint8Array(768):null;
+    const gradFor=function(th){if(!gradR)return grad;
+      const shift=Math.round(256*scene.rev4.palCycles*th/TAU)%256;
+      for(let i=0;i<256;i++){const j=((i+shift)&255)*3,k=i*3;
+        gradR[k]=grad[j];gradR[k+1]=grad[j+1];gradR[k+2]=grad[j+2];}return gradR;};
+    const rgbA=new Uint8Array(W*H*3),rgbB=new Uint8Array(W*H*3),
+          rgbC=new Uint8Array(W*H*3),snap=new Uint8Array(W*H*3);
+    const indices=new Uint8Array(W*H);
+    const DIMS=[1080,720,540,405];
+    const MCS=DIMS.map(function(d){const t=new Sink(1024);return gifBegin(t,d,d,pal,0);});
+    const xidx=[new Uint8Array(720*720),new Uint8Array(540*540),new Uint8Array(405*405)];
+    /* --- exact ring-state reconstruction at block start --- */
+    function cleanCoarse(p,out){const q=((p%N)+N)%N,pth=q/N*TAU;
+      renderSource(rgbA,rgbC,scene,q,tEff(pth),gradFor(pth),fx,corr);
+      downsampleCoarse(rgbA,out);}
+    function postTunnelCoarse(q,out){          // q is a real (unwrapped) frame >=0
+      if(!fx.tunnel){cleanCoarse(q,out);return;}
+      const T=scene.demi.tunnel,r2=[];
+      for(let e=T.taps;e>=1;e--){const t2=new Uint8Array(FW*FW*3);cleanCoarse(q-e,t2);r2.push(t2);}
+      const pth=q/N*TAU;
+      renderSource(rgbA,rgbC,scene,q,tEff(pth),gradFor(pth),fx,corr);
+      compositeTunnel(rgbA,r2,T,Math.min(150,corr*scene.vibe.g.tunnel));
+      downsampleCoarse(rgbA,out);}
+    let ring=[],weights=[],coarseCur=null;
+    if(fx.echo){const ECN=scene.vibe.echoN,ED=scene.vibe.echoDecay;
+      for(let j=0;j<ECN;j++){weights.push(Math.pow(ED,ECN-j));ring.push(new Uint8Array(FW*FW*3));}
+      coarseCur=new Uint8Array(FW*FW*3);
+      for(let e=ECN;e>=1;e--){const ef=J.i0-e;
+        if(ef<0)cleanCoarse(ef,ring[ECN-e]);       // tail-primed entries were clean
+        else postTunnelCoarse(ef,ring[ECN-e]);}    // steady entries were post-tunnel
+    }
+    let ring2=null,coarse2=null;
+    if(fx.tunnel){const T=scene.demi.tunnel;
+      ring2=[];for(let j=0;j<T.taps;j++)ring2.push(new Uint8Array(FW*FW*3));
+      coarse2=new Uint8Array(FW*FW*3);
+      for(let e=T.taps;e>=1;e--)cleanCoarse(J.i0-e,ring2[T.taps-e]);   // tunnel ring is always clean captures
+    }
+    /* --- frame loop: identical math to the sequential path --- */
+    for(let i=J.i0;i<J.i1;i++){
+      const raw=i/N*TAU, theta=tEff(raw);
+      renderSource(rgbA,rgbC,scene,i,theta,gradFor(raw),fx,corr);
+      if(fx.tunnel){
+        downsampleCoarse(rgbA,coarse2);
+        compositeTunnel(rgbA,ring2,scene.demi.tunnel,Math.min(150,corr*scene.vibe.g.tunnel));
+        const rec=ring2.shift();ring2.push(coarse2);coarse2=rec;
+      }
+      if(fx.echo){
+        downsampleCoarse(rgbA,coarseCur);
+        compositeEcho(rgbA,ring,weights);
+        const rec=ring.shift();ring.push(coarseCur);coarseCur=rec;
+      }
+      analogPass(rgbA,rgbB,scene,theta,corr,fx);
+      digitalPass(rgbB,snap,scene,theta,corr,fx);
+      heavyCorruption(rgbB,snap,scene,theta,corr,fx);
+      oblivionPixel(rgbB,snap,scene,theta,corr,fx);
+      valhallaPixel(rgbB,snap,scene,theta,corr,fx);
+      demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
+      quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null);
+      const chunks=[];
+      { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,DELAY,MCS[0]); chunks.push(cs.done().slice()); }
+      for(let k2=0;k2<3;k2++){const d=DIMS[k2+1],xi=xidx[k2];
+        for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W,row=y*d;
+          for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
+        const cs=new Sink(1<<14); gifFrame(cs,d,d,xi,DELAY,MCS[k2+1]); chunks.push(cs.done().slice());
+      }
+      const pv=xidx[2].slice();                       // 405-idx twin doubles as live preview
+      self.postMessage({t:'frame',i:i,c:chunks,pv:pv},
+        [chunks[0].buffer,chunks[1].buffer,chunks[2].buffer,chunks[3].buffer,pv.buffer]);
+    }
+    self.postMessage({t:'done',i0:J.i0});
+  }catch(err){ self.postMessage({t:'err',msg:String(err&&err.stack||err)}); }
+};`;
+
+let POOL={workers:null,ok:('Worker' in window)};
+function getWorkerSrc(){
+  const sc=document.querySelector('script:not([src])').textContent;
+  const M=(n)=>'/*CORE'+n+'*/';                         // built by concat: the only
+  const core=sc.slice(sc.indexOf(M('-BEGIN')), sc.indexOf(M('-END')));      // verbatim
+  const core2=sc.slice(sc.indexOf(M('2-BEGIN')), sc.indexOf(M('2-END')));   // markers are the real ones
+  return '"use strict";const W=1080,H=1080,FW=360;const TAU=6.283185307179586;\n'
+    +core+'\n'+core2+'\n'+WORKER_DRIVER;
+}
+function spawnPool(){
+  if(POOL.workers)return true;
+  try{
+    const url=URL.createObjectURL(new Blob([getWorkerSrc()],{type:'text/javascript'}));
+    POOL.workers=[];
+    for(let i=0;i<PLAT.workers;i++)POOL.workers.push(new Worker(url));
+    return true;
+  }catch(e){ POOL.ok=false; POOL.workers=null; return false; }
+}
+function killPool(){
+  if(POOL.workers){for(const w of POOL.workers)try{w.terminate();}catch(e){} POOL.workers=null;}
+}
+
+async function generate(){
+  if(busy)return;
+  if(!POOL.ok || !spawnPool()) return generateSeq();
+  busy=true;
+  const run=++RUN;
+  $('go').disabled=true; $('oblivion').disabled=true; $('download').setAttribute('disabled','');
+  $('ph').style.display='none'; $('result').style.display='none';
+  $('download').classList.remove('ready');
+
+  const seed=(parseInt($('seed').value,10)>>>0)||1;
+  let schemeKey = state.scheme;
+  if(schemeKey==='RANDOM'){
+    const rr=mulberry32((seed^0x77aa11)>>>0)();
+    schemeKey = rr<0.4 ? 'GENESIS' : (rr<0.6 ? 'TISGEN' : SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0]);
+  }
+  const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
+    : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
+  const scene=buildScene(seed, state.mode);
+  applyOverrides(scene, seed);
+  reflectTune(scene);
+  const {pal}=buildPalette(scheme, scene.vibe);
+  const N=state.frames, corr=state.corr, fx=state.fx;
+
+  $('t-sig').textContent=schemeKey;
+  $('t-mode').textContent=scene.mode;
+  $('t-seed').textContent=seed;
+  $('t-size').textContent=W+'²';
+  $('osd').textContent='RENDERING · '+PLAT.workers+' CORES';
+
+  if(xURL){URL.revokeObjectURL(xURL);xURL=null;}
+  xBytes=null; xBlob=null; xDataURL=''; xDim=0;
+  $('xsave').setAttribute('disabled',''); $('xsave').classList.remove('ready');
+
+  /* adaptive split: feedback channels force per-worker ring reconstruction
+     (echo+tunnel ≈ 24 extra renders each), so keep blocks fat enough to
+     amortize the priming or the parallelism pays for nothing */
+  let nw=Math.min(PLAT.workers, N);
+  if(fx.echo&&fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/10)));
+  else if(fx.echo||fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/5)));
+  const chunks=new Array(N);
+  let doneFrames=0, failed=null;
+  const pcv=generate._pcv||(generate._pcv=document.createElement('canvas'));
+  pcv.width=405;pcv.height=405;
+  const pctx=pcv.getContext('2d');
+  const pimg=pctx.createImageData(405,405);
+
+  const jobOf=w=>({seed, mode:state.mode, scheme:{stops:scheme.stops,glitch:scheme.glitch},
+    corr, N, fx, ov:{...OV}, DELAY,
+    i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
+
+  await new Promise(resolve=>{
+    let remaining=nw;
+    for(let w=0;w<nw;w++){
+      const wk=POOL.workers[w];
+      wk.onmessage=e=>{
+        if(run!==RUN)return;
+        const m=e.data;
+        if(m.t==='frame'){
+          chunks[m.i]=m.c;
+          doneFrames++;
+          $('t-frame').textContent=doneFrames+'/'+N;
+          $('prog').style.width=(doneFrames/N*92)+'%';
+          const pd=pimg.data, pv=m.pv;
+          for(let q=0;q<405*405;q++){const c=pal[pv[q]],k=q*4;
+            pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
+          pctx.putImageData(pimg,0,0);
+          vctx.imageSmoothingEnabled=false;
+          vctx.drawImage(pcv,0,0,W,H);
+        } else if(m.t==='done'){
+          if(--remaining===0)resolve();
+        } else if(m.t==='err'){ failed=m.msg; resolve(); }
+      };
+      wk.onerror=err=>{ if(run===RUN){failed=String(err.message||err); resolve();} };
+      wk.postMessage(jobOf(w));
+    }
+  });
+  if(run!==RUN)return;                                 // hijacked: die silently
+  if(failed){                                          // worker path broke: honest fallback
+    console.warn('HYDRA worker failed, falling back to sequential:', failed);
+    killPool(); POOL.ok=false; busy=false;
+    return generateSeq();
+  }
+
+  $('osd').textContent='ENCODING';
+  await sleep(0);
+  if(run!==RUN)return;
+
+  const DIMS=[1080,720,540,405];
+  const streams=DIMS.map((d,s)=>{
+    const t=new Sink(2048); gifBegin(t,d,d,pal,0);
+    const head=t.done();
+    let total=head.length+1;
+    for(let i=0;i<N;i++)total+=chunks[i][s].length;
+    const out=new Uint8Array(total);
+    out.set(head,0); let o=head.length;
+    for(let i=0;i<N;i++){out.set(chunks[i][s],o);o+=chunks[i][s].length;}
+    out[o]=0x3B;
+    return out;
+  });
+  const bytes=streams[0];
+  $('prog').style.width='100%';
+
+  if(lastURL)URL.revokeObjectURL(lastURL);
+  lastBlob=new Blob([bytes],{type:'image/gif'});
+  lastURL=URL.createObjectURL(lastBlob);
+  lastName='DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
+  $('dna').value=packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
+
+  const LIMIT=14900000;
+  for(let s2=1;s2<4;s2++){
+    if(!xBytes && streams[s2].length<=LIMIT){ xBytes=streams[s2]; xDim=DIMS[s2]; }
+  }
+  const kb=(bytes.length/1024), dur=(N/FPS).toFixed(2);
+  const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
+  let xInfo='';
+  if(xBytes){
+    xName='DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
+    xInfo=' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
+    $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
+  }
+  $('t-size').textContent=W+'² '+mainSz+xInfo+' · '+dur+'s';
+  $('osd').textContent='LOOP · '+mainSz;
+
+  lastDataURL=bytesToDataURL(bytes);
+  const img=$('result'); img.src=lastDataURL; img.style.display='block';
+  $('download').removeAttribute('disabled');
+  if(canShareFiles||isIOS){ $('download').classList.add('ready'); }
+  else { triggerDownload(); }
 
   setTimeout(()=>{$('prog').style.width='0%';},700);
   $('go').disabled=false; $('oblivion').disabled=false; busy=false;
@@ -2540,6 +2815,7 @@ $('dnaload').addEventListener('click',()=>{
    ========================================================================== */
 const OV={maskType:0,maskStyle:0,cx:16,cy:16,size:16,n:0,form:0};
 const ovActive=()=>OV.maskType>0||OV.n>0||OV.form>0;
+/*CORE2-BEGIN*/
 const q2f=(q,lo,hi)=>lo+(q/31)*(hi-lo);
 const f2q=(f,lo,hi)=>Math.max(0,Math.min(31,Math.round((f-lo)/(hi-lo)*31)));
 function synthOrbs(seed, seedOrbs, nSel, formSel){
@@ -2556,14 +2832,16 @@ function synthOrbs(seed, seedOrbs, nSel, formSel){
   }
   return out;
 }
-function applyOverrides(scene, seed){
-  if(OV.maskType===1) scene.rev4.mask={...scene.rev4.mask, type:0};
-  else if(OV.maskType>=2) scene.rev4.mask={...scene.rev4.mask,
-    type:OV.maskType-1, style:OV.maskStyle,                 // shapes 1-30, styles 0-19
-    cx:q2f(OV.cx,0.05,0.95), cy:q2f(OV.cy,0.05,0.95), size:q2f(OV.size,0.10,0.55)};
-  if(OV.n>0||OV.form>0)
-    scene.rev4.orbs=synthOrbs(seed, scene.rev4.orbs, OV.n, OV.form);
+function applyOverridesPure(scene, seed, ov){
+  if(ov.maskType===1) scene.rev4.mask={...scene.rev4.mask, type:0};
+  else if(ov.maskType>=2) scene.rev4.mask={...scene.rev4.mask,
+    type:ov.maskType-1, style:ov.maskStyle,                 // shapes 1-30, styles 0-19
+    cx:q2f(ov.cx,0.05,0.95), cy:q2f(ov.cy,0.05,0.95), size:q2f(ov.size,0.10,0.55)};
+  if(ov.n>0||ov.form>0)
+    scene.rev4.orbs=synthOrbs(seed, scene.rev4.orbs, ov.n, ov.form);
 }
+/*CORE2-END*/
+function applyOverrides(scene, seed){ applyOverridesPure(scene, seed, OV); }
 function reflectTune(scene){
   /* show the seed's own choices in any control still on AUTO */
   const M=scene.rev4.mask;
@@ -2744,7 +3022,7 @@ function pandorize(){
 /* tap the box any time — even mid-render. A running transmission is
    abandoned on the spot and a fresh universe is minted. */
 document.querySelector('.screen-wrap').addEventListener('click',()=>{
-  if(busy){ RUN++; busy=false; }                       // kill the zombie's claim
+  if(busy){ RUN++; busy=false; killPool(); }           // kill the zombie's claim + its worker pack
   pandorize();
 });
 
