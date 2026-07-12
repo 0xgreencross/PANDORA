@@ -133,11 +133,6 @@
     box-shadow:inset 0 0 20px rgba(25,240,255,.08);}
   .tg[data-on="1"] span{color:#fff;text-shadow:0 0 10px rgba(25,240,255,.55);}
   .tg[data-on="1"] .dot{background:var(--cyan);box-shadow:0 0 9px var(--cyan);}
-  .tgreset{display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:0;
-    background:var(--panel);border:1px solid var(--mag);border-radius:4px;}
-  .tgreset span{font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;color:var(--mag);
-    text-shadow:0 0 8px rgba(255,31,156,.4);}
-  .tgreset:active{background:var(--mag);} .tgreset:active span{color:#05050a;text-shadow:none;}
   .tg.gb{border-left-color:#585874;} .tg.gh{border-left-color:var(--cyan);}
   .tg.go2{border-left-color:var(--mag);} .tg.gv{border-left-color:var(--sulph);}
   .tg.gd{border-left-color:#f5f5ff;}
@@ -148,6 +143,8 @@
     padding:16px 0;}
   #go{flex:1.7;color:#05050a;background:linear-gradient(95deg,var(--mag),var(--cyan));}
   #go:disabled{opacity:.5;}
+  #resetall{flex:0 0 50px;color:var(--cyan);background:var(--panel);border:1px solid var(--line2);font-size:16px;}
+  #resetall:active{background:var(--cyan);color:#05050a;}
   #oblivion{flex:0 0 56px;color:var(--mag);background:var(--panel);border:1px solid var(--mag);font-size:17px;
     text-shadow:0 0 10px rgba(255,31,156,.65);}
   #oblivion:disabled{opacity:.4;}
@@ -186,7 +183,8 @@
     .seg button{padding:11px 14px;}
     .brand{font-size:16px;} .tab{font-size:8px;padding:13px 0 12px;}
     .actions button{font-size:16px;padding:17px 0;} #oblivion{font-size:19px;flex:0 0 68px;}
-    #xsave{flex:0 0 64px;}
+    #xsave{flex:0 0 64px;} #resetall{flex:0 0 56px;font-size:18px;}
+    #resetall:hover{border-color:var(--cyan);filter:brightness(1.25);}
     .toggles{gap:6px;}
     .tg:hover{border-color:var(--line2);background:var(--panel2);}
     .seg button:hover{color:var(--txt);border-color:var(--line2);}
@@ -294,7 +292,6 @@
           <div class="tg gd" data-fx="embers"><span>EMBERS</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="runes"><span>RUNES</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="chimera"><span>CHIMERA</span><i class="dot"></i></div>
-          <div class="tgreset" id="resetall" title="deactivate every sigil + clear all TUNE overrides"><span>⟲ RESET</span></div>
       </div>
     </section>
     <section id="p-tune" class="panel">
@@ -336,6 +333,7 @@
   </main>
 
   <div class="actions">
+    <button id="resetall" title="deactivate every sigil + clear all TUNE overrides">⟲</button>
     <button id="go">▶ TRANSMIT</button>
     <button id="oblivion" title="total oblivion">☠</button>
     <button id="download" disabled>⤓ SAVE</button>
