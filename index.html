@@ -75,6 +75,15 @@
   .bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--mag),var(--cyan));transition:width .12s;}
 
   .tabs{display:flex;border-bottom:1px solid var(--line);}
+  #infobtn{appearance:none;cursor:pointer;flex:0 0 34px;padding:10px 0;border-radius:4px;
+    font-family:var(--fD);font-weight:700;font-size:9px;color:var(--mut);
+    background:var(--panel);border:1px solid var(--line);}
+  #infobtn.on{color:#05050a;background:var(--cyan);border-color:var(--cyan);}
+  #tipbar{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:80;
+    background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:12px;
+    font-family:var(--fD);font-weight:700;font-size:9px;line-height:1.8;color:var(--txt);
+    letter-spacing:0;box-shadow:0 8px 30px rgba(0,0,0,.6);}
+  #tipbar b{color:var(--cyan);}
   .tab{flex:1;appearance:none;background:none;border:none;cursor:pointer;
     font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;text-transform:uppercase;
     color:var(--mut);padding:12px 0 11px;border-bottom:2px solid transparent;}
@@ -249,7 +258,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 10.1b · JANUS<br>EIP-6963 WALLETS</div>
+    <div class="ver">REV 10.2 · JANUS<br>INFO MODE</div>
   </header>
 
   <div class="colL">
@@ -282,7 +291,8 @@
     <button class="tab" data-p="p-sigils" aria-selected="false">SIGILS·37</button>
     <button class="tab" data-p="p-tune" aria-selected="false">TUNE</button>
     <button class="tab" data-p="p-lab" aria-selected="false">LAB</button>
-  </nav>
+    <button id="infobtn" title="INFO MODE: tap this, then tap anything to learn what it does">?</button>
+</nav>
 
   <main id="panels">
     <section id="p-signal" class="panel on">
@@ -429,6 +439,7 @@
     <button id="xm-close">CLOSE</button>
   </div>
 </div>
+<div id="tipbar"></div>
 <div id="saveview">
   <div class="sv-head">SAVE TO PHOTOS</div>
   <img id="sv-img" alt="finished loop — long-press to save">
@@ -3669,6 +3680,84 @@ $('gplant').addEventListener('click',async ()=>{
   }catch(err){ $('osd').textContent='GARDEN: '+String(err.message).slice(0,18); }
 });
 if(SB.url){vCloudRefresh(); gRefresh();} else vRender();
+
+/* ============================================================================
+   TIP LAYER — desktop hover via title, mobile via INFO MODE (? then tap).
+   ========================================================================== */
+const TIP_ID={
+  transmit:'TRANSMIT — renders the loop from the current dials. Same seed + same dials = the exact same loop, forever.',
+  oblivion:'OBLIVION ☠ — maximum corruption strike: arms a violent random sigil set and transmits.',
+  download:'DOWNLOAD — saves the full 1080\u00b2 master GIF. On the phone it opens the share sheet (Save to Photos).',
+  xsave:'\ud835\udd4f — opens the transmission modal: an X-safe version of the loop, a save button, and a procedurally corrupted post no one will ever get twice.',
+  resetall:'\u27f2 RESET — returns every dial to factory. The loop on screen is untouched until you transmit.',
+  seed:'SEED — the genome number. Every loop grows from it deterministically.',
+  dice:'DICE — rolls a fresh random seed.',
+  dna:'DNA CARD — the loop\u2019s full genetic code: seed, palette, source, corruption, frames, sigils, tuning, era. Paste any card here to resurrect that exact loop.',
+  dnago:'RESURRECT — decodes the pasted card and rebuilds its loop byte-exactly.',
+  copydna:'COPY — copies the current loop\u2019s DNA card. The card IS the artwork\u2019s proof.',
+  vaultadd:'STORE — saves the current loop (card + thumbnail) into the PUBLIC VAULT, a shared collection every visitor sees.',
+  vexport:'EXPORT — downloads your vault as a JSON backup file.',
+  vimport:'IMPORT — merges a vault backup file into the collection. Duplicates are skipped.',
+  gconnect:'CONNECT WALLET — Ethereum wallets only (EIP-6963). One signature-free tap; no gas, ever.',
+  gplant:'SAVE TO MY GARDEN — plants the current loop in your wallet\u2019s own public section. Each plant is a wallet signature; only you can uproot yours. Plant without limit.',
+  corr:'CORRUPTION — global violence dial. Low = clean signal, high = the void bites back.',
+  frames:'FRAMES — loop length. More frames, longer loop, bigger file.',
+  epochseg:'ERA — SIGNAL is the current physics (index-space corruption, quake, clash). CLASSIC resurrects the pre-glitch era byte-exactly. Flick it and the same seed re-renders in the other era.',
+  'xm-save':'SAVE GIF — saves the X-safe loop shown above.',
+  'xm-compose':'COMPOSE — opens X with a one-of-a-kind glitch-tongue transmission. Attach the saved GIF by hand; X allows no other way.',
+  'xm-reroll':'\u27f3 — mints a fresh transmission. No two ever match.',
+  infobtn:'INFO MODE — you found it. Tap again to leave.',
+};
+const TIP_SEG={
+  AUTO:'AUTO — the seed decides this dial for itself.',
+  OFF:'OFF — disables this layer entirely.',
+  RND:'RND — a random palette each transmit.',
+  'GEN\u221e':'GEN\u221e — infinite generative palettes: the seed grows its own colorway by DITHERVOID rules.',
+  'TIS\u221e':'TIS\u221e — infinite palettes grown by the TIME IS SCAM generative rules.',
+  SIGNAL:'SIGNAL ERA — the current physics: index-space corruption, dither quake, attribute clash.',
+  CLASSIC:'CLASSIC ERA — the pre-glitch physics, resurrected byte-exactly from the old engine.',
+};
+const TIP_MODE={
+  PLASMA:'PLASMA — folded interference fields.',RINGS:'RINGS — concentric wave collapse.',
+  GLYPHS:'GLYPHS — a grid of corrupted symbols.',SCANS:'SCANS — horizontal oscilloscope sweep.',
+  LATTICE:'LATTICE — woven grid interference.',ORBIT:'ORBIT — bodies circling a gravity well.',
+  STRATA:'STRATA — sediment layers of signal.',TENDRIL:'TENDRIL — organic reaching filaments.',
+};
+function tipFor(el){
+  if(!el)return null;
+  if(el.id&&TIP_ID[el.id])return TIP_ID[el.id];
+  if(el.title)return el.title;
+  const seg=el.closest&&el.closest('.seg');
+  if(seg&&el.tagName==='BUTTON'){
+    const t=el.textContent.trim();
+    if(TIP_SEG[t])return TIP_SEG[t];
+    if(TIP_MODE[t])return TIP_MODE[t];
+    if(seg.id==='epochseg')return TIP_ID.epochseg;
+    return t+' — one voice of this dial. The lit chip is the active one.';
+  }
+  return null;
+}
+let INFOMODE=false;
+$('infobtn').addEventListener('click',()=>{
+  INFOMODE=!INFOMODE;
+  $('infobtn').classList.toggle('on',INFOMODE);
+  $('tipbar').style.display=INFOMODE?'block':'none';
+  $('tipbar').innerHTML='<b>INFO MODE</b> — tap any control to learn it. Tap ? again to leave.';
+});
+document.addEventListener('click',ev=>{
+  if(!INFOMODE)return;
+  const el=ev.target.closest('button,input,.seg,.tab,.tgl,img');
+  if(!el||el.id==='infobtn')return;
+  const t=tipFor(el)|| (el.classList&&el.classList.contains('tgl') ? el.textContent.trim()+' — a sigil: one corruption channel. Lit = armed. Long-press stories live in the grid.' : null);
+  if(t){ ev.preventDefault(); ev.stopPropagation(); $('tipbar').innerHTML='<b>'+(el.id||el.textContent.trim().slice(0,18)||'CONTROL')+'</b> — '+t.replace(/^[^—]*—\s*/,''); }
+},true);
+/* title attributes for desktop hover */
+(function(){
+  for(const id in TIP_ID){ const el=$(id); if(el)el.title=TIP_ID[id]; }
+  document.querySelectorAll('.seg button').forEach(b=>{ if(!b.title)b.title=tipFor(b)||''; });
+  document.querySelectorAll('input[type=range]').forEach(r=>{ if(!r.title&&r.id&&TIP_ID[r.id])r.title=TIP_ID[r.id]; });
+})();
+
 $('dice').addEventListener('click',randSeed);
 $('resetall').addEventListener('click',()=>{
   document.querySelectorAll('.tg').forEach(tg=>{ tg.dataset.on=0; state.fx[tg.dataset.fx]=false; });
