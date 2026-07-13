@@ -120,6 +120,19 @@
   .duo{display:flex;gap:8px;align-items:flex-end;}
   #p-tune{gap:4px;}
   #p-tune input[type=range]{height:22px;}
+  #vaultadd{appearance:none;cursor:pointer;width:100%;padding:12px 0;border-radius:4px;
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
+    color:var(--cyan);background:var(--panel);border:1px solid var(--line2);}
+  #vaultadd[disabled]{opacity:.35;cursor:default;}
+  #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .ve{position:relative;}
+  .ve img{display:block;width:100%;aspect-ratio:1;border-radius:4px;cursor:pointer;
+    image-rendering:pixelated;}
+  .ve .vx{position:absolute;top:2px;right:2px;width:16px;height:16px;line-height:14px;
+    font-size:9px;color:var(--mut);background:rgba(5,5,10,.75);border:none;border-radius:3px;
+    cursor:pointer;padding:0;}
+  .ve .vx:active{color:var(--mag);}
+  .vempty{font-family:var(--fD);font-size:8px;color:var(--mut);padding:6px 2px;}
   .labnote{font-size:8px;line-height:1.9;color:var(--faint);letter-spacing:0;}
   .dice{appearance:none;background:var(--panel);border:1px solid var(--line2);color:var(--txt);
     width:44px;height:40px;border-radius:4px;font-size:17px;cursor:pointer;}
@@ -205,7 +218,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.1c · HYDRA<br>UNIFORM CHIP GRID</div>
+    <div class="ver">REV 9.2 · HYDRA<br>DNA VAULT</div>
   </header>
 
   <div class="colL">
@@ -334,7 +347,12 @@
         <button id="dnacopy" class="dice" title="copy card">⧉</button>
         <button id="dnaload" class="dice" title="reproduce from card">▶</button>
       </div>
-      <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. Share the card, share the artwork.</p>
+      <div class="field">
+        <label>VAULT <span class="v" id="vcount"></span></label>
+        <button id="vaultadd" disabled>⬇ STORE CURRENT LOOP</button>
+      </div>
+      <div id="vaultlist"></div>
+      <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. The vault keeps them in this browser, surviving sessions and app upgrades.</p>
     </section>
   </main>
 
@@ -2466,6 +2484,7 @@ async function generateSeq(){
   lastDataURL=bytesToDataURL(bytes);
   const img=$('result'); img.src=lastDataURL; img.style.display='block';
   $('download').removeAttribute('disabled');
+  $('vaultadd').removeAttribute('disabled');
   if(canShareFiles||isIOS){
     $('download').classList.add('ready');
   }else{
@@ -2745,6 +2764,7 @@ async function generate(){
   lastDataURL=bytesToDataURL(bytes);
   const img=$('result'); img.src=lastDataURL; img.style.display='block';
   $('download').removeAttribute('disabled');
+  $('vaultadd').removeAttribute('disabled');
   if(canShareFiles||isIOS){ $('download').classList.add('ready'); }
   else { triggerDownload(); }
 
@@ -3049,6 +3069,56 @@ function clearOV(){
   $('ovn').value=0; $('lab-ovn').textContent='AUTO';
 }
 clearOV();
+/* ============================================================================
+   DNA VAULT — cards + thumbnails, persisted in this browser (localStorage,
+   per-origin: survives sessions AND app upgrades since the vault lives in the
+   browser, not the file). In-memory fallback where storage is unavailable.
+   ========================================================================== */
+const VKEY='pndr_vault_v1', VMAX=60;
+let VMEM=[];
+function vLoad(){
+  try{ if(typeof localStorage!=='undefined'){const r=localStorage.getItem(VKEY); return r?JSON.parse(r):[];} }catch(e){}
+  return VMEM;
+}
+function vSave(list){
+  try{ if(typeof localStorage!=='undefined'){localStorage.setItem(VKEY,JSON.stringify(list)); return;} }catch(e){}
+  VMEM=list;
+}
+function vThumb(){
+  try{
+    const cv=document.createElement('canvas'); cv.width=108; cv.height=108;
+    cv.getContext('2d').drawImage($('view'),0,0,108,108);
+    return cv.toDataURL('image/jpeg',0.62);
+  }catch(e){ return ''; }
+}
+function vRender(){
+  const list=vLoad(), host=$('vaultlist');
+  $('vcount').textContent=list.length? list.length+' / '+VMAX : '';
+  host.innerHTML='';
+  if(!list.length){ const p=document.createElement('div'); p.className='vempty'; p.textContent='VAULT EMPTY — STORE A LOOP'; host.appendChild(p); return; }
+  for(let i=list.length-1;i>=0;i--){const e=list[i];
+    const d=document.createElement('div'); d.className='ve';
+    const img=document.createElement('img'); img.src=e.thumb; img.title=e.card; img.alt=e.card;
+    img.addEventListener('click',()=>{
+      const c=unpackCard(e.card);
+      if(!c){ $('osd').textContent='CARD FROM A NEWER/OLDER BOX'; return; }
+      applyCard(c); generate();
+    });
+    const x=document.createElement('button'); x.className='vx'; x.textContent='✕'; x.title='remove';
+    x.addEventListener('click',ev=>{ev.stopPropagation();
+      const l=vLoad(); l.splice(i,1); vSave(l); vRender();});
+    d.appendChild(img); d.appendChild(x); host.appendChild(d);
+  }
+}
+$('vaultadd').addEventListener('click',()=>{
+  const card=$('dna').value.trim(); if(!card)return;
+  const list=vLoad();
+  if(list.some(e=>e.card===card)){ $('osd').textContent='ALREADY IN VAULT'; return; }
+  list.push({card, thumb:vThumb(), ts:Date.now()});
+  while(list.length>VMAX)list.shift();
+  vSave(list); vRender();
+});
+vRender();
 $('dice').addEventListener('click',randSeed);
 $('resetall').addEventListener('click',()=>{
   document.querySelectorAll('.tg').forEach(tg=>{ tg.dataset.on=0; state.fx[tg.dataset.fx]=false; });
