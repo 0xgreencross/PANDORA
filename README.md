@@ -5,7 +5,7 @@ animated glitch loops from a single number. Nothing is drawn by hand and nothing
 every loop is fully determined by its DNA, so any loop can be resurrected byte-exactly, by anyone,
 forever. The whole machine is one HTML file.
 
-**Live box:** https://0xgreencross.github.io/PANDORA/
+**Live box:** https://dithervoid.art/
 
 ---
 
