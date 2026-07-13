@@ -226,7 +226,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.6 · HYDRA<br>PUBLIC VAULT</div>
+    <div class="ver">REV 9.6 · HYDRA<br>PUBLIC VAULT · LIVE</div>
   </header>
 
   <div class="colL">
@@ -3152,7 +3152,7 @@ clearOV();
    requires the curator passphrase verified server-side — never in this file).
    Empty values = the vault runs local-only, exactly as before.
    ========================================================================== */
-const SB={url:'', key:''};   // <- Supabase project URL + anon public key
+const SB={url:'https://llirnynoyarbvtxcekwy.supabase.co', key:'sb_publishable_0-do8FDOXiv-7LgxGqjxdA_74-QTOkq'};   // public by design — RLS is the lock
 const VKEY='pndr_vault_v1', VMAX=60, VDELKEY='pndr_vault_pass';
 function sbHeaders(){return {'apikey':SB.key,'Authorization':'Bearer '+SB.key,'Content-Type':'application/json'};}
 async function sbList(){
