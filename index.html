@@ -249,7 +249,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 10.1 · JANUS<br>WALLET GARDENS</div>
+    <div class="ver">REV 10.1b · JANUS<br>EIP-6963 WALLETS</div>
   </header>
 
   <div class="colL">
@@ -3579,11 +3579,37 @@ $('vfile').addEventListener('change',ev=>{
    privileged keys. No sessions, no tokens in the page, nothing to steal.
    ========================================================================== */
 let GADDR='';
+let GPROV=null;                            // the chosen EIP-1193 provider (EIP-6963 discovered)
+const G6963=[];                            // wallets that announce themselves (EVM-only by spec)
+window.addEventListener('eip6963:announceProvider',ev=>{
+  try{ if(ev.detail&&ev.detail.provider&&!G6963.some(p=>p.info.uuid===ev.detail.info.uuid))G6963.push(ev.detail); }catch(e){}
+});
+try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
 const GFN=SB.url? SB.url.replace('.supabase.co','.functions.supabase.co')+'/garden-write' : '';
 async function gConnect(){
-  if(!window.ethereum){ $('osd').textContent='NO WALLET FOUND'; return; }
+  /* EIP-6963: ask Ethereum wallets to identify themselves; never trust the
+     window.ethereum squatter (Tezos and friends love that chair). */
+  try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
+  await new Promise(r=>setTimeout(r,120));
+  if(G6963.length>1 && !GPROV){
+    const host=$('gardenlist');
+    const sec=document.createElement('div'); sec.className='gsec';
+    const nm=document.createElement('div'); nm.className='gname'; nm.textContent='◈ SELECT ETHEREUM WALLET';
+    sec.appendChild(nm);
+    for(const p of G6963){
+      const b=document.createElement('button'); b.className='vio'; b.style.marginTop='4px';
+      b.textContent=p.info.name.toUpperCase();
+      b.addEventListener('click',()=>{ GPROV=p.provider; sec.remove(); gConnect(); });
+      sec.appendChild(b);
+    }
+    host.insertBefore(sec,host.firstChild);
+    return;
+  }
+  if(!GPROV) GPROV = G6963.length===1 ? G6963[0].provider
+                   : (window.ethereum&&window.ethereum.request ? window.ethereum : null);
+  if(!GPROV){ $('osd').textContent='NO ETHEREUM WALLET FOUND'; return; }
   try{
-    const acc=await window.ethereum.request({method:'eth_requestAccounts'});
+    const acc=await GPROV.request({method:'eth_requestAccounts'});
     GADDR=(acc&&acc[0]||'').toLowerCase();
     if(GADDR){
       $('gaddr').textContent=GADDR.slice(0,6)+'…'+GADDR.slice(-4);
@@ -3595,7 +3621,7 @@ async function gConnect(){
 async function gSigned(action,card,thumb){
   const ts=Date.now();
   const msg='PANDORA GARDEN\n'+action.toUpperCase()+' '+card+'\nby '+GADDR+'\nat '+ts;
-  const signature=await window.ethereum.request({method:'personal_sign',params:[msg,GADDR]});
+  const signature=await (GPROV||window.ethereum).request({method:'personal_sign',params:[msg,GADDR]});
   const r=await fetch(GFN,{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({action,address:GADDR,card,thumb,ts,signature})});
   const d=await r.json();
