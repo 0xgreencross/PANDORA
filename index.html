@@ -218,7 +218,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.3 · HYDRA<br>CANVAS LOOP PLAYER</div>
+    <div class="ver">REV 9.3d · HYDRA<br>PLAYBACK DIAGNOSTICS</div>
   </header>
 
   <div class="colL">
@@ -2310,7 +2310,7 @@ let xBytes=null, xDim=0, xName='', xBlob=null, xURL=null, xDataURL='';
    decoder (which delays frames when high-entropy decodes miss its budget).
    We retain 540² index frames from the render and play them on the canvas
    with an exact clock. Immune to entropy; saved files untouched. */
-const PLAYER={raf:0};
+const PLAYER={raf:0, hud:false, stats:null};
 function stopPlayer(){ if(PLAYER.raf){cancelAnimationFrame(PLAYER.raf);PLAYER.raf=0;} }
 function startPlayer(frames,pal,dim,N,delayMs){
   stopPlayer();
@@ -2319,21 +2319,38 @@ function startPlayer(frames,pal,dim,N,delayMs){
   const octx=off.getContext('2d');
   const img=octx.createImageData(dim,dim), pd=img.data;
   const vctx=$('view').getContext('2d');
-  let last=-1;
+  let last=-1, lastAdv=0;
+  const st=PLAYER.stats={n:0,sum:0,worst:0,late:0,rafGap:0,rafN:0,rafSum:0,rafWorst:0,prevRaf:0,dim,N,target:delayMs};
   const t0=performance.now();
   function tick(now){
     PLAYER.raf=requestAnimationFrame(tick);
+    if(st.prevRaf){const g=now-st.prevRaf; st.rafN++; st.rafSum+=g; if(g>st.rafWorst)st.rafWorst=g;}
+    st.prevRaf=now;
     const fi=(((now-t0)/delayMs)|0)%N;
     if(fi===last)return;
+    if(lastAdv){const d=now-lastAdv; st.n++; st.sum+=d; if(d>st.worst)st.worst=d;
+      if(d>delayMs*1.6)st.late++;}
+    lastAdv=now;
     last=fi;
     const f=frames[fi];
+    const b0=performance.now();
     for(let q=0;q<dim*dim;q++){const c=pal[f[q]],k=q*4;pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
     octx.putImageData(img,0,0);
     vctx.imageSmoothingEnabled=false;
     vctx.drawImage(off,0,0,W,H);
+    st.blit=performance.now()-b0;
+    if(PLAYER.hud && (st.n&7)===0){
+      $('osd').textContent='PLAYER '+dim+'² · adv avg '+(st.sum/Math.max(1,st.n)).toFixed(1)
+        +' worst '+st.worst.toFixed(0)+' late '+st.late+'/'+st.n
+        +' · raf avg '+(st.rafSum/Math.max(1,st.rafN)).toFixed(1)+' worst '+st.rafWorst.toFixed(0)
+        +' · blit '+st.blit.toFixed(1)+'ms';
+    }
   }
   PLAYER.raf=requestAnimationFrame(tick);
 }
+/* tap the OSD readout to toggle the playback diagnostic HUD */
+$('osd').addEventListener('click',()=>{PLAYER.hud=!PLAYER.hud;
+  if(!PLAYER.hud&&PLAYER.stats)$('osd').textContent='LOOP';});
 const TAU=6.283185307179586;
 const FPS=25, DELAY=4;                 // 25fps locked  (4 centiseconds = 40ms/frame)
 
