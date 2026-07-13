@@ -128,6 +128,10 @@
     font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
     color:var(--mut);background:var(--panel);border:1px solid var(--line);}
   .vio:active{color:var(--cyan);border-color:var(--line2);}
+  #vtoken,#vrepo{flex:1;min-width:0;appearance:none;padding:9px 8px;border-radius:4px;
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
+    color:var(--txt);background:var(--panel);border:1px solid var(--line);}
+  #vtoken::placeholder,#vrepo::placeholder{color:var(--mut);}
   #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
   .ve{position:relative;}
   .ve img{display:block;width:100%;aspect-ratio:1;border-radius:4px;cursor:pointer;
@@ -222,7 +226,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.4 · HYDRA<br>VAULT PORT · SLEEP</div>
+    <div class="ver">REV 9.5 · HYDRA<br>VAULT CLOUD SYNC</div>
   </header>
 
   <div class="colL">
@@ -356,9 +360,14 @@
         <button id="vaultadd" disabled>⬇ STORE CURRENT LOOP</button>
       </div>
       <div class="duo">
-        <button id="vexport" class="vio">⇪ EXPORT VAULT</button>
+        <button id="vexport" class="vio">⇪ EXPORT</button>
         <button id="vimport" class="vio">⇩ IMPORT</button>
+        <button id="vsyncbtn" class="vio">⟳ SYNC</button>
         <input type="file" id="vfile" accept="application/json,.json" style="display:none">
+      </div>
+      <div class="duo">
+        <input type="password" id="vtoken" placeholder="GITHUB TOKEN" autocomplete="off">
+        <input type="text" id="vrepo" placeholder="user/private-repo" autocomplete="off">
       </div>
       <div id="vaultlist"></div>
       <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. The vault keeps them in this browser, surviving sessions and app upgrades.</p>
@@ -3141,15 +3150,68 @@ clearOV();
    per-origin: survives sessions AND app upgrades since the vault lives in the
    browser, not the file). In-memory fallback where storage is unavailable.
    ========================================================================== */
-const VKEY='pndr_vault_v1', VMAX=60;
-let VMEM=[];
-function vLoad(){
-  try{ if(typeof localStorage!=='undefined'){const r=localStorage.getItem(VKEY); return r?JSON.parse(r):[];} }catch(e){}
-  return VMEM;
+const VKEY='pndr_vault_v1', VMAX=60, VSKEY='pndr_vault_sync';
+let VMEM={entries:[],deleted:{}};
+function vState(){
+  let st=null;
+  try{ if(typeof localStorage!=='undefined'){const r=localStorage.getItem(VKEY); if(r)st=JSON.parse(r);} }catch(e){}
+  if(!st)st=VMEM;
+  if(Array.isArray(st))st={entries:st,deleted:{}};                  // migrate old shape
+  st.entries=st.entries||[]; st.deleted=st.deleted||{};
+  return st;
 }
+function vLoad(){ return vState().entries; }
 function vSave(list){
-  try{ if(typeof localStorage!=='undefined'){localStorage.setItem(VKEY,JSON.stringify(list)); return;} }catch(e){}
-  VMEM=list;
+  const st=vState(); st.entries=list;
+  vPersist(st);
+}
+function vPersist(st){
+  try{ if(typeof localStorage!=='undefined'){localStorage.setItem(VKEY,JSON.stringify(st)); return;} }catch(e){}
+  VMEM=st;
+}
+/* merge two vault states: newest wins, tombstones kill entries they postdate */
+function vMerge(a,b){
+  const deleted={...a.deleted};
+  for(const k in b.deleted)if(!(k in deleted)||b.deleted[k]>deleted[k])deleted[k]=b.deleted[k];
+  const byCard={};
+  for(const e of [...a.entries,...b.entries]){
+    if(!e||typeof e.card!=='string')continue;
+    if(deleted[e.card]&&deleted[e.card]>=(e.ts||0))continue;        // tombstone wins
+    if(!byCard[e.card]||(e.ts||0)>(byCard[e.card].ts||0))byCard[e.card]=e;
+  }
+  const entries=Object.values(byCard).sort((x,y)=>(x.ts||0)-(y.ts||0));
+  while(entries.length>VMAX)entries.shift();
+  const cut=Date.now()-90*86400000;                                  // prune ancient tombstones
+  for(const k in deleted)if(deleted[k]<cut)delete deleted[k];
+  return {entries,deleted};
+}
+/* ---- GitHub-backed sync: vault.json in a private repo the user owns ---- */
+function vsCfg(){ try{const r=localStorage.getItem(VSKEY); return r?JSON.parse(r):null;}catch(e){return null;} }
+function vsStore(c){ try{localStorage.setItem(VSKEY,JSON.stringify(c));}catch(e){} }
+let VSYNC_BUSY=false;
+async function vSync(quiet){
+  const cfg=vsCfg(); if(!cfg||!cfg.token||!cfg.repo||VSYNC_BUSY)return;
+  VSYNC_BUSY=true;
+  try{
+    const api='https://api.github.com/repos/'+cfg.repo+'/contents/vault.json';
+    const H={'Authorization':'Bearer '+cfg.token,'Accept':'application/vnd.github+json'};
+    let remote={entries:[],deleted:{}}, sha=null;
+    const g=await fetch(api,{headers:H});
+    if(g.status===200){
+      const d=await g.json(); sha=d.sha;
+      try{ remote=JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))))); }catch(e){}
+      if(Array.isArray(remote))remote={entries:remote,deleted:{}};
+    } else if(g.status!==404){ throw new Error('pull '+g.status); }
+    const merged=vMerge(vState(),remote);
+    vPersist(merged); vRender();
+    const body=btoa(unescape(encodeURIComponent(JSON.stringify(merged))));
+    const payload={message:'vault sync',content:body}; if(sha)payload.sha=sha;
+    const p=await fetch(api,{method:'PUT',headers:H,body:JSON.stringify(payload)});
+    if(p.status===409||p.status===422){ VSYNC_BUSY=false; return vSync(quiet); } // sha raced: re-pull
+    if(!p.ok)throw new Error('push '+p.status);
+    if(!quiet)$('osd').textContent='VAULT SYNCED · '+merged.entries.length;
+  }catch(err){ if(!quiet)$('osd').textContent='SYNC FAILED'; }
+  VSYNC_BUSY=false;
 }
 function vThumb(){
   try{
@@ -3173,7 +3235,9 @@ function vRender(){
     });
     const x=document.createElement('button'); x.className='vx'; x.textContent='✕'; x.title='remove';
     x.addEventListener('click',ev=>{ev.stopPropagation();
-      const l=vLoad(); l.splice(i,1); vSave(l); vRender();});
+      const st=vState(); const dead=st.entries[i];
+      if(dead)st.deleted[dead.card]=Date.now();
+      st.entries.splice(i,1); vPersist(st); vRender(); vSync(true);});
     d.appendChild(img); d.appendChild(x); host.appendChild(d);
   }
 }
@@ -3183,7 +3247,7 @@ $('vaultadd').addEventListener('click',()=>{
   if(list.some(e=>e.card===card)){ $('osd').textContent='ALREADY IN VAULT'; return; }
   list.push({card, thumb:vThumb(), ts:Date.now()});
   while(list.length>VMAX)list.shift();
-  vSave(list); vRender();
+  vSave(list); vRender(); vSync(true);
 });
 $('vexport').addEventListener('click',()=>{
   const list=vLoad(); if(!list.length){$('osd').textContent='VAULT EMPTY';return;}
@@ -3206,13 +3270,22 @@ $('vfile').addEventListener('change',ev=>{
         added++;
       }
       while(list.length>VMAX)list.shift();
-      vSave(list); vRender();
+      vSave(list); vRender(); vSync(true);
       $('osd').textContent='VAULT +'+added;
     }catch(err){ $('osd').textContent='IMPORT FAILED'; }
     ev.target.value='';
   };
   rd.readAsText(f);
 });
+(function(){
+  const cfg=vsCfg();
+  if(cfg){ $('vtoken').value=cfg.token||''; $('vrepo').value=cfg.repo||''; }
+  const commit=()=>{ vsStore({token:$('vtoken').value.trim(), repo:$('vrepo').value.trim()}); };
+  $('vtoken').addEventListener('change',commit);
+  $('vrepo').addEventListener('change',commit);
+  $('vsyncbtn').addEventListener('click',()=>{commit(); vSync(false);});
+  if(cfg&&cfg.token&&cfg.repo) vSync(true);              // silent sync on every open
+})();
 vRender();
 $('dice').addEventListener('click',randSeed);
 $('resetall').addEventListener('click',()=>{
