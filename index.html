@@ -226,7 +226,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.6 · HYDRA<br>PUBLIC VAULT · LIVE</div>
+    <div class="ver">REV 9.7 · HYDRA<br>VAULT KEYFIX</div>
   </header>
 
   <div class="colL">
@@ -3154,7 +3154,11 @@ clearOV();
    ========================================================================== */
 const SB={url:'https://llirnynoyarbvtxcekwy.supabase.co', key:'sb_publishable_0-do8FDOXiv-7LgxGqjxdA_74-QTOkq'};   // public by design — RLS is the lock
 const VKEY='pndr_vault_v1', VMAX=60, VDELKEY='pndr_vault_pass';
-function sbHeaders(){return {'apikey':SB.key,'Authorization':'Bearer '+SB.key,'Content-Type':'application/json'};}
+function sbHeaders(){
+  const h={'apikey':SB.key,'Content-Type':'application/json'};
+  if(!SB.key.startsWith('sb_')) h['Authorization']='Bearer '+SB.key;   // legacy JWT keys only
+  return h;
+}
 async function sbList(){
   const r=await fetch(SB.url+'/rest/v1/vault?select=card,thumb,ts&order=ts.desc&limit=200',{headers:sbHeaders()});
   if(!r.ok)throw new Error('list '+r.status);
@@ -3227,12 +3231,16 @@ async function vCloudRefresh(){
   if(!SB.url)return vRender();
   try{
     VCLOUD=await sbList();
+    VCLOUD._ok=true;
     try{ localStorage.setItem(VKEY+'_cloudcache',JSON.stringify(VCLOUD)); }catch(e){}
   }catch(e){
     try{ VCLOUD=JSON.parse(localStorage.getItem(VKEY+'_cloudcache')||'null'); }catch(e2){}
+    $('vcount').textContent='OFFLINE · '+String(e.message||e).slice(0,24);
+    vRenderList(VCLOUD||[]); return;
   }
   vRender();
 }
+function vRenderList(l){ const keep=VCLOUD; VCLOUD=l; vRender(); VCLOUD=keep; }
 function vRender(){
   const list=SB.url ? (VCLOUD||[]) : vLoad(), host=$('vaultlist');
   $('vcount').textContent=SB.url ? (list.length? list.length+' STORED' : '') : (list.length? list.length+' / '+VMAX : '');
@@ -3268,7 +3276,7 @@ $('vaultadd').addEventListener('click',async ()=>{
       const res=await sbAdd(card, vThumb());
       $('osd').textContent=res==='dup'?'ALREADY IN VAULT':'STORED IN PUBLIC VAULT';
       vCloudRefresh();
-    }catch(e){ $('osd').textContent='VAULT OFFLINE'; }
+    }catch(e){ $('osd').textContent='VAULT OFFLINE · '+String(e.message||e).slice(0,20); }
     return;
   }
   const list=vLoad();
