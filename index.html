@@ -174,7 +174,12 @@
     .colL{display:flex;flex-direction:column;gap:9px;flex:0 1 56%;max-width:660px;}
     .colR{display:flex;flex-direction:column;gap:10px;flex:1 1 360px;min-width:360px;}
     .monitor{width:min(100%,76dvh);align-self:flex-start;}
-    #panels{flex:0 0 600px;}
+    /* panels hug their content per tab — no more 600px void on SIGNAL/LAB.
+       Mobile keeps the absolute-overlay panels untouched. */
+    #panels{flex:0 0 auto;position:static;}
+    .panel{position:static;overflow:visible;}
+    #p-sigils{height:520px;}
+    #p-sigils .toggles{height:100%;}
     .duostyle{flex-direction:column;align-items:stretch;}
     .duostyle .field{flex:1 1 auto !important;}
     #p-tune .seg button{padding:7px 8px;}
@@ -182,8 +187,9 @@
     .seg{flex-wrap:wrap;overflow:visible;}
     .seg button{padding:11px 14px;}
     .brand{font-size:16px;} .tab{font-size:8px;padding:13px 0 12px;}
-    .actions button{font-size:16px;padding:17px 0;} #oblivion{font-size:19px;flex:0 0 68px;}
-    #xsave{flex:0 0 64px;} #resetall{flex:0 0 56px;font-size:18px;}
+    .actions{margin-top:2px;}
+    .actions button{font-size:12px;padding:13px 0;border-radius:6px;} #oblivion{font-size:15px;flex:0 0 56px;}
+    #xsave{flex:0 0 56px;font-size:14px;} #resetall{flex:0 0 50px;font-size:15px;}
     #resetall:hover{border-color:var(--cyan);filter:brightness(1.25);}
     .toggles{gap:6px;}
     .tg:hover{border-color:var(--line2);background:var(--panel2);}
@@ -199,7 +205,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.0 · HYDRA<br>MULTICORE RENDER</div>
+    <div class="ver">REV 9.1 · HYDRA<br>DEATH SIGNAL · X-FULL</div>
   </header>
 
   <div class="colL">
@@ -2441,6 +2447,7 @@ async function generateSeq(){
   $('dna').value=packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
 
   const LIMIT=14900000;  // 15MB platform cap, safe under both MB and MiB readings
+  if(bytes.length<=LIMIT){ xBytes=bytes; xDim=W; }        // master fits: X ships FULL RES
   for(const xs of XS){
     const xb=gifEnd(xs.sink);
     if(!xBytes && xb.length<=LIMIT){ xBytes=xb; xDim=xs.d; }
@@ -2449,8 +2456,8 @@ async function generateSeq(){
   const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
   let xInfo='';
   if(xBytes){
-    xName='DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
-    xInfo=' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
+    xName = xDim===W ? lastName : 'DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
+    xInfo = xDim===W ? ' · 𝕏 FULL' : ' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
     $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
   }
   $('t-size').textContent=W+'² '+mainSz+xInfo+' · '+dur+'s';
@@ -2722,6 +2729,7 @@ async function generate(){
   $('dna').value=packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
 
   const LIMIT=14900000;
+  if(bytes.length<=LIMIT){ xBytes=bytes; xDim=W; }        // master fits: X ships FULL RES
   for(let s2=1;s2<4;s2++){
     if(!xBytes && streams[s2].length<=LIMIT){ xBytes=streams[s2]; xDim=DIMS[s2]; }
   }
@@ -2729,8 +2737,8 @@ async function generate(){
   const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
   let xInfo='';
   if(xBytes){
-    xName='DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
-    xInfo=' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
+    xName = xDim===W ? lastName : 'DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
+    xInfo = xDim===W ? ' · 𝕏 FULL' : ' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
     $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
   }
   $('t-size').textContent=W+'² '+mainSz+xInfo+' · '+dur+'s';
@@ -2774,6 +2782,7 @@ async function saveAsset(blob,name,dataURL,url){
 async function saveLoop(){ return saveAsset(lastBlob,lastName,lastDataURL,lastURL); }
 async function saveX(){
   if(!xBytes)return;
+  if(xDim===W && lastBlob){ return saveAsset(lastBlob,lastName,lastDataURL,lastURL); }  // X = master: reuse
   if(!xBlob){ xBlob=new Blob([xBytes],{type:'image/gif'}); xURL=URL.createObjectURL(xBlob); }
   if(!xDataURL && isIOS) xDataURL=bytesToDataURL(xBytes);   // lazy: built on demand
   return saveAsset(xBlob,xName,xDataURL,xURL);
