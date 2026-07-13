@@ -226,7 +226,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.5 · HYDRA<br>VAULT CLOUD SYNC</div>
+    <div class="ver">REV 9.6 · HYDRA<br>PUBLIC VAULT</div>
   </header>
 
   <div class="colL">
@@ -362,12 +362,7 @@
       <div class="duo">
         <button id="vexport" class="vio">⇪ EXPORT</button>
         <button id="vimport" class="vio">⇩ IMPORT</button>
-        <button id="vsyncbtn" class="vio">⟳ SYNC</button>
         <input type="file" id="vfile" accept="application/json,.json" style="display:none">
-      </div>
-      <div class="duo">
-        <input type="password" id="vtoken" placeholder="GITHUB TOKEN" autocomplete="off">
-        <input type="text" id="vrepo" placeholder="user/private-repo" autocomplete="off">
       </div>
       <div id="vaultlist"></div>
       <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. The vault keeps them in this browser, surviving sessions and app upgrades.</p>
@@ -3150,7 +3145,42 @@ clearOV();
    per-origin: survives sessions AND app upgrades since the vault lives in the
    browser, not the file). In-memory fallback where storage is unavailable.
    ========================================================================== */
-const VKEY='pndr_vault_v1', VMAX=60, VSKEY='pndr_vault_sync';
+/* ============================================================================
+   PUBLIC VAULT — a shared database every visitor reads. Backed by Supabase:
+   the two values below are PUBLIC by design (row-level security in the
+   database enforces the actual rules: anyone reads, anyone stores, deletion
+   requires the curator passphrase verified server-side — never in this file).
+   Empty values = the vault runs local-only, exactly as before.
+   ========================================================================== */
+const SB={url:'', key:''};   // <- Supabase project URL + anon public key
+const VKEY='pndr_vault_v1', VMAX=60, VDELKEY='pndr_vault_pass';
+function sbHeaders(){return {'apikey':SB.key,'Authorization':'Bearer '+SB.key,'Content-Type':'application/json'};}
+async function sbList(){
+  const r=await fetch(SB.url+'/rest/v1/vault?select=card,thumb,ts&order=ts.desc&limit=200',{headers:sbHeaders()});
+  if(!r.ok)throw new Error('list '+r.status);
+  return r.json();
+}
+async function sbAdd(card,thumb){
+  const r=await fetch(SB.url+'/rest/v1/vault',{method:'POST',headers:{...sbHeaders(),'Prefer':'return=minimal'},
+    body:JSON.stringify({card,thumb,ts:Date.now()})});
+  if(r.status===409)return 'dup';
+  if(!r.ok)throw new Error('add '+r.status);
+  return 'ok';
+}
+async function sbDelete(card){
+  let pass='';
+  try{ pass=localStorage.getItem(VDELKEY)||''; }catch(e){}
+  if(!pass){
+    pass=prompt('CURATOR PASSPHRASE');
+    if(!pass)return 'no';
+    try{ localStorage.setItem(VDELKEY,pass); }catch(e){}
+  }
+  const r=await fetch(SB.url+'/rest/v1/rpc/vault_delete',{method:'POST',headers:sbHeaders(),
+    body:JSON.stringify({p_card:card,p_pass:pass})});
+  if(!r.ok){ try{localStorage.removeItem(VDELKEY);}catch(e){} return 'denied'; }
+  return 'ok';
+}
+let VCLOUD=null;   // latest fetched public list
 let VMEM={entries:[],deleted:{}};
 function vState(){
   let st=null;
@@ -3185,34 +3215,7 @@ function vMerge(a,b){
   for(const k in deleted)if(deleted[k]<cut)delete deleted[k];
   return {entries,deleted};
 }
-/* ---- GitHub-backed sync: vault.json in a private repo the user owns ---- */
-function vsCfg(){ try{const r=localStorage.getItem(VSKEY); return r?JSON.parse(r):null;}catch(e){return null;} }
-function vsStore(c){ try{localStorage.setItem(VSKEY,JSON.stringify(c));}catch(e){} }
-let VSYNC_BUSY=false;
-async function vSync(quiet){
-  const cfg=vsCfg(); if(!cfg||!cfg.token||!cfg.repo||VSYNC_BUSY)return;
-  VSYNC_BUSY=true;
-  try{
-    const api='https://api.github.com/repos/'+cfg.repo+'/contents/vault.json';
-    const H={'Authorization':'Bearer '+cfg.token,'Accept':'application/vnd.github+json'};
-    let remote={entries:[],deleted:{}}, sha=null;
-    const g=await fetch(api,{headers:H});
-    if(g.status===200){
-      const d=await g.json(); sha=d.sha;
-      try{ remote=JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))))); }catch(e){}
-      if(Array.isArray(remote))remote={entries:remote,deleted:{}};
-    } else if(g.status!==404){ throw new Error('pull '+g.status); }
-    const merged=vMerge(vState(),remote);
-    vPersist(merged); vRender();
-    const body=btoa(unescape(encodeURIComponent(JSON.stringify(merged))));
-    const payload={message:'vault sync',content:body}; if(sha)payload.sha=sha;
-    const p=await fetch(api,{method:'PUT',headers:H,body:JSON.stringify(payload)});
-    if(p.status===409||p.status===422){ VSYNC_BUSY=false; return vSync(quiet); } // sha raced: re-pull
-    if(!p.ok)throw new Error('push '+p.status);
-    if(!quiet)$('osd').textContent='VAULT SYNCED · '+merged.entries.length;
-  }catch(err){ if(!quiet)$('osd').textContent='SYNC FAILED'; }
-  VSYNC_BUSY=false;
-}
+
 function vThumb(){
   try{
     const cv=document.createElement('canvas'); cv.width=108; cv.height=108;
@@ -3220,12 +3223,23 @@ function vThumb(){
     return cv.toDataURL('image/jpeg',0.62);
   }catch(e){ return ''; }
 }
+async function vCloudRefresh(){
+  if(!SB.url)return vRender();
+  try{
+    VCLOUD=await sbList();
+    try{ localStorage.setItem(VKEY+'_cloudcache',JSON.stringify(VCLOUD)); }catch(e){}
+  }catch(e){
+    try{ VCLOUD=JSON.parse(localStorage.getItem(VKEY+'_cloudcache')||'null'); }catch(e2){}
+  }
+  vRender();
+}
 function vRender(){
-  const list=vLoad(), host=$('vaultlist');
-  $('vcount').textContent=list.length? list.length+' / '+VMAX : '';
+  const list=SB.url ? (VCLOUD||[]) : vLoad(), host=$('vaultlist');
+  $('vcount').textContent=SB.url ? (list.length? list.length+' STORED' : '') : (list.length? list.length+' / '+VMAX : '');
   host.innerHTML='';
   if(!list.length){ const p=document.createElement('div'); p.className='vempty'; p.textContent='VAULT EMPTY — STORE A LOOP'; host.appendChild(p); return; }
-  for(let i=list.length-1;i>=0;i--){const e=list[i];
+  const ordered=SB.url?list.slice():list.slice().reverse();
+  for(let i=0;i<ordered.length;i++){const e=ordered[i];
     const d=document.createElement('div'); d.className='ve';
     const img=document.createElement('img'); img.src=e.thumb; img.title=e.card; img.alt=e.card;
     img.addEventListener('click',()=>{
@@ -3234,20 +3248,34 @@ function vRender(){
       applyCard(c); generate();
     });
     const x=document.createElement('button'); x.className='vx'; x.textContent='✕'; x.title='remove';
-    x.addEventListener('click',ev=>{ev.stopPropagation();
-      const st=vState(); const dead=st.entries[i];
-      if(dead)st.deleted[dead.card]=Date.now();
-      st.entries.splice(i,1); vPersist(st); vRender(); vSync(true);});
+    x.addEventListener('click',async ev=>{ev.stopPropagation();
+      if(SB.url){
+        const res=await sbDelete(e.card);
+        if(res==='ok'){ $('osd').textContent='ENTRY PURGED'; vCloudRefresh(); }
+        else if(res==='denied'){ $('osd').textContent='CURATOR ONLY'; }
+        return;
+      }
+      const st=vState(); const idx=st.entries.findIndex(x2=>x2.card===e.card);
+      if(idx>=0){ st.deleted[e.card]=Date.now(); st.entries.splice(idx,1); vPersist(st); }
+      vRender(); });
     d.appendChild(img); d.appendChild(x); host.appendChild(d);
   }
 }
-$('vaultadd').addEventListener('click',()=>{
+$('vaultadd').addEventListener('click',async ()=>{
   const card=$('dna').value.trim(); if(!card)return;
+  if(SB.url){
+    try{
+      const res=await sbAdd(card, vThumb());
+      $('osd').textContent=res==='dup'?'ALREADY IN VAULT':'STORED IN PUBLIC VAULT';
+      vCloudRefresh();
+    }catch(e){ $('osd').textContent='VAULT OFFLINE'; }
+    return;
+  }
   const list=vLoad();
   if(list.some(e=>e.card===card)){ $('osd').textContent='ALREADY IN VAULT'; return; }
   list.push({card, thumb:vThumb(), ts:Date.now()});
   while(list.length>VMAX)list.shift();
-  vSave(list); vRender(); vSync(true);
+  vSave(list); vRender();
 });
 $('vexport').addEventListener('click',()=>{
   const list=vLoad(); if(!list.length){$('osd').textContent='VAULT EMPTY';return;}
@@ -3270,23 +3298,14 @@ $('vfile').addEventListener('change',ev=>{
         added++;
       }
       while(list.length>VMAX)list.shift();
-      vSave(list); vRender(); vSync(true);
+      vSave(list); vRender();
       $('osd').textContent='VAULT +'+added;
     }catch(err){ $('osd').textContent='IMPORT FAILED'; }
     ev.target.value='';
   };
   rd.readAsText(f);
 });
-(function(){
-  const cfg=vsCfg();
-  if(cfg){ $('vtoken').value=cfg.token||''; $('vrepo').value=cfg.repo||''; }
-  const commit=()=>{ vsStore({token:$('vtoken').value.trim(), repo:$('vrepo').value.trim()}); };
-  $('vtoken').addEventListener('change',commit);
-  $('vrepo').addEventListener('change',commit);
-  $('vsyncbtn').addEventListener('click',()=>{commit(); vSync(false);});
-  if(cfg&&cfg.token&&cfg.repo) vSync(true);              // silent sync on every open
-})();
-vRender();
+if(SB.url)vCloudRefresh(); else vRender();
 $('dice').addEventListener('click',randSeed);
 $('resetall').addEventListener('click',()=>{
   document.querySelectorAll('.tg').forEach(tg=>{ tg.dataset.on=0; state.fx[tg.dataset.fx]=false; });
