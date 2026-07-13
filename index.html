@@ -259,7 +259,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 10.5b · JANUS<br>SPOKEN ADDRESS</div>
+    <div class="ver">REV 10.5c · JANUS<br>NO AUTOSAVE</div>
   </header>
 
   <div class="colL">
@@ -2721,11 +2721,7 @@ async function generateSeq(){
   startPlayer(pvFrames, pal, 540, N, DELAY*10);
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
-  if(canShareFiles||isIOS){
-    $('download').classList.add('ready');
-  }else{
-    triggerDownload();   // desktop: auto-download
-  }
+  $('download').classList.add('ready');   // saving is deliberate on every platform
 
   setTimeout(()=>{$('prog').style.width='0%';},700);
   $('go').disabled=false; $('oblivion').disabled=false; busy=false;
@@ -3015,8 +3011,7 @@ async function generate(){
   startPlayer(pvFrames, pal, 540, N, DELAY*10);
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
-  if(canShareFiles||isIOS){ $('download').classList.add('ready'); }
-  else { triggerDownload(); }
+  $('download').classList.add('ready');   // saving is deliberate on every platform
 
   setTimeout(()=>{$('prog').style.width='0%';},700);
   $('go').disabled=false; $('oblivion').disabled=false; busy=false;
