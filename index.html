@@ -178,6 +178,24 @@
   #download.ready{color:#05050a;background:linear-gradient(95deg,var(--sulph),var(--cyan));border-color:transparent;
     box-shadow:0 0 20px rgba(232,255,46,.3);}
 
+  #xmodal{display:none;position:fixed;inset:0;z-index:60;background:rgba(3,3,6,.92);
+    align-items:center;justify-content:center;padding:16px;}
+  .xm-box{width:min(440px,94vw);max-height:94dvh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+    background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:14px;}
+  .xm-head{font-family:var(--fD);font-weight:700;font-size:9px;color:var(--cyan);letter-spacing:0;}
+  .xm-head span{color:var(--mut);}
+  #xm-img{width:100%;aspect-ratio:1;border-radius:4px;image-rendering:pixelated;background:#000;}
+  #xm-tweet{font-family:var(--fD);font-weight:700;font-size:10px;line-height:1.7;color:var(--txt);
+    background:#08080e;border-radius:4px;padding:10px;word-break:break-word;white-space:pre-wrap;}
+  .xm-row{display:flex;gap:8px;}
+  .xm-row button{appearance:none;cursor:pointer;padding:13px 0;border-radius:5px;
+    font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;}
+  #xm-reroll{flex:0 0 46px;color:var(--cyan);background:var(--panel2);border:1px solid var(--line2);}
+  #xm-save{flex:1;color:#05050a;background:var(--sulph);border:1px solid var(--sulph);}
+  #xm-compose{flex:1;color:#05050a;background:var(--cyan);border:1px solid var(--cyan);}
+  .xm-note{font-family:var(--fD);font-size:7px;color:var(--mut);letter-spacing:0;line-height:1.8;}
+  #xm-close{appearance:none;cursor:pointer;padding:10px 0;border-radius:5px;color:var(--mut);
+    background:var(--panel2);border:1px solid var(--line);font-family:var(--fD);font-weight:700;font-size:8px;}
   #saveview{display:none;position:fixed;inset:0;z-index:99;background:rgba(4,4,8,.97);
     flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:22px;}
   #saveview .sv-head{font-family:var(--fD);font-weight:700;font-size:16px;letter-spacing:0;color:var(--sulph);}
@@ -227,7 +245,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.8b · HYDRA<br>THUMB BUDGET FIX</div>
+    <div class="ver">REV 9.9 · HYDRA<br>𝕏 TRANSMISSION MODAL</div>
   </header>
 
   <div class="colL">
@@ -380,6 +398,20 @@
   </div>
 </div>
 
+<div id="xmodal">
+  <div class="xm-box">
+    <div class="xm-head">𝕏-SAFE TRANSMISSION <span id="xm-size"></span></div>
+    <img id="xm-img" alt="x-safe loop">
+    <div id="xm-tweet"></div>
+    <div class="xm-row">
+      <button id="xm-reroll">⟳</button>
+      <button id="xm-save">⤓ SAVE GIF</button>
+      <button id="xm-compose">𝕏 COMPOSE</button>
+    </div>
+    <div class="xm-note">𝕏 CANNOT CARRY THE GIF FOR YOU:<br>1 · SAVE THE GIF &nbsp; 2 · OPEN THE COMPOSER &nbsp; 3 · ATTACH IT BY HAND &nbsp; 4 · POST</div>
+    <button id="xm-close">CLOSE</button>
+  </div>
+</div>
 <div id="saveview">
   <div class="sv-head">SAVE TO PHOTOS</div>
   <img id="sv-img" alt="finished loop — long-press to save">
@@ -2879,6 +2911,78 @@ async function saveAsset(blob,name,dataURL,url){
   if(isIOS){ openSaveView(dataURL||url); } else { triggerDownloadURL(url,name); }
 }
 async function saveLoop(){ return saveAsset(lastBlob,lastName,lastDataURL,lastURL); }
+/* ============================================================================
+   GLITCH TONGUE — procedural transmission composer. Every invocation mints a
+   new utterance: seeded by genome x wall-clock, phrases drawn from the
+   DITHERVOID liturgy, each letter re-cast into a randomly chosen corrupted
+   alphabet, salted with block-noise and a unique rune nonce. No two alike.
+   Astral-safe: built as codepoint arrays, never charCode arithmetic.
+   ========================================================================== */
+const GT_ALPHA={
+  fw:  {a:0xFF41,A:0xFF21},                       // ｆｕｌｌｗｉｄｔｈ
+  frak:{a:0x1D51E,A:0x1D504},                     // 𝔣𝔯𝔞𝔨𝔱𝔲𝔯
+  dbl: {a:0x1D552,A:0x1D538},                     // 𝕕𝕠𝕦𝕓𝕝𝕖
+  sansb:{a:0x1D5EE,A:0x1D5D4},                    // 𝗌𝖺𝗇𝗌 𝖻𝗈𝗅𝖽
+  mono:{a:0x1D68A,A:0x1D670},                     // 𝚖𝚘𝚗𝚘
+};
+const GT_SC={a:'ᴀ',b:'ʙ',c:'ᴄ',d:'ᴅ',e:'ᴇ',f:'ꜰ',g:'ɢ',h:'ʜ',i:'ɪ',j:'ᴊ',k:'ᴋ',l:'ʟ',m:'ᴍ',
+  n:'ɴ',o:'ᴏ',p:'ᴘ',q:'ǫ',r:'ʀ',s:'ꜱ',t:'ᴛ',u:'ᴜ',v:'ᴠ',w:'ᴡ',x:'x',y:'ʏ',z:'ᴢ'};
+const GT_NOISE=['▓','▒','░','█','▚','▞','◤','◢','◣','◥','▙','▜'];
+const GT_RUNES=['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᛃ','ᛇ','ᛈ','ᛉ','ᛋ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛟ','ᛞ'];
+const GT_SUBJ=['THE BOX','THE SIGNAL','A LOOP','THE VOID','THE MACHINE','THIS FREQUENCY','THE DITHER','A GHOST FRAME','THE CARRIER','THE PHOSPHOR'];
+const GT_VERB=['LEAKED','ESCAPED','WAS MINTED FROM','BLED THROUGH','SURFACED IN','CORRUPTED','TRANSMITTED FROM','DECAYED INTO','TORE OPEN','SPOKE THROUGH'];
+const GT_OBJ=['THE STATIC','DEAD AIR','CHANNEL ZERO','THE NOISE FLOOR','A BROKEN CRT','THE LAST BROADCAST','MAGNETIC RUST','THE SCANLINES','AN EMPTY DIAL','THE INTERFERENCE'];
+const GT_CODA=['IT WILL NEVER EXIST AGAIN','NO SECOND TRANSMISSION','ONE OF ONE, THEN GONE','THE DNA IS THE PROOF','HOLD THE CARD, HOLD THE GHOST','REPLAYABLE ONLY BY ITS CODE'];
+function gtCast(word,rng){
+  const out=[];
+  for(const ch of word){
+    if(ch===' '){out.push(' ');continue;}
+    const lo=ch.toLowerCase(), up=ch.toUpperCase(), isL=/[a-z]/i.test(ch);
+    if(!isL){out.push(ch);continue;}
+    const roll=rng();
+    if(roll<0.18&&GT_SC[lo]){out.push(GT_SC[lo]);continue;}
+    const keys=Object.keys(GT_ALPHA);
+    const set=GT_ALPHA[keys[(rng()*keys.length)|0]];
+    const base=rng()<0.5?set.a:set.A;
+    const idx=(rng()<0.5?lo:lo).charCodeAt(0)-97;
+    out.push(String.fromCodePoint(base+idx));
+  }
+  return out.join('');
+}
+function glitchTweet(seed,card){
+  const rng=mulberry32(((Date.now()&0xffffffff)^seed^(Math.random()*1e9|0))>>>0);
+  const phrase=GT_SUBJ[(rng()*GT_SUBJ.length)|0]+' '+GT_VERB[(rng()*GT_VERB.length)|0]+' '+GT_OBJ[(rng()*GT_OBJ.length)|0];
+  const coda=GT_CODA[(rng()*GT_CODA.length)|0];
+  const n1=GT_NOISE[(rng()*GT_NOISE.length)|0]+GT_NOISE[(rng()*GT_NOISE.length)|0];
+  let runes=''; const nr=3+(rng()*4|0);
+  for(let i=0;i<nr;i++)runes+=GT_RUNES[(rng()*GT_RUNES.length)|0];
+  const txt=n1+' '+gtCast(phrase,rng)+' '+n1.split('').reverse().join('')+'\n'
+    +gtCast(coda,rng)+'\n'
+    +card+'\n'
+    +'https://0xgreencross.github.io/PANDORA/'+'\n'
+    +runes+' #DITHERVOID';
+  return txt;
+}
+let XM_TXT='';
+function openXModal(){
+  if(!xBytes)return;
+  if(!xBlob){ xBlob=new Blob([xBytes],{type:'image/gif'}); xURL=URL.createObjectURL(xBlob); }
+  $('xm-img').src=xURL;
+  $('xm-size').textContent = xDim===W ? '· FULL 1080²' : '· '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
+  XM_TXT=glitchTweet(lastSeed>>>0, $('dna').value.trim());
+  $('xm-tweet').textContent=XM_TXT;
+  $('xmodal').style.display='flex';
+}
+$('xm-reroll').addEventListener('click',()=>{
+  XM_TXT=glitchTweet(lastSeed>>>0, $('dna').value.trim());
+  $('xm-tweet').textContent=XM_TXT;
+});
+$('xm-save').addEventListener('click',()=>saveX());
+$('xm-compose').addEventListener('click',()=>{
+  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(XM_TXT),'_blank','noopener');
+});
+$('xm-close').addEventListener('click',()=>{$('xmodal').style.display='none';});
+$('xmodal').addEventListener('click',ev=>{ if(ev.target===$('xmodal'))$('xmodal').style.display='none'; });
 async function saveX(){
   if(!xBytes)return;
   if(xDim===W && lastBlob){ return saveAsset(lastBlob,lastName,lastDataURL,lastURL); }  // X = master: reuse
@@ -3346,7 +3450,7 @@ document.querySelectorAll('.tab').forEach(t=>{
   });
 });
 $('download').addEventListener('click',saveLoop);
-$('xsave').addEventListener('click',saveX);
+$('xsave').addEventListener('click',openXModal);
 $('download').textContent = isDesktop ? '⤓ DOWNLOAD' : ((canShareFiles||isIOS) ? '⤓ PHOTOS' : '⤓ SAVE');
 $('sv-close').addEventListener('click',closeSaveView);
 $('saveview').addEventListener('click',e=>{ if(e.target===$('saveview'))closeSaveView(); });
