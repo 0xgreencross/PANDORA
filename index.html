@@ -400,7 +400,7 @@
         </div>
       </div>
       <div id="gardenlist"></div>
-      <p class="labnote">YOUR WALLET IS YOUR SHELF. EVERY SAVE IS SIGNED, PUBLIC, AND CURATED BY YOU ALONE. THE SHELF IS A DOORWAY: SOON, WHAT YOU SAVE HERE WILL LEARN TO MINT.</p>
+      <p class="labnote">YOUR WALLET IS YOUR SHELF. PLANT WITHOUT LIMIT: EVERY SAVE IS SIGNED, PUBLIC, AND CURATED BY YOU ALONE. WHAT GROWS HERE MINTS IN THE NEXT ERA. PLANT NOW, MINT LATER.</p>
       <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. The vault keeps them in this browser, surviving sessions and app upgrades.</p>
     </section>
   </main>
@@ -3631,7 +3631,7 @@ async function gSigned(action,card,thumb){
 async function gRefresh(){
   if(!SB.url)return;
   try{
-    const r=await fetch(SB.url+'/rest/v1/gardens?select=address,card,thumb,ts&order=ts.desc&limit=400',{headers:sbHeaders()});
+    const r=await fetch(SB.url+'/rest/v1/gardens?select=address,card,thumb,ts&order=ts.desc&limit=1000',{headers:sbHeaders()});
     const rows=await r.json();
     const byAddr={};
     for(const e of rows){ (byAddr[e.address]=byAddr[e.address]||[]).push(e); }
