@@ -218,7 +218,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.2 · HYDRA<br>DNA VAULT</div>
+    <div class="ver">REV 9.2b · HYDRA<br>SMOOTH PREVIEW</div>
   </header>
 
   <div class="colL">
@@ -2306,6 +2306,7 @@ const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36,
       tunnel:false,kaleido:false,bloom:false,embers:false,runes:false,chimera:false} };
 let busy=false, RUN=0, lastURL=null, lastBlob=null, lastName='', lastDataURL='';
 let xBytes=null, xDim=0, xName='', xBlob=null, xURL=null, xDataURL='';
+let prevURL=null;   // heavy masters preview via the 720² twin — decode budget, not file quality
 const TAU=6.283185307179586;
 const FPS=25, DELAY=4;                 // 25fps locked  (4 centiseconds = 40ms/frame)
 
@@ -2397,6 +2398,7 @@ async function generateSeq(){
     return {d, sink:sk, mcs:gifBegin(sk,d,d,pal,0), idx:new Uint8Array(d*d)};});
   if(xURL){URL.revokeObjectURL(xURL);xURL=null;}
   xBytes=null; xBlob=null; xDataURL=''; xDim=0;
+  if(prevURL){URL.revokeObjectURL(prevURL);prevURL=null;}
   $('xsave').setAttribute('disabled',''); $('xsave').classList.remove('ready');
   const indices=new Uint8Array(W*H);
 
@@ -2464,10 +2466,15 @@ async function generateSeq(){
 
   const LIMIT=14900000;  // 15MB platform cap, safe under both MB and MiB readings
   if(bytes.length<=LIMIT){ xBytes=bytes; xDim=W; }        // master fits: X ships FULL RES
+  let tw720=null;
   for(const xs of XS){
     const xb=gifEnd(xs.sink);
+    if(xs.d===720)tw720=xb;
     if(!xBytes && xb.length<=LIMIT){ xBytes=xb; xDim=xs.d; }
   }
+  const PREV_LIMIT=12000000;
+  if(bytes.length>PREV_LIMIT && tw720)
+    prevURL=URL.createObjectURL(new Blob([tw720],{type:'image/gif'}));
   const kb=(bytes.length/1024), dur=(N/FPS).toFixed(2);
   const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
   let xInfo='';
@@ -2477,12 +2484,12 @@ async function generateSeq(){
     $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
   }
   $('t-size').textContent=W+'² '+mainSz+xInfo+' · '+dur+'s';
-  $('osd').textContent='LOOP · '+mainSz;
+  $('osd').textContent='LOOP · '+mainSz+(prevURL?' · PVW 720²':'');
 
   // play the finished loop right in the monitor. data: URL (not blob:) so an iOS
   // long-press offers "Save to Photos"; blob is kept for share/download.
   lastDataURL=bytesToDataURL(bytes);
-  const img=$('result'); img.src=lastDataURL; img.style.display='block';
+  const img=$('result'); img.src=prevURL||lastDataURL; img.style.display='block';
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
   if(canShareFiles||isIOS){
@@ -2668,6 +2675,7 @@ async function generate(){
 
   if(xURL){URL.revokeObjectURL(xURL);xURL=null;}
   xBytes=null; xBlob=null; xDataURL=''; xDim=0;
+  if(prevURL){URL.revokeObjectURL(prevURL);prevURL=null;}
   $('xsave').setAttribute('disabled',''); $('xsave').classList.remove('ready');
 
   /* adaptive split: feedback channels force per-worker ring reconstruction
@@ -2750,6 +2758,9 @@ async function generate(){
   for(let s2=1;s2<4;s2++){
     if(!xBytes && streams[s2].length<=LIMIT){ xBytes=streams[s2]; xDim=DIMS[s2]; }
   }
+  const PREV_LIMIT=12000000;
+  if(bytes.length>PREV_LIMIT)
+    prevURL=URL.createObjectURL(new Blob([streams[1]],{type:'image/gif'}));
   const kb=(bytes.length/1024), dur=(N/FPS).toFixed(2);
   const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
   let xInfo='';
@@ -2759,10 +2770,10 @@ async function generate(){
     $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
   }
   $('t-size').textContent=W+'² '+mainSz+xInfo+' · '+dur+'s';
-  $('osd').textContent='LOOP · '+mainSz;
+  $('osd').textContent='LOOP · '+mainSz+(prevURL?' · PVW 720²':'');
 
   lastDataURL=bytesToDataURL(bytes);
-  const img=$('result'); img.src=lastDataURL; img.style.display='block';
+  const img=$('result'); img.src=prevURL||lastDataURL; img.style.display='block';
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
   if(canShareFiles||isIOS){ $('download').classList.add('ready'); }
