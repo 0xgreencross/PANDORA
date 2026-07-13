@@ -245,7 +245,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.9 · HYDRA<br>𝕏 TRANSMISSION MODAL</div>
+    <div class="ver">REV 10.0 · JANUS<br>TWO ERAS · ONE BOX</div>
   </header>
 
   <div class="colL">
@@ -293,6 +293,10 @@
       <div class="field">
         <label>CORRUPTION <span id="lab-corr"></span><span class="v" id="v-corr">62</span></label>
         <input type="range" id="corr" min="0" max="100" value="62">
+      </div>
+      <div class="field">
+        <label>ERA</label>
+        <div class="seg" id="epochseg"></div>
       </div>
       <div class="field">
         <label>FRAMES <span id="lab-dur"></span><span class="v" id="v-frames">36</span></label>
@@ -1201,7 +1205,8 @@ function analogPass(src,dst,scene,theta,corr,fx){
     const sh=Math.round(shift);
     // AGC wobble: seeded tempo/spatial frequency, horizontal or vertical, or off
     const bar = (V.agcOn&&!V.agcVert) ? 1+(V.agcAmp+corr*0.003)*Math.sin(theta*V.agcK+V.agcPh + y*V.agcF) : 1;
-    const rowMul = bar;   // scanlines slot reborn as ATTRCLASH in the index stage
+    const scan = (fx.scanlines&&scene.epoch===1) ? ((y&1)?0.82:1.0) : 1.0;   // classic row dim; signal era = ATTRCLASH
+    const rowMul = bar*scan;
     for(let x=0;x<W;x++){
       const o=(y*W+x)*3;
       // sample R / G / B with chroma offset + tracking shift
@@ -1215,7 +1220,12 @@ function analogPass(src,dst,scene,theta,corr,fx){
       let R=src[(yr*W+xr)*3];
       let G=src[(y*W+xg)*3+1];
       let B=src[(yb*W+xb)*3+2];
-      if(grainAmt){
+      if(grainAmt && scene.epoch===1){
+        // classic era: neutral hash grain, frame-correlated shimmer
+        let n=((x*374761393+y*668265263+seedRow*982451653)>>>0); n=(n^(n>>>13))>>>0;
+        const g=((n&255)/255-0.5)*grainAmt;
+        R+=g; G+=g; B+=g;
+      } else if(grainAmt){
         /* CRAWL — NTSC rainbow static + dot crawl (Max Capacity axis).
            Chroma-decorrelated noise (never grey grain) + a 2px checker that
            crawls along luma edges like a composite signal failing. */
@@ -1346,6 +1356,7 @@ function buildQuake(scene,theta,corr){
    RANSOM (mirror slot). All per-frame chaos is fkRng => loop-exact.
    ========================================================================== */
 function indexPass(ind,P,scene,theta,corr,fx){
+  if(scene.epoch===1)return;                      // the classic era predates index-space corruption
   const C=corr/100;
   if(fx.scanlines){
     /* ATTRCLASH — ZX Spectrum attribute clash: 8x8 cells forced to their two
@@ -1441,6 +1452,7 @@ function fkRng(scene,theta,salt){
    corr (0..100) drives intensity; C=corr/100.
    ========================================================================== */
 function fxWave(buf,snap,scene,theta,corr){
+  if(scene.epoch===1)return fxWave_classic(buf,snap,scene,theta,corr);
   /* SHRED — torn-band displacement. Smooth sync ripple is dead: bands get
      per-frame re-rolled integer offsets (hard tears, not waves), some bands
      duplicate their neighbor (smear ghost). No two frames tear alike. */
@@ -1543,6 +1555,7 @@ function fxCrush(buf,scene,theta,corr){                // 9. bit-crush / posteri
   for(let i=0;i<buf.length;i++){ let v=Math.round(buf[i]/step)*step; buf[i]=v>255?255:v; }
 }
 function fxDropout(buf,scene,theta,corr){
+  if(scene.epoch===1)return fxDropout_classic(buf,scene,theta,corr);
   /* TAPROT — tape dropout the way tape actually dies (Ina Vare / Max Capacity
      axis): streaks of sparkling noise smeared with the content they're eating,
      plus a head-switch tear strip at the frame's foot. Never a flat slab. */
@@ -1578,12 +1591,107 @@ function fxDropout(buf,scene,theta,corr){
     }
   }
 }
+
+/* ===== CLASSIC EPOCH BODIES — resurrected verbatim from 6c0e0add ===== */
+function fxWave_classic(buf,snap,scene,theta,corr){            // 1. sync ripple — seeded orientation/waveform
+  const C=corr/100; snap.set(buf); const ws=scene.extra.waves;
+  // horizontal-shifting waves (per row)
+  let anyH=false, anyV=false;
+  for(const w of ws){ if(w.vert)anyV=true; else anyH=true; }
+  if(anyH){
+    for(let y=0;y<H;y++){
+      let s=0;
+      for(let i=0;i<ws.length;i++){const w=ws[i]; if(w.vert)continue;
+        s+=shp(Math.sin(y*w.freq*w.harm+theta*w.k+w.ph),w.shape)*w.amp;}
+      let sh=Math.round(s*(0.3+C*1.8)); if(!sh)continue;
+      const row=y*W;
+      for(let x=0;x<W;x++){ let sx=(x-sh)%W; if(sx<0)sx+=W; const so=(row+sx)*3,o=(row+x)*3;
+        buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; }
+    }
+  }
+  if(anyV){                                            // vertical-shifting waves (per column)
+    snap.set(buf);
+    const colSh=fxWave._cs||(fxWave._cs=new Int16Array(W));
+    for(let x=0;x<W;x++){
+      let s=0;
+      for(let i=0;i<ws.length;i++){const w=ws[i]; if(!w.vert)continue;
+        s+=shp(Math.sin(x*w.freq*w.harm+theta*w.k+w.ph),w.shape)*w.amp;}
+      colSh[x]=Math.round(s*(0.3+C*1.8));
+    }
+    for(let y=0;y<H;y++){const row=y*W;
+      for(let x=0;x<W;x++){const sh=colSh[x]; if(!sh)continue;
+        let sy=(y-sh)%H; if(sy<0)sy+=H;
+        const so=(sy*W+x)*3, o=(row+x)*3;
+        buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; }
+    }
+  }
+}
+function fxDropout_classic(buf,scene,theta,corr){              // 10. signal-loss blocks
+  const C=corr/100; const D=scene.extra.dropouts; const gate=0.62-C*0.5;
+  for(let i=0;i<D.length;i++){const d=D[i]; if(Math.sin(theta*d.k+d.ph)<gate)continue;
+    const val=d.white?255:0; const w=Math.min(d.w,W-d.x),h=Math.min(d.h,H-d.y);
+    for(let yy=0;yy<h;yy++){const row=(d.y+yy)*W;
+      for(let x=0;x<w;x++){const o=(row+d.x+x)*3; buf[o]=val;buf[o+1]=val;buf[o+2]=val;} }
+  }
+}
+function fxGhost_classic(buf,snap,scene,theta,corr){           // 5. spatial double-image
+  const C=corr/100; snap.set(buf); const g=scene.extra.ghost;
+  const dx=Math.round(g.dx*Math.sin(theta*g.k+g.ph)*g.amp*(0.5+C*2.2));
+  const dy=Math.round(g.dy*Math.cos(theta*g.k+g.ph)*g.amp*(0.5+C*2.2));
+  const a=0.35+C*0.45;
+  for(let y=0;y<H;y++){ const sy=y-dy; if(sy<0||sy>=H)continue;
+    for(let x=0;x<W;x++){ const sx=x-dx; if(sx<0||sx>=W)continue;
+      const so=(sy*W+sx)*3,o=(y*W+x)*3;
+      const r=snap[so]*a;   if(r>buf[o])buf[o]=r;
+      const gg=snap[so+1]*a;if(gg>buf[o+1])buf[o+1]=gg;
+      const bb=snap[so+2]*a;if(bb>buf[o+2])buf[o+2]=bb; }
+  }
+}
+function fxInvert_classic(buf,scene,theta,corr){               // 8. moving negative / channel-rot bands
+  const C=corr/100; const IB=scene.extra.invBands; const gate=0.3-C*0.28;
+  for(let i=0;i<IB.length;i++){const b=IB[i]; const env=Math.sin(theta*b.k+b.ph); if(env<gate)continue;
+    const yoff=Math.round(Math.sin(theta*b.k+b.ph)*(10+C*70));
+    for(let yy=0;yy<b.h;yy++){ const ay=((b.y+yoff+yy)%H+H)%H; const row=ay*W;
+      for(let x=0;x<W;x++){const o=(row+x)*3;
+        if(b.mode===0){buf[o]=255-buf[o];buf[o+1]=255-buf[o+1];buf[o+2]=255-buf[o+2];}
+        else if(b.mode===1){const t=buf[o];buf[o]=buf[o+1];buf[o+1]=buf[o+2];buf[o+2]=t;}
+        else{buf[o]=255-buf[o];buf[o+2]=255-buf[o+2];} }
+    }
+  }
+}
+function fxCrush_classic(buf,scene,theta,corr){                // 9. bit-crush / posterize pulse
+  const C=corr/100; const cr=scene.extra.crush;
+  const env=0.5+0.5*Math.sin(theta*cr.k+cr.ph);
+  const levels=Math.max(2, Math.round(16-(C*env)*13));
+  const step=255/(levels-1);
+  for(let i=0;i<buf.length;i++){ let v=Math.round(buf[i]/step)*step; buf[i]=v>255?255:v; }
+}
+function combineMirror_classic(a,c,scene,theta){
+  const m=scene.extra2.mirror;
+  if(!m.sinX){ m.sinX=new Float32Array(W); m.cosX=new Float32Array(W);
+    for(let x=0;x<W;x++){m.sinX[x]=Math.sin(x*m.fx);m.cosX[x]=Math.cos(x*m.fx);} }
+  for(let y=0;y<H;y++){
+    const B=y*m.fy+theta*m.k+m.ph, sB=Math.sin(B), cB=Math.cos(B);
+    const row=y*W*3;
+    for(let x=0;x<W;x++){
+      const t=0.5+0.5*(m.sinX[x]*cB+m.cosX[x]*sB);
+      const o=row+x*3;
+      a[o]  +=(c[o]  -a[o]  )*t;
+      a[o+1]+=(c[o+1]-a[o+1])*t;
+      a[o+2]+=(c[o+2]-a[o+2])*t;
+    }
+  }
+}
+
+/* 3. MOTION FLAY — the render is replaced by its own time-derivative: the
+   difference between now and 1/8th of a loop from now, amplified. Stillness
+   goes black; only change survives as electric edges. */
 const HEAVY_FX={
   wave:(b,s,sc,t,c)=>fxWave(b,s,sc,t,c),   slice:(b,s,sc,t,c)=>fxSlice(b,s,sc,t,c),
   vroll:(b,s,sc,t,c)=>fxVroll(b,s,sc,t,c), mosh:(b,s,sc,t,c)=>fxMosh(b,s,sc,t,c),
-  ghost:()=>{}, melt:(b,s,sc,t,c)=>fxMelt(b,sc,t,c),        // ghost reborn as IXTEAR (index stage)
-  bleed:(b,s,sc,t,c)=>fxBleed(b,sc,t,c),   invert:()=>{},   // invert reborn as XSLAM (index stage)
-  crush:()=>{},                            dropout:(b,s,sc,t,c)=>fxDropout(b,sc,t,c) // crush reborn as DQUAKE (quantizer stage)
+  ghost:(b,s,sc,t,c)=>{if(sc.epoch===1)fxGhost_classic(b,s,sc,t,c);}, melt:(b,s,sc,t,c)=>fxMelt(b,sc,t,c),   // signal era: IXTEAR (index stage)
+  bleed:(b,s,sc,t,c)=>fxBleed(b,sc,t,c),   invert:(b,s,sc,t,c)=>{if(sc.epoch===1)fxInvert_classic(b,sc,t,c);},   // signal era: XSLAM
+  crush:(b,s,sc,t,c)=>{if(sc.epoch===1)fxCrush_classic(b,sc,t,c);},   dropout:(b,s,sc,t,c)=>fxDropout(b,sc,t,c) // signal era: DQUAKE
 };
 function heavyCorruption(buf,snap,scene,theta,corr,fx){
   const g=scene.vibe.g, cc=ch=>Math.min(150,corr*g[ch]);
@@ -2350,6 +2458,7 @@ const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36,
       chrono:false,mirror:false,flay:false,autoph:false,weave:false,entropy:false,meta:false,tect:false,
       panes:false,hilb:false,splice:false,moire:false,braid:false,lungs:false,
       tunnel:false,kaleido:false,bloom:false,embers:false,runes:false,chimera:false} };
+let EPOCH=0;   // 0 = DEATH SIGNAL era · 1 = CLASSIC era (pre index-space corruption)
 let busy=false, RUN=0, lastURL=null, lastBlob=null, lastName='', lastDataURL='';
 let xBytes=null, xDim=0, xName='', xBlob=null, xURL=null, xDataURL='';
 /* CANVAS LOOP PLAYER — the monitor no longer relies on the browser's GIF
@@ -2433,6 +2542,7 @@ async function generateSeq(){
   const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
   const scene=buildScene(seed, state.mode);
+  scene.epoch=EPOCH;
   applyOverrides(scene, seed);
   reflectTune(scene);
   const {grad,pal,near}=buildPalette(scheme, scene.vibe);
@@ -2529,7 +2639,7 @@ async function generateSeq(){
       }
     }
     quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
-             fx.crush?buildQuake(scene,theta,corr):null);
+             (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
     indexPass(indices, pal.length, scene, theta, corr, fx);
 
     // live preview from quantized indices
@@ -2642,6 +2752,7 @@ self.onmessage=function(e){
   const J=e.data;
   try{
     const scene=buildScene(J.seed,J.mode);
+    scene.epoch=J.epoch|0;
     applyOverridesPure(scene,J.seed,J.ov);
     const {grad,pal,near}=buildPalette(J.scheme,scene.vibe);
     const N=J.N, corr=J.corr, fx=J.fx, DELAY=J.DELAY;
@@ -2708,7 +2819,7 @@ self.onmessage=function(e){
       valhallaPixel(rgbB,snap,scene,theta,corr,fx);
       demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
       quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
-               fx.crush?buildQuake(scene,theta,corr):null);
+               (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
       indexPass(indices,pal.length,scene,theta,corr,fx);
       const chunks=[];
       { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,DELAY,MCS[0]); chunks.push(cs.done().slice()); }
@@ -2765,6 +2876,7 @@ async function generate(){
   const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
   const scene=buildScene(seed, state.mode);
+  scene.epoch=EPOCH;
   applyOverrides(scene, seed);
   reflectTune(scene);
   const {pal}=buildPalette(scheme, scene.vibe);
@@ -2796,7 +2908,7 @@ async function generate(){
   const pimg=pctx.createImageData(540,540);
 
   const jobOf=w=>({seed, mode:state.mode, scheme:{stops:scheme.stops,glitch:scheme.glitch},
-    corr, N, fx, ov:{...OV}, DELAY,
+    corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
   await new Promise(resolve=>{
@@ -3079,7 +3191,7 @@ function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
   const si=CARD_SCHEMES.indexOf(schemeKey), mi=MODES.indexOf(modeKey);
   const mo=Math.max(0,CARD_MOTION.indexOf(motion||'AUTO'));
   if(si<0||mi<0)return '';
-  const v4=ovActive();
+  const v4=ovActive()||EPOCH===1;
   let v=0n;
   const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
   push(v4?4:2,4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
@@ -3089,7 +3201,8 @@ function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
     push(OV.maskType,5); push(OV.maskStyle,5);
     push(OV.cx,5); push(OV.cy,5); push(OV.size,5);
     push(OV.n,6); push(OV.form,5);
-    nBytes=17; pad=2n;
+    push(EPOCH?1:0,1);                     // epoch bit lives in what was padding
+    nBytes=17; pad=1n;
   }
   v<<=pad;
   const bytes=[];
@@ -3133,14 +3246,18 @@ function unpackCard(str){
     if(ov.maskType>5||(ov.n!==0&&(ov.n<2||ov.n>5))||ov.form>3)return null;
     if(ov.form===3)ov.form=31;                          // old MIX -> new MIX
   }
+  let epoch=0;
   if(ver===4){
     ov={maskType:pull(5),maskStyle:pull(5),cx:pull(5),cy:pull(5),size:pull(5),n:pull(6),form:pull(5)};
     if(ov.maskType>31||ov.maskStyle>19||(ov.n!==0&&(ov.n<2||ov.n>50))||ov.form>31)return null;
+    epoch=pull(1);                         // legacy v4 cards carry 0 here by construction
   }
-  return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov};
+  return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov, epoch};
 }
 function applyCard(c){
   clearOV();
+  EPOCH=c.epoch||0;
+  setSeg('epochseg','_epoch',String(EPOCH));
   if(c.ov){
     OV.maskType=c.ov.maskType; OV.maskStyle=c.ov.maskStyle;
     OV.cx=c.ov.cx; OV.cy=c.ov.cy; OV.size=c.ov.size;
@@ -3230,6 +3347,14 @@ const STYLE_NAMES=['DIMOUT','INVIN','BLKOUT','INVOUT','DIMIN','PSTIN','PSTOUT','
 const FORM_NAMES=['DISC','RING','SQUAR','FRAME','DIAM','DRING','HBAR','VBAR','CROSS','X',
   'TRI','TRIDN','DOT','HALO','LENSH','LENSV','CRESC','PILLH','PILLV','CHKR',
   'SCAN','TARGT','STAR4','SPOKE','HOLSQ','CORN4','MOON','COMET','PULSR','GLTCH'];
+buildSeg($('epochseg'),[{v:'0',label:'SIGNAL'},{v:'1',label:'CLASSIC'}],'_epoch');
+setSeg('epochseg','_epoch','0');
+$('epochseg').addEventListener('click',()=>{
+  const e=+state._epoch||0;
+  if(e===EPOCH)return;
+  EPOCH=e;
+  if(lastBlob||busy) generate();          // flick the switch: same loop, other era
+});
 buildSeg($('ovmask'),[{v:'0',label:'AUTO'},{v:'1',label:'OFF'},
   ...MASK_NAMES.map((n,i)=>({v:String(i+2),label:n}))],'_ovmask');
 buildSeg($('ovstyle'),STYLE_NAMES.map((n,i)=>({v:String(i),label:n})),'_ovstyle');
