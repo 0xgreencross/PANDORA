@@ -258,7 +258,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 10.2b · JANUS<br>PALETTE THEORY</div>
+    <div class="ver">REV 10.3 · JANUS<br>TOTAL KNOWLEDGE</div>
   </header>
 
   <div class="colL">
@@ -3706,6 +3706,10 @@ const TIP_ID={
   'xm-save':'SAVE GIF — saves the X-safe loop shown above.',
   'xm-compose':'COMPOSE — opens X with a one-of-a-kind glitch-tongue transmission. Attach the saved GIF by hand; X allows no other way.',
   'xm-reroll':'\u27f3 — mints a fresh transmission. No two ever match.',
+  ovsize:'SIZE — the mask’s scale, from a pinpoint stamp to a field-swallowing figure.',
+  ovx:'POS X — the mask’s horizontal anchor. Center is home; edges make the composition lean.',
+  ovy:'POS Y — the mask’s vertical anchor.',
+  ovn:'BODIES — population of orbiting forms, 2 to 50. Zero hands the count back to the seed (AUTO). Their shape is the FORM dial below.',
   infobtn:'INFO MODE — you found it. Tap again to leave.',
 };
 const TIP_PAL={
@@ -3735,6 +3739,83 @@ const TIP_PAL={
   DOE:'DOE — slate bed under a loose triad: fuchsia 310°, azure 204°, emerald 156°. Cool-leaning three-way balance; elegant, almost polite, for DITHERVOID.',
   TNUKE:'TISNUKE — imported from TIME IS SCAM: indigo 253° versus a red→orange→gold heat ramp (9–53°). Complementary temperature split: one cold objector against an advancing fire.',
 };
+const TIP_SIG={
+  chroma:'CHROMA \u2014 RGB channel separation: the color planes slide apart like a mistimed broadcast. The foundation sigil; almost everything looks better bleeding.',
+  tracking:'TRACKING \u2014 VHS head misalignment: rows shear sideways in bands, the tape refusing to seat. Analog pass.',
+  pixelsort:'PIXELSORT \u2014 runs of pixels reordered by brightness: waterfalls of sorted light. Digital pass; the classic net-art wound.',
+  grain:'GRAIN \u2014 two lives: SIGNAL era = CRAWL, chroma-decorrelated rainbow static with CRT dot-crawl at edges. CLASSIC era = neutral hash grain, the old film shimmer.',
+  blocks:'BLOCKS \u2014 macroblock displacement: JPEG-style cells torn from home and re-seated wrong. Compression grief.',
+  scanlines:'SCANLINES \u2014 two lives: SIGNAL era = CLASH, ZX Spectrum 8\u00d78 attribute-clash cells locking to two dominant colors. CLASSIC era = plain row dimming, the honest CRT.',
+  echo:'ECHO \u2014 temporal ghosting: previous frames refuse burial and shadow the present. Feedback memory.',
+  wave:'WAVE \u2014 two lives: SIGNAL era = SHRED, torn horizontal strips re-rolled fresh every frame. CLASSIC era = smooth sine ripple, the reference-era water.',
+  slice:'SLICE \u2014 clean horizontal displacement cuts: whole bands beheaded and offset. Sharper, colder cousin of tracking.',
+  vroll:'VROLL \u2014 vertical hold failure: the whole picture rolls upward like a dying television.',
+  mosh:'MOSH \u2014 datamosh drift: motion vectors applied to the wrong frame, the image smearing along phantom movement.',
+  ghost:'GHOST \u2014 two lives: SIGNAL era = IXTEAR, palette-lookup tear bands in index space. CLASSIC era = translucent double-exposure offset.',
+  melt:'MELT \u2014 pixels sag downward under heat, columns slumping at different rates. The Dal\u00ed channel.',
+  bleed:'BLEED \u2014 color leaks past its borders like wet ink on cheap paper. Chroma spill in the analog pass.',
+  invert:'INVERT \u2014 two lives: SIGNAL era = XSLAM, seeded one-frame full-palette reversals with a canvas jolt. CLASSIC era = negative bands.',
+  crush:'CRUSH \u2014 two lives: SIGNAL era = DQUAKE, a seismic epicenter warping the dither matrix itself, per-frame bit-rotated Bayer. CLASSIC era = bit-depth posterize.',
+  dropout:'DROPOUT \u2014 two lives: SIGNAL era = TAPROT, textured tape-rot streaks with a head-switch bar. CLASSIC era = dead signal blocks.',
+  chrono:'CHRONO \u2014 time quantization: the loop stutters between held frames, motion arriving in steps. Stop-motion disease.',
+  mirror:'MIRROR \u2014 two lives: SIGNAL era = RANSOM, stamped rectangles of index violence: negatives, half-spectrum slams, LUT scrambles. CLASSIC era = temporal mirror fold.',
+  flay:'FLAY \u2014 the surface peels in strips, revealing the layer beneath at an offset. Skinning pass.',
+  autoph:'AUTOPH \u2014 autophagy: the image samples and eats regions of itself, recursive self-consumption.',
+  weave:'WEAVE \u2014 interlaced warp/weft displacement: alternating rows pulled opposite directions like fabric under tension.',
+  entropy:'ENTROPY \u2014 progressive order decay: structure dissolves toward noise as the loop breathes. Thermodynamics as aesthetics.',
+  meta:'META \u2014 the engine corrupts its own parameters mid-frame: the corruption corrupting the corruptor.',
+  tect:'TECT \u2014 tectonics in the quantizer: dither plates with faultlines, the ordered matrix fractured into shifted continents.',
+  panes:'PANES \u2014 the image shatters into glass panes, each refracting its own copy at a different offset.',
+  hilb:'HILB \u2014 displacement along a Hilbert space-filling curve: corruption that walks a mathematical path through every pixel exactly once.',
+  splice:'SPLICE \u2014 tape splices: the loop cut and rejoined with frames from elsewhere in itself. Editing-room violence.',
+  moire:'MOIRE \u2014 two near-identical frequencies overlaid until interference patterns bloom. The screen photographing itself.',
+  braid:'BRAID \u2014 three displacement strands interleaved, crossing over each other in a moving plait.',
+  lungs:'LUNGS \u2014 the image breathes: rhythmic radial expansion and contraction synced to the loop. Respiration for machines.',
+  tunnel:'TUNNEL \u2014 recursive zoom feedback: the frame falling into itself forever. Video-feedback vertigo.',
+  kaleido:'KALEIDO \u2014 mirrored wedge symmetry: the corruption folded into rotational mandala order.',
+  bloom:'BLOOM \u2014 bright regions overflow their borders in phosphor glow, light behaving like liquid.',
+  embers:'EMBERS \u2014 hot particles rise from the brightest zones and cool as they climb. The image on fire, politely.',
+  runes:'RUNES \u2014 glyph strata: bands of corrupted symbols cut into the signal, language that never existed.',
+  chimera:'CHIMERA \u2014 the seed renders a second, alien scene and grafts regions of it into this one. Two universes sharing one body.',
+};
+const TIP_MASK={
+  CIRC:'circle',DIAM:'diamond',BARH:'horizontal bar',RING:'annulus',BARV:'vertical bar',SQUAR:'square',
+  FRAME:'hollow square frame',CROSS:'plus cross',XCRSS:'diagonal X',TRI:'upward triangle',TRIDN:'downward triangle',
+  HEX:'hexagon',LENS:'vesica lens',CRESC:'crescent',PILL:'capsule',DIAG1:'rising diagonal band',DIAG2:'falling diagonal band',
+  CORNR:'four corner wedges',DOTS9:'3\u00d73 dot grid',VBARS:'vertical bar array',HBARS:'horizontal bar array',
+  FOIL3:'three-lobed trefoil',FOIL4:'four-lobed quatrefoil',STAR5:'five-point star',FLWR6:'six-petal flower',
+  GEAR8:'eight-tooth gear',STR12:'twelve-ray star',BLOB:'seeded organic blob',SUN16:'sixteen-ray sun',EYE:'eye with pupil',
+};
+const TIP_STYLE={
+  DIMOUT:'DIMOUT \u2014 outside the mask dims to shadow; the shape holds the only light.',
+  INVIN:'INVIN \u2014 palette inverts inside the shape; the mask is a negative window.',
+  BLKOUT:'BLKOUT \u2014 outside is executed to pure black; the shape floats in void.',
+  INVOUT:'INVOUT \u2014 the world inverts, the shape stays true.',
+  DIMIN:'DIMIN \u2014 the shape itself dims: a shadow figure on a live field.',
+  PSTIN:'PSTIN \u2014 heavy posterize inside: the shape drops to brutal few-color steps.',
+  PSTOUT:'PSTOUT \u2014 the world posterizes, the shape keeps full depth.',
+  CHRIN:'CHRIN \u2014 chroma channels split inside the shape only.',
+  CHROUT:'CHROUT \u2014 chroma splits everywhere except the shape: an island of registration.',
+  EDGE:'EDGE \u2014 only the mask\u2019s contour band is affected: the shape as pure outline event.',
+  GHSIN:'GHSIN \u2014 ghost double-exposure inside the shape.',
+  GHSOUT:'GHSOUT \u2014 the world ghosts, the shape stays solid.',
+  NEGBND:'NEGBND \u2014 a negative band tracks the mask contour: an inverted halo.',
+  GLWBND:'GLWBND \u2014 a glowing band rides the contour: neon rim-light.',
+  MOSIN:'MOSIN \u2014 mosaic pixelation inside: the shape as censored region.',
+  MOSOUT:'MOSOUT \u2014 the world pixelates, the shape stays sharp: reverse censorship.',
+  SCNIN:'SCNIN \u2014 scanline rows only inside the shape.',
+  SCNOUT:'SCNOUT \u2014 scanlines everywhere but the shape.',
+  SWAP:'SWAP \u2014 inside and outside exchange their palettes across the boundary.',
+  VOIDIN:'VOIDIN \u2014 the shape is deleted to void black: a hole cut in the signal.',
+};
+const TIP_FORM={
+  DISC:'solid disc',RING:'ring',SQUAR:'solid square',FRAME:'square frame',DIAM:'diamond',DRING:'double ring',
+  HBAR:'horizontal slab',VBAR:'vertical slab',CROSS:'cross',X:'diagonal X',TRI:'triangle',TRIDN:'inverted triangle',
+  DOT:'small dot',HALO:'soft halo',LENSH:'horizontal lens',LENSV:'vertical lens',CRESC:'crescent',
+  PILLH:'horizontal capsule',PILLV:'vertical capsule',CHKR:'checkered tile',SCAN:'scan slit',TARGT:'target rings',
+  STAR4:'four-point star',SPOKE:'spoked wheel',HOLSQ:'hollow square dot',CORN4:'corner brackets',MOON:'eclipse moon',
+  COMET:'comet with tail',PULSR:'pulsing core',GLTCH:'glitch shard',MIX:'MIX \u2014 every body rolls its own form from the whole set.',
+};
 const TIP_SEG={
   AUTO:'AUTO — the seed decides this dial for itself.',
   OFF:'OFF — disables this layer entirely.',
@@ -3745,21 +3826,33 @@ const TIP_SEG={
   CLASSIC:'CLASSIC ERA — the pre-glitch physics, resurrected byte-exactly from the old engine.',
 };
 const TIP_MODE={
-  PLASMA:'PLASMA — folded interference fields.',RINGS:'RINGS — concentric wave collapse.',
-  GLYPHS:'GLYPHS — a grid of corrupted symbols.',SCANS:'SCANS — horizontal oscilloscope sweep.',
-  LATTICE:'LATTICE — woven grid interference.',ORBIT:'ORBIT — bodies circling a gravity well.',
-  STRATA:'STRATA — sediment layers of signal.',TENDRIL:'TENDRIL — organic reaching filaments.',
+  PLASMA:'PLASMA — folded sine interference fields: the classic demoscene plasma, layered and phase-shifted. Dense, full-frame, loves every sigil.',
+  RINGS:'RINGS — concentric waves collapsing toward (or escaping) a center. Radial symmetry that masks and quakes break beautifully.',
+  GLYPHS:'GLYPHS — a grid of procedural symbols, a language the seed invents and immediately corrupts. Strong with CLASH and RUNES.',
+  SCANS:'SCANS — horizontal oscilloscope sweep: stacked waveforms scrolling as signal. The reference-era body; try it in CLASSIC.',
+  LATTICE:'LATTICE — woven grid interference: warp and weft frequencies crossing. Structural; QUAKE and MOIRE feast here.',
+  ORBIT:'ORBIT — luminous bodies circling a gravity well, trailing light. The TUNE tab’s BODIES dial commands their population and form.',
+  STRATA:'STRATA — sedimentary bands of signal laid down like rock layers, each stratum drifting at its own rate.',
+  ORBITALS:'ORBITALS — luminous bodies circling a gravity well, trailing light. The TUNE tab’s BODIES dial commands their population and form.',
+  TENDRILS:'TENDRILS — organic filaments reaching and branching from seed points. The most biological source in the box.',
+  TENDRL:'TENDRILS — organic filaments reaching and branching from seed points. The most biological source in the box.',
+  TENDRIL:'TENDRIL — organic filaments reaching and branching from seed points. The most biological source in the box.',
 };
 function tipFor(el){
   if(!el)return null;
   if(el.id&&TIP_ID[el.id])return TIP_ID[el.id];
   if(el.title)return el.title;
+  const tg=el.closest&&el.closest('.tg');
+  if(tg&&tg.dataset&&tg.dataset.fx&&TIP_SIG[tg.dataset.fx])return TIP_SIG[tg.dataset.fx];
   const seg=el.closest&&el.closest('.seg');
   if(seg&&el.tagName==='BUTTON'){
     const t=el.textContent.trim();
     if(TIP_PAL[t])return TIP_PAL[t];
     if(TIP_SEG[t])return TIP_SEG[t];
     if(TIP_MODE[t])return TIP_MODE[t];
+    if(seg.id==='ovmask'&&TIP_MASK[t])return 'MASK '+t+' — the seed’s field carved by a '+TIP_MASK[t]+'. STYLE below decides what happens inside versus outside it.';
+    if(seg.id==='ovstyle'&&TIP_STYLE[t])return TIP_STYLE[t];
+    if(seg.id==='ovform'&&TIP_FORM[t])return TIP_FORM[t].length>30?TIP_FORM[t]:'FORM '+t+' — each orbiting body drawn as a '+TIP_FORM[t]+'.';
     if(seg.id==='epochseg')return TIP_ID.epochseg;
     return t+' — one voice of this dial. The lit chip is the active one.';
   }
@@ -3774,9 +3867,9 @@ $('infobtn').addEventListener('click',()=>{
 });
 document.addEventListener('click',ev=>{
   if(!INFOMODE)return;
-  const el=ev.target.closest('button,input,.seg,.tab,.tgl,img');
+  const el=ev.target.closest('button,input,.seg,.tab,.tg,img');
   if(!el||el.id==='infobtn')return;
-  const t=tipFor(el)|| (el.classList&&el.classList.contains('tgl') ? el.textContent.trim()+' — a sigil: one corruption channel. Lit = armed. Long-press stories live in the grid.' : null);
+  const t=tipFor(el);
   if(t){ ev.preventDefault(); ev.stopPropagation(); $('tipbar').innerHTML='<b>'+(el.id||el.textContent.trim().slice(0,18)||'CONTROL')+'</b> — '+t.replace(/^[^—]*—\s*/,''); }
 },true);
 /* title attributes for desktop hover */
@@ -3784,6 +3877,7 @@ document.addEventListener('click',ev=>{
   for(const id in TIP_ID){ const el=$(id); if(el)el.title=TIP_ID[id]; }
   document.querySelectorAll('.seg button').forEach(b=>{ if(!b.title)b.title=tipFor(b)||''; });
   document.querySelectorAll('input[type=range]').forEach(r=>{ if(!r.title&&r.id&&TIP_ID[r.id])r.title=TIP_ID[r.id]; });
+  document.querySelectorAll('.tg').forEach(g=>{ if(g.dataset.fx&&TIP_SIG[g.dataset.fx])g.title=TIP_SIG[g.dataset.fx]; });
 })();
 
 $('dice').addEventListener('click',randSeed);
