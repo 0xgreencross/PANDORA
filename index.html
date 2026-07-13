@@ -227,7 +227,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.8 · HYDRA<br>FULL-BORE MULTICORE</div>
+    <div class="ver">REV 9.8b · HYDRA<br>THUMB BUDGET FIX</div>
   </header>
 
   <div class="colL">
@@ -3231,10 +3231,17 @@ function vMerge(a,b){
 }
 
 function vThumb(){
+  /* DITHERVOID thumbs are pure entropy — JPEG hates noise. Adapt until the
+     result fits the vault's row budget; a card must never fail over garnish. */
   try{
-    const cv=document.createElement('canvas'); cv.width=108; cv.height=108;
-    cv.getContext('2d').drawImage($('view'),0,0,108,108);
-    return cv.toDataURL('image/jpeg',0.62);
+    const BUDGET=8500;
+    for(const [dim,q] of [[108,0.62],[108,0.45],[84,0.45],[72,0.35],[56,0.3]]){
+      const cv=document.createElement('canvas'); cv.width=dim; cv.height=dim;
+      cv.getContext('2d').drawImage($('view'),0,0,dim,dim);
+      const u=cv.toDataURL('image/jpeg',q);
+      if(u.length<=BUDGET)return u;
+    }
+    return '';                                        // card ships thumbless before it fails
   }catch(e){ return ''; }
 }
 async function vCloudRefresh(){
