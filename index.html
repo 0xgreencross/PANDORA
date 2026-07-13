@@ -141,6 +141,10 @@
     font-size:9px;color:var(--mut);background:rgba(5,5,10,.75);border:none;border-radius:3px;
     cursor:pointer;padding:0;}
   .ve .vx:active{color:var(--mag);}
+  #gardenlist{display:flex;flex-direction:column;gap:8px;}
+  .gsec{display:flex;flex-direction:column;gap:5px;}
+  .gsec .gname{font-family:var(--fD);font-weight:700;font-size:8px;color:var(--cyan);letter-spacing:0;}
+  .gsec .grow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
   .vempty{font-family:var(--fD);font-size:8px;color:var(--mut);padding:6px 2px;}
   .labnote{font-size:8px;line-height:1.9;color:var(--faint);letter-spacing:0;}
   .dice{appearance:none;background:var(--panel);border:1px solid var(--line2);color:var(--txt);
@@ -245,7 +249,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 10.0 · JANUS<br>TWO ERAS · ONE BOX</div>
+    <div class="ver">REV 10.1 · JANUS<br>WALLET GARDENS</div>
   </header>
 
   <div class="colL">
@@ -388,6 +392,14 @@
         <input type="file" id="vfile" accept="application/json,.json" style="display:none">
       </div>
       <div id="vaultlist"></div>
+      <div class="field">
+        <label>GARDENS <span class="v" id="gaddr"></span></label>
+        <div class="duo">
+          <button id="gconnect" class="vio">◈ CONNECT WALLET</button>
+          <button id="gplant" class="vio" disabled>⚘ PLANT CURRENT</button>
+        </div>
+      </div>
+      <div id="gardenlist"></div>
       <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. The vault keeps them in this browser, surviving sessions and app upgrades.</p>
     </section>
   </main>
@@ -3559,7 +3571,77 @@ $('vfile').addEventListener('change',ev=>{
   };
   rd.readAsText(f);
 });
-if(SB.url)vCloudRefresh(); else vRender();
+/* ============================================================================
+   GARDENS — per-wallet curated sections. Reads are public rows; writes are
+   stateless signed actions: the wallet signs a canonical message, an edge
+   function verifies the signature server-side and performs the write with
+   privileged keys. No sessions, no tokens in the page, nothing to steal.
+   ========================================================================== */
+let GADDR='';
+const GFN=SB.url? SB.url.replace('.supabase.co','.functions.supabase.co')+'/garden-write' : '';
+async function gConnect(){
+  if(!window.ethereum){ $('osd').textContent='NO WALLET FOUND'; return; }
+  try{
+    const acc=await window.ethereum.request({method:'eth_requestAccounts'});
+    GADDR=(acc&&acc[0]||'').toLowerCase();
+    if(GADDR){
+      $('gaddr').textContent=GADDR.slice(0,6)+'…'+GADDR.slice(-4);
+      $('gconnect').textContent='◈ '+GADDR.slice(0,6)+'…'+GADDR.slice(-4);
+      $('gplant').removeAttribute('disabled');
+    }
+  }catch(e){ $('osd').textContent='WALLET REFUSED'; }
+}
+async function gSigned(action,card,thumb){
+  const ts=Date.now();
+  const msg='PANDORA GARDEN\n'+action.toUpperCase()+' '+card+'\nby '+GADDR+'\nat '+ts;
+  const signature=await window.ethereum.request({method:'personal_sign',params:[msg,GADDR]});
+  const r=await fetch(GFN,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action,address:GADDR,card,thumb,ts,signature})});
+  const d=await r.json();
+  if(!d.ok)throw new Error(d.err||'denied');
+  return d;
+}
+async function gRefresh(){
+  if(!SB.url)return;
+  try{
+    const r=await fetch(SB.url+'/rest/v1/gardens?select=address,card,thumb,ts&order=ts.desc&limit=400',{headers:sbHeaders()});
+    const rows=await r.json();
+    const byAddr={};
+    for(const e of rows){ (byAddr[e.address]=byAddr[e.address]||[]).push(e); }
+    const host=$('gardenlist'); host.innerHTML='';
+    for(const addr of Object.keys(byAddr)){
+      const sec=document.createElement('div'); sec.className='gsec';
+      const nm=document.createElement('div'); nm.className='gname';
+      nm.textContent='⚘ '+addr.slice(0,6)+'…'+addr.slice(-4)+(addr===GADDR?' (YOU)':'');
+      const grid=document.createElement('div'); grid.className='grow';
+      for(const e of byAddr[addr]){
+        const d=document.createElement('div'); d.className='ve';
+        const img=document.createElement('img'); img.src=e.thumb||''; img.title=e.card;
+        img.addEventListener('click',()=>{const c=unpackCard(e.card); if(c){applyCard(c); generate();}});
+        d.appendChild(img);
+        if(addr===GADDR){
+          const x=document.createElement('button'); x.className='vx'; x.textContent='✕';
+          x.addEventListener('click',async ev=>{ev.stopPropagation();
+            try{ await gSigned('uproot',e.card); $('osd').textContent='UPROOTED'; gRefresh(); }
+            catch(err){ $('osd').textContent='GARDEN: '+String(err.message).slice(0,18); }});
+          d.appendChild(x);
+        }
+        grid.appendChild(d);
+      }
+      sec.appendChild(nm); sec.appendChild(grid); host.appendChild(sec);
+    }
+  }catch(e){}
+}
+$('gconnect').addEventListener('click',gConnect);
+$('gplant').addEventListener('click',async ()=>{
+  const card=$('dna').value.trim(); if(!card||!GADDR)return;
+  try{
+    const d=await gSigned('plant',card,vThumb());
+    $('osd').textContent=d.dup?'ALREADY IN YOUR GARDEN':'PLANTED';
+    gRefresh();
+  }catch(err){ $('osd').textContent='GARDEN: '+String(err.message).slice(0,18); }
+});
+if(SB.url){vCloudRefresh(); gRefresh();} else vRender();
 $('dice').addEventListener('click',randSeed);
 $('resetall').addEventListener('click',()=>{
   document.querySelectorAll('.tg').forEach(tg=>{ tg.dataset.on=0; state.fx[tg.dataset.fx]=false; });
