@@ -218,7 +218,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.2b · HYDRA<br>SMOOTH PREVIEW</div>
+    <div class="ver">REV 9.3 · HYDRA<br>CANVAS LOOP PLAYER</div>
   </header>
 
   <div class="colL">
@@ -2306,7 +2306,34 @@ const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36,
       tunnel:false,kaleido:false,bloom:false,embers:false,runes:false,chimera:false} };
 let busy=false, RUN=0, lastURL=null, lastBlob=null, lastName='', lastDataURL='';
 let xBytes=null, xDim=0, xName='', xBlob=null, xURL=null, xDataURL='';
-let prevURL=null;   // heavy masters preview via the 720² twin — decode budget, not file quality
+/* CANVAS LOOP PLAYER — the monitor no longer relies on the browser's GIF
+   decoder (which delays frames when high-entropy decodes miss its budget).
+   We retain 540² index frames from the render and play them on the canvas
+   with an exact clock. Immune to entropy; saved files untouched. */
+const PLAYER={raf:0};
+function stopPlayer(){ if(PLAYER.raf){cancelAnimationFrame(PLAYER.raf);PLAYER.raf=0;} }
+function startPlayer(frames,pal,dim,N,delayMs){
+  stopPlayer();
+  const off=PLAYER.cv||(PLAYER.cv=document.createElement('canvas'));
+  off.width=dim; off.height=dim;
+  const octx=off.getContext('2d');
+  const img=octx.createImageData(dim,dim), pd=img.data;
+  const vctx=$('view').getContext('2d');
+  let last=-1;
+  const t0=performance.now();
+  function tick(now){
+    PLAYER.raf=requestAnimationFrame(tick);
+    const fi=(((now-t0)/delayMs)|0)%N;
+    if(fi===last)return;
+    last=fi;
+    const f=frames[fi];
+    for(let q=0;q<dim*dim;q++){const c=pal[f[q]],k=q*4;pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
+    octx.putImageData(img,0,0);
+    vctx.imageSmoothingEnabled=false;
+    vctx.drawImage(off,0,0,W,H);
+  }
+  PLAYER.raf=requestAnimationFrame(tick);
+}
 const TAU=6.283185307179586;
 const FPS=25, DELAY=4;                 // 25fps locked  (4 centiseconds = 40ms/frame)
 
@@ -2389,6 +2416,7 @@ async function generateSeq(){
   }
 
   /* ---- stream-encode: encode + free each frame as we go ---- */
+  const pvFrames=new Array(N);
   const sink=new Sink(1<<20);
   const minCodeSize=gifBegin(sink,W,H,pal,0);
   /* parallel X-safe encoders: identical frames at 720/540/405, nearest-sampled
@@ -2398,7 +2426,7 @@ async function generateSeq(){
     return {d, sink:sk, mcs:gifBegin(sk,d,d,pal,0), idx:new Uint8Array(d*d)};});
   if(xURL){URL.revokeObjectURL(xURL);xURL=null;}
   xBytes=null; xBlob=null; xDataURL=''; xDim=0;
-  if(prevURL){URL.revokeObjectURL(prevURL);prevURL=null;}
+  stopPlayer();
   $('xsave').setAttribute('disabled',''); $('xsave').classList.remove('ready');
   const indices=new Uint8Array(W*H);
 
@@ -2444,6 +2472,7 @@ async function generateSeq(){
       for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W, row=y*d;
         for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
       gifFrame(xs.sink, d, d, xi, DELAY, xs.mcs);
+      if(d===540)pvFrames[i]=xi.slice();               // retained for the canvas player
     }
 
     $('t-frame').textContent=(i+1)+'/'+N;
@@ -2466,15 +2495,10 @@ async function generateSeq(){
 
   const LIMIT=14900000;  // 15MB platform cap, safe under both MB and MiB readings
   if(bytes.length<=LIMIT){ xBytes=bytes; xDim=W; }        // master fits: X ships FULL RES
-  let tw720=null;
   for(const xs of XS){
     const xb=gifEnd(xs.sink);
-    if(xs.d===720)tw720=xb;
     if(!xBytes && xb.length<=LIMIT){ xBytes=xb; xDim=xs.d; }
   }
-  const PREV_LIMIT=12000000;
-  if(bytes.length>PREV_LIMIT && tw720)
-    prevURL=URL.createObjectURL(new Blob([tw720],{type:'image/gif'}));
   const kb=(bytes.length/1024), dur=(N/FPS).toFixed(2);
   const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
   let xInfo='';
@@ -2484,12 +2508,12 @@ async function generateSeq(){
     $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
   }
   $('t-size').textContent=W+'² '+mainSz+xInfo+' · '+dur+'s';
-  $('osd').textContent='LOOP · '+mainSz+(prevURL?' · PVW 720²':'');
+  $('osd').textContent='LOOP · '+mainSz;
 
   // play the finished loop right in the monitor. data: URL (not blob:) so an iOS
   // long-press offers "Save to Photos"; blob is kept for share/download.
   lastDataURL=bytesToDataURL(bytes);
-  const img=$('result'); img.src=prevURL||lastDataURL; img.style.display='block';
+  startPlayer(pvFrames, pal, 540, N, DELAY*10);
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
   if(canShareFiles||isIOS){
@@ -2614,7 +2638,7 @@ self.onmessage=function(e){
           for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
         const cs=new Sink(1<<14); gifFrame(cs,d,d,xi,DELAY,MCS[k2+1]); chunks.push(cs.done().slice());
       }
-      const pv=xidx[2].slice();                       // 405-idx twin doubles as live preview
+      const pv=xidx[1].slice();                       // 540-idx twin: live preview + retained playback
       self.postMessage({t:'frame',i:i,c:chunks,pv:pv},
         [chunks[0].buffer,chunks[1].buffer,chunks[2].buffer,chunks[3].buffer,pv.buffer]);
     }
@@ -2675,7 +2699,7 @@ async function generate(){
 
   if(xURL){URL.revokeObjectURL(xURL);xURL=null;}
   xBytes=null; xBlob=null; xDataURL=''; xDim=0;
-  if(prevURL){URL.revokeObjectURL(prevURL);prevURL=null;}
+  stopPlayer();
   $('xsave').setAttribute('disabled',''); $('xsave').classList.remove('ready');
 
   /* adaptive split: feedback channels force per-worker ring reconstruction
@@ -2685,11 +2709,12 @@ async function generate(){
   if(fx.echo&&fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/10)));
   else if(fx.echo||fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/5)));
   const chunks=new Array(N);
+  const pvFrames=new Array(N);
   let doneFrames=0, failed=null;
   const pcv=generate._pcv||(generate._pcv=document.createElement('canvas'));
-  pcv.width=405;pcv.height=405;
+  pcv.width=540;pcv.height=540;
   const pctx=pcv.getContext('2d');
-  const pimg=pctx.createImageData(405,405);
+  const pimg=pctx.createImageData(540,540);
 
   const jobOf=w=>({seed, mode:state.mode, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov:{...OV}, DELAY,
@@ -2707,8 +2732,9 @@ async function generate(){
           doneFrames++;
           $('t-frame').textContent=doneFrames+'/'+N;
           $('prog').style.width=(doneFrames/N*92)+'%';
+          pvFrames[m.i]=m.pv;                          // retained for the canvas player
           const pd=pimg.data, pv=m.pv;
-          for(let q=0;q<405*405;q++){const c=pal[pv[q]],k=q*4;
+          for(let q=0;q<540*540;q++){const c=pal[pv[q]],k=q*4;
             pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
           pctx.putImageData(pimg,0,0);
           vctx.imageSmoothingEnabled=false;
@@ -2758,9 +2784,6 @@ async function generate(){
   for(let s2=1;s2<4;s2++){
     if(!xBytes && streams[s2].length<=LIMIT){ xBytes=streams[s2]; xDim=DIMS[s2]; }
   }
-  const PREV_LIMIT=12000000;
-  if(bytes.length>PREV_LIMIT)
-    prevURL=URL.createObjectURL(new Blob([streams[1]],{type:'image/gif'}));
   const kb=(bytes.length/1024), dur=(N/FPS).toFixed(2);
   const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
   let xInfo='';
@@ -2770,10 +2793,10 @@ async function generate(){
     $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
   }
   $('t-size').textContent=W+'² '+mainSz+xInfo+' · '+dur+'s';
-  $('osd').textContent='LOOP · '+mainSz+(prevURL?' · PVW 720²':'');
+  $('osd').textContent='LOOP · '+mainSz;
 
   lastDataURL=bytesToDataURL(bytes);
-  const img=$('result'); img.src=prevURL||lastDataURL; img.style.display='block';
+  startPlayer(pvFrames, pal, 540, N, DELAY*10);
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
   if(canShareFiles||isIOS){ $('download').classList.add('ready'); }
