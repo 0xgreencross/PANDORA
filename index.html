@@ -227,7 +227,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.7 · HYDRA<br>VAULT KEYFIX</div>
+    <div class="ver">REV 9.8 · HYDRA<br>FULL-BORE MULTICORE</div>
   </header>
 
   <div class="colL">
@@ -2583,15 +2583,24 @@ function detectPlatform(){
     const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
     const ext=gl&&gl.getExtension('WEBGL_debug_renderer_info');
     if(ext)gpu=String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL));}catch(e){}
+  /* privacy browsers (Brave especially) deliberately misreport hardwareConcurrency
+     to resist fingerprinting — the number is a hint, not the truth. Policy:
+     floor-based oversubscription (CPU-bound workers timeslice cleanly), with a
+     manual override: append ?cores=N to the URL to command the machine directly. */
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
   let cls,workers;
-  if(ios){ cls='IPHONE'; workers=Math.min(Math.max(cores-1,1),4); }
-  else if(android){ cls='ANDROID'; workers=Math.min(Math.max(cores-1,1),4); }
+  if(ios){ cls='IPHONE'; workers=clamp(Math.max(cores-1,4),1,6); }
+  else if(android){ cls='ANDROID'; workers=clamp(Math.max(cores-1,4),1,6); }
   else if(/Mac/.test(navigator.platform)){
     const as=/Apple/i.test(gpu);
     cls=as?'MAC·AS':'MAC·INTEL';
-    workers=as?Math.min(Math.max(cores-1,1),8):Math.min(Math.max(cores-1,1),6); // intel: thermal headroom
+    workers=as?clamp(Math.max(cores-1,8),1,16):clamp(Math.max(cores-1,8),1,12); // intel: thermal ceiling
   }
-  else { cls='PC'; workers=Math.min(Math.max(cores-1,1),8); }
+  else { cls='PC'; workers=clamp(Math.max(cores-1,8),1,16); }
+  try{
+    const o=parseInt(new URLSearchParams(location.search).get('cores'),10);
+    if(o>=1&&o<=32)workers=o;
+  }catch(e){}
   return {cls,cores,workers,gpu};
 }
 const PLAT=detectPlatform();
@@ -2733,7 +2742,6 @@ async function generate(){
   $('t-mode').textContent=scene.mode;
   $('t-seed').textContent=seed;
   $('t-size').textContent=W+'²';
-  $('osd').textContent='RENDERING · '+PLAT.workers+' CORES';
 
   if(xURL){URL.revokeObjectURL(xURL);xURL=null;}
   xBytes=null; xBlob=null; xDataURL=''; xDim=0;
@@ -2744,6 +2752,7 @@ async function generate(){
      (echo+tunnel ≈ 24 extra renders each), so keep blocks fat enough to
      amortize the priming or the parallelism pays for nothing */
   let nw=Math.min(PLAT.workers, N);
+  $('osd').textContent='RENDERING · '+nw+' CORES';
   if(fx.echo&&fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/10)));
   else if(fx.echo||fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/5)));
   const chunks=new Array(N);
