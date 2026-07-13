@@ -2969,12 +2969,12 @@ function openXModal(){
   if(!xBlob){ xBlob=new Blob([xBytes],{type:'image/gif'}); xURL=URL.createObjectURL(xBlob); }
   $('xm-img').src=xURL;
   $('xm-size').textContent = xDim===W ? '· FULL 1080²' : '· '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
-  XM_TXT=glitchTweet(lastSeed>>>0, $('dna').value.trim());
+  XM_TXT=glitchTweet((+$('seed').value||0)>>>0, $('dna').value.trim());
   $('xm-tweet').textContent=XM_TXT;
   $('xmodal').style.display='flex';
 }
 $('xm-reroll').addEventListener('click',()=>{
-  XM_TXT=glitchTweet(lastSeed>>>0, $('dna').value.trim());
+  XM_TXT=glitchTweet((+$('seed').value||0)>>>0, $('dna').value.trim());
   $('xm-tweet').textContent=XM_TXT;
 });
 $('xm-save').addEventListener('click',()=>saveX());
