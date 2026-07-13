@@ -124,6 +124,10 @@
     font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
     color:var(--cyan);background:var(--panel);border:1px solid var(--line2);}
   #vaultadd[disabled]{opacity:.35;cursor:default;}
+  .vio{appearance:none;cursor:pointer;flex:1;padding:10px 0;border-radius:4px;
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
+    color:var(--mut);background:var(--panel);border:1px solid var(--line);}
+  .vio:active{color:var(--cyan);border-color:var(--line2);}
   #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
   .ve{position:relative;}
   .ve img{display:block;width:100%;aspect-ratio:1;border-radius:4px;cursor:pointer;
@@ -218,7 +222,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.3d · HYDRA<br>PLAYBACK DIAGNOSTICS</div>
+    <div class="ver">REV 9.4 · HYDRA<br>VAULT PORT · SLEEP</div>
   </header>
 
   <div class="colL">
@@ -350,6 +354,11 @@
       <div class="field">
         <label>VAULT <span class="v" id="vcount"></span></label>
         <button id="vaultadd" disabled>⬇ STORE CURRENT LOOP</button>
+      </div>
+      <div class="duo">
+        <button id="vexport" class="vio">⇪ EXPORT VAULT</button>
+        <button id="vimport" class="vio">⇩ IMPORT</button>
+        <input type="file" id="vfile" accept="application/json,.json" style="display:none">
       </div>
       <div id="vaultlist"></div>
       <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. The vault keeps them in this browser, surviving sessions and app upgrades.</p>
@@ -2310,10 +2319,17 @@ let xBytes=null, xDim=0, xName='', xBlob=null, xURL=null, xDataURL='';
    decoder (which delays frames when high-entropy decodes miss its budget).
    We retain 540² index frames from the render and play them on the canvas
    with an exact clock. Immune to entropy; saved files untouched. */
-const PLAYER={raf:0, hud:false, stats:null};
+const PLAYER={raf:0, hud:false, stats:null, args:null};
 function stopPlayer(){ if(PLAYER.raf){cancelAnimationFrame(PLAYER.raf);PLAYER.raf=0;} }
+/* battery courtesy: the player fully stops when the page is hidden and
+   resumes on return — zero draw work while the phone is in your pocket */
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden) stopPlayer();
+  else if(PLAYER.args && !PLAYER.raf) startPlayer(...PLAYER.args);
+});
 function startPlayer(frames,pal,dim,N,delayMs){
   stopPlayer();
+  PLAYER.args=[frames,pal,dim,N,delayMs];
   const off=PLAYER.cv||(PLAYER.cv=document.createElement('canvas'));
   off.width=dim; off.height=dim;
   const octx=off.getContext('2d');
@@ -3168,6 +3184,34 @@ $('vaultadd').addEventListener('click',()=>{
   list.push({card, thumb:vThumb(), ts:Date.now()});
   while(list.length>VMAX)list.shift();
   vSave(list); vRender();
+});
+$('vexport').addEventListener('click',()=>{
+  const list=vLoad(); if(!list.length){$('osd').textContent='VAULT EMPTY';return;}
+  const blob=new Blob([JSON.stringify({fmt:'pndr_vault',v:1,exported:Date.now(),entries:list})],{type:'application/json'});
+  triggerDownloadURL(URL.createObjectURL(blob),'PANDORA_VAULT_'+new Date().toISOString().slice(0,10)+'.json');
+});
+$('vimport').addEventListener('click',()=>$('vfile').click());
+$('vfile').addEventListener('change',ev=>{
+  const f=ev.target.files&&ev.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const d=JSON.parse(rd.result);
+      const inc=Array.isArray(d)?d:(d.entries||[]);
+      const list=vLoad(); let added=0;
+      for(const e of inc){
+        if(!e||typeof e.card!=='string'||!unpackCard(e.card))continue;   // only valid cards enter
+        if(list.some(x=>x.card===e.card))continue;
+        list.push({card:e.card, thumb:typeof e.thumb==='string'?e.thumb:'', ts:e.ts||Date.now()});
+        added++;
+      }
+      while(list.length>VMAX)list.shift();
+      vSave(list); vRender();
+      $('osd').textContent='VAULT +'+added;
+    }catch(err){ $('osd').textContent='IMPORT FAILED'; }
+    ev.target.value='';
+  };
+  rd.readAsText(f);
 });
 vRender();
 $('dice').addEventListener('click',randSeed);
