@@ -258,22 +258,22 @@
           <div class="tg gb" data-fx="chroma" data-on="1"><span>CHROMA</span><i class="dot"></i></div>
           <div class="tg gb" data-fx="tracking" data-on="1"><span>TRACK</span><i class="dot"></i></div>
           <div class="tg gb" data-fx="pixelsort" data-on="1"><span>SORT</span><i class="dot"></i></div>
-          <div class="tg gb" data-fx="grain" data-on="1"><span>GRAIN</span><i class="dot"></i></div>
+          <div class="tg gb" data-fx="grain" data-on="1"><span>CRAWL</span><i class="dot"></i></div>
           <div class="tg gb" data-fx="blocks" data-on="1"><span>BLOCKS</span><i class="dot"></i></div>
-          <div class="tg gb" data-fx="scanlines" data-on="1"><span>SCAN</span><i class="dot"></i></div>
+          <div class="tg gb" data-fx="scanlines" data-on="1"><span>CLASH</span><i class="dot"></i></div>
           <div class="tg gb" data-fx="echo" data-on="1"><span>ECHO</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="wave"><span>RIPPLE</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="wave"><span>SHRED</span><i class="dot"></i></div>
           <div class="tg gh" data-fx="slice"><span>SLICE</span><i class="dot"></i></div>
           <div class="tg gh" data-fx="vroll"><span>V-ROLL</span><i class="dot"></i></div>
           <div class="tg gh" data-fx="mosh"><span>MOSH</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="ghost"><span>GHOST</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="ghost"><span>IXTEAR</span><i class="dot"></i></div>
           <div class="tg gh" data-fx="melt"><span>MELT</span><i class="dot"></i></div>
           <div class="tg gh" data-fx="bleed"><span>BLEED</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="invert"><span>NEGA</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="crush"><span>CRUSH</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="dropout"><span>DROP</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="invert"><span>XSLAM</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="crush"><span>DQUAKE</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="dropout"><span>TAPROT</span><i class="dot"></i></div>
           <div class="tg go2" data-fx="chrono"><span>CHRONO</span><i class="dot"></i></div>
-          <div class="tg go2" data-fx="mirror"><span>MIRROR</span><i class="dot"></i></div>
+          <div class="tg go2" data-fx="mirror"><span>RANSOM</span><i class="dot"></i></div>
           <div class="tg go2" data-fx="flay"><span>FLAY</span><i class="dot"></i></div>
           <div class="tg go2" data-fx="autoph"><span>AUTOPH</span><i class="dot"></i></div>
           <div class="tg go2" data-fx="weave"><span>WEAVE</span><i class="dot"></i></div>
@@ -1131,8 +1131,7 @@ function analogPass(src,dst,scene,theta,corr,fx){
     const sh=Math.round(shift);
     // AGC wobble: seeded tempo/spatial frequency, horizontal or vertical, or off
     const bar = (V.agcOn&&!V.agcVert) ? 1+(V.agcAmp+corr*0.003)*Math.sin(theta*V.agcK+V.agcPh + y*V.agcF) : 1;
-    const scan = fx.scanlines ? ((y&1)?0.82:1.0) : 1.0;
-    const rowMul = bar*scan;
+    const rowMul = bar;   // scanlines slot reborn as ATTRCLASH in the index stage
     for(let x=0;x<W;x++){
       const o=(y*W+x)*3;
       // sample R / G / B with chroma offset + tracking shift
@@ -1147,10 +1146,22 @@ function analogPass(src,dst,scene,theta,corr,fx){
       let G=src[(y*W+xg)*3+1];
       let B=src[(yb*W+xb)*3+2];
       if(grainAmt){
-        // cheap hash grain, frame-correlated for shimmer
+        /* CRAWL — NTSC rainbow static + dot crawl (Max Capacity axis).
+           Chroma-decorrelated noise (never grey grain) + a 2px checker that
+           crawls along luma edges like a composite signal failing. */
         let n=((x*374761393+y*668265263+seedRow*982451653)>>>0); n=(n^(n>>>13))>>>0;
-        const g=((n&255)/255-0.5)*grainAmt;
-        R+=g; G+=g; B+=g;
+        const n2=(n*2246822519)>>>0, n3=(n*3266489917)>>>0;
+        R+=((n&255)/255-0.5)*grainAmt*1.15;
+        G+=(((n2>>>8)&255)/255-0.5)*grainAmt*0.85;
+        B+=(((n3>>>16)&255)/255-0.5)*grainAmt*1.25;
+        if(x>0){
+          const eL=src[o]-src[o-3];
+          const edge=eL<0?-eL:eL;
+          if(edge>26){
+            const crawl=(((x+y+((theta*512)|0))&2)?1:-1)*Math.min(60,edge*0.5)*(grainAmt*0.02);
+            R+=crawl; B-=crawl;
+          }
+        }
       }
       const m = colMul ? rowMul*colMul[x] : rowMul;
       R*=m; G*=m; B*=m;
@@ -1212,7 +1223,7 @@ function pixelSortCorrect(buf,snap,scene,theta,corr){
 /* ============================================================================
    DITHER + QUANTIZE  -> palette indices
    ========================================================================== */
-function quantize(buf,indices,near,dAmt,tect){
+function quantize(buf,indices,near,dAmt,tect,quake){
   for(let y=0;y<H;y++){const brow=(y&7)*8, trow=(y>>3)*135;
     for(let x=0;x<W;x++){
       const o=(y*W+x)*3; let d;
@@ -1224,6 +1235,15 @@ function quantize(buf,indices,near,dAmt,tect){
       } else {
         d=BAYER[brow+(x&7)]*dAmt;
       }
+      if(quake){
+        const t=trow+(x>>3);
+        if(quake.m[t]){
+          /* DQUAKE — the dither matrix itself convulses: cells where the
+             threshold geometry bit-rotates per frame and the amplitude
+             multiplies. Corruption inside the color decision — unforgeable. */
+          d=BAYER[(((y&7)+quake.ry[t])&7)*8+(((x&7)+quake.rx[t])&7)]*dAmt*quake.mul[t];
+        }
+      }
       let r=buf[o]+d+bonus, g=buf[o+1]+d+bonus, b=buf[o+2]+d+bonus;
       r=r<0?0:r>255?255:r; g=g<0?0:g>255?255:g; b=b<0?0:b>255?255:b;
       indices[y*W+x]=near[((r>>3)<<10)|((g>>3)<<5)|(b>>3)];
@@ -1231,41 +1251,147 @@ function quantize(buf,indices,near,dAmt,tect){
   }
 }
 
+function buildQuake(scene,theta,corr){
+  const C=corr/100;
+  const q=buildQuake._q||(buildQuake._q={m:new Uint8Array(135*135),rx:new Uint8Array(135*135),ry:new Uint8Array(135*135),mul:new Float32Array(135*135)});
+  const st=mulberry32((scene.seed^0xD17E)>>>0);         // static epicenter field per seed
+  const fk=Math.round(theta/TAU*4096)&4095;
+  const cx=st()*135, cy=st()*135, rad=(18+st()*45)*(0.5+C);
+  const r2=rad*rad;
+  for(let gy=0;gy<135;gy++)for(let gx=0;gx<135;gx++){
+    const t=gy*135+gx, dx=gx-cx, dy=gy-cy, d2=dx*dx+dy*dy;
+    if(d2<r2){
+      q.m[t]=1;
+      const h=((gx*73856093)^(gy*19349663)^(fk*83492791))>>>0;
+      q.rx[t]=h&7; q.ry[t]=(h>>>3)&7;
+      q.mul[t]=1.6+((h>>>6)&3)*1.3;
+    } else q.m[t]=0;
+  }
+  return q;
+}
+/* ============================================================================
+   INDEX STAGE — corruption AFTER quantization, on palette indices themselves.
+   No RGB filter can imitate this: the artifacts are native to the LUT.
+   CLASH (scanlines slot) · IXTEAR (ghost slot) · XSLAM (invert slot) ·
+   RANSOM (mirror slot). All per-frame chaos is fkRng => loop-exact.
+   ========================================================================== */
+function indexPass(ind,P,scene,theta,corr,fx){
+  const C=corr/100;
+  if(fx.scanlines){
+    /* ATTRCLASH — ZX Spectrum attribute clash: 8x8 cells forced to their two
+       dominant palette indices; some cells corrupt and swap or drift. */
+    const R=fkRng(scene,theta,0xC1A5B);
+    const hist=indexPass._h||(indexPass._h=new Uint16Array(256));
+    const cov=0.25+C*0.75;
+    for(let cy2=0;cy2<H;cy2+=8){
+      for(let cx2=0;cx2<W;cx2+=8){
+        const cellH=((cx2*2654435761)^(cy2*40503)^(scene.seed))>>>0;
+        if(((cellH&1023)/1024)>=cov)continue;
+        hist.fill(0);
+        for(let y=cy2;y<cy2+8;y++){const row=y*W;
+          for(let x=cx2;x<cx2+8;x++)hist[ind[row+x]]++;}
+        let a=0,b2=0,ha=-1,hb=-1;
+        for(let i=0;i<P;i++){const h=hist[i];
+          if(h>ha){hb=ha;b2=a;ha=h;a=i;} else if(h>hb){hb=h;b2=i;} }
+        if(hb<=0)continue;
+        let ia=a, ib=b2;
+        if(R()<0.05*(0.5+C)){ const t=ia; ia=ib; ib=t; }          // clash cell: swap
+        if(R()<0.03*(0.5+C)){ ia=(ia+((R()*P)|0))%P; }            // corrupt cell: drift
+        const mid=(ia+ib)>>1;
+        for(let y=cy2;y<cy2+8;y++){const row=y*W;
+          for(let x=cx2;x<cx2+8;x++){const o=row+x;
+            ind[o]=(Math.abs(ind[o]-ia)<=Math.abs(ind[o]-ib))?ia:ib;}}
+      }
+    }
+  }
+  if(fx.ghost){
+    /* IXTEAR — the palette LUT tears: bands of indices shifted through the
+       gradient with ragged per-row edges. Shapes wear the wrong band of light. */
+    const R=fkRng(scene,theta,0x17EA2);
+    const nB=2+((C*5)|0);
+    for(let b2=0;b2<nB;b2++){
+      const y0=(R()*H)|0, h=10+(R()*90)|0;
+      const k=1+((R()*(P*0.4))|0);
+      const x0=(R()*W*0.5)|0, len=(W*0.3+R()*W*0.7)|0;
+      for(let yy=0;yy<h;yy++){const ay=y0+yy; if(ay>=H)break; const row=ay*W;
+        const rag=(((ay*2654435761)^(scene.seed))>>>8)&15;       // ragged edge
+        for(let x=0;x<len;x++){const ax=x0+rag+x; if(ax>=W)break;
+          const o=row+ax; ind[o]=(ind[o]+k)%P;}
+      }
+    }
+  }
+  if(fx.mirror){
+    /* RANSOM — crude stamped rectangles (XCOPY axis): per-frame re-rolled
+       positions, each carrying its own index violence, dark punched outline. */
+    const R=fkRng(scene,theta,0xFA45);
+    const nR=1+((C*3)|0);
+    for(let i=0;i<nR;i++){
+      const w=(60+R()*260)|0, h=(50+R()*220)|0;
+      const x0=(R()*(W-w))|0, y0=(R()*(H-h))|0;
+      const op=(R()*3)|0, half=(P>>1)||1;
+      for(let yy=0;yy<h;yy++){const row=(y0+yy)*W;
+        const border=yy<3||yy>=h-3;
+        for(let xx=0;xx<w;xx++){const o=row+x0+xx;
+          if(border||xx<3||xx>=w-3){ ind[o]=0; continue; }        // punched outline
+          if(op===0) ind[o]=P-1-ind[o];                           // negative
+          else if(op===1) ind[o]=(ind[o]+half)%P;                 // half-spectrum slam
+          else ind[o]=(ind[o]*3)%P;                               // LUT scramble
+        }
+      }
+    }
+  }
+  if(fx.invert){
+    /* XSLAM — the strobe assault: at 2-4 seeded loop positions the whole frame
+       slams to negative and the canvas jolts. One-frame violence, loop-exact. */
+    const sl=mulberry32((scene.seed^0x51A3)>>>0);
+    const nS=2+((sl()*3)|0);
+    for(let i=0;i<nS;i++){
+      const pos=sl()*TAU, jx=Math.round((sl()-0.5)*24), jy=Math.round((sl()-0.5)*16);
+      let d=Math.abs(theta-pos); if(d>TAU/2)d=TAU-d;
+      if(d<Math.PI/28){
+        for(let q=0;q<ind.length;q++)ind[q]=P-1-ind[q];
+        if(jx||jy){
+          const tmp=indexPass._t&&indexPass._t.length===ind.length?indexPass._t:(indexPass._t=new Uint8Array(ind.length));
+          tmp.set(ind);
+          for(let y=0;y<H;y++){let sy=y+jy; sy=((sy%H)+H)%H; const row=y*W, srow=sy*W;
+            for(let x=0;x<W;x++){let sx=x+jx; sx=((sx%W)+W)%W; ind[row+x]=tmp[srow+sx];}}
+        }
+        break;
+      }
+    }
+  }
+}
+/* frame-keyed rng: chaos that re-rolls EVERY FRAME yet loops perfectly,
+   because frame i always rolls frame i's dice. The XCOPY theorem. */
+function fkRng(scene,theta,salt){
+  const fk=Math.round(theta/TAU*4096)&4095;
+  return mulberry32((scene.seed^(fk*2654435761)^salt)>>>0);
+}
 /* ============================================================================
    HEAVY CORRUPTION  — 10 extra effects. Every animated term uses sin/cos of an
    INTEGER multiple of theta, so each one stays 2pi-periodic => seamless loop.
    corr (0..100) drives intensity; C=corr/100.
    ========================================================================== */
-function fxWave(buf,snap,scene,theta,corr){            // 1. sync ripple — seeded orientation/waveform
-  const C=corr/100; snap.set(buf); const ws=scene.extra.waves;
-  // horizontal-shifting waves (per row)
-  let anyH=false, anyV=false;
-  for(const w of ws){ if(w.vert)anyV=true; else anyH=true; }
-  if(anyH){
-    for(let y=0;y<H;y++){
-      let s=0;
-      for(let i=0;i<ws.length;i++){const w=ws[i]; if(w.vert)continue;
-        s+=shp(Math.sin(y*w.freq*w.harm+theta*w.k+w.ph),w.shape)*w.amp;}
-      let sh=Math.round(s*(0.3+C*1.8)); if(!sh)continue;
-      const row=y*W;
-      for(let x=0;x<W;x++){ let sx=(x-sh)%W; if(sx<0)sx+=W; const so=(row+sx)*3,o=(row+x)*3;
-        buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; }
-    }
-  }
-  if(anyV){                                            // vertical-shifting waves (per column)
-    snap.set(buf);
-    const colSh=fxWave._cs||(fxWave._cs=new Int16Array(W));
-    for(let x=0;x<W;x++){
-      let s=0;
-      for(let i=0;i<ws.length;i++){const w=ws[i]; if(!w.vert)continue;
-        s+=shp(Math.sin(x*w.freq*w.harm+theta*w.k+w.ph),w.shape)*w.amp;}
-      colSh[x]=Math.round(s*(0.3+C*1.8));
-    }
-    for(let y=0;y<H;y++){const row=y*W;
-      for(let x=0;x<W;x++){const sh=colSh[x]; if(!sh)continue;
-        let sy=(y-sh)%H; if(sy<0)sy+=H;
-        const so=(sy*W+x)*3, o=(row+x)*3;
-        buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; }
+function fxWave(buf,snap,scene,theta,corr){
+  /* SHRED — torn-band displacement. Smooth sync ripple is dead: bands get
+     per-frame re-rolled integer offsets (hard tears, not waves), some bands
+     duplicate their neighbor (smear ghost). No two frames tear alike. */
+  const C=corr/100; snap.set(buf);
+  const R=fkRng(scene,theta,0x5A7ED);
+  const nB=3+((C*9)|0);
+  for(let b2=0;b2<nB;b2++){
+    const y0=(R()*H)|0, h=6+(R()*44)|0;
+    const off=Math.round((R()-0.5)*2*(8+C*90));
+    const dup=R()<0.28;
+    if(!off&&!dup)continue;
+    for(let yy=0;yy<h;yy++){const ay=y0+yy; if(ay>=H)break;
+      const sy=dup?Math.min(H-1,ay+h):ay;
+      const drow=ay*W*3, srow=sy*W*3;
+      for(let x=0;x<W;x++){
+        let sx=x+off; if(sx<0)sx+=W; else if(sx>=W)sx-=W;
+        const so=srow+sx*3, doff=drow+x*3;
+        buf[doff]=snap[so];buf[doff+1]=snap[so+1];buf[doff+2]=snap[so+2];
+      }
     }
   }
 }
@@ -1348,20 +1474,48 @@ function fxCrush(buf,scene,theta,corr){                // 9. bit-crush / posteri
   const step=255/(levels-1);
   for(let i=0;i<buf.length;i++){ let v=Math.round(buf[i]/step)*step; buf[i]=v>255?255:v; }
 }
-function fxDropout(buf,scene,theta,corr){              // 10. signal-loss blocks
-  const C=corr/100; const D=scene.extra.dropouts; const gate=0.62-C*0.5;
-  for(let i=0;i<D.length;i++){const d=D[i]; if(Math.sin(theta*d.k+d.ph)<gate)continue;
-    const val=d.white?255:0; const w=Math.min(d.w,W-d.x),h=Math.min(d.h,H-d.y);
-    for(let yy=0;yy<h;yy++){const row=(d.y+yy)*W;
-      for(let x=0;x<w;x++){const o=(row+d.x+x)*3; buf[o]=val;buf[o+1]=val;buf[o+2]=val;} }
+function fxDropout(buf,scene,theta,corr){
+  /* TAPROT — tape dropout the way tape actually dies (Ina Vare / Max Capacity
+     axis): streaks of sparkling noise smeared with the content they're eating,
+     plus a head-switch tear strip at the frame's foot. Never a flat slab. */
+  const C=corr/100;
+  const R=fkRng(scene,theta,0x7A9E0);
+  const nS=2+((C*7)|0);
+  for(let i=0;i<nS;i++){
+    const y0=(R()*H)|0, h=2+(R()*13)|0;
+    const x0=(R()*W*0.6)|0, len=(W*0.15+R()*W*0.8)|0;
+    const drift=1+(R()*4)|0;
+    for(let yy=0;yy<h;yy++){const ay=y0+yy; if(ay>=H)break; const row=ay*W;
+      for(let x=0;x<len;x++){const ax=x0+x; if(ax>=W)break;
+        const o=(row+ax)*3;
+        const sm=(row+Math.max(0,ax-((x*drift)&31)))*3;      // horizontal luma smear
+        const lum=buf[sm]*0.299+buf[sm+1]*0.587+buf[sm+2]*0.114;
+        let n=((ax*374761393+ay*668265263+((theta*997)|0)*1274126177)>>>0); n=(n^(n>>>15))&255;
+        const v=lum*0.45+n*0.55*(0.5+C*0.5);
+        const w2=v>235?235:v;
+        buf[o]=w2; buf[o+1]=w2*0.96; buf[o+2]=w2*0.88;        // warm tape sparkle
+      }
+    }
+  }
+  /* head-switch tear: bottom strip lurches per frame */
+  const hs=(H*0.972)|0, off=Math.round((R()-0.5)*2*(6+C*40));
+  if(off){
+    for(let y=hs;y<H;y++){const row=y*W*3;
+      const tmp=buf.slice(row,row+W*3);
+      for(let x=0;x<W;x++){
+        let sx=x+off; if(sx<0)sx+=W; else if(sx>=W)sx-=W;
+        const doff=row+x*3, so=sx*3;
+        buf[doff]=tmp[so];buf[doff+1]=tmp[so+1];buf[doff+2]=tmp[so+2];
+      }
+    }
   }
 }
 const HEAVY_FX={
   wave:(b,s,sc,t,c)=>fxWave(b,s,sc,t,c),   slice:(b,s,sc,t,c)=>fxSlice(b,s,sc,t,c),
   vroll:(b,s,sc,t,c)=>fxVroll(b,s,sc,t,c), mosh:(b,s,sc,t,c)=>fxMosh(b,s,sc,t,c),
-  ghost:(b,s,sc,t,c)=>fxGhost(b,s,sc,t,c), melt:(b,s,sc,t,c)=>fxMelt(b,sc,t,c),
-  bleed:(b,s,sc,t,c)=>fxBleed(b,sc,t,c),   invert:(b,s,sc,t,c)=>fxInvert(b,sc,t,c),
-  crush:(b,s,sc,t,c)=>fxCrush(b,sc,t,c),   dropout:(b,s,sc,t,c)=>fxDropout(b,sc,t,c)
+  ghost:()=>{}, melt:(b,s,sc,t,c)=>fxMelt(b,sc,t,c),        // ghost reborn as IXTEAR (index stage)
+  bleed:(b,s,sc,t,c)=>fxBleed(b,sc,t,c),   invert:()=>{},   // invert reborn as XSLAM (index stage)
+  crush:()=>{},                            dropout:(b,s,sc,t,c)=>fxDropout(b,sc,t,c) // crush reborn as DQUAKE (quantizer stage)
 };
 function heavyCorruption(buf,snap,scene,theta,corr,fx){
   const g=scene.vibe.g, cc=ch=>Math.min(150,corr*g[ch]);
@@ -2076,7 +2230,6 @@ function fxMaskComp(buf,scene,theta){
 
 function renderSource(rgbA,rgbC,scene,i,theta,grad,fx,corr){
   renderBase(rgbA,scene,i,theta,grad);
-  if(fx.mirror){ renderBase(rgbC,scene,i,TAU-theta,grad); combineMirror(rgbA,rgbC,scene,theta); }
   if(fx.flay){   renderBase(rgbC,scene,i,theta+TAU/8,grad); combineFlay(rgbA,rgbC,scene,theta,corr); }
   if(fx.braid){
     const rgbD=renderSource._d||(renderSource._d=new Uint8Array(W*H*3));
@@ -2253,7 +2406,9 @@ async function generateSeq(){
         break;
       }
     }
-    quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null);
+    quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
+             fx.crush?buildQuake(scene,theta,corr):null);
+    indexPass(indices, pal.length, scene, theta, corr, fx);
 
     // live preview from quantized indices
     const pd=preview.data;
