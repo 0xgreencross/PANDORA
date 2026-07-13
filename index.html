@@ -2573,7 +2573,9 @@ self.onmessage=function(e){
       oblivionPixel(rgbB,snap,scene,theta,corr,fx);
       valhallaPixel(rgbB,snap,scene,theta,corr,fx);
       demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
-      quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null);
+      quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
+               fx.crush?buildQuake(scene,theta,corr):null);
+      indexPass(indices,pal.length,scene,theta,corr,fx);
       const chunks=[];
       { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,DELAY,MCS[0]); chunks.push(cs.done().slice()); }
       for(let k2=0;k2<3;k2++){const d=DIMS[k2+1],xi=xidx[k2];
