@@ -94,8 +94,8 @@
   .seg{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
     -webkit-overflow-scrolling:touch;padding-bottom:1px;}
   .seg::-webkit-scrollbar{display:none;}
-  .seg button{appearance:none;cursor:pointer;flex:0 0 auto;
-    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;padding:11px 12px;
+  .seg button{appearance:none;cursor:pointer;flex:0 0 76px;width:76px;text-align:center;
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;padding:11px 0;
     color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:4px;}
   .seg button[aria-pressed="true"]{color:#05050a;background:var(--sulph);border-color:var(--sulph);
     box-shadow:0 0 16px rgba(232,255,46,.3);}
@@ -182,10 +182,10 @@
     #p-sigils .toggles{height:100%;}
     .duostyle{flex-direction:column;align-items:stretch;}
     .duostyle .field{flex:1 1 auto !important;}
-    #p-tune .seg button{padding:7px 8px;}
+    #p-tune .seg button{padding:8px 0;}
     #p-tune{gap:6px;}
-    .seg{flex-wrap:wrap;overflow:visible;}
-    .seg button{padding:11px 14px;}
+    .seg{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));overflow:visible;}
+    .seg button{width:auto;padding:11px 0;}
     .brand{font-size:16px;} .tab{font-size:8px;padding:13px 0 12px;}
     .actions{margin-top:2px;}
     .actions button{font-size:12px;padding:13px 0;border-radius:6px;} #oblivion{font-size:15px;flex:0 0 56px;}
@@ -205,7 +205,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.1b · HYDRA<br>NO BORDERS DOCTRINE</div>
+    <div class="ver">REV 9.1c · HYDRA<br>UNIFORM CHIP GRID</div>
   </header>
 
   <div class="colL">
