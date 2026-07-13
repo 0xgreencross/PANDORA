@@ -258,7 +258,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 10.2 · JANUS<br>INFO MODE</div>
+    <div class="ver">REV 10.2b · JANUS<br>PALETTE THEORY</div>
   </header>
 
   <div class="colL">
@@ -3708,6 +3708,33 @@ const TIP_ID={
   'xm-reroll':'\u27f3 — mints a fresh transmission. No two ever match.',
   infobtn:'INFO MODE — you found it. Tap again to leave.',
 };
+const TIP_PAL={
+  VOID:'DITHERVOID — the house signature. Magenta 327° against cyan 184° (a near-complementary pair at full chroma) with a sulphur 67° strike, rising from 2%-lightness black. Split-complementary triad: two enemies and an instigator.',
+  TOXIC:'TOXIC — analogous radiation greens (82–144°), one hue family doing all the work through a lightness ramp from swamp to glare. Monochrome discipline; the danger is in the value curve.',
+  INFRA:'INFRARED — thermal-camera ramp: analogous heat 355→44°, deep red through orange to white-hot. No cool hue anywhere; contrast comes purely from luminance, like heat itself.',
+  VAPOR:'VAPOR — magenta/cyan complements lifted to pastel (69% lightness) over violet bed. The classic vaporwave detente: opposing hues, softened until they stop fighting and start haunting.',
+  ULTRA:'ULTRAVIOLET — tight analogous blue-violets (244–256°) pushed to full saturation, cooled further by a cyan accent. The narrowest hue range in the box; depth through darkness, not hue.',
+  BONE:'BONE — an achromatic grey ramp shocked twice: pure blue and hot magenta. Simultaneous contrast weaponized — the neutral field makes the two chroma spikes scream far louder than they would in color.',
+  ACID:'ACIDBURN — yellow-greens 60–108° at maximum luminance: the exact zone where human eyes are most sensitive. Analogous harmony tuned for physical discomfort.',
+  HOTLNE:'HOTLINE — monochrome magenta (278–321°), saturation locked at 100%, only lightness moves. Miami at 4am: one hue, total commitment.',
+  LAZER:'LAZER — analogous cold light, blue 228° sliding to cyan 176°. Coherent-beam palette: one temperature, no warmth permitted anywhere.',
+  NUKE:'NUKEGLOW — amber monochrome 30–60°, the sodium-fire ramp. Warm counterpart to LAZER: single-family heat with a white-hot ceiling.',
+  FROG:'POISONFROG — aposematism as color theory: analogous teal→chartreuse body ambushed by a magenta strike, its near-complement. Nature’s warning coloration: harmony designed to be broken.',
+  BLKLT:'BLACKLIGHT — UV ramp, violet 266° to magenta 300°, all saturation, club-poster fluorescence. Analogous pair living at the edge of the visible spectrum.',
+  EMBER:'EMBERGRID — fire gradient: crimson 343° through orange to gold 51°. Analogous warmth crossing the red–yellow arc exactly as combustion does.',
+  CRT:'CATHODE — pure P1-phosphor green, one hue at five intensities. The oldest monochrome in computing; value structure IS the image.',
+  KENNE:'KENNE — the Ken Ishii collaboration palette: charcoal-blue bed, violet-to-hot-pink ramp, one desaturated green counterweight sitting near-complement to the pink. Techno restraint with a single dissenting voice.',
+  AIRNEO:'AIRNEON — the classic-era flagship: violet/magenta team versus sky/green/cyan team, both at full chroma on 6% grey. Two temperature factions in open war — flick ERA to CLASSIC to see its homeland.',
+  DES:'DES — complementary core: magenta 307° against green 120°, mediated by violet depth and ice highlights. The most direct opponent-pair in the box after TRURGB.',
+  NEOMNY:'NEONMONEY — the widest spread here: eight stops, indigo/violet against money-greens against magenta. A loose triad sprawl; reads as circuitry because no faction wins.',
+  MGC:'MGC — minimal additive ghosts: magenta, green, cyan on charcoal. Three stops, maximum economy — the printer’s CMY logic rebuilt in light.',
+  POLE:'POLE — four-corner tetrad: blue 232°, magenta 300°, orange 28°, green 147° — hues pulled from opposite quadrants of the wheel. Carnival logic: everything clashes, so nothing does.',
+  FAUXGB:'FAUXRGB — the broadcast test card corrupted: true RGB primaries plus violet and hot pink infiltrators. Pretends to be a standard; lies.',
+  TRURGB:'TRUERGB — the purest triad possible: red 0°, green 120°, blue 240°, perfectly equidistant, nothing else. The three phosphors of every screen you have ever owned, undiluted.',
+  XPASTE:'XPASTE — low-value violet strata (4–13% lightness) rising to a pastel complement duo: pink 329° and mint 138°. The quietest palette in the box until the surface breaks.',
+  DOE:'DOE — slate bed under a loose triad: fuchsia 310°, azure 204°, emerald 156°. Cool-leaning three-way balance; elegant, almost polite, for DITHERVOID.',
+  TNUKE:'TISNUKE — imported from TIME IS SCAM: indigo 253° versus a red→orange→gold heat ramp (9–53°). Complementary temperature split: one cold objector against an advancing fire.',
+};
 const TIP_SEG={
   AUTO:'AUTO — the seed decides this dial for itself.',
   OFF:'OFF — disables this layer entirely.',
@@ -3730,6 +3757,7 @@ function tipFor(el){
   const seg=el.closest&&el.closest('.seg');
   if(seg&&el.tagName==='BUTTON'){
     const t=el.textContent.trim();
+    if(TIP_PAL[t])return TIP_PAL[t];
     if(TIP_SEG[t])return TIP_SEG[t];
     if(TIP_MODE[t])return TIP_MODE[t];
     if(seg.id==='epochseg')return TIP_ID.epochseg;
