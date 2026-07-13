@@ -205,7 +205,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 9.1 · HYDRA<br>DEATH SIGNAL · X-FULL</div>
+    <div class="ver">REV 9.1b · HYDRA<br>NO BORDERS DOCTRINE</div>
   </header>
 
   <div class="colL">
@@ -1336,14 +1336,12 @@ function indexPass(ind,P,scene,theta,corr,fx){
       const x0=(R()*(W-w))|0, y0=(R()*(H-h))|0;
       const op=(R()*3)|0, half=(P>>1)||1;
       for(let yy=0;yy<h;yy++){const row=(y0+yy)*W;
-        const border=yy<3||yy>=h-3;
         for(let xx=0;xx<w;xx++){const o=row+x0+xx;
-          if(border||xx<3||xx>=w-3){ ind[o]=0; continue; }        // punched outline
           if(op===0) ind[o]=P-1-ind[o];                           // negative
           else if(op===1) ind[o]=(ind[o]+half)%P;                 // half-spectrum slam
           else ind[o]=(ind[o]*3)%P;                               // LUT scramble
         }
-      }
+      }                                                           // no outline — doctrine: no borders
     }
   }
   if(fx.invert){
