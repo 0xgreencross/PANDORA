@@ -34,9 +34,9 @@
   --tap:44px;
 }
 *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
-html,body{height:100dvh; overflow:hidden; background:var(--void); color:var(--ink);
-  font-family:var(--fD); font-size:11px; letter-spacing:.4px;}
-body{display:flex; flex-direction:column;}
+html,body{height:100vh; height:100svh; overflow:hidden; background:var(--void); color:var(--ink);
+  font-family:var(--fD); font-size:11px; letter-spacing:.4px; overscroll-behavior:none;}
+body{display:flex; flex-direction:column; position:fixed; inset:0;}
 button{font-family:var(--fD); color:var(--ink); background:none; border:1px solid var(--hair2);
   cursor:pointer; min-height:var(--tap); padding:0 14px; font-size:11px; letter-spacing:.6px;}
 button:hover{border-color:var(--ink);}
@@ -66,97 +66,112 @@ input[type=text],input[type=number],textarea{background:var(--well); color:var(-
 #mastrev{margin-left:auto; text-align:right; color:var(--mut); font-size:9px; line-height:1.5; letter-spacing:1px;}
 #mast #infobtn{min-width:var(--tap); border:1px solid var(--hair2); border-radius:0;}
 
-/* ============ COCKPIT GRID ============ */
+/* ============ COCKPIT GRID — WIDTH IS THE BAND, SIZES ARE EXPLICIT ============ */
 #cockpit{flex:1; min-height:0; display:grid;}
 .bay{min-height:0; min-width:0; display:flex; flex-direction:column; overflow:hidden;}
 #bay-engine,#bay-archive{background:var(--panel);}
-#bay-engine{border-right:1px solid var(--hair);}
-#bay-archive{border-left:1px solid var(--hair);}
 .bayhead{display:flex; align-items:center; gap:10px; padding:10px 14px 6px; color:var(--mut);
-  font-size:10px; letter-spacing:2px;}
-.baybody{flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 14px 14px;
-  scrollbar-width:thin; scrollbar-color:var(--hair2) transparent;}
+  font-size:10px; letter-spacing:2px; flex:0 0 auto;}
+.baybody{flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  padding:0 14px 14px; scrollbar-width:thin; scrollbar-color:var(--hair2) transparent;}
 .baybody::-webkit-scrollbar{width:4px;} .baybody::-webkit-scrollbar-thumb{background:var(--hair2);}
-
-/* WIDE — everything visible, the full cockpit */
-@media (min-width:1240px) and (orientation:landscape){
-  #cockpit{grid-template-columns:minmax(300px,370px) 1fr minmax(300px,370px);}
-  #dock{display:none;}
-}
-/* MID landscape — stage + one switchable side bay */
-@media (min-width:900px) and (max-width:1239px) and (orientation:landscape){
-  #cockpit{grid-template-columns:minmax(300px,380px) 1fr;}
-  #bay-archive{display:none; border-left:none; border-right:1px solid var(--hair);}
-  body[data-bay=archive] #bay-archive{display:flex; grid-column:1; grid-row:1;}
-  body[data-bay=archive] #bay-engine{display:none;}
-  #dock{display:flex; position:static;}
-}
-/* PORTRAIT / NARROW — stage on top, docked bays below, zero page scroll */
-@media (orientation:portrait), (max-width:899px){
-  #cockpit{grid-template-rows:auto minmax(0,1fr); grid-template-columns:1fr;}
-  #bay-stage{grid-row:1;}
-  #stagewrap{height:min(44dvh,60vw);}
-  #bay-engine,#bay-archive{grid-row:2; grid-column:1; border:none; border-top:1px solid var(--hair);}
-  #bay-archive{display:none;}
-  body[data-bay=archive] #bay-archive{display:flex;}
-  body[data-bay=archive] #bay-engine{display:none;}
-  #dock{display:flex;}
-}
-@media (max-height:480px) and (orientation:landscape){ #mast{height:44px;} }
-
-/* dock — the bay switch, thumb-sized, always where the thumb lives */
-#dock{display:none; gap:0; border-top:1px solid var(--hair); flex:0 0 52px;}
-.shelf-hidden{display:none!important;}
+#dock{display:none; flex:0 0 52px; border-top:1px solid var(--hair);
+  padding-bottom:env(safe-area-inset-bottom);}
 #dock button{flex:1; border:none; border-right:1px solid var(--hair); color:var(--mut); letter-spacing:2px;}
 #dock button:last-child{border-right:none;}
 #dock button[aria-pressed=true]{color:var(--ink); box-shadow:inset 0 -2px 0 var(--ox);}
+.shelf-hidden{display:none!important;}
 
-/* ============ STAGE ============ */
+/* WIDE ≥1240 landscape: the whole instrument on the panel */
+@media (min-width:1240px) and (orientation:landscape){
+  #cockpit{grid-template-columns:minmax(300px,370px) 1fr minmax(300px,370px);}
+  #bay-engine{border-right:1px solid var(--hair);}
+  #bay-archive{border-left:1px solid var(--hair);}
+  :root{--msz:min(calc(100svh - 56px - 208px), calc(100vw - 740px - 48px));}
+}
+/* MID 900–1239 landscape: stage + one switchable bay */
+@media (min-width:900px) and (max-width:1239px) and (orientation:landscape){
+  #cockpit{grid-template-columns:minmax(300px,380px) 1fr;}
+  #bay-engine{border-right:1px solid var(--hair); grid-column:1; grid-row:1;}
+  #bay-archive{display:none; border-right:1px solid var(--hair); grid-column:1; grid-row:1;}
+  body[data-bay=archive] #bay-archive{display:flex;}
+  body[data-bay=archive] #bay-engine{display:none;}
+  #dock{display:flex;}
+  :root{--msz:min(calc(100svh - 56px - 260px), calc(100vw - 380px - 48px));}
+}
+/* SHORT landscape (phones rotated): monitor left, controls right */
+@media (max-height:520px) and (orientation:landscape){
+  #mast{height:44px;}
+  #cockpit{grid-template-columns:auto 1fr;}
+  #bay-stage{grid-column:1; flex-direction:row;}
+  #bay-engine,#bay-archive{grid-column:2; grid-row:1; display:none; border-left:1px solid var(--hair);}
+  body[data-bay=engine] #bay-engine{display:flex;}
+  body[data-bay=archive] #bay-archive{display:flex;}
+  #dock{display:flex; position:absolute; right:0; bottom:0; width:220px; border-left:1px solid var(--hair);}
+  :root{--msz:calc(100svh - 44px - 24px);}
+  #stagewrap{width:auto;}
+  #surface,#stagetelem{display:none;}   /* rotated phone = viewing mode; controls live in the bays */
+}
+/* PORTRAIT / NARROW: stage on top, dock at the thumb */
+@media (orientation:portrait), (max-width:899px){
+  #cockpit{grid-template-rows:auto auto minmax(0,1fr); grid-template-columns:1fr;}
+  #bay-stage{grid-row:1 / span 2; display:contents;}
+  #stagewrap{grid-row:1;}
+  #bay-engine,#bay-archive{grid-row:3; grid-column:1; border-top:1px solid var(--hair); display:none;}
+  body[data-bay=engine] #bay-engine{display:flex;}
+  body[data-bay=archive] #bay-archive{display:flex;}
+  #dock{display:flex;}
+  :root{--msz:min(100vw - 20px, 34svh);}
+}
+/* ============ STAGE — THE MONITOR IS SIZED BY LAW, NEVER BY FLEX ============ */
 #bay-stage{background:var(--void);}
-#stagewrap{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px; position:relative;}
-.monitor{position:relative; height:100%; max-height:100%; aspect-ratio:1; max-width:100%; margin:0 auto;}
+#stagewrap{flex:0 0 auto; display:flex; align-items:center; justify-content:center; padding:10px; position:relative;}
+.monitor{position:relative; width:var(--msz,540px); height:var(--msz,540px); max-width:100%;}
 .monitor canvas,.monitor img{width:100%; height:100%; display:block; image-rendering:pixelated;}
 .screen-wrap{width:100%; height:100%;}
-.osd{position:absolute; top:8px; left:10px; font-size:9px; letter-spacing:1.6px; color:var(--ok); z-index:3;}
+.osd{position:absolute; top:6px; left:8px; font-size:9px; letter-spacing:1.6px; color:var(--ok); z-index:3;}
 .rec{color:var(--ox);}
 .placeholder,.ph-block{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
   color:var(--dimk); font-size:10px; letter-spacing:2px; text-align:center; padding:16px;}
-.telem{display:flex; gap:14px; flex-wrap:wrap; justify-content:center; color:var(--mut); font-size:9px;
-  letter-spacing:1.2px; padding:2px 12px 6px;}
+#stagetelem{flex:0 0 auto;}
+.telem{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; color:var(--mut); font-size:8px;
+  letter-spacing:1px; padding:2px 10px;}
 .telem b{color:var(--ink); font-weight:normal;}
 #prog{height:2px; background:var(--ox); width:0; transition:width .2s;}
 
-/* the surface — the performance controls, always visible with the stage */
-#surface{border-top:1px solid var(--hair); padding:10px 12px calc(10px + env(safe-area-inset-bottom)); display:grid; gap:10px;
-  grid-template-columns:minmax(150px,1fr) auto; align-items:center;}
-#go{grid-row:1 / span 2; font-family:var(--fT); font-size:13px; min-height:96px;
-  background:var(--ox); color:var(--void); border:none; letter-spacing:1px;}
+/* the surface: compact, complete, never taller than its budget */
+#surface{flex:1 1 auto; min-height:0; border-top:1px solid var(--hair);
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+  display:flex; flex-direction:column; gap:8px; overflow:hidden;}
+#go{flex:0 0 52px; font-family:var(--fT); font-size:13px;
+  background:var(--ox); color:var(--void); border:none; letter-spacing:1px; width:100%;}
 #go:hover{background:var(--ink);}
 #go.needy{animation:pulse 1.6s infinite;}
 @keyframes pulse{50%{filter:brightness(1.25);}}
-#surfdials{display:grid; grid-template-columns:repeat(3,minmax(90px,1fr)) auto; gap:10px; align-items:end;}
-#surfdials .field{min-width:0;}
-#surfrow2{grid-column:2; display:flex; gap:8px; align-items:center; min-width:0;}
-#surfrow2 .field{flex:1; min-width:0;}
-#surfacts{display:flex; gap:8px;}
-#surfacts button{min-width:var(--tap); padding:0 10px;}
-#dice,#mutate{min-width:var(--tap); font-size:16px;}
+#surfdials{display:flex; gap:12px; align-items:flex-end;}
+#surfdials .field{flex:1; min-width:0; margin:0;}
+#surfdials .field label{margin-bottom:0; white-space:nowrap; overflow:hidden;}
+#surfdials input[type=range]{height:36px;}
+#surfdials .field:has(#chromaseg){flex:0 0 auto;}
+#chromaseg{display:flex; flex-wrap:nowrap; gap:4px;}
+#chromaseg button{min-height:36px; padding:0 8px; font-size:8px; white-space:nowrap;}
+#surfrow2{display:flex; gap:8px; align-items:center; min-height:0;}
+#surfrow2 .field{flex:1; min-width:0; margin:0;}
+#surfacts{display:flex; gap:6px; flex:0 0 auto;}
+#surfacts button{min-width:var(--tap); padding:0 8px;}
+#dice,#mutate{min-width:var(--tap); font-size:15px;}
 #oblivion{color:var(--ox); border-color:var(--oxd);}
 #download.ready,#xsave.ready{border-color:var(--ok); color:var(--ok);}
-@media (orientation:portrait), (max-width:899px){
-  #surface{grid-template-columns:1fr; }
-  #go{grid-row:auto; min-height:var(--tap); height:56px;}
-  #surfdials{grid-template-columns:1fr 1fr;}
-  #surfrow2{grid-column:auto;}
-}
-
-/* palette ribbon — one horizontal motion, never a wall */
-#surface .field.ribbon{grid-column:1 / -1;}
-.ribbon .seg{display:flex; overflow-x:auto; flex-wrap:nowrap; gap:6px; padding-bottom:4px;
-  scrollbar-width:none;}
+#surface .field.ribbon{margin:0;}
+.ribbon .seg{display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; gap:6px;
+  padding-bottom:2px; scrollbar-width:none;}
 .ribbon .seg::-webkit-scrollbar{display:none;}
 .ribbon .seg button{flex:0 0 auto;}
-
+@media (orientation:portrait), (max-width:899px){
+  #surface{flex:0 0 auto; gap:6px;}
+  #go{flex-basis:48px;}
+  #surfdials input[type=range]{height:32px;}
+}
 /* ============ SEGS + FIELDS + TOGGLES ============ */
 .field{margin:12px 0;}
 .seg{display:flex; flex-wrap:wrap; gap:6px;}
@@ -259,7 +274,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 15.1 · BLACKMASS<br>FIGURA</div>
+  <div id="mastrev">REV 15.2 · BLACKMASS<br>VIEWPORT LAW</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -288,7 +303,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 15.1 · BLACKMASS<br>FIGURA</div>
+    <div class="ver">REV 15.2 · BLACKMASS<br>VIEWPORT LAW</div>
   </header>
 
   <div class="colL">
@@ -4843,7 +4858,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='15.1';
+const REV_SELF='15.2';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5097,6 +5112,17 @@ document.addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='Enter')
 
   /* strip legacy panel class so old tab logic can't hide living organs */
   document.querySelectorAll('.panel').forEach(p=>p.classList.add('dead'));
+
+  /* fixed overlays live on the body, above the wreckage */
+  for(const id of ['galmodal','sellmodal','xmodal','saveview','mintbar','revbar','tipbar'])
+    if(g(id)) document.body.appendChild(g(id));
+
+  /* corpse kill: every original root not part of the cockpit dies */
+  const KEEP=new Set(['mast','cockpit','dock','galmodal','sellmodal','xmodal','saveview','mintbar','revbar','tipbar']);
+  for(const el of [...document.body.children]){
+    if(el.tagName==='SCRIPT'||el.tagName==='STYLE')continue;
+    if(!KEEP.has(el.id)) el.style.display='none';
+  }
 })();
 </script>
 </body>
