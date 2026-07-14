@@ -114,21 +114,24 @@ input[type=text],input[type=number],textarea{background:var(--well); color:var(-
 }
 /* PORTRAIT / NARROW: stage on top, dock at the thumb */
 @media (orientation:portrait), (max-width:899px){
-  #cockpit{grid-template-rows:auto auto minmax(0,1fr); grid-template-columns:1fr;}
-  #bay-stage{grid-row:1 / span 2; display:contents;}
+  #cockpit{grid-template-rows:auto auto auto minmax(0,1fr); grid-template-columns:1fr;}
+  #bay-stage{display:contents;}
   #stagewrap{grid-row:1;}
-  #bay-engine,#bay-archive{grid-row:3; grid-column:1; border-top:1px solid var(--hair); display:none;}
+  #stagetelem{grid-row:2;}
+  #surface{grid-row:3;}
+  #bay-engine,#bay-archive{grid-row:4; grid-column:1; border-top:1px solid var(--hair); display:none;}
   body[data-bay=engine] #bay-engine{display:flex;}
   body[data-bay=archive] #bay-archive{display:flex;}
   #dock{display:flex;}
-  :root{--msz:min(100vw - 20px, 34svh);}
+  :root{--msz:min(100vw - 20px, calc(100svh - 396px));}
 }
 /* ============ STAGE — THE MONITOR IS SIZED BY LAW, NEVER BY FLEX ============ */
 #bay-stage{background:var(--void);}
 #stagewrap{flex:0 0 auto; display:flex; align-items:center; justify-content:center; padding:10px; position:relative;}
 .monitor{position:relative; width:var(--msz,540px); height:var(--msz,540px); max-width:100%;}
-.monitor canvas,.monitor img{width:100%; height:100%; display:block; image-rendering:pixelated;}
-.screen-wrap{width:100%; height:100%;}
+.monitor canvas,.monitor img{position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated;}
+#result{display:none;}
+.screen-wrap{position:absolute; inset:0;}
 .osd{position:absolute; top:6px; left:8px; font-size:9px; letter-spacing:1.6px; color:var(--ok); z-index:3;}
 .rec{color:var(--ox);}
 .placeholder,.ph-block{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -150,7 +153,7 @@ input[type=text],input[type=number],textarea{background:var(--well); color:var(-
 @keyframes pulse{50%{filter:brightness(1.25);}}
 #surfdials{display:flex; gap:12px; align-items:flex-end;}
 #surfdials .field{flex:1; min-width:0; margin:0;}
-#surfdials .field label{margin-bottom:0; white-space:nowrap; overflow:hidden;}
+#surfdials .field label{margin-bottom:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:8px;}
 #surfdials input[type=range]{height:36px;}
 #surfdials .field:has(#chromaseg){flex:0 0 auto;}
 #chromaseg{display:flex; flex-wrap:nowrap; gap:4px;}
@@ -274,7 +277,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 15.2 · BLACKMASS<br>VIEWPORT LAW</div>
+  <div id="mastrev">REV 15.3 · BLACKMASS<br>MONITOR DISCIPLINE</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -303,7 +306,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 15.2 · BLACKMASS<br>VIEWPORT LAW</div>
+    <div class="ver">REV 15.3 · BLACKMASS<br>MONITOR DISCIPLINE</div>
   </header>
 
   <div class="colL">
@@ -4858,7 +4861,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='15.2';
+const REV_SELF='15.3';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
