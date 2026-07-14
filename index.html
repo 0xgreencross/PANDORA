@@ -341,6 +341,7 @@
         flex:1 1 0;min-height:0;}   /* both live: exact 50/50 of the column */
       #colA #vaultlist,#colA #gardenlist{max-height:none;flex:1;min-height:0;}
       #colA #vaultlist{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));}
+      #colA .labnote{display:none;}
     }
     #panels{flex:0 0 auto;position:static;}
     .panel{position:static;overflow:visible;}
@@ -371,7 +372,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 12.8 · LAZARUS<br>SPLIT ARCHIVE</div>
+    <div class="ver">REV 12.9 · LAZARUS<br>VAULT DOCTRINE TEXT</div>
   </header>
 
   <div class="colL">
@@ -521,6 +522,7 @@
             <input type="file" id="vfile" accept="application/json,.json" style="display:none">
           </div>
           <div id="vaultlist" class="voidscroll"></div>
+          <p class="labnote" id="vaultnote">THE VAULT IS THE COMMONS. ANYONE CAN STORE A LOOP HERE, NO WALLET, NO NAME, DNA INCLUDED. TAP A THUMB TO RESURRECT THE EXACT LOOP. THE HOUSE PRUNES WHAT ROTS.</p>
         </div>
         <div id="c-gardens">
           <div class="field">
@@ -537,7 +539,7 @@
           <p class="labnote">YOUR WALLET IS YOUR SHELF. PLANT WITHOUT LIMIT: EVERY SAVE IS SIGNED, PUBLIC, AND CURATED BY YOU ALONE. WHAT GROWS HERE MINTS IN THE NEXT ERA. PLANT NOW, MINT LATER.</p>
         </div>
       </div>
-      <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. The vault keeps them in this browser, surviving sessions and app upgrades.</p>
+      <p class="labnote">DNA cards resurrect the exact loop: seed, colorway, source, corruption, frames, all sigils, motion. The public vault keeps them for everyone. Your garden keeps them in your name.</p>
     </section>
   </main>
 
@@ -4622,7 +4624,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='12.8';
+const REV_SELF='12.9';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
