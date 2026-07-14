@@ -4173,6 +4173,17 @@ async function mintPage(id){
   const g=decodeGenome(res);
   if(!g){ $('mb-stat').textContent='NO GENOME AT Nº'+id+' — NOT YET INSCRIBED'; return; }
   MINT_G={id,...g};
+  mintMeta(g);
+  $('mb-stat').textContent='RESURRECTING FROM ON-CHAIN DNA…';
+  const c=unpackCard(g.dna);
+  if(c){ applyCard(c); generate(); $('mb-stat').textContent='LIVE · WHAT YOU SEE IS WHAT THE CHAIN STORES'; }
+  else $('mb-stat').textContent='DNA FAILED LOCAL DECODE (ERA MISMATCH?)';
+  mintButton(g);
+  clearInterval(MINT_TICK);
+  MINT_TICK=setInterval(()=>mintRefresh(false),12000);   // the corpus breathes: other buyers, closing windows
+}
+let MINT_G=null, MINT_TICK=0;
+function mintMeta(g){
   const kindStr=g.kind===0?'1/1 · SEALED AT INSCRIPTION'
     : g.kind===1?('LIMITED · '+g.minted+' OF '+g.maxSupply+' MINTED')
     : ('OPEN UNTIL '+new Date(g.saleEnd*1000).toISOString().slice(0,16).replace('T',' ')+' · '+g.minted+' MINTED');
@@ -4180,16 +4191,27 @@ async function mintPage(id){
     '<b>'+(g.ens||g.curator.slice(0,6)+'…'+g.curator.slice(-4))+'</b> · '+kindStr+
     (g.kind!==0?' · '+(Number(g.price)/1e18)+' ETH':'')+
     '<br>TRAITS '+(g.traits||'—')+'<br>DNA '+g.dna+'<br>COMMITMENT '+g.gifHash.slice(0,18)+'…';
-  $('mb-stat').textContent='RESURRECTING FROM ON-CHAIN DNA…';
-  const c=unpackCard(g.dna);
-  if(c){ applyCard(c); generate(); $('mb-stat').textContent='LIVE · WHAT YOU SEE IS WHAT THE CHAIN STORES'; }
-  else $('mb-stat').textContent='DNA FAILED LOCAL DECODE (ERA MISMATCH?)';
-  if(g.kind===0){ $('mb-collect').style.display='none'; }
-  else if(g.kind===1&&g.minted>=g.maxSupply){ $('mb-collect').textContent='SOLD OUT'; $('mb-collect').setAttribute('disabled',''); }
-  else if(g.kind===2&&Date.now()/1000>g.saleEnd){ $('mb-collect').textContent='WINDOW CLOSED'; $('mb-collect').setAttribute('disabled',''); }
-  else $('mb-collect').textContent='⛓ COLLECT · '+(Number(g.price)/1e18)+' ETH';
 }
-let MINT_G=null;
+function mintButton(g){
+  const b=$('mb-collect');
+  b.style.display='';
+  if(g.kind===0){ b.textContent='SOLD'; b.setAttribute('disabled',''); }
+  else if(g.kind===1&&g.minted>=g.maxSupply){ b.textContent='SOLD OUT'; b.setAttribute('disabled',''); }
+  else if(g.kind===2&&Date.now()/1000>g.saleEnd){ b.textContent='SALE ENDED'; b.setAttribute('disabled',''); }
+  else { b.removeAttribute('disabled'); b.textContent='⛓ COLLECT · '+(Number(g.price)/1e18)+' ETH'; }
+}
+async function mintRefresh(loud){
+  if(!MINT_G)return;
+  const sel=keccak256(utf8('genomes(uint256)')).slice(0,8);
+  const res=await ethCallLaz('0x'+sel+BigInt(MINT_G.id).toString(16).padStart(64,'0'));
+  const g=decodeGenome(res);
+  if(!g)return;
+  const grew=g.minted>MINT_G.minted;
+  MINT_G={id:MINT_G.id,...g};
+  mintMeta(g); mintButton(g);
+  if(loud&&grew)$('mb-stat').innerHTML='CONFIRMED ON-CHAIN ✓ · '+g.minted+(g.kind===1?' OF '+g.maxSupply:'')+' MINTED '+$('mb-stat').innerHTML.replace(/^[^<]*/,'');
+  return grew;
+}
 async function mintCollect(){
   try{
     if(!MINT_G)return;
@@ -4205,6 +4227,7 @@ async function mintCollect(){
       +' &nbsp;<a class="mblink" target="_blank" rel="noopener" href="'+LAZ_EXPLORER+'/tx/'+tx+'">VIEW TX ↗</a>'
       +' &nbsp;<button class="mbbtn" id="mb-gal">▦ YOUR COLLECTION</button>';
     $('mb-gal').addEventListener('click',()=>galShow('collected'));
+    (async()=>{ for(let i=0;i<20;i++){ await new Promise(r=>setTimeout(r,3000)); if(await mintRefresh(true))break; } })();
   }catch(e){ $('mb-stat').textContent='COLLECT: '+String(e&&e.message||e).slice(0,36); }
 }
 $('mb-collect').addEventListener('click',mintCollect);
@@ -4289,13 +4312,14 @@ async function galShow(which){
         if(bal&&BigInt(bal)>0n){
           const res=await ethCallLaz('0x'+keccak256(utf8('genomes(uint256)')).slice(0,8)+BigInt(i).toString(16).padStart(64,'0'));
           const g=decodeGenome(res);
-          if(g&&g.curator.toLowerCase()!==GADDR) mine.push({id:i,g,bal:BigInt(bal)});
+          if(g) mine.push({id:i,g,bal:BigInt(bal)});
         }
       }
       grid.innerHTML='';
       if(!mine.length){ grid.innerHTML='<div class="gtxt" style="position:static">NO COLLECTED LOOPS YET — COLLECT FROM OTHER CURATORS\u2019 MINT PAGES</div>'; return; }
       for(const t of mine){
-        grid.appendChild(galTile('Nº'+t.id+'\n'+(t.g.ens||t.g.curator.slice(0,8))+'\n×'+t.bal+'\n'+t.g.traits, null,
+        const who=t.g.curator.toLowerCase()===GADDR?'YOUR INSCRIPTION':(t.g.ens||t.g.curator.slice(0,8));
+        grid.appendChild(galTile('Nº'+t.id+'\n'+who+'\n×'+t.bal+'\n'+t.g.traits, null,
           ()=>{const c=unpackCard(t.g.dna); if(c){applyCard(c); generate(); $('galmodal').style.display='none';}}, false));
       }
     }catch(e){ grid.innerHTML='<div class="gtxt" style="position:static">CORPUS UNREACHABLE</div>'; }
