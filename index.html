@@ -251,6 +251,11 @@
   #mb-meta{font-family:var(--fD);font-weight:700;font-size:8px;color:var(--txt);letter-spacing:0;line-height:1.9;}
   #mb-meta b{color:var(--cyan);}
   #mb-stat{font-family:var(--fD);font-weight:700;font-size:8px;color:var(--mut);letter-spacing:0;margin-top:4px;}
+  .mblink{color:var(--cyan);text-decoration:none;border-bottom:1px solid var(--cyan);
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;}
+  .mbbtn{appearance:none;cursor:pointer;padding:5px 9px;border-radius:4px;margin-left:2px;
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
+    color:#05050a;background:var(--sulph);border:1px solid var(--sulph);}
   #mb-collect{appearance:none;cursor:pointer;flex:0 0 auto;padding:14px 18px;border-radius:6px;
     font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;
     color:#05050a;background:var(--cyan);border:1px solid var(--cyan);}
@@ -3990,6 +3995,7 @@ async function gRefresh(){
    ========================================================================== */
 const LAZARUS_ADDR='0x072B09Cf9F428cd09D771a75c3b9889Ba7a3E3CD';   // SEPOLIA REHEARSAL
 const LAZARUS_CHAIN='0xaa36a7';                                     // 11155111
+const LAZ_EXPLORER = LAZARUS_CHAIN==='0x1' ? 'https://etherscan.io' : 'https://sepolia.etherscan.io';
 const LAZ_RPCS=['https://ethereum-sepolia-rpc.publicnode.com','https://sepolia.drpc.org','https://1rpc.io/sepolia'];
 function abiU(v,bits){ return BigInt(v).toString(16).padStart(64,'0'); }
 function abiStr(str){
@@ -4069,7 +4075,8 @@ async function sellInscribe(){
     sstat('CALLING WALLET — CONFIRM THE INSCRIPTION');
     const tx=await (GPROV||window.ethereum).request({method:'eth_sendTransaction',
       params:[{from:GADDR,to:LAZARUS_ADDR,value:'0x'+BigInt(fee||'0x0').toString(16),data}]});
-    sstat('INSCRIBED · TX '+tx.slice(0,10)+'…');
+    $('sellstat').innerHTML='INSCRIBED ✓ &nbsp;<a class="mblink" target="_blank" rel="noopener" href="'+LAZ_EXPLORER+'/tx/'+tx+'">VIEW TX ↗</a>';
+    $('osd').textContent='INSCRIBED · TX '+tx.slice(0,10)+'…';
     $('sellmodal').style.display='none';
   }catch(e){ sstat('SELL: '+String(e&&e.message||e).slice(0,40)); }
 }
@@ -4188,7 +4195,10 @@ async function mintCollect(){
     $('mb-stat').textContent='CALLING WALLET — CONFIRM THE COLLECT';
     const tx=await (GPROV||window.ethereum).request({method:'eth_sendTransaction',
       params:[{from:GADDR,to:LAZARUS_ADDR,value:'0x'+MINT_G.price.toString(16),data}]});
-    $('mb-stat').textContent='COLLECTED · TX '+tx.slice(0,10)+'… · REFRESH TO SEE THE COUNT';
+    $('mb-stat').innerHTML='COLLECTED ✓ · THE LOOP ABOVE IS YOUR PIECE, PLAYING LIVE'
+      +' &nbsp;<a class="mblink" target="_blank" rel="noopener" href="'+LAZ_EXPLORER+'/tx/'+tx+'">VIEW TX ↗</a>'
+      +' &nbsp;<button class="mbbtn" id="mb-gal">▦ YOUR COLLECTION</button>';
+    $('mb-gal').addEventListener('click',()=>galShow('collected'));
   }catch(e){ $('mb-stat').textContent='COLLECT: '+String(e&&e.message||e).slice(0,36); }
 }
 $('mb-collect').addEventListener('click',mintCollect);
