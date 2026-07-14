@@ -219,6 +219,18 @@
   #xm-reroll{flex:0 0 46px;color:var(--cyan);background:var(--panel2);border:1px solid var(--line2);}
   #xm-save{flex:1;color:#05050a;background:var(--sulph);border:1px solid var(--sulph);}
   #xm-compose{flex:1;color:#05050a;background:var(--cyan);border:1px solid var(--cyan);}
+  #mintbar{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:58;
+    background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:12px 14px;
+    align-items:center;gap:14px;justify-content:space-between;
+    box-shadow:0 8px 30px rgba(0,0,0,.6);}
+  #mb-title{font-family:var(--fD);font-weight:700;font-size:11px;color:var(--sulph);letter-spacing:0;}
+  #mb-meta{font-family:var(--fD);font-weight:700;font-size:8px;color:var(--txt);letter-spacing:0;line-height:1.9;}
+  #mb-meta b{color:var(--cyan);}
+  #mb-stat{font-family:var(--fD);font-weight:700;font-size:8px;color:var(--mut);letter-spacing:0;margin-top:4px;}
+  #mb-collect{appearance:none;cursor:pointer;flex:0 0 auto;padding:14px 18px;border-radius:6px;
+    font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;
+    color:#05050a;background:var(--cyan);border:1px solid var(--cyan);}
+  #mb-collect[disabled]{opacity:.4;cursor:default;}
   #sellmodal{display:none;position:fixed;inset:0;z-index:61;background:rgba(3,3,6,.92);
     align-items:center;justify-content:center;padding:16px;}
   #sellstat{font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;
@@ -485,6 +497,14 @@
 
 
 
+<div id="mintbar">
+  <div>
+    <div id="mb-title"></div>
+    <div id="mb-meta"></div>
+    <div id="mb-stat"></div>
+  </div>
+  <button id="mb-collect">⛓ COLLECT</button>
+</div>
 <div id="sellmodal">
   <div class="xm-box">
     <div class="xm-head">INSCRIBE INTO LAZARUS <span id="sellnet"></span><br><span id="sellcard"></span></div>
@@ -4053,6 +4073,88 @@ $('sellkind').addEventListener('click',()=>setTimeout(sellUI,0));
     }
   }catch(e){}
 })();
+
+/* ============================================================================
+   ?mint=<id> — the corpus reader + storefront. Reads the genome straight from
+   LAZARUS over RPC (hand-rolled ABI decode), shows what the chain says, and
+   resurrects the loop from the on-chain DNA. COLLECT pays the curator.
+   ========================================================================== */
+function hexWord(res,i){ return res.slice(2+i*64, 2+(i+1)*64); }
+function hexAddr(w){ return '0x'+w.slice(24); }
+function hexNum(w){ return BigInt('0x'+w); }
+function hexStrAt(res,offWord){
+  const off=Number(hexNum(offWord))*2;
+  const base=2+off;
+  const len=Number(BigInt('0x'+res.slice(base,base+64)));
+  const raw=res.slice(base+64, base+64+len*2);
+  const bytes=[]; for(let i=0;i<raw.length;i+=2)bytes.push(parseInt(raw.substr(i,2),16));
+  return new TextDecoder().decode(new Uint8Array(bytes));
+}
+function decodeGenome(res){
+  if(!res||res.length<2+13*64)return null;
+  const g={
+    dna:      hexStrAt(res,hexWord(res,0)),
+    traits:   hexStrAt(res,hexWord(res,1)),
+    ens:      hexStrAt(res,hexWord(res,2)),
+    curator:  hexAddr(hexWord(res,3)),
+    inscribedAt:Number(hexNum(hexWord(res,4))),
+    saleEnd:  Number(hexNum(hexWord(res,5))),
+    maxSupply:Number(hexNum(hexWord(res,6))),
+    minted:   Number(hexNum(hexWord(res,7))),
+    price:    hexNum(hexWord(res,8)),
+    kind:     Number(hexNum(hexWord(res,9))),
+    gifHash:  '0x'+hexWord(res,10),
+    curatorHidden: hexNum(hexWord(res,11))!==0n,
+    houseTier:Number(hexNum(hexWord(res,12))),
+  };
+  return g.curator!=='0x'+'0'.repeat(40)?g:null;
+}
+async function mintPage(id){
+  $('mintbar').style.display='flex';
+  $('mb-title').textContent='PANDORA Nº'+id;
+  $('mb-stat').textContent='READING THE CORPUS…';
+  const sel=keccak256(utf8('genomes(uint256)')).slice(0,8);
+  const res=await ethCallLaz('0x'+sel+BigInt(id).toString(16).padStart(64,'0'));
+  const g=decodeGenome(res);
+  if(!g){ $('mb-stat').textContent='NO GENOME AT Nº'+id+' — NOT YET INSCRIBED'; return; }
+  MINT_G={id,...g};
+  const kindStr=g.kind===0?'1/1 · SEALED AT INSCRIPTION'
+    : g.kind===1?('LIMITED · '+g.minted+' OF '+g.maxSupply+' MINTED')
+    : ('OPEN UNTIL '+new Date(g.saleEnd*1000).toISOString().slice(0,16).replace('T',' ')+' · '+g.minted+' MINTED');
+  $('mb-meta').innerHTML=
+    '<b>'+(g.ens||g.curator.slice(0,6)+'…'+g.curator.slice(-4))+'</b> · '+kindStr+
+    (g.kind!==0?' · '+(Number(g.price)/1e18)+' ETH':'')+
+    '<br>DNA '+g.dna+'<br>COMMITMENT '+g.gifHash.slice(0,18)+'…';
+  $('mb-stat').textContent='RESURRECTING FROM ON-CHAIN DNA…';
+  const c=unpackCard(g.dna);
+  if(c){ applyCard(c); generate(); $('mb-stat').textContent='LIVE · WHAT YOU SEE IS WHAT THE CHAIN STORES'; }
+  else $('mb-stat').textContent='DNA FAILED LOCAL DECODE (ERA MISMATCH?)';
+  if(g.kind===0){ $('mb-collect').style.display='none'; }
+  else if(g.kind===1&&g.minted>=g.maxSupply){ $('mb-collect').textContent='SOLD OUT'; $('mb-collect').setAttribute('disabled',''); }
+  else if(g.kind===2&&Date.now()/1000>g.saleEnd){ $('mb-collect').textContent='WINDOW CLOSED'; $('mb-collect').setAttribute('disabled',''); }
+  else $('mb-collect').textContent='⛓ COLLECT · '+(Number(g.price)/1e18)+' ETH';
+}
+let MINT_G=null;
+async function mintCollect(){
+  try{
+    if(!MINT_G)return;
+    if(!GADDR){ await gConnect(); if(!GADDR)return; }
+    try{ await (GPROV||window.ethereum).request({method:'wallet_switchEthereumChain',params:[{chainId:LAZARUS_CHAIN}]}); }
+    catch(e){ $('mb-stat').textContent='APPROVE THE NETWORK SWITCH'; return; }
+    const sel=keccak256(utf8('collect(uint256,uint256)')).slice(0,8);
+    const data='0x'+sel+BigInt(MINT_G.id).toString(16).padStart(64,'0')+1n.toString(16).padStart(64,'0');
+    $('mb-stat').textContent='CALLING WALLET — CONFIRM THE COLLECT';
+    const tx=await (GPROV||window.ethereum).request({method:'eth_sendTransaction',
+      params:[{from:GADDR,to:LAZARUS_ADDR,value:'0x'+MINT_G.price.toString(16),data}]});
+    $('mb-stat').textContent='COLLECTED · TX '+tx.slice(0,10)+'… · REFRESH TO SEE THE COUNT';
+  }catch(e){ $('mb-stat').textContent='COLLECT: '+String(e&&e.message||e).slice(0,36); }
+}
+$('mb-collect').addEventListener('click',mintCollect);
+(function(){
+  const mp=new URLSearchParams(location.search).get('mint');
+  if(mp&&/^\d+$/.test(mp)) setTimeout(()=>mintPage(mp),400);
+})();
+
 $('gconnect').addEventListener('click',gConnect);
 $('gplant').addEventListener('click',async ()=>{
   const card=$('dna').value.trim(); if(!card||!GADDR)return;
