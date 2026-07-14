@@ -375,7 +375,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 14.0 · FORK ONE<br>COMPOSE FIRST, CORRUPT SECOND</div>
+    <div class="ver">REV 14.1 · FORK ONE<br>VOID SANCTITY</div>
   </header>
 
   <div class="colL">
@@ -1470,6 +1470,23 @@ function analogPass(src,dst,scene,theta,corr,fx){
    wound anchors all read the same organic coastline. Glitch needs order to
    violate; this is the order.
    ========================================================================== */
+function sanctityIdx(indices, scene, frame){
+  /* the third act: after every storm, the void reclaims its territory.
+     ~80% of violated void pixels return to black; the survivors read as
+     debris drifting in the dark — evidence of the wounds, not noise. */
+  const vf=(scene.voidamt|0)/100;
+  if(vf<=0&&scene.mode!=='MASS')return;
+  const mf=massField(scene);
+  for(let y=0;y<H;y++){const cy=((y*FW/H)|0)*FW;
+    for(let x=0;x<W;x++){
+      if(mf.n[cy+((x*FW/W)|0)]>=mf.q)continue;
+      const o=y*W+x;
+      if(indices[o]<3)continue;                                   // already dark
+      if(((x*7+y*13+frame*31)&15)<3)continue;                      // ~19% debris survives
+      indices[o]=0;
+    }
+  }
+}
 function massField(scene){
   if(scene._mf) return scene._mf;
   const rng=mulberry32((scene.seed^0x14CE55)>>>0);
@@ -2974,6 +2991,7 @@ async function generateSeq(){
     quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
              (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
     indexPass(indices, pal.length, scene, theta, corr, fx);
+    sanctityIdx(indices, scene, i);
 
     // live preview from quantized indices
     const pd=preview.data;
@@ -3151,6 +3169,7 @@ self.onmessage=function(e){
       quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
                (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
       indexPass(indices,pal.length,scene,theta,corr,fx);
+      sanctityIdx(indices, scene, i);
       const chunks=[];
       { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,DELAY,MCS[0]); chunks.push(cs.done().slice()); }
       for(let k2=0;k2<3;k2++){const d=DIMS[k2+1],xi=xidx[k2];
@@ -4805,7 +4824,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='14.0';
+const REV_SELF='14.1';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
