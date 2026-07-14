@@ -238,6 +238,9 @@
   .galv img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;}
   .galv .gtxt{position:absolute;inset:0;padding:6px;font-family:var(--fD);font-weight:700;font-size:7px;
     color:var(--txt);letter-spacing:0;line-height:1.8;overflow:hidden;}
+  .galv .gtag{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:3px 6px;
+    font-family:var(--fD);font-weight:700;font-size:7px;letter-spacing:0;
+    color:var(--txt);background:rgba(5,5,10,.78);}
   .galv.bsel{outline:2px solid var(--sulph);outline-offset:-2px;}
   .galv .bpick{position:absolute;right:4px;bottom:4px;z-index:2;appearance:none;cursor:pointer;
     padding:2px 6px;border-radius:3px;font-family:var(--fD);font-weight:700;font-size:8px;
@@ -372,7 +375,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 12.9 · LAZARUS<br>VAULT DOCTRINE TEXT</div>
+    <div class="ver">REV 13.0 · LAZARUS<br>FACES FOR SOULS</div>
   </header>
 
   <div class="colL">
@@ -4304,9 +4307,12 @@ function breedCards(a,b,salt){
   if(a.ov||b.ov) child.ov = pick(a.ov,b.ov);
   return child;
 }
-function galTile(txt,thumb,onTap,pickable,key){
+function galTile(txt,thumb,onTap,pickable,key,tag){
   const d=document.createElement('div'); d.className='galv';
-  if(thumb){ const im=document.createElement('img'); im.src=thumb; d.appendChild(im); }
+  if(thumb){
+    const im=document.createElement('img'); im.src=thumb; d.appendChild(im);
+    if(tag){ const g=document.createElement('div'); g.className='gtag'; g.textContent=tag; d.appendChild(g); }
+  }
   else { const t=document.createElement('div'); t.className='gtxt'; t.textContent=txt; d.appendChild(t); }
   d.addEventListener('click',onTap);
   if(pickable){
@@ -4361,10 +4367,20 @@ async function galShow(which){
       }
       grid.innerHTML='';
       if(!mine.length){ grid.innerHTML='<div class="gtxt" style="position:static">NO COLLECTED LOOPS YET — COLLECT FROM OTHER CURATORS\u2019 MINT PAGES</div>'; return; }
+      /* the chain stores the soul; the archives store the face. Join by DNA. */
+      const thumbs={};
+      try{
+        const cards=mine.map(t=>'"'+t.g.dna+'"').join(',');
+        const q1=await fetch(SB.url+'/rest/v1/gardens?card=in.('+encodeURIComponent(cards)+')&select=card,thumb',{headers:sbHeaders()});
+        for(const r of await q1.json()) thumbs[r.card]=thumbs[r.card]||r.thumb;
+        const q2=await fetch(SB.url+'/rest/v1/vault?card=in.('+encodeURIComponent(cards)+')&select=card,thumb',{headers:sbHeaders()});
+        for(const r of await q2.json()) thumbs[r.card]=thumbs[r.card]||r.thumb;
+      }catch(e){}
       for(const t of mine){
         const who=t.g.curator.toLowerCase()===GADDR?'YOUR INSCRIPTION':(t.g.ens||t.g.curator.slice(0,8));
-        grid.appendChild(galTile('Nº'+t.id+'\n'+who+'\n×'+t.bal+'\n'+t.g.traits, null,
-          ()=>{const c=unpackCard(t.g.dna); if(c){applyCard(c); generate(); $('galmodal').style.display='none';}}, false));
+        const tap=()=>{const c=unpackCard(t.g.dna); if(c){applyCard(c); generate(); $('galmodal').style.display='none';}};
+        grid.appendChild(galTile('Nº'+t.id+'\n'+who+'\n×'+t.bal+'\n'+t.g.traits,
+          thumbs[t.g.dna]||null, tap, false, null, 'Nº'+t.id+' · ×'+t.bal));
       }
     }catch(e){ grid.innerHTML='<div class="gtxt" style="position:static">CORPUS UNREACHABLE</div>'; }
   }
@@ -4624,7 +4640,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='12.9';
+const REV_SELF='13.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
