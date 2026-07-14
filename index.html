@@ -250,6 +250,9 @@
   #breedgo[disabled]{opacity:.35;cursor:default;}
   #galclose{appearance:none;cursor:pointer;padding:10px 0;border-radius:5px;color:var(--mut);
     background:var(--panel2);border:1px solid var(--line);font-family:var(--fD);font-weight:700;font-size:8px;}
+  #revbar{display:none;position:fixed;top:0;left:0;right:0;z-index:90;cursor:pointer;
+    padding:10px;text-align:center;font-family:var(--fD);font-weight:700;font-size:8px;
+    letter-spacing:0;color:#05050a;background:var(--sulph);}
   #mintbar{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:58;
     background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:12px 14px;
     align-items:center;gap:14px;justify-content:space-between;
@@ -551,6 +554,7 @@
     <button id="galclose">CLOSE</button>
   </div>
 </div>
+<div id="revbar"></div>
 <div id="mintbar">
   <div>
     <div id="mb-title"></div>
@@ -4576,6 +4580,28 @@ function relocateCollections(){
 }
 relocateCollections();
 if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',relocateCollections);
+
+/* ============================================================================
+   REVISION SENTINEL — the box notices when the tab it lives in has gone
+   stale (CDN + browser caches) and offers the cure where you can see it.
+   ========================================================================== */
+const REV_SELF='12.5';
+async function revCheck(){
+  try{
+    const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
+    const t=await r.text();
+    const m=t.match(/REV (\d+\.\d+[a-z]?)/);
+    if(m&&m[1]!==REV_SELF){
+      const b=$('revbar');
+      b.textContent='A NEWER PANDORA IS LIVE (REV '+m[1]+' — THIS TAB RUNS '+REV_SELF+') · TAP TO RELOAD';
+      b.style.display='block';
+    }
+  }catch(e){}
+}
+$('revbar').addEventListener('click',()=>{ location.href=location.pathname+'?v='+Date.now(); });
+setTimeout(revCheck,8000);
+setInterval(revCheck,300000);
+
 $('dice').addEventListener('click',randSeed);
 function mutateCard(c,rng){
   const m=JSON.parse(JSON.stringify(c));
