@@ -143,9 +143,13 @@
     font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
     color:var(--txt);background:var(--panel);border:1px solid var(--line);}
   #vtoken::placeholder,#vrepo::placeholder{color:var(--mut);}
+  #archive{display:none;}
+  #collections,#c-vault,#c-gardens{display:flex;flex-direction:column;gap:10px;}
   #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:248px;}
   #gardenlist{max-height:280px;}
-  .voidscroll{overflow-y:auto;overscroll-behavior:contain;
+  .voidscroll{overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y proximity;scroll-padding-top:2px;}
+  .voidscroll .ve,.voidscroll .gsec{scroll-snap-align:start;}
+  .voidscroll{
     scrollbar-width:thin;scrollbar-color:transparent transparent;}
   .voidscroll:hover,.voidscroll.scrolling{scrollbar-color:rgba(255,255,255,.22) transparent;}
   .voidscroll::-webkit-scrollbar{width:4px;height:4px;}
@@ -237,6 +241,17 @@
     .colL{display:flex;flex-direction:column;gap:9px;flex:0 1 56%;max-width:660px;}
     .colR{display:flex;flex-direction:column;gap:10px;flex:1 1 360px;min-width:360px;}
     .monitor{width:min(100%,76dvh);align-self:flex-start;}
+    /* THE ARCHIVE — desktop floor beneath the instrument deck. The collections
+       node relocates here (see relocateCollections): vault and gardens get the
+       horizontal room they structurally want, capped wells, ghost scroll. */
+    #archive{max-width:1140px;margin:26px auto 40px;padding:0 20px;
+      display:grid;grid-template-columns:3fr 2fr;gap:26px;align-items:start;}
+    #archive:empty{display:none;}
+    #archive #collections{display:contents;}
+    #archive #vaultlist{max-height:300px;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
+    #archive #gardenlist{max-height:300px;}
+    #archive .gsec .grow{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
+    #c-vault,#c-gardens{display:flex;flex-direction:column;gap:10px;min-width:0;}
     /* panels hug their content per tab — no more 600px void on SIGNAL/LAB.
        Mobile keeps the absolute-overlay panels untouched. */
     #panels{flex:0 0 auto;position:static;}
@@ -268,7 +283,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 10.7 · JANUS<br>GHOST SCROLL</div>
+    <div class="ver">REV 11.0 · JANUS<br>DECK & ARCHIVE</div>
   </header>
 
   <div class="colL">
@@ -402,25 +417,31 @@
         <button id="dnacopy" class="dice" title="copy card">⧉</button>
         <button id="dnaload" class="dice" title="reproduce from card">▶</button>
       </div>
-      <div class="field">
-        <label>VAULT <span class="v" id="vcount"></span></label>
-        <button id="vaultadd" disabled>⬇ STORE CURRENT LOOP</button>
-      </div>
-      <div class="duo">
-        <button id="vexport" class="vio">⇪ EXPORT</button>
-        <button id="vimport" class="vio">⇩ IMPORT</button>
-        <input type="file" id="vfile" accept="application/json,.json" style="display:none">
-      </div>
-      <div id="vaultlist" class="voidscroll"></div>
-      <div class="field">
-        <label>GARDENS <span class="v" id="gaddr"></span></label>
-        <div class="duo">
-          <button id="gconnect" class="vio">◈ CONNECT WALLET</button>
-          <button id="gplant" class="vio" disabled>⚘ SAVE TO MY GARDEN</button>
+      <div id="collections">
+        <div id="c-vault">
+          <div class="field">
+            <label>PUBLIC VAULT <span class="v" id="vcount"></span></label>
+            <button id="vaultadd" disabled>⬇ STORE CURRENT LOOP</button>
+          </div>
+          <div class="duo">
+            <button id="vexport" class="vio">⇪ EXPORT</button>
+            <button id="vimport" class="vio">⇩ IMPORT</button>
+            <input type="file" id="vfile" accept="application/json,.json" style="display:none">
+          </div>
+          <div id="vaultlist" class="voidscroll"></div>
+        </div>
+        <div id="c-gardens">
+          <div class="field">
+            <label>GARDENS <span class="v" id="gaddr"></span></label>
+            <div class="duo">
+              <button id="gconnect" class="vio">◈ CONNECT WALLET</button>
+              <button id="gplant" class="vio" disabled>⚘ SAVE TO MY GARDEN</button>
+            </div>
+          </div>
+          <div id="gardenlist" class="voidscroll"></div>
+          <p class="labnote">YOUR WALLET IS YOUR SHELF. PLANT WITHOUT LIMIT: EVERY SAVE IS SIGNED, PUBLIC, AND CURATED BY YOU ALONE. WHAT GROWS HERE MINTS IN THE NEXT ERA. PLANT NOW, MINT LATER.</p>
         </div>
       </div>
-      <div id="gardenlist" class="voidscroll"></div>
-      <p class="labnote">YOUR WALLET IS YOUR SHELF. PLANT WITHOUT LIMIT: EVERY SAVE IS SIGNED, PUBLIC, AND CURATED BY YOU ALONE. WHAT GROWS HERE MINTS IN THE NEXT ERA. PLANT NOW, MINT LATER.</p>
       <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. The vault keeps them in this browser, surviving sessions and app upgrades.</p>
     </section>
   </main>
@@ -434,6 +455,8 @@
   </div>
   </div>
 </div>
+
+<div id="archive"></div>
 
 <div id="xmodal">
   <div class="xm-box">
@@ -4015,6 +4038,17 @@ document.querySelectorAll('.voidscroll').forEach(el=>{
     clearTimeout(t); t=setTimeout(()=>el.classList.remove('scrolling'),700);
   },{passive:true});
 });
+/* the collections live in LAB on mobile and on the archive floor on desktop.
+   One node, two rooms; listeners survive the move. */
+const DESKTOP_MQ=window.matchMedia?window.matchMedia('(min-width:900px)'):null;
+function relocateCollections(){
+  const c=$('collections'), lab=$('p-lab'), ar=$('archive');
+  if(!c||!lab||!ar)return;
+  if(DESKTOP_MQ&&DESKTOP_MQ.matches){ if(c.parentElement!==ar)ar.appendChild(c); }
+  else { if(c.parentElement!==lab)lab.insertBefore(c,lab.querySelector('.labnote')); }
+}
+relocateCollections();
+if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',relocateCollections);
 $('dice').addEventListener('click',randSeed);
 $('resetall').addEventListener('click',()=>{
   document.querySelectorAll('.tg').forEach(tg=>{ tg.dataset.on=0; state.fx[tg.dataset.fx]=false; });
