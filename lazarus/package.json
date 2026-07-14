@@ -1,0 +1,12 @@
+{
+  "name": "lazarus",
+  "version": "1.0.0",
+  "description": "LAZARUS — the DITHERVOID // PANDORA corpus. ERC-1155 editions with flat inscription fees, dual-key curation, on-chain metadata, and a swappable renderer.",
+  "license": "MIT",
+  "scripts": { "test": "hardhat test", "compile": "hardhat compile" },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.4.0",
+    "hardhat": "^2.22.0"
+  }
+}
