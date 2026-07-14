@@ -244,16 +244,29 @@
     /* THE ARCHIVE — desktop floor beneath the instrument deck. The collections
        node relocates here (see relocateCollections): vault and gardens get the
        horizontal room they structurally want, capped wells, ghost scroll. */
-    #archive{max-width:1140px;margin:26px auto 40px;padding:0 20px;
+    #archive{max-width:1140px;margin:18px auto 40px;padding:0 20px;
       display:grid;grid-template-columns:3fr 2fr;gap:26px;align-items:start;}
-    #archive:empty{display:none;}
+    #arclabel{grid-column:1/-1;font-family:var(--fD);font-weight:700;font-size:9px;
+      letter-spacing:0;color:var(--mut);}
     #archive #collections{display:contents;}
+    /* mid-width: shorter monitor so the archive peeks above the fold */
+    .screen-wrap{max-height:64dvh;}
     #archive #vaultlist{max-height:300px;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
     #archive #gardenlist{max-height:300px;}
     #archive .gsec .grow{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
     #c-vault,#c-gardens{display:flex;flex-direction:column;gap:10px;min-width:0;}
     /* panels hug their content per tab — no more 600px void on SIGNAL/LAB.
        Mobile keeps the absolute-overlay panels untouched. */
+    @media (min-width:1280px){
+      body{display:grid;grid-template-columns:minmax(0,1fr) 400px;align-items:start;}
+      #app{grid-column:1;max-width:1140px;}
+      .screen-wrap{max-height:76dvh;}
+      #archive{grid-column:2;position:sticky;top:0;max-height:100dvh;overflow:hidden;
+        display:flex;flex-direction:column;gap:14px;margin:14px 20px 14px 0;padding:0;}
+      #archive #collections{display:flex;flex-direction:column;gap:14px;min-height:0;}
+      #archive #vaultlist{max-height:44dvh;}
+      #archive #gardenlist{max-height:26dvh;}
+    }
     #panels{flex:0 0 auto;position:static;}
     .panel{position:static;overflow:visible;}
     #p-sigils{height:520px;}
@@ -283,7 +296,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 11.0 · JANUS<br>DECK & ARCHIVE</div>
+    <div class="ver">REV 11.1 · JANUS<br>TRI-COLUMN DECK</div>
   </header>
 
   <div class="colL">
@@ -456,7 +469,7 @@
   </div>
 </div>
 
-<div id="archive"></div>
+<div id="archive"><div id="arclabel">THE ARCHIVE</div></div>
 
 <div id="xmodal">
   <div class="xm-box">
@@ -4044,8 +4057,13 @@ const DESKTOP_MQ=window.matchMedia?window.matchMedia('(min-width:900px)'):null;
 function relocateCollections(){
   const c=$('collections'), lab=$('p-lab'), ar=$('archive');
   if(!c||!lab||!ar)return;
-  if(DESKTOP_MQ&&DESKTOP_MQ.matches){ if(c.parentElement!==ar)ar.appendChild(c); }
-  else { if(c.parentElement!==lab)lab.insertBefore(c,lab.querySelector('.labnote')); }
+  if(DESKTOP_MQ&&DESKTOP_MQ.matches){
+    if(c.parentElement!==ar)ar.appendChild(c);
+    ar.style.display='';
+  } else {
+    ar.style.display='none';
+    if(c.parentElement!==lab)lab.insertBefore(c,lab.querySelector('.labnote'));
+  }
 }
 relocateCollections();
 if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',relocateCollections);
