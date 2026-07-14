@@ -303,7 +303,7 @@
   #saveview .sv-close{appearance:none;cursor:pointer;border-radius:4px;
     font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
     padding:13px 28px;color:var(--txt);background:var(--panel);border:1px solid var(--line2);}
-  @media (min-width:900px) and (pointer:fine){
+  @media (min-width:900px){   /* WIDTH decides the band; pointer only tunes scroll physics */
     /* THE BAND DOCTRINE — explicit grid geometry per band; wrapping abolished.
        DECK (900–1439): monitor + controls, archive lives in LAB.
        TRI (>=1440):    monitor + controls + 50/50 archive as a third track.
@@ -362,7 +362,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 12.6 · LAZARUS<br>BAND DOCTRINE</div>
+    <div class="ver">REV 12.7 · LAZARUS<br>WIDTH IS THE BAND</div>
   </header>
 
   <div class="colL">
@@ -3271,7 +3271,7 @@ $('xm-reroll').addEventListener('click',()=>{
 });
 $('xm-save').addEventListener('click',()=>saveX());
 $('xm-compose').addEventListener('click',()=>{
-  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(XM_TXT),'_blank','noopener');
+  xLaunch(XM_TXT);
 });
 $('xm-close').addEventListener('click',()=>{$('xmodal').style.display='none';});
 $('xmodal').addEventListener('click',ev=>{ if(ev.target===$('xmodal'))$('xmodal').style.display='none'; });
@@ -3804,6 +3804,28 @@ async function keccak256Async(bytes,onProgress){
   for(let i=0;i<4;i++){ let v=st[i];
     for(let b=0;b<8;b++){ out+=((v>>BigInt(b*8))&0xffn).toString(16).padStart(2,'0'); } }
   return out;
+}
+function xLaunch(txt){
+  /* the app is the destination; the web intent is the consolation prize.
+     iOS: custom scheme + timed fallback (if X took over, the tab hid and the
+     timer's world ended). Android: intent:// carries its own fallback. */
+  const enc=encodeURIComponent(txt);
+  const web='https://x.com/intent/tweet?text='+enc;
+  const ua=navigator.userAgent||'';
+  const iOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const android=/Android/i.test(ua);
+  if(android){
+    location.href='intent://post?message='+enc
+      +'#Intent;scheme=twitter;package=com.twitter.android;S.browser_fallback_url='
+      +encodeURIComponent(web)+';end';
+    return;
+  }
+  if(iOS){
+    location.href='twitter://post?message='+enc;
+    setTimeout(()=>{ if(!document.hidden) location.href=web; },1400);
+    return;
+  }
+  window.open(web,'_blank','noopener');
 }
 function rotl(x,n){ n=BigInt(n%64); return ((x<<n)|(x>>(64n-n)))&M64; }
 function keccakF(st){
@@ -4574,7 +4596,7 @@ const EMBED=(function(){
   catch(e){ return true; }   // cross-origin top access throws inside an iframe: that IS embed
 })();
 if(EMBED)document.body.classList.add('embed');
-const DESKTOP_MQ=window.matchMedia?window.matchMedia('(min-width:1440px) and (pointer:fine)'):null;
+const DESKTOP_MQ=window.matchMedia?window.matchMedia('(min-width:1440px)'):null;
 function relocateCollections(){
   const c=$('collections'), lab=$('p-lab'), ar=$('colA');
   if(!c||!lab||!ar)return;
@@ -4591,7 +4613,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='12.6';
+const REV_SELF='12.7';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
