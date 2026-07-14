@@ -259,7 +259,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 10.5c · JANUS<br>NO AUTOSAVE</div>
+    <div class="ver">REV 10.6 · JANUS<br>ENS GARDENS</div>
   </header>
 
   <div class="colL">
@@ -3585,6 +3585,127 @@ $('vfile').addEventListener('change',ev=>{
    function verifies the signature server-side and performs the write with
    privileged keys. No sessions, no tokens in the page, nothing to steal.
    ========================================================================== */
+
+/* ============================================================================
+   ENS — raw JSON-RPC reverse resolution with forward verification. No libs:
+   keccak-256 and EIP-137 namehash implemented here; reverse claims are only
+   trusted when the claimed name resolves back to the same address.
+   ========================================================================== */
+const K_RC=[1n,0x8082n,0x800000000000808an,0x8000000080008000n,0x808bn,0x80000001n,
+  0x8000000080008081n,0x8000000000008009n,0x8an,0x88n,0x80008009n,0x8000000an,
+  0x8000808bn,0x800000000000008bn,0x8000000000008089n,0x8000000000008003n,
+  0x8000000000008002n,0x8000000000000080n,0x800an,0x800000008000000an,
+  0x8000000080008081n,0x8000000000008080n,0x80000001n,0x8000000080008008n];
+const K_R=[[0,36,3,41,18],[1,44,10,45,2],[62,6,43,15,61],[28,55,25,21,56],[27,20,39,8,14]];
+const M64=(1n<<64n)-1n;
+function keccak256(bytes){
+  const st=new Array(25).fill(0n);
+  const rate=136;
+  const buf=new Uint8Array(rate);
+  let off=0;
+  function absorb(){
+    for(let i=0;i<rate/8;i++){
+      let v=0n;
+      for(let b=7;b>=0;b--)v=(v<<8n)|BigInt(buf[i*8+b]);
+      st[i]^=v;
+    }
+    keccakF(st);
+    off=0; buf.fill(0);
+  }
+  for(const byte of bytes){ buf[off++]=byte; if(off===rate)absorb(); }
+  buf[off]^=0x01; buf[rate-1]^=0x80; absorb();
+  let out='';
+  for(let i=0;i<4;i++){
+    let v=st[i];
+    for(let b=0;b<8;b++){ out+=((v>>BigInt(b*8))&0xffn).toString(16).padStart(2,'0'); }
+  }
+  return out;
+}
+function rotl(x,n){ n=BigInt(n%64); return ((x<<n)|(x>>(64n-n)))&M64; }
+function keccakF(st){
+  for(let r=0;r<24;r++){
+    const c=[0n,0n,0n,0n,0n];
+    for(let x=0;x<5;x++)c[x]=st[x]^st[x+5]^st[x+10]^st[x+15]^st[x+20];
+    for(let x=0;x<5;x++){
+      const d=c[(x+4)%5]^rotl(c[(x+1)%5],1);
+      for(let y=0;y<5;y++)st[x+5*y]^=d;
+    }
+    const b=new Array(25);
+    for(let x=0;x<5;x++)for(let y=0;y<5;y++)
+      b[y+5*((2*x+3*y)%5)]=rotl(st[x+5*y],K_R[y][x]);
+    for(let x=0;x<5;x++)for(let y=0;y<5;y++)
+      st[x+5*y]=b[x+5*y]^((~b[(x+1)%5+5*y])&M64&b[(x+2)%5+5*y]);
+    st[0]^=K_RC[r];
+  }
+}
+const utf8=(str)=>Array.from(new TextEncoder().encode(str));
+const hexBytes=(h)=>{const a=[];for(let i=0;i<h.length;i+=2)a.push(parseInt(h.substr(i,2),16));return a;};
+function namehash(name){
+  let node='0'.repeat(64);
+  if(name){
+    const labels=name.split('.');
+    for(let i=labels.length-1;i>=0;i--)
+      node=keccak256([...hexBytes(node),...hexBytes(keccak256(utf8(labels[i])))]);
+  }
+  return node;
+}
+const ENS_REGISTRY='0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+const ENS_RPCS=['https://ethereum-rpc.publicnode.com','https://cloudflare-eth.com','https://eth.llamarpc.com'];
+async function ethCall(to,data){
+  for(const rpc of ENS_RPCS){
+    try{
+      const r=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to,data},'latest']})});
+      const d=await r.json();
+      if(d.result&&d.result!=='0x')return d.result;
+      if(d.result==='0x')return null;
+    }catch(e){}
+  }
+  return null;
+}
+async function ensResolver(node){
+  const res=await ethCall(ENS_REGISTRY,'0x0178b8bf'+node);
+  if(!res)return null;
+  const a='0x'+res.slice(26);
+  return /^0x0+$/.test(a)?null:a;
+}
+function decodeString(hex){
+  try{
+    const b=hex.slice(2);
+    const len=parseInt(b.slice(64,128),16);
+    const bytes=hexBytes(b.slice(128,128+len*2));
+    return new TextDecoder().decode(new Uint8Array(bytes));
+  }catch(e){return null;}
+}
+const ENS_CACHE_KEY='pndr_ens_v1';
+function ensCache(){ try{return JSON.parse(localStorage.getItem(ENS_CACHE_KEY)||'{}');}catch(e){return {};} }
+async function ensName(addr){
+  addr=addr.toLowerCase();
+  const c=ensCache();
+  if(c[addr]&&Date.now()-c[addr].ts<7*86400000)return c[addr].name;
+  let name=null;
+  try{
+    const rnode=namehash(addr.slice(2)+'.addr.reverse');
+    const rres=await ensResolver(rnode);
+    if(rres){
+      const raw=await ethCall(rres,'0x691f3431'+rnode);
+      const claimed=raw&&decodeString(raw);
+      if(claimed){
+        /* forward verification: the claimed name must point back home */
+        const fnode=namehash(claimed.toLowerCase());
+        const fres=await ensResolver(fnode);
+        if(fres){
+          const ares=await ethCall(fres,'0x3b3b57de'+fnode);
+          if(ares&&('0x'+ares.slice(26)).toLowerCase()===addr)name=claimed;
+        }
+      }
+    }
+  }catch(e){}
+  const c2=ensCache(); c2[addr]={name,ts:Date.now()};
+  try{localStorage.setItem(ENS_CACHE_KEY,JSON.stringify(c2));}catch(e){}
+  return name;
+}
+function gLabel(addr){ return addr.slice(0,6)+'…'+addr.slice(-4); }
 let GADDR='';
 let GPROV=null;                            // the chosen EIP-1193 provider (EIP-6963 discovered)
 const G6963=[];                            // wallets that announce themselves (EVM-only by spec)
@@ -3619,8 +3740,9 @@ async function gConnect(){
     const acc=await GPROV.request({method:'eth_requestAccounts'});
     GADDR=(acc&&acc[0]||'').toLowerCase();
     if(GADDR){
-      $('gaddr').textContent=GADDR.slice(0,6)+'…'+GADDR.slice(-4);
-      $('gconnect').textContent='◈ '+GADDR.slice(0,6)+'…'+GADDR.slice(-4);
+      $('gaddr').textContent=gLabel(GADDR);
+      $('gconnect').textContent='◈ '+gLabel(GADDR);
+      ensName(GADDR).then(n=>{ if(n){ $('gaddr').textContent=n; $('gconnect').textContent='◈ '+n; } });
       $('gplant').removeAttribute('disabled');
     }
   }catch(e){ $('osd').textContent='WALLET REFUSED'; }
@@ -3646,7 +3768,8 @@ async function gRefresh(){
     for(const addr of Object.keys(byAddr)){
       const sec=document.createElement('div'); sec.className='gsec';
       const nm=document.createElement('div'); nm.className='gname';
-      nm.textContent='⚘ '+addr.slice(0,6)+'…'+addr.slice(-4)+(addr===GADDR?' (YOU)':'');
+      nm.textContent='⚘ '+gLabel(addr)+(addr===GADDR?' (YOU)':'');
+      ensName(addr).then(n=>{ if(n)nm.textContent='⚘ '+n+(addr===GADDR?' (YOU)':''); });
       const grid=document.createElement('div'); grid.className='grow';
       for(const e of byAddr[addr]){
         const d=document.createElement('div'); d.className='ve';
