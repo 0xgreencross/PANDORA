@@ -3632,7 +3632,7 @@ function keccakF(st){
     }
     const b=new Array(25);
     for(let x=0;x<5;x++)for(let y=0;y<5;y++)
-      b[y+5*((2*x+3*y)%5)]=rotl(st[x+5*y],K_R[y][x]);
+      b[y+5*((2*x+3*y)%5)]=rotl(st[x+5*y],K_R[x][y]);
     for(let x=0;x<5;x++)for(let y=0;y<5;y++)
       st[x+5*y]=b[x+5*y]^((~b[(x+1)%5+5*y])&M64&b[(x+2)%5+5*y]);
     st[0]^=K_RC[r];
