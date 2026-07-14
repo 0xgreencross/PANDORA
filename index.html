@@ -286,7 +286,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 11.3 · JANUS<br>ARCHIVE IN FRAME</div>
+    <div class="ver">REV 11.4 · LAZARUS<br>SELL FLOW ARMED</div>
   </header>
 
   <div class="colL">
@@ -466,6 +466,22 @@
 
 
 
+<div id="sellmodal">
+  <div class="xm-box">
+    <div class="xm-head">INSCRIBE INTO LAZARUS <span id="sellcard"></span></div>
+    <div class="field"><label>EDITION</label><div class="seg" id="sellkind"></div></div>
+    <div class="duo">
+      <div class="field" style="flex:1"><label>EDITIONS</label><input type="number" id="selled" value="10" min="2"></div>
+      <div class="field" style="flex:1"><label>OPEN DAYS</label><input type="number" id="selldays" value="3" min="1" max="30"></div>
+    </div>
+    <div class="field"><label>PRICE ETH PER COPY</label><input type="text" id="sellprice" value="0.01" inputmode="decimal"></div>
+    <div class="xm-note">ONE TRANSACTION: PAYS THE INSCRIPTION FEE, WRITES THE DNA ON-CHAIN FOREVER, MINTS COPY Nº1 TO YOU. COLLECTORS PAY YOU 100%.</div>
+    <div class="xm-row">
+      <button id="sellgo">⛓ INSCRIBE</button>
+    </div>
+    <button id="sellclose">CLOSE</button>
+  </div>
+</div>
 <div id="xmodal">
   <div class="xm-box">
     <div class="xm-head">𝕏-SAFE TRANSMISSION <span id="xm-size"></span></div>
@@ -3841,6 +3857,9 @@ async function gRefresh(){
         img.addEventListener('click',()=>{const c=unpackCard(e.card); if(c){applyCard(c); generate();}});
         d.appendChild(img);
         if(addr===GADDR){
+          const sl=document.createElement('button'); sl.className='vsell'; sl.textContent='SELL';
+          sl.addEventListener('click',ev=>{ev.stopPropagation(); openSell(e.card);});
+          d.appendChild(sl);
           const x=document.createElement('button'); x.className='vx'; x.textContent='✕';
           x.addEventListener('click',async ev=>{ev.stopPropagation();
             try{ await gSigned('uproot',e.card); $('osd').textContent='UPROOTED'; gRefresh(); }
@@ -3853,6 +3872,84 @@ async function gRefresh(){
     }
   }catch(e){}
 }
+
+/* ============================================================================
+   LAZARUS SELL FLOW — inscribe a loop into the corpus, straight from a garden.
+   No libraries: ABI encoding hand-rolled, selectors derived from our own
+   vector-proven keccak. The contract address is the only missing organ:
+   paste it into LAZARUS_ADDR when deployed and the flow goes live.
+   ========================================================================== */
+const LAZARUS_ADDR='';   // <- mainnet address after deployment
+const LAZARUS_CHAIN='0x1';
+function abiU(v,bits){ return BigInt(v).toString(16).padStart(64,'0'); }
+function abiStr(str){
+  const b=Array.from(new TextEncoder().encode(str));
+  let hx=b.map(x=>x.toString(16).padStart(2,'0')).join('');
+  const padded=hx.padEnd(Math.ceil(hx.length/64)*64,'0');
+  return abiU(b.length)+padded;
+}
+function encodeInscribe(dna,traits,ens,gifHashHex,kind,maxSupply,priceWei,saleEnd){
+  const sel=keccak256(utf8('inscribe(string,string,string,bytes32,uint8,uint40,uint128,uint64)')).slice(0,8);
+  const head=[], tail=[];
+  const parts=[abiStr(dna),abiStr(traits),abiStr(ens)];
+  let dynOff=8*32;
+  for(const p of parts){ head.push(abiU(dynOff)); dynOff+=p.length/2; }
+  head.splice(3,0,gifHashHex.replace(/^0x/,'').padStart(64,'0'));
+  head.push(abiU(kind), abiU(maxSupply), abiU(priceWei), abiU(saleEnd));
+  return '0x'+sel+head.slice(0,3).join('')+head.slice(3).join('')+parts.join('');
+}
+function gifHashHex(){
+  if(!masterBytes)return null;
+  /* keccak over the canonical 1080 master — the LAZARUS commitment */
+  return '0x'+keccak256(Array.from(masterBytes));
+}
+let SELL_CTX=null;
+function openSell(card){
+  if(!LAZARUS_ADDR){ $('osd').textContent='LAZARUS NOT DEPLOYED YET'; return; }
+  if(!GADDR){ $('osd').textContent='CONNECT WALLET FIRST'; return; }
+  SELL_CTX={card};
+  $('sellcard').textContent=card;
+  $('sellmodal').style.display='flex';
+}
+async function sellInscribe(){
+  try{
+    const kindStr=state._sellkind||'0';
+    const kind=+kindStr;
+    const editions=Math.max(2, +$('selled').value||10);
+    const days=Math.max(1, Math.min(30, +$('selldays').value||3));
+    const priceEth=parseFloat($('sellprice').value)||0;
+    const priceWei=BigInt(Math.round(priceEth*1e6))*1000000000000n;
+    const maxSupply = kind===0?1: kind===1?editions: 0;
+    const saleEnd = kind===2 ? Math.floor(Date.now()/1000)+days*86400 : 0;
+    const dna=SELL_CTX.card;
+    const traits=(state.scheme||'?')+'*'+(state.mode||'?')+'*'+(EPOCH?'CLASSIC':'SIGNAL');
+    const ens=$('gaddr').textContent.includes('.')?$('gaddr').textContent:'';
+    const gh=gifHashHex();
+    if(!gh){ $('osd').textContent='RENDER THE LOOP FIRST (HASH NEEDED)'; return; }
+    const fee=await ethCallLaz('0x'+keccak256(utf8('inscriptionFee()')).slice(0,8));
+    const data=encodeInscribe(dna,traits,ens,gh,kind,maxSupply,priceWei,saleEnd);
+    $('osd').textContent='CALLING WALLET — CONFIRM THE INSCRIPTION';
+    const tx=await (GPROV||window.ethereum).request({method:'eth_sendTransaction',
+      params:[{from:GADDR,to:LAZARUS_ADDR,value:'0x'+BigInt(fee||'0x0').toString(16),data}]});
+    $('osd').textContent='INSCRIBED · TX '+tx.slice(0,10)+'…';
+    $('sellmodal').style.display='none';
+  }catch(e){ $('osd').textContent='SELL: '+String(e&&e.message||e).slice(0,32); }
+}
+async function ethCallLaz(data){
+  for(const rpc of ENS_RPCS){
+    try{
+      const r=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:LAZARUS_ADDR,data},'latest']})});
+      const d=await r.json(); if(d.result)return d.result;
+    }catch(e){}
+  }
+  return null;
+}
+$('sellgo').addEventListener('click',sellInscribe);
+$('sellclose').addEventListener('click',()=>{$('sellmodal').style.display='none';});
+buildSeg($('sellkind'),[{v:'0',label:'1/1'},{v:'1',label:'LIMITED'},{v:'2',label:'OPEN'}],'_sellkind');
+setSeg('sellkind','_sellkind','0');
+
 $('gconnect').addEventListener('click',gConnect);
 $('gplant').addEventListener('click',async ()=>{
   const card=$('dna').value.trim(); if(!card||!GADDR)return;
