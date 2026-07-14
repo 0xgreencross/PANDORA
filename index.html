@@ -143,7 +143,6 @@
     font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
     color:var(--txt);background:var(--panel);border:1px solid var(--line);}
   #vtoken::placeholder,#vrepo::placeholder{color:var(--mut);}
-  #archive{display:none;}
   #collections,#c-vault,#c-gardens{display:flex;flex-direction:column;gap:10px;}
   #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:248px;}
   #gardenlist{max-height:280px;}
@@ -241,35 +240,22 @@
     .colL{display:flex;flex-direction:column;gap:9px;flex:0 1 56%;max-width:660px;}
     .colR{display:flex;flex-direction:column;gap:10px;flex:1 1 360px;min-width:360px;}
     .monitor{width:min(100%,76dvh);align-self:flex-start;}
-    /* THE ARCHIVE — desktop floor beneath the instrument deck. The collections
-       node relocates here (see relocateCollections): vault and gardens get the
-       horizontal room they structurally want, capped wells, ghost scroll. */
-    #archive{max-width:1140px;margin:18px auto 40px;padding:0 20px;
-      display:grid;grid-template-columns:3fr 2fr;gap:26px;align-items:start;}
     #shelfseg{display:none;}
-    #archive #shelfseg{display:grid;}
-    #arclabel{grid-column:1/-1;font-family:var(--fD);font-weight:700;font-size:9px;
-      letter-spacing:0;color:var(--mut);}
-    #archive #collections{display:contents;}
-    /* mid-width: shorter monitor so the archive peeks above the fold */
-    .screen-wrap{max-height:64dvh;}
-    #archive #vaultlist{max-height:300px;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
-    #archive #gardenlist{max-height:300px;}
-    #archive .gsec .grow{grid-template-columns:repeat(auto-fill,minmax(92px,1fr));}
-    #c-vault,#c-gardens{display:flex;flex-direction:column;gap:10px;min-width:0;}
+    #arclabel{font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;color:var(--mut);}
     /* panels hug their content per tab — no more 600px void on SIGNAL/LAB.
        Mobile keeps the absolute-overlay panels untouched. */
+    #colA{display:none;}
     @media (min-width:1280px){
-      body{display:grid;grid-template-columns:minmax(0,1fr) 400px;align-items:start;}
-      #app{grid-column:1;max-width:1140px;}
+      #app{max-width:1560px;}
       .screen-wrap{max-height:76dvh;}
-      #archive{grid-column:2;position:sticky;top:0;max-height:100dvh;overflow:hidden;
-        display:flex;flex-direction:column;gap:14px;margin:14px 20px 14px 0;padding:0;}
-      #archive #collections{display:flex;flex-direction:column;gap:12px;min-height:0;flex:1;}
-      #archive #c-vault,#archive #c-gardens{flex:1;min-height:0;}
-      #archive #vaultlist,#archive #gardenlist{max-height:none;flex:1;min-height:0;}
-      #archive .shelf-hidden{display:none;}
-      #archive{height:calc(100dvh - 28px);}
+      #colA{display:flex;flex-direction:column;gap:12px;flex:0 0 300px;min-width:0;
+        max-height:calc(100dvh - 40px);position:sticky;top:20px;}
+      #colA #shelfseg{display:grid;grid-template-columns:1fr 1fr;}
+      #colA #collections{display:flex;flex-direction:column;gap:12px;min-height:0;flex:1;}
+      #colA #c-vault,#colA #c-gardens{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;}
+      #colA #vaultlist,#colA #gardenlist{max-height:none;flex:1;min-height:0;}
+      #colA #vaultlist{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));}
+      #colA .shelf-hidden{display:none;}
     }
     #panels{flex:0 0 auto;position:static;}
     .panel{position:static;overflow:visible;}
@@ -300,7 +286,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 11.2 · JANUS<br>ONE SHELF</div>
+    <div class="ver">REV 11.3 · JANUS<br>ARCHIVE IN FRAME</div>
   </header>
 
   <div class="colL">
@@ -475,9 +461,10 @@
     <button id="xsave" disabled title="X-safe version, guaranteed under the 15MB GIF cap">𝕏</button>
   </div>
   </div>
+  <aside id="colA"><div id="arclabel">THE ARCHIVE</div></aside>
 </div>
 
-<div id="archive"><div id="arclabel">THE ARCHIVE</div></div>
+
 
 <div id="xmodal">
   <div class="xm-box">
@@ -4085,15 +4072,13 @@ document.querySelectorAll('.voidscroll').forEach(el=>{
 });
 /* the collections live in LAB on mobile and on the archive floor on desktop.
    One node, two rooms; listeners survive the move. */
-const DESKTOP_MQ=window.matchMedia?window.matchMedia('(min-width:900px)'):null;
+const DESKTOP_MQ=window.matchMedia?window.matchMedia('(min-width:1280px) and (pointer:fine)'):null;
 function relocateCollections(){
-  const c=$('collections'), lab=$('p-lab'), ar=$('archive');
+  const c=$('collections'), lab=$('p-lab'), ar=$('colA');
   if(!c||!lab||!ar)return;
   if(DESKTOP_MQ&&DESKTOP_MQ.matches){
     if(c.parentElement!==ar)ar.appendChild(c);
-    ar.style.display='';
   } else {
-    ar.style.display='none';
     if(c.parentElement!==lab)lab.insertBefore(c,lab.querySelector('.labnote'));
   }
 }
