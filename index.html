@@ -145,7 +145,7 @@
   #vtoken::placeholder,#vrepo::placeholder{color:var(--mut);}
   #collections,#c-vault,#c-gardens{display:flex;flex-direction:column;gap:10px;}
   #shelfseg{display:grid;grid-template-columns:1fr 1fr;}
-  .shelf-hidden{display:none;}
+  .shelf-hidden{display:none!important;}
   #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
 
   /* wells scroll ONLY where a mouse lives; touch gets one native scroll context */
@@ -318,10 +318,11 @@
       #colA{display:flex;flex-direction:column;gap:12px;flex:0 0 300px;min-width:0;
         max-height:calc(100dvh - 40px);position:sticky;top:20px;}
       #colA #collections{display:flex;flex-direction:column;gap:12px;min-height:0;flex:1;}
-      #colA #c-vault,#colA #c-gardens{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;}
+      #colA #shelfseg{display:none;}
+      #colA #c-vault,#colA #c-gardens{display:flex!important;flex-direction:column;gap:10px;
+        flex:1 1 0;min-height:0;}   /* both live: exact 50/50 of the column */
       #colA #vaultlist,#colA #gardenlist{max-height:none;flex:1;min-height:0;}
       #colA #vaultlist{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));}
-      #colA .shelf-hidden{display:none;}
     }
     #panels{flex:0 0 auto;position:static;}
     .panel{position:static;overflow:visible;}
