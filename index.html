@@ -286,7 +286,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 11.5 · LAZARUS<br>SEPOLIA REHEARSAL</div>
+    <div class="ver">REV 11.5b · LAZARUS<br>SESSION RESTORE</div>
   </header>
 
   <div class="colL">
@@ -3927,7 +3927,14 @@ function encodeInscribe(dna,traits,ens,gifHashHex,kind,maxSupply,priceWei,saleEn
 let SELL_CTX=null;
 function openSell(card){
   if(!LAZARUS_ADDR){ $('osd').textContent='LAZARUS NOT DEPLOYED YET'; return; }
-  if(!GADDR){ $('osd').textContent='CONNECT WALLET FIRST'; return; }
+  if(!GADDR){
+    $('osd').textContent='CONNECT WALLET FIRST';
+    const b=$('gconnect');
+    b.classList.add('needy');
+    b.scrollIntoView({block:'nearest',behavior:'smooth'});
+    setTimeout(()=>b.classList.remove('needy'),2400);
+    return;
+  }
   SELL_CTX={card};
   $('sellcard').textContent=card;
   $('sellnet').textContent=LAZARUS_CHAIN==='0x1'?'· MAINNET':'· SEPOLIA REHEARSAL';
@@ -3977,6 +3984,26 @@ $('sellclose').addEventListener('click',()=>{$('sellmodal').style.display='none'
 buildSeg($('sellkind'),[{v:'0',label:'1/1'},{v:'1',label:'LIMITED'},{v:'2',label:'OPEN'}],'_sellkind');
 setSeg('sellkind','_sellkind','0');
 
+(async function gRestore(){
+  /* the wallet you chose is remembered by rdns; eth_accounts is popup-free,
+     so a page load silently resumes the session if the wallet still allows it */
+  await new Promise(r=>setTimeout(r,600));
+  try{
+    const pref=localStorage.getItem('pndr_wallet_rdns'); if(!pref)return;
+    try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
+    await new Promise(r=>setTimeout(r,300));
+    const hit=G6963.find(p=>p.info.rdns===pref); if(!hit)return;
+    const acc=await hit.provider.request({method:'eth_accounts'});
+    if(acc&&acc[0]){
+      GPROV=hit.provider; GADDR=acc[0].toLowerCase();
+      $('gaddr').textContent=gLabel(GADDR);
+      $('gconnect').textContent='◈ '+gLabel(GADDR);
+      $('gplant').removeAttribute('disabled');
+      ensName(GADDR).then(n=>{ if(n){ $('gaddr').textContent=n; $('gconnect').textContent='◈ '+n; } });
+      gRefresh();
+    }
+  }catch(e){}
+})();
 $('gconnect').addEventListener('click',gConnect);
 $('gplant').addEventListener('click',async ()=>{
   const card=$('dna').value.trim(); if(!card||!GADDR)return;
