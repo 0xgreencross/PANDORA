@@ -219,6 +219,30 @@
   #xm-reroll{flex:0 0 46px;color:var(--cyan);background:var(--panel2);border:1px solid var(--line2);}
   #xm-save{flex:1;color:#05050a;background:var(--sulph);border:1px solid var(--sulph);}
   #xm-compose{flex:1;color:#05050a;background:var(--cyan);border:1px solid var(--cyan);}
+  body.embed header,body.embed .colR,body.embed #colA,body.embed #mintbar,
+  body.embed #tipbar,body.embed #infobtn{display:none!important;}
+  body.embed #app{max-width:100vmin;padding:0;margin:0 auto;}
+  body.embed .colL{width:100%;}
+  body.embed .screen-wrap{max-height:100dvh;border-radius:0;}
+  #galmodal{display:none;position:fixed;inset:0;z-index:62;background:rgba(3,3,6,.92);
+    align-items:center;justify-content:center;padding:16px;}
+  #galgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;max-height:46dvh;}
+  .galv{position:relative;aspect-ratio:1;border-radius:4px;overflow:hidden;background:#0a0a12;cursor:pointer;}
+  .galv img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;}
+  .galv .gtxt{position:absolute;inset:0;padding:6px;font-family:var(--fD);font-weight:700;font-size:7px;
+    color:var(--txt);letter-spacing:0;line-height:1.8;overflow:hidden;}
+  .galv.bsel{outline:2px solid var(--sulph);outline-offset:-2px;}
+  .galv .bpick{position:absolute;right:4px;bottom:4px;z-index:2;appearance:none;cursor:pointer;
+    padding:2px 6px;border-radius:3px;font-family:var(--fD);font-weight:700;font-size:8px;
+    color:#05050a;background:var(--cyan);border:1px solid var(--cyan);}
+  #galbreed{display:flex;gap:10px;align-items:center;}
+  #breedslots{flex:1;font-family:var(--fD);font-weight:700;font-size:8px;color:var(--mut);letter-spacing:0;line-height:1.8;}
+  #breedgo{appearance:none;cursor:pointer;flex:0 0 auto;padding:12px 16px;border-radius:5px;
+    font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;
+    color:#05050a;background:var(--mag);border:1px solid var(--mag);}
+  #breedgo[disabled]{opacity:.35;cursor:default;}
+  #galclose{appearance:none;cursor:pointer;padding:10px 0;border-radius:5px;color:var(--mut);
+    background:var(--panel2);border:1px solid var(--line);font-family:var(--fD);font-weight:700;font-size:8px;}
   #mintbar{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:58;
     background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:12px 14px;
     align-items:center;gap:14px;justify-content:space-between;
@@ -443,7 +467,7 @@
       <div class="field seedrow">
         <label>SEED</label>
         <input id="seed" type="text" inputmode="numeric" autocomplete="off">
-        <button id="dice" class="dice" title="randomize seed">⚄</button>
+        <button id="dice" class="dice" title="randomize seed">⚄</button><button id="mutate" title="MUTATE — one sigil flips, corruption drifts, the seed holds. Same soul, new scars.">Ω</button>
       </div>
       <div class="field seedrow">
         <label>DNA</label>
@@ -475,6 +499,9 @@
               <button id="gconnect" class="vio">◈ CONNECT WALLET</button>
               <button id="gplant" class="vio" disabled>⚘ SAVE TO MY GARDEN</button>
             </div>
+            <div class="duo">
+              <button id="galopen" class="vio">▦ GALLERY</button>
+            </div>
           </div>
           <div id="gardenlist" class="voidscroll"></div>
           <p class="labnote">YOUR WALLET IS YOUR SHELF. PLANT WITHOUT LIMIT: EVERY SAVE IS SIGNED, PUBLIC, AND CURATED BY YOU ALONE. WHAT GROWS HERE MINTS IN THE NEXT ERA. PLANT NOW, MINT LATER.</p>
@@ -497,6 +524,21 @@
 
 
 
+<div id="galmodal">
+  <div class="xm-box" style="width:min(560px,96vw)">
+    <div class="xm-head">GALLERY <span id="gal-you"></span></div>
+    <div class="seg" id="galseg">
+      <button data-g="planted" aria-pressed="true">PLANTED</button>
+      <button data-g="collected" aria-pressed="false">COLLECTED</button>
+    </div>
+    <div id="galgrid" class="voidscroll"></div>
+    <div id="galbreed">
+      <div id="breedslots">SELECT TWO PLANTED LOOPS TO BREED ⚭</div>
+      <button id="breedgo" disabled>⚭ BREED</button>
+    </div>
+    <button id="galclose">CLOSE</button>
+  </div>
+</div>
 <div id="mintbar">
   <div>
     <div id="mb-title"></div>
@@ -4110,7 +4152,7 @@ function decodeGenome(res){
   return g.curator!=='0x'+'0'.repeat(40)?g:null;
 }
 async function mintPage(id){
-  $('mintbar').style.display='flex';
+  if(!EMBED)$('mintbar').style.display='flex';
   $('mb-title').textContent='PANDORA Nº'+id;
   $('mb-stat').textContent='READING THE CORPUS…';
   const sel=keccak256(utf8('genomes(uint256)')).slice(0,8);
@@ -4124,7 +4166,7 @@ async function mintPage(id){
   $('mb-meta').innerHTML=
     '<b>'+(g.ens||g.curator.slice(0,6)+'…'+g.curator.slice(-4))+'</b> · '+kindStr+
     (g.kind!==0?' · '+(Number(g.price)/1e18)+' ETH':'')+
-    '<br>DNA '+g.dna+'<br>COMMITMENT '+g.gifHash.slice(0,18)+'…';
+    '<br>TRAITS '+(g.traits||'—')+'<br>DNA '+g.dna+'<br>COMMITMENT '+g.gifHash.slice(0,18)+'…';
   $('mb-stat').textContent='RESURRECTING FROM ON-CHAIN DNA…';
   const c=unpackCard(g.dna);
   if(c){ applyCard(c); generate(); $('mb-stat').textContent='LIVE · WHAT YOU SEE IS WHAT THE CHAIN STORES'; }
@@ -4154,6 +4196,108 @@ $('mb-collect').addEventListener('click',mintCollect);
   const mp=new URLSearchParams(location.search).get('mint');
   if(mp&&/^\d+$/.test(mp)) setTimeout(()=>mintPage(mp),400);
 })();
+
+
+/* ============================================================================
+   GALLERY — PLANTED (your garden) | COLLECTED (corpus tokens you hold from
+   other curators) — and the breeding chamber: two planted genomes cross into
+   a child. Same channels agree, disagreements flip coins, the seeds fuse.
+   ========================================================================== */
+let BREED_A=null, BREED_B=null;
+function breedCards(a,b,salt){
+  const rng=mulberry32(((a.seed^((b.seed<<13)|(b.seed>>>19)))^salt)>>>0);
+  const pick=(x,y)=>rng()<0.5?x:y;
+  const child={
+    seed:((a.seed^((b.seed<<7)|(b.seed>>>25)))+((rng()*0xffff)|0))>>>0,
+    scheme:pick(a.scheme,b.scheme), mode:pick(a.mode,b.mode),
+    corr:Math.max(0,Math.min(100,Math.round((a.corr+b.corr)/2)+((rng()*11|0)-5))),
+    frames:pick(a.frames,b.frames), motion:pick(a.motion,b.motion),
+    epoch:pick(a.epoch||0,b.epoch||0), fx:{}, ov:null,
+  };
+  for(const ch of CARD_CH){
+    const x=a.fx[ch],y=b.fx[ch];
+    child.fx[ch]= x===y ? x : rng()<0.5;
+  }
+  if(a.ov||b.ov) child.ov = pick(a.ov,b.ov);
+  return child;
+}
+function galTile(txt,thumb,onTap,pickable,key){
+  const d=document.createElement('div'); d.className='galv';
+  if(thumb){ const im=document.createElement('img'); im.src=thumb; d.appendChild(im); }
+  else { const t=document.createElement('div'); t.className='gtxt'; t.textContent=txt; d.appendChild(t); }
+  d.addEventListener('click',onTap);
+  if(pickable){
+    const p=document.createElement('button'); p.className='bpick'; p.textContent='⚭';
+    p.addEventListener('click',ev=>{ev.stopPropagation(); breedPick(key,d);});
+    d.appendChild(p);
+  }
+  return d;
+}
+function breedPick(card,el){
+  if(BREED_A===card){BREED_A=null; el.classList.remove('bsel');}
+  else if(BREED_B===card){BREED_B=null; el.classList.remove('bsel');}
+  else if(!BREED_A){BREED_A=card; el.classList.add('bsel');}
+  else if(!BREED_B){BREED_B=card; el.classList.add('bsel');}
+  const n=(BREED_A?1:0)+(BREED_B?1:0);
+  $('breedslots').textContent = n===0?'SELECT TWO PLANTED LOOPS TO BREED ⚭'
+    : n===1?'ONE PARENT ARMED — SELECT THE SECOND'
+    : 'TWO PARENTS ARMED — THE CHAMBER IS READY';
+  if(n===2)$('breedgo').removeAttribute('disabled'); else $('breedgo').setAttribute('disabled','');
+}
+async function galShow(which){
+  $('galmodal').style.display='flex';
+  $('gal-you').textContent=$('gaddr').textContent?('· '+$('gaddr').textContent):'';
+  document.querySelectorAll('#galseg button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.g===which)));
+  const grid=$('galgrid'); grid.innerHTML='';
+  $('galbreed').style.display = which==='planted'?'flex':'none';
+  if(which==='planted'){
+    if(!GADDR){ grid.innerHTML='<div class="gtxt" style="position:static">CONNECT WALLET TO SEE YOUR GARDEN</div>'; return; }
+    try{
+      const r=await fetch(SB.url+'/rest/v1/gardens?address=eq.'+GADDR+'&select=card,thumb,ts&order=ts.desc&limit=200',{headers:sbHeaders()});
+      const rows=await r.json();
+      if(!rows.length){ grid.innerHTML='<div class="gtxt" style="position:static">NOTHING PLANTED YET</div>'; return; }
+      for(const e of rows){
+        grid.appendChild(galTile(e.card, e.thumb, ()=>{const c=unpackCard(e.card); if(c){applyCard(c); generate(); $('galmodal').style.display='none';}}, true, e.card));
+      }
+    }catch(e){ grid.innerHTML='<div class="gtxt" style="position:static">GARDEN UNREACHABLE</div>'; }
+  } else {
+    if(!GADDR){ grid.innerHTML='<div class="gtxt" style="position:static">CONNECT WALLET TO SCAN THE CORPUS</div>'; return; }
+    grid.innerHTML='<div class="gtxt" style="position:static">SCANNING THE CORPUS…</div>';
+    try{
+      const nx=await ethCallLaz('0x'+keccak256(utf8('nextId()')).slice(0,8));
+      const total=Math.min(Number(BigInt(nx||'0x1')),80);
+      const mine=[];
+      for(let i=1;i<total;i++){
+        const bal=await ethCallLaz('0x'+keccak256(utf8('balanceOf(address,uint256)')).slice(0,8)
+          +GADDR.slice(2).padStart(64,'0')+BigInt(i).toString(16).padStart(64,'0'));
+        if(bal&&BigInt(bal)>0n){
+          const res=await ethCallLaz('0x'+keccak256(utf8('genomes(uint256)')).slice(0,8)+BigInt(i).toString(16).padStart(64,'0'));
+          const g=decodeGenome(res);
+          if(g&&g.curator.toLowerCase()!==GADDR) mine.push({id:i,g,bal:BigInt(bal)});
+        }
+      }
+      grid.innerHTML='';
+      if(!mine.length){ grid.innerHTML='<div class="gtxt" style="position:static">NO COLLECTED LOOPS YET — COLLECT FROM OTHER CURATORS\u2019 MINT PAGES</div>'; return; }
+      for(const t of mine){
+        grid.appendChild(galTile('Nº'+t.id+'\n'+(t.g.ens||t.g.curator.slice(0,8))+'\n×'+t.bal+'\n'+t.g.traits, null,
+          ()=>{const c=unpackCard(t.g.dna); if(c){applyCard(c); generate(); $('galmodal').style.display='none';}}, false));
+      }
+    }catch(e){ grid.innerHTML='<div class="gtxt" style="position:static">CORPUS UNREACHABLE</div>'; }
+  }
+}
+$('galseg').addEventListener('click',ev=>{ const b=ev.target.closest('button'); if(b)galShow(b.dataset.g); });
+$('galclose').addEventListener('click',()=>{$('galmodal').style.display='none';});
+$('breedgo').addEventListener('click',()=>{
+  const a=unpackCard(BREED_A), b=unpackCard(BREED_B);
+  if(!a||!b)return;
+  const child=breedCards(a,b,(Date.now()&0xffffffff)>>>0);
+  applyCard(child); generate();
+  $('galmodal').style.display='none';
+  $('osd').textContent='BRED · TWO SOULS, ONE CHILD — TRANSMITTING';
+  BREED_A=BREED_B=null; $('breedgo').setAttribute('disabled','');
+  $('breedslots').textContent='SELECT TWO PLANTED LOOPS TO BREED ⚭';
+});
+$('galopen').addEventListener('click',()=>galShow('planted'));
 
 $('gconnect').addEventListener('click',gConnect);
 $('gplant').addEventListener('click',async ()=>{
@@ -4374,6 +4518,11 @@ document.querySelectorAll('.voidscroll').forEach(el=>{
 });
 /* the collections live in LAB on mobile and on the archive floor on desktop.
    One node, two rooms; listeners survive the move. */
+const EMBED=(function(){
+  try{ return new URLSearchParams(location.search).get('ui')==='0' || window.self!==window.top; }
+  catch(e){ return true; }   // cross-origin top access throws inside an iframe: that IS embed
+})();
+if(EMBED)document.body.classList.add('embed');
 const DESKTOP_MQ=window.matchMedia?window.matchMedia('(min-width:1280px) and (pointer:fine)'):null;
 function relocateCollections(){
   const c=$('collections'), lab=$('p-lab'), ar=$('colA');
@@ -4387,6 +4536,23 @@ function relocateCollections(){
 relocateCollections();
 if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',relocateCollections);
 $('dice').addEventListener('click',randSeed);
+function mutateCard(c,rng){
+  const m=JSON.parse(JSON.stringify(c));
+  const chs=CARD_CH.slice();
+  const flip=chs[(rng()*chs.length)|0];
+  m.fx[flip]=!m.fx[flip];                                   // one sigil flips
+  m.corr=Math.max(0,Math.min(100,m.corr+((rng()*21|0)-10)));// corruption drifts
+  if(rng()<0.2)m.motion=CARD_MOTION[(rng()*CARD_MOTION.length)|0];
+  if(rng()<0.15)m.scheme=CARD_SCHEMES[(rng()*(CARD_SCHEMES.length-1))|0];
+  return m;                                                  // seed holds: same soul, new scars
+}
+$('mutate').addEventListener('click',()=>{
+  const c=unpackCard($('dna').value.trim());
+  if(!c){ $('osd').textContent='NO LOOP TO MUTATE — TRANSMIT FIRST'; return; }
+  const rng=mulberry32((Date.now()^c.seed)>>>0);
+  applyCard(mutateCard(c,rng)); generate();
+  $('osd').textContent='MUTATED · SAME SOUL, NEW SCARS';
+});
 $('resetall').addEventListener('click',()=>{
   document.querySelectorAll('.tg').forEach(tg=>{ tg.dataset.on=0; state.fx[tg.dataset.fx]=false; });
   clearOV();
