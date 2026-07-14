@@ -304,22 +304,28 @@
     font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
     padding:13px 28px;color:var(--txt);background:var(--panel);border:1px solid var(--line2);}
   @media (min-width:900px) and (pointer:fine){
-    #app{max-width:1140px;height:auto;min-height:100dvh;flex-direction:row;flex-wrap:wrap;
-      align-content:flex-start;align-items:flex-start;gap:12px 28px;padding-bottom:28px;}
-    header{flex:1 0 100%;}
-    .colL{display:flex;flex-direction:column;gap:9px;flex:0 1 56%;max-width:660px;}
-    .colR{display:flex;flex-direction:column;gap:10px;flex:1 1 360px;min-width:360px;}
+    /* THE BAND DOCTRINE — explicit grid geometry per band; wrapping abolished.
+       DECK (900–1439): monitor + controls, archive lives in LAB.
+       TRI (>=1440):    monitor + controls + 50/50 archive as a third track.
+       Grid tracks cannot wrap: the archive is structurally incapable of
+       landing anywhere except its own column. */
+    #app{max-width:1140px;height:auto;min-height:100dvh;
+      display:grid;grid-template-columns:minmax(0,56fr) minmax(360px,44fr);
+      align-items:start;align-content:start;gap:12px 28px;padding-bottom:28px;}
+    header{grid-column:1/-1;}
+    .colL{display:flex;flex-direction:column;gap:9px;min-width:0;}
+    .colR{display:flex;flex-direction:column;gap:10px;min-width:0;}
     .monitor{width:min(100%,76dvh);align-self:flex-start;}
 
     #arclabel{font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;color:var(--mut);}
     /* panels hug their content per tab — no more 600px void on SIGNAL/LAB.
        Mobile keeps the absolute-overlay panels untouched. */
     #colA{display:none;}
-    @media (min-width:1280px){
-      #app{max-width:1560px;}
+    @media (min-width:1440px){
+      #app{max-width:1600px;grid-template-columns:minmax(0,1fr) 400px 300px;}
       .screen-wrap{max-height:76dvh;}
-      #colA{display:flex;flex-direction:column;gap:12px;flex:0 0 300px;min-width:0;
-        height:calc(100dvh - 40px);position:sticky;top:20px;}   /* definite height: 50/50 children need a whole to halve */
+      #colA{display:flex;flex-direction:column;gap:12px;min-width:0;
+        height:calc(100dvh - 40px);position:sticky;top:20px;}
       #colA #collections{display:flex;flex-direction:column;gap:12px;min-height:0;flex:1;}
       #colA #shelfseg{display:none;}
       #colA #c-vault,#colA #c-gardens{display:flex!important;flex-direction:column;gap:10px;
@@ -356,7 +362,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 12.5 · LAZARUS<br>SELF-AWARE CACHE</div>
+    <div class="ver">REV 12.6 · LAZARUS<br>BAND DOCTRINE</div>
   </header>
 
   <div class="colL">
@@ -4568,7 +4574,7 @@ const EMBED=(function(){
   catch(e){ return true; }   // cross-origin top access throws inside an iframe: that IS embed
 })();
 if(EMBED)document.body.classList.add('embed');
-const DESKTOP_MQ=window.matchMedia?window.matchMedia('(min-width:1280px) and (pointer:fine)'):null;
+const DESKTOP_MQ=window.matchMedia?window.matchMedia('(min-width:1440px) and (pointer:fine)'):null;
 function relocateCollections(){
   const c=$('collections'), lab=$('p-lab'), ar=$('colA');
   if(!c||!lab||!ar)return;
@@ -4585,7 +4591,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='12.5';
+const REV_SELF='12.6';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
