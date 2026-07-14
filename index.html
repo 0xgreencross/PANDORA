@@ -219,6 +219,22 @@
   #xm-reroll{flex:0 0 46px;color:var(--cyan);background:var(--panel2);border:1px solid var(--line2);}
   #xm-save{flex:1;color:#05050a;background:var(--sulph);border:1px solid var(--sulph);}
   #xm-compose{flex:1;color:#05050a;background:var(--cyan);border:1px solid var(--cyan);}
+  #sellmodal{display:none;position:fixed;inset:0;z-index:61;background:rgba(3,3,6,.92);
+    align-items:center;justify-content:center;padding:16px;}
+  #sellmodal .xm-box{width:min(420px,94vw);}
+  #sellmodal input{appearance:none;width:100%;padding:12px 8px;border-radius:5px;
+    font-family:var(--fD);font-weight:700;font-size:10px;letter-spacing:0;
+    color:var(--txt);background:#08080e;border:1px solid var(--line);}
+  #sellgo{flex:1;color:#05050a;background:var(--sulph);border:1px solid var(--sulph);
+    appearance:none;cursor:pointer;padding:13px 0;border-radius:5px;
+    font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;}
+  #sellclose{appearance:none;cursor:pointer;padding:10px 0;border-radius:5px;color:var(--mut);
+    background:var(--panel2);border:1px solid var(--line);font-family:var(--fD);font-weight:700;font-size:8px;}
+  .vsell{position:absolute;left:4px;bottom:4px;z-index:2;appearance:none;cursor:pointer;
+    padding:3px 7px;border-radius:3px;font-family:var(--fD);font-weight:700;font-size:7px;
+    letter-spacing:0;color:#05050a;background:var(--sulph);border:1px solid var(--sulph);}
+  @keyframes needy{0%,100%{box-shadow:none;}50%{box-shadow:0 0 0 2px var(--sulph),0 0 18px var(--sulph);}}
+  .needy{animation:needy .8s ease-in-out 3;}
   .xm-note{font-family:var(--fD);font-size:7px;color:var(--mut);letter-spacing:0;line-height:1.8;}
   #xm-close{appearance:none;cursor:pointer;padding:10px 0;border-radius:5px;color:var(--mut);
     background:var(--panel2);border:1px solid var(--line);font-family:var(--fD);font-weight:700;font-size:8px;}
