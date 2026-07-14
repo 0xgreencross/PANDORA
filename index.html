@@ -318,6 +318,15 @@
     .monitor{width:min(100%,76dvh);align-self:flex-start;}
 
     #arclabel{font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;color:var(--mut);}
+    /* THE ARCHIVE in LAB (deck band): two halves, side by side. Vault left,
+       gardens right, each two thumbnails wide, split by a house hairline.
+       Both always visible — the switcher is a touch-band instrument. */
+    #p-lab #collections{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;align-items:start;}
+    #p-lab #shelfseg{display:none;}
+    #p-lab #c-vault,#p-lab #c-gardens{display:flex!important;flex-direction:column;gap:10px;min-width:0;}
+    #p-lab #c-gardens{border-left:1px solid var(--line);padding-left:16px;}
+    #p-lab #vaultlist{grid-template-columns:repeat(2,1fr);}
+    #p-lab .gsec .grow{grid-template-columns:repeat(2,1fr);}
     /* panels hug their content per tab — no more 600px void on SIGNAL/LAB.
        Mobile keeps the absolute-overlay panels untouched. */
     #colA{display:none;}
@@ -362,7 +371,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 12.7 · LAZARUS<br>WIDTH IS THE BAND</div>
+    <div class="ver">REV 12.8 · LAZARUS<br>SPLIT ARCHIVE</div>
   </header>
 
   <div class="colL">
@@ -4613,7 +4622,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='12.7';
+const REV_SELF='12.8';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
