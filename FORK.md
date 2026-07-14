@@ -1,29 +1,17 @@
-# THE FORK — 2026-07-14
+# THE FORK — updated 2026-07-14
 
-## Decision
-Greencross elected to fork the engine to pursue an experimental direction that
-may change the art substantially. The stable line is preserved so the
-experiment can be judged and, if found unworthy, abandoned without loss.
+## Geography
+- `dithervoid.art`      → the TRUNK: REV 13.0 baseline, Sepolia-proven, mainnet-ready. Untouched by the experiment.
+- `dithervoid.art/f1/`  → FORK ONE: "compose first, corrupt second." MASS source, VOID law, CHROMA cap, WOUND LOCALITY, DNA v5.
 
 ## The return point
-- Branch: `rev13-baseline` (immutable reference)
-- Tag: `v13.0-baseline`
-- Commit: `fbb59895fbf173d194c2d316a06d30fe83a05be5`
-- State: REV 13.0 · LAZARUS · FACES FOR SOULS. Sepolia rehearsal complete
-  (inscribe + collect proven on-chain at 0x072B09Cf9F428cd09D771a75c3b9889Ba7a3E3CD).
-  Band doctrine layout. Split archive. Live editions. Gallery with breeding.
-  Mainnet deploy pending only a go decision.
+- Branch `rev13-baseline` · tag `v13.0-baseline` · commit `fbb59895`
+- Trunk index.html on main IS the baseline blob; the fork lives only under `f1/`.
 
-## How to return (kill the fork)
-Restore `index.html` from the baseline and push to `main`:
-
-    git checkout rev13-baseline -- index.html && git commit -m "fork abandoned, baseline restored" && git push
-
-Or ask Claude: "restore the rev13 baseline" (one API call, same effect).
-
-## How to keep the fork
-Merge nothing; `main` already carries it. Delete this file's "experimental"
-framing, retag, and the fork becomes the trunk.
+## Rituals
+- Kill the fork: delete `f1/` from main. The trunk never moved.
+- Promote the fork: copy `f1/index.html` over root `index.html`, retag, delete `f1/`.
+- v5 DNA cards (fork genes) decode only in the fork engine; v1–v4 cards decode in both, byte-identical.
 
 ## Verdict
-PENDING — the experiment runs on `main` (live at dithervoid.art) until judged.
+PENDING — judged at `dithervoid.art/f1/`.

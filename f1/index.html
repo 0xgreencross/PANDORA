@@ -375,7 +375,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 13.0 · LAZARUS<br>FACES FOR SOULS</div>
+    <div class="ver">REV 14.0 · FORK ONE<br>COMPOSE FIRST, CORRUPT SECOND</div>
   </header>
 
   <div class="colL">
@@ -424,6 +424,18 @@
       <div class="field">
         <label>CORRUPTION <span id="lab-corr"></span><span class="v" id="v-corr">62</span></label>
         <input type="range" id="corr" min="0" max="100" value="62">
+      </div>
+      <div class="field">
+        <label>VOID <span id="lab-voidamt"></span><span class="v" id="v-voidamt">34</span></label>
+        <input type="range" id="voidamt" min="0" max="90" value="34">
+      </div>
+      <div class="field">
+        <label>WOUND LOCALITY <span class="v" id="v-locality">60</span></label>
+        <input type="range" id="locality" min="0" max="100" value="60">
+      </div>
+      <div class="field">
+        <label>CHROMA</label>
+        <div class="seg" id="chromaseg"></div>
       </div>
       <div class="field">
         <label>ERA</label>
@@ -812,7 +824,7 @@ for(const key in SCHEMES){ const sc=SCHEMES[key];
   sc.glitch=sc.glitch.map(st=>deWhiteHex(st, sc.stops[sc.stops.length-1]));
 }
 const SCHEME_KEYS = Object.keys(SCHEMES);
-const MODES = ['PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS'];
+const MODES = ['PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS','MASS'];
 
 /* build a 256-entry smooth gradient LUT from stops */
 function buildGradient(stops){
@@ -1185,7 +1197,7 @@ function makeGlyphSet(rng){
    ========================================================================== */
 function renderBase(rgb, scene, t, theta, grad){
   const m=scene.mode;
-  if(m==='PLASMA'||m==='RINGS'||m==='LATTICE'||m==='ORBITALS'||m==='STRATA'||m==='TENDRILS'){
+  if(m==='PLASMA'||m==='RINGS'||m==='LATTICE'||m==='ORBITALS'||m==='STRATA'||m==='TENDRILS'||m==='MASS'){
     // coarse scalar field then chunky upscale
     const field=renderBase._f || (renderBase._f=new Float32Array(FW*FW));
     const cs=Math.cos(theta), sn=Math.sin(theta);
@@ -1295,6 +1307,7 @@ function renderBase(rgb, scene, t, theta, grad){
         if(hits[i]===1){ if(field[i]<0.55)field[i]=0.55; }
         else if(hits[i]>=2){ if(field[i]<0.95)field[i]=0.95; }
       }
+    } else if(m==='MASS'){ renderMass(field, scene, theta, massField(scene));
     } else if(m==='STRATA'){ // displaced geological bands
       const S=scene.rev4.strata, no=scene.noise;
       for(let y=0;y<FW;y++){const fy=y/FW;
@@ -1451,6 +1464,124 @@ function analogPass(src,dst,scene,theta,corr,fx){
   }
 }
 
+/* ============================================================================
+   FORK ONE — COMPOSE FIRST, CORRUPT SECOND
+   One field is the single truth: the MASS form, the carved void, and the
+   wound anchors all read the same organic coastline. Glitch needs order to
+   violate; this is the order.
+   ========================================================================== */
+function massField(scene){
+  if(scene._mf) return scene._mf;
+  const rng=mulberry32((scene.seed^0x14CE55)>>>0);
+  const fam=(rng()*3)|0;                       // 0 blobs · 1 ridge branches · 2 central massif
+  const n=new Float32Array(FW*FW);
+  const no=scene.noise, no2=scene.noise2;
+  const ph=rng()*100, sc=1.15+rng()*0.9;
+  for(let y=0;y<FW;y++){const fy=y/FW;
+    for(let x=0;x<FW;x++){const fx=x/FW;
+      let v;
+      if(fam===0){        // continents
+        v=no(fx*sc+ph, fy*sc)*0.72 + no2(fx*sc*2.3, fy*sc*2.3+ph)*0.28;
+      } else if(fam===1){ // ridge branches: fold the noise, invert the crease
+        const r=no(fx*sc*1.5+ph, fy*sc*1.5);
+        v=1-Math.abs(2*r-1); v=v*0.8+no2(fx*3.1,fy*3.1+ph)*0.2;
+      } else {            // central massif: gravity toward a seeded spine
+        const cx=0.3+rng.cx1||0; const spine=0.32+ (scene.seed%37)/37*0.36;
+        const d=Math.abs(fx-spine);
+        v=no(fx*sc+ph, fy*sc)*0.55 + Math.max(0,1-d*2.4)*0.5 + no2(fx*4,fy*4+ph)*0.12;
+      }
+      n[y*FW+x]=v;
+    }
+  }
+  // exact area law: quantile threshold ⇒ the void slider is obeyed, not hoped for
+  let vf=(scene.voidamt|0)/100;
+  if(scene.mode==='MASS'&&vf<=0)vf=0.45;
+  vf=Math.max(0,Math.min(0.9,vf));
+  const sorted=Float32Array.from(n).sort();
+  const q=vf>0?sorted[Math.min(FW*FW-1,(vf*FW*FW)|0)]:-1e9;
+  scene._mf={n,q,fam,vf};
+  return scene._mf;
+}
+function renderMass(field, scene, theta, mf){
+  const {n,q}=mf;
+  const rng=mulberry32((scene.seed^0xB0DE)>>>0);
+  const bandK=5+((rng()*7)|0), bandRot=rng()*TAU;
+  const faultY=((theta/TAU)*FW)|0;             // ONE traveling fault: the dominant gesture
+  const faultH=10+((rng()*14)|0), faultA=(6+rng()*14)|0;
+  const breath=0.055+rng()*0.05;
+  for(let y=0;y<FW;y++){
+    let shift=0;
+    let dy=Math.abs(y-faultY); dy=Math.min(dy,FW-dy);
+    if(dy<faultH) shift=Math.round(faultA*(1-dy/faultH));
+    for(let x=0;x<FW;x++){
+      let sx=x+shift; if(sx>=FW)sx-=FW; if(sx<0)sx+=FW;
+      const v=n[y*FW+sx], d=v-q;
+      if(d<=0){ field[y*FW+x]=0.03; continue; }                    // the void: one coherent ground
+      const rim=breath*(0.55+0.45*Math.sin(theta+ (x+y)*0.05));
+      if(d<rim){ field[y*FW+x]=0.16; continue; }                   // breathing rim
+      const depth=Math.min(1,d*3.2);
+      const band=0.5+0.5*Math.sin(depth*bandK*TAU*0.5 + bandRot + Math.sin(theta)*0.7);
+      field[y*FW+x]=0.30+0.62*(band*0.7+depth*0.3);                // strata within the body
+    }
+  }
+}
+function voidCarve(buf, scene, grad){
+  const vf=(scene.voidamt|0)/100;
+  if(vf<=0||scene.mode==='MASS')return;        // MASS carries its own void
+  const mf=massField(scene);
+  const r0=grad[0],g0=grad[1],b0=grad[2];
+  for(let y=0;y<H;y++){const cy=((y*FW/H)|0)*FW;
+    for(let x=0;x<W;x++){
+      if(mf.n[cy+((x*FW/W)|0)]<mf.q){ const o=(y*W+x)*3; buf[o]=r0; buf[o+1]=g0; buf[o+2]=b0; }
+    }
+  }
+}
+function chromaCap(buf, scene, grad){
+  if(!(scene.chromacap|0))return;
+  let lut=scene._capLUT;
+  if(!lut){
+    const rng=mulberry32((scene.seed^0xCA9)>>>0);
+    const picks=[2, 40+((rng()*60)|0), 120+((rng()*60)|0), 205+((rng()*48)|0)];
+    const A=[]; for(const p of picks)A.push(grad[p*3],grad[p*3+1],grad[p*3+2]);
+    lut=scene._capLUT=new Uint8Array(32768*3);
+    for(let r=0;r<32;r++)for(let g=0;g<32;g++)for(let b=0;b<32;b++){
+      const R=r*8+4,G=g*8+4,B=b*8+4; let bi=0,bd=1e9;
+      for(let k=0;k<A.length;k+=3){
+        const d=(R-A[k])*(R-A[k])+(G-A[k+1])*(G-A[k+1])+(B-A[k+2])*(B-A[k+2]);
+        if(d<bd){bd=d;bi=k;}
+      }
+      const o=((r<<10)|(g<<5)|b)*3; lut[o]=A[bi]; lut[o+1]=A[bi+1]; lut[o+2]=A[bi+2];
+    }
+  }
+  for(let i=0;i<buf.length;i+=3){
+    const o=(((buf[i]>>3)<<10)|((buf[i+1]>>3)<<5)|(buf[i+2]>>3))*3;
+    buf[i]=lut[o]; buf[i+1]=lut[o+1]; buf[i+2]=lut[o+2];
+  }
+}
+function seatWounds(scene){
+  const loc=(scene.locality|0)/100;
+  if(loc<=0)return;
+  const mf=massField(scene);
+  if(mf.vf<=0&&scene.mode!=='MASS')return;     // locality grips the coastline; no coast, no grip
+  const coast=[];
+  const band=0.035;
+  for(let y=2;y<FW-2;y+=2)for(let x=2;x<FW-2;x+=2){
+    if(Math.abs(mf.n[y*FW+x]-mf.q)<band)coast.push((y<<16)|x);
+  }
+  if(!coast.length)return;
+  const rng=mulberry32((scene.seed^0x77D5)>>>0);
+  if(scene.blocks)for(const b of scene.blocks){
+    if(rng()>loc)continue;
+    const c=coast[(rng()*coast.length)|0];
+    b.x=Math.max(0,Math.min(W-b.w-1, (((c&0xffff)/FW)*W - b.w/2)|0));
+    b.y=Math.max(0,Math.min(H-b.h-1, (((c>>16)/FW)*H - b.h/2)|0));
+  }
+  if(scene.bands)for(const bd of scene.bands){
+    if(rng()>loc)continue;
+    const c=coast[(rng()*coast.length)|0];
+    bd.y=Math.max(0,Math.min(H-4, (((c>>16)/FW)*H - bd.h/2)|0));
+  }
+}
 /* ============================================================================
    DIGITAL PASS  (datablock displacement + pixel sort)  in-place on buf
    ========================================================================== */
@@ -2618,6 +2749,8 @@ function renderSource(rgbA,rgbC,scene,i,theta,grad,fx,corr){
     const scr=renderSource._k||(renderSource._k=new Uint8Array(W*H*3));
     fxKaleido(rgbA,scr,scene,theta,Math.min(150,corr*scene.vibe.g.kaleido));
   }
+  voidCarve(rgbA, scene, grad);
+  chromaCap(rgbA, scene, grad);
 }
 
 /* ============================================================================
@@ -2651,7 +2784,7 @@ function compositeEcho(buf, ring, weights){
    GENERATION ORCHESTRATION
    ========================================================================== */
 /*CORE-END*/
-const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36,
+const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36, voidamt:34, locality:60, chromacap:0,
   fx:{chroma:true,tracking:true,pixelsort:true,grain:true,blocks:true,scanlines:true,echo:true,
       wave:false,slice:false,vroll:false,mosh:false,ghost:false,melt:false,bleed:false,invert:false,crush:false,dropout:false,
       chrono:false,mirror:false,flay:false,autoph:false,weave:false,entropy:false,meta:false,tect:false,
@@ -2741,6 +2874,7 @@ async function generateSeq(){
   const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
   const scene=buildScene(seed, state.mode);
+  scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
   reflectTune(scene);
@@ -2947,6 +3081,7 @@ self.onmessage=function(e){
   const J=e.data;
   try{
     const scene=buildScene(J.seed,J.mode);
+    scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
     scene.epoch=J.epoch|0;
     applyOverridesPure(scene,J.seed,J.ov);
     const {grad,pal,near}=buildPalette(J.scheme,scene.vibe);
@@ -3071,6 +3206,7 @@ async function generate(){
   const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
   const scene=buildScene(seed, state.mode);
+  scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
   reflectTune(scene);
@@ -3102,7 +3238,7 @@ async function generate(){
   const pctx=pcv.getContext('2d');
   const pimg=pctx.createImageData(540,540);
 
-  const jobOf=w=>({seed, mode:state.mode, scheme:{stops:scheme.stops,glitch:scheme.glitch},
+  const jobOf=w=>({seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0, chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
@@ -3344,6 +3480,7 @@ buildSeg($('mode'), [
   {v:'RANDOM',label:'AUTO'},{v:'PLASMA',label:'PLASMA'},{v:'RINGS',label:'RINGS'},
   {v:'GLYPHS',label:'GLYPHS'},{v:'SCANS',label:'SCANS'},{v:'LATTICE',label:'LATTIC'},
   {v:'ORBITALS',label:'ORBIT'},{v:'STRATA',label:'STRATA'},{v:'TENDRILS',label:'TENDRL'},
+  {v:'MASS',label:'MASS'},
 ],'mode');
 
 function bindSlider(id,labId,key,fmt){
@@ -3356,6 +3493,13 @@ bindSlider('frames','v-frames','frames');
 const updDur=()=>{ $('lab-dur').textContent=(+$('frames').value/FPS).toFixed(2)+'s @ '+FPS+'fps'; };
 $('frames').addEventListener('input',updDur); updDur();
 $('corr').addEventListener('input',()=>{$('lab-corr').textContent=state.corr>75?'SEVERE':state.corr>40?'ACTIVE':state.corr>10?'LIGHT':'CLEAN';});
+$('voidamt').addEventListener('input',()=>{state.voidamt=+$('voidamt').value; $('v-voidamt').textContent=state.voidamt;
+  $('lab-voidamt').textContent=state.voidamt>60?'DEVOURING':state.voidamt>30?'BREATHING':state.voidamt>0?'PRESENT':'DENIED';});
+$('voidamt').dispatchEvent(new Event('input'));
+$('locality').addEventListener('input',()=>{state.locality=+$('locality').value; $('v-locality').textContent=state.locality;});
+buildSeg($('chromaseg'),[{v:'0',label:'FULL SPECTRUM'},{v:'1',label:'CAPPED'}],'_chromaseg');
+setSeg('chromaseg','_chromaseg','0');
+$('chromaseg').addEventListener('click',()=>setTimeout(()=>{state.chromacap=+(state._chromaseg||'0');},0));
 $('corr').dispatchEvent(new Event('input'));
 
 document.querySelectorAll('.tg').forEach(tg=>{
@@ -3385,18 +3529,26 @@ function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
   const si=CARD_SCHEMES.indexOf(schemeKey), mi=MODES.indexOf(modeKey);
   const mo=Math.max(0,CARD_MOTION.indexOf(motion||'AUTO'));
   if(si<0||mi<0)return '';
-  const v4=ovActive()||EPOCH===1;
+  const forked=(state.voidamt|0)>0||(state.locality|0)>0||(state.chromacap|0)===1||modeKey==='MASS';
+  const v4=(ovActive()||EPOCH===1)&&!forked;
+  const v5=forked;
   let v=0n;
   const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
-  push(v4?4:2,4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
+  push(v5?5:(v4?4:2),4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
   for(const ch of CARD_CH)push(fx[ch]?1:0,1);          // 98 bits
   let nBytes=13, pad=6n;
-  if(v4){                                              // +36-bit override block -> 134 bits
+  if(v4||v5){                                          // +36-bit override block -> 134 bits
     push(OV.maskType,5); push(OV.maskStyle,5);
     push(OV.cx,5); push(OV.cy,5); push(OV.size,5);
     push(OV.n,6); push(OV.form,5);
     push(EPOCH?1:0,1);                     // epoch bit lives in what was padding
     nBytes=17; pad=1n;
+  }
+  if(v5){                                              // fork block: +15 bits -> 149
+    push(Math.min(100,state.voidamt|0),7);
+    push(state.chromacap?1:0,1);
+    push(Math.min(100,state.locality|0),7);
+    nBytes=19; pad=2n;   // 150 bits into 152: two, not three
   }
   v<<=pad;
   const bytes=[];
@@ -3414,7 +3566,7 @@ function unpackCard(str){
   let sx=String(str||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
   if(sx.startsWith('PNDR'))sx=sx.slice(4);
   sx=sx.replace(/I|L/g,'1').replace(/O/g,'0').replace(/U/g,'V');
-  const LEN={21:13,23:14,28:17,29:18};                 // v1 / v2 / v3 / v4
+  const LEN={21:13,23:14,28:17,29:18,32:20};           // v1 / v2 / v3 / v4 / v5-fork
   if(!(sx.length in LEN))return null;
   let bv=0n;
   for(const c of sx){const d=B32.indexOf(c); if(d<0)return null; bv=(bv<<5n)|BigInt(d);}
@@ -3429,7 +3581,7 @@ function unpackCard(str){
   let used=0;
   const pull=bits=>{const r=Number((v>>BigInt(TOT-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
   const ver=pull(4);
-  if(!((ver===1&&sx.length===21)||(ver===2&&sx.length===23)||(ver===3&&sx.length===28)||(ver===4&&sx.length===29)))return null;
+  if(!((ver===1&&sx.length===21)||(ver===2&&sx.length===23)||(ver===3&&sx.length===28)||(ver===4&&sx.length===29)||(ver===5&&sx.length===32)))return null;
   const seed=pull(32), si=pull(5), mi=pull(4), corr=pull(7), frames=pull(7);
   const mo=ver>=2?pull(2):0;
   if(si>=CARD_SCHEMES.length||mi>=MODES.length||corr>100||frames<8||frames>80||mo>2)return null;
@@ -3441,12 +3593,18 @@ function unpackCard(str){
     if(ov.form===3)ov.form=31;                          // old MIX -> new MIX
   }
   let epoch=0;
-  if(ver===4){
+  if(ver===4||ver===5){
     ov={maskType:pull(5),maskStyle:pull(5),cx:pull(5),cy:pull(5),size:pull(5),n:pull(6),form:pull(5)};
     if(ov.maskType>31||ov.maskStyle>19||(ov.n!==0&&(ov.n<2||ov.n>50))||ov.form>31)return null;
     epoch=pull(1);                         // legacy v4 cards carry 0 here by construction
   }
-  return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov, epoch};
+  let voidamt=0, chromacap=0, locality=0;
+  if(ver===5){
+    voidamt=pull(7); chromacap=pull(1); locality=pull(7);
+    if(voidamt>100||locality>100)return null;
+    if(ov&&ov.maskType===0&&ov.n===0&&ov.form===0&&ov.size===0)ov=null;   // fork cards without an override
+  }
+  return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov, epoch, voidamt, chromacap, locality};
 }
 function applyCard(c){
   clearOV();
@@ -3466,6 +3624,9 @@ function applyCard(c){
   setSeg('scheme','scheme',c.scheme);
   setSeg('mode','mode',c.mode);
   $('corr').value=c.corr; $('corr').dispatchEvent(new Event('input'));
+  state.voidamt=c.voidamt|0; $('voidamt').value=state.voidamt; $('voidamt').dispatchEvent(new Event('input'));
+  state.locality=c.locality|0; $('locality').value=state.locality; $('locality').dispatchEvent(new Event('input'));
+  state.chromacap=c.chromacap?1:0; setSeg('chromaseg','_chromaseg',String(state.chromacap));
   $('frames').value=c.frames; $('frames').dispatchEvent(new Event('input'));
   document.querySelectorAll('.tg').forEach(tg=>{
     const f=tg.dataset.fx; if(!(f in c.fx))return;
@@ -4429,6 +4590,10 @@ const TIP_ID={
   vimport:'IMPORT — merges a vault backup file into the collection. Duplicates are skipped.',
   gconnect:'CONNECT WALLET — Ethereum wallets only (EIP-6963). One signature-free tap; no gas, ever.',
   gplant:'SAVE TO MY GARDEN — plants the current loop in your wallet\u2019s own public section. Each plant is a wallet signature; only you can uproot yours. Plant without limit.',
+  voidamt:'VOID \u2014 how much of the canvas belongs to the black. Carved as one coherent coastline, never scattered dust. The composition\u2019s negative protagonist.',
+  locality:'WOUND LOCALITY \u2014 how much the damage knows the image. High: glitches grip the coastline of the form. Zero: blind violence, anywhere.',
+  chromaseg:'CHROMA \u2014 FULL SPECTRUM keeps the whole palette. CAPPED quantizes to a few flat fields: pop discipline, color as punctuation.',
+  mass:'MASS \u2014 grown forms, not drawn shapes. Continents, ridge branches, central massifs. The legible victim the corruption attacks.',
   corr:'CORRUPTION — global violence dial. Low = clean signal, high = the void bites back.',
   frames:'FRAMES — loop length. More frames, longer loop, bigger file.',
   epochseg:'ERA — SIGNAL is the current physics (index-space corruption, quake, clash). CLASSIC resurrects the pre-glitch era byte-exactly. Flick it and the same seed re-renders in the other era.',
@@ -4640,7 +4805,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='13.0';
+const REV_SELF='14.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
