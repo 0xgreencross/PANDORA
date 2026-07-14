@@ -286,7 +286,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 11.4 · LAZARUS<br>SELL FLOW ARMED</div>
+    <div class="ver">REV 11.5 · LAZARUS<br>SEPOLIA REHEARSAL</div>
   </header>
 
   <div class="colL">
@@ -468,7 +468,7 @@
 
 <div id="sellmodal">
   <div class="xm-box">
-    <div class="xm-head">INSCRIBE INTO LAZARUS <span id="sellcard"></span></div>
+    <div class="xm-head">INSCRIBE INTO LAZARUS <span id="sellnet"></span><br><span id="sellcard"></span></div>
     <div class="field"><label>EDITION</label><div class="seg" id="sellkind"></div></div>
     <div class="duo">
       <div class="field" style="flex:1"><label>EDITIONS</label><input type="number" id="selled" value="10" min="2"></div>
@@ -2540,7 +2540,7 @@ const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36,
       panes:false,hilb:false,splice:false,moire:false,braid:false,lungs:false,
       tunnel:false,kaleido:false,bloom:false,embers:false,runes:false,chimera:false} };
 let EPOCH=0;   // 0 = DEATH SIGNAL era · 1 = CLASSIC era (pre index-space corruption)
-let busy=false, RUN=0, lastURL=null, lastBlob=null, lastName='', lastDataURL='';
+let busy=false, RUN=0, lastURL=null, lastBlob=null, lastBytes=null, lastName='', lastDataURL='';
 let xBytes=null, xDim=0, xName='', xBlob=null, xURL=null, xDataURL='';
 /* CANVAS LOOP PLAYER — the monitor no longer relies on the browser's GIF
    decoder (which delays frames when high-entropy decodes miss its budget).
@@ -2749,7 +2749,7 @@ async function generateSeq(){
   $('prog').style.width='100%';
 
   if(lastURL)URL.revokeObjectURL(lastURL);
-  lastBlob=new Blob([bytes],{type:'image/gif'});
+  lastBlob=new Blob([bytes],{type:'image/gif'}); lastBytes=bytes;
   lastURL=URL.createObjectURL(lastBlob);
   lastName='DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
   $('dna').value=packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
@@ -3042,7 +3042,7 @@ async function generate(){
   $('prog').style.width='100%';
 
   if(lastURL)URL.revokeObjectURL(lastURL);
-  lastBlob=new Blob([bytes],{type:'image/gif'});
+  lastBlob=new Blob([bytes],{type:'image/gif'}); lastBytes=bytes;
   lastURL=URL.createObjectURL(lastBlob);
   lastName='DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
   $('dna').value=packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
@@ -3677,6 +3677,30 @@ function keccak256(bytes){
   }
   return out;
 }
+async function keccak256Async(bytes,onProgress){
+  const st=new Array(25).fill(0n);
+  const rate=136, CHUNK=262144;
+  const buf=new Uint8Array(rate); let off=0;
+  function absorb(){
+    for(let i=0;i<rate/8;i++){
+      let v=0n;
+      for(let b=7;b>=0;b--)v=(v<<8n)|BigInt(buf[i*8+b]);
+      st[i]^=v;
+    }
+    keccakF(st); off=0; buf.fill(0);
+  }
+  for(let start=0;start<bytes.length;start+=CHUNK){
+    const end=Math.min(start+CHUNK,bytes.length);
+    for(let i=start;i<end;i++){ buf[off++]=bytes[i]; if(off===rate)absorb(); }
+    if(onProgress)onProgress(end/bytes.length);
+    await new Promise(r=>setTimeout(r,0));
+  }
+  buf[off]^=0x01; buf[rate-1]^=0x80; absorb();
+  let out='';
+  for(let i=0;i<4;i++){ let v=st[i];
+    for(let b=0;b<8;b++){ out+=((v>>BigInt(b*8))&0xffn).toString(16).padStart(2,'0'); } }
+  return out;
+}
 function rotl(x,n){ n=BigInt(n%64); return ((x<<n)|(x>>(64n-n)))&M64; }
 function keccakF(st){
   for(let r=0;r<24;r++){
@@ -3879,8 +3903,9 @@ async function gRefresh(){
    vector-proven keccak. The contract address is the only missing organ:
    paste it into LAZARUS_ADDR when deployed and the flow goes live.
    ========================================================================== */
-const LAZARUS_ADDR='';   // <- mainnet address after deployment
-const LAZARUS_CHAIN='0x1';
+const LAZARUS_ADDR='0x072B09Cf9F428cd09D771a75c3b9889Ba7a3E3CD';   // SEPOLIA REHEARSAL
+const LAZARUS_CHAIN='0xaa36a7';                                     // 11155111
+const LAZ_RPCS=['https://ethereum-sepolia-rpc.publicnode.com','https://sepolia.drpc.org','https://1rpc.io/sepolia'];
 function abiU(v,bits){ return BigInt(v).toString(16).padStart(64,'0'); }
 function abiStr(str){
   const b=Array.from(new TextEncoder().encode(str));
@@ -3898,17 +3923,14 @@ function encodeInscribe(dna,traits,ens,gifHashHex,kind,maxSupply,priceWei,saleEn
   head.push(abiU(kind), abiU(maxSupply), abiU(priceWei), abiU(saleEnd));
   return '0x'+sel+head.slice(0,3).join('')+head.slice(3).join('')+parts.join('');
 }
-function gifHashHex(){
-  if(!masterBytes)return null;
-  /* keccak over the canonical 1080 master — the LAZARUS commitment */
-  return '0x'+keccak256(Array.from(masterBytes));
-}
+
 let SELL_CTX=null;
 function openSell(card){
   if(!LAZARUS_ADDR){ $('osd').textContent='LAZARUS NOT DEPLOYED YET'; return; }
   if(!GADDR){ $('osd').textContent='CONNECT WALLET FIRST'; return; }
   SELL_CTX={card};
   $('sellcard').textContent=card;
+  $('sellnet').textContent=LAZARUS_CHAIN==='0x1'?'· MAINNET':'· SEPOLIA REHEARSAL';
   $('sellmodal').style.display='flex';
 }
 async function sellInscribe(){
@@ -3924,8 +3946,13 @@ async function sellInscribe(){
     const dna=SELL_CTX.card;
     const traits=(state.scheme||'?')+'*'+(state.mode||'?')+'*'+(EPOCH?'CLASSIC':'SIGNAL');
     const ens=$('gaddr').textContent.includes('.')?$('gaddr').textContent:'';
-    const gh=gifHashHex();
-    if(!gh){ $('osd').textContent='RENDER THE LOOP FIRST (HASH NEEDED)'; return; }
+    if(!lastBytes){ $('osd').textContent='RENDER THE LOOP FIRST (HASH NEEDED)'; return; }
+    const gh='0x'+await keccak256Async(lastBytes,p=>{
+      $('osd').textContent='SEALING COMMITMENT · HASHING MASTER '+Math.round(p*100)+'%';
+    });
+    try{
+      await (GPROV||window.ethereum).request({method:'wallet_switchEthereumChain',params:[{chainId:LAZARUS_CHAIN}]});
+    }catch(e){ $('osd').textContent='WRONG NETWORK — SWITCH TO '+(LAZARUS_CHAIN==='0x1'?'MAINNET':'SEPOLIA'); return; }
     const fee=await ethCallLaz('0x'+keccak256(utf8('inscriptionFee()')).slice(0,8));
     const data=encodeInscribe(dna,traits,ens,gh,kind,maxSupply,priceWei,saleEnd);
     $('osd').textContent='CALLING WALLET — CONFIRM THE INSCRIPTION';
@@ -3936,7 +3963,7 @@ async function sellInscribe(){
   }catch(e){ $('osd').textContent='SELL: '+String(e&&e.message||e).slice(0,32); }
 }
 async function ethCallLaz(data){
-  for(const rpc of ENS_RPCS){
+  for(const rpc of LAZ_RPCS){
     try{
       const r=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:LAZARUS_ADDR,data},'latest']})});
