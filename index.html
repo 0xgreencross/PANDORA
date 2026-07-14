@@ -246,6 +246,8 @@
        horizontal room they structurally want, capped wells, ghost scroll. */
     #archive{max-width:1140px;margin:18px auto 40px;padding:0 20px;
       display:grid;grid-template-columns:3fr 2fr;gap:26px;align-items:start;}
+    #shelfseg{display:none;}
+    #archive #shelfseg{display:grid;}
     #arclabel{grid-column:1/-1;font-family:var(--fD);font-weight:700;font-size:9px;
       letter-spacing:0;color:var(--mut);}
     #archive #collections{display:contents;}
@@ -263,9 +265,11 @@
       .screen-wrap{max-height:76dvh;}
       #archive{grid-column:2;position:sticky;top:0;max-height:100dvh;overflow:hidden;
         display:flex;flex-direction:column;gap:14px;margin:14px 20px 14px 0;padding:0;}
-      #archive #collections{display:flex;flex-direction:column;gap:14px;min-height:0;}
-      #archive #vaultlist{max-height:44dvh;}
-      #archive #gardenlist{max-height:26dvh;}
+      #archive #collections{display:flex;flex-direction:column;gap:12px;min-height:0;flex:1;}
+      #archive #c-vault,#archive #c-gardens{flex:1;min-height:0;}
+      #archive #vaultlist,#archive #gardenlist{max-height:none;flex:1;min-height:0;}
+      #archive .shelf-hidden{display:none;}
+      #archive{height:calc(100dvh - 28px);}
     }
     #panels{flex:0 0 auto;position:static;}
     .panel{position:static;overflow:visible;}
@@ -296,7 +300,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 11.1 · JANUS<br>TRI-COLUMN DECK</div>
+    <div class="ver">REV 11.2 · JANUS<br>ONE SHELF</div>
   </header>
 
   <div class="colL">
@@ -431,6 +435,10 @@
         <button id="dnaload" class="dice" title="reproduce from card">▶</button>
       </div>
       <div id="collections">
+        <div class="seg" id="shelfseg">
+          <button data-shelf="vault" aria-pressed="true">VAULT</button>
+          <button data-shelf="gardens" aria-pressed="false">GARDENS</button>
+        </div>
         <div id="c-vault">
           <div class="field">
             <label>PUBLIC VAULT <span class="v" id="vcount"></span></label>
@@ -3759,11 +3767,32 @@ window.addEventListener('eip6963:announceProvider',ev=>{
 });
 try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
 const GFN=SB.url? SB.url.replace('.supabase.co','.functions.supabase.co')+'/garden-write' : '';
+/* the archive shelf: one collection at a time, full height */
+(function(){
+  const seg=$('shelfseg'); if(!seg)return;
+  function setShelf(which){
+    $('c-vault').classList.toggle('shelf-hidden',which!=='vault');
+    $('c-gardens').classList.toggle('shelf-hidden',which!=='gardens');
+    seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.shelf===which)));
+  }
+  seg.addEventListener('click',ev=>{
+    const b=ev.target.closest('button'); if(b&&b.dataset.shelf)setShelf(b.dataset.shelf);
+  });
+  setShelf('vault');
+})();
 async function gConnect(){
   /* EIP-6963: ask Ethereum wallets to identify themselves; never trust the
-     window.ethereum squatter (Tezos and friends love that chair). */
+     window.ethereum squatter. Discovery gets a real window, every branch
+     speaks, and your chosen wallet is remembered by its rdns. */
+  $('osd').textContent='SCANNING FOR ETHEREUM WALLETS…';
   try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
-  await new Promise(r=>setTimeout(r,120));
+  await new Promise(r=>setTimeout(r,450));
+  if(!GPROV){
+    try{
+      const pref=localStorage.getItem('pndr_wallet_rdns');
+      if(pref){ const hit=G6963.find(p=>p.info.rdns===pref); if(hit)GPROV=hit.provider; }
+    }catch(e){}
+  }
   if(G6963.length>1 && !GPROV){
     const host=$('gardenlist');
     const sec=document.createElement('div'); sec.className='gsec';
@@ -3772,7 +3801,9 @@ async function gConnect(){
     for(const p of G6963){
       const b=document.createElement('button'); b.className='vio'; b.style.marginTop='4px';
       b.textContent=p.info.name.toUpperCase();
-      b.addEventListener('click',()=>{ GPROV=p.provider; sec.remove(); gConnect(); });
+      b.addEventListener('click',()=>{ GPROV=p.provider;
+        try{ if(p.info&&p.info.rdns)localStorage.setItem('pndr_wallet_rdns',p.info.rdns); }catch(e){}
+        sec.remove(); gConnect(); });
       sec.appendChild(b);
     }
     host.insertBefore(sec,host.firstChild);
@@ -3780,7 +3811,8 @@ async function gConnect(){
   }
   if(!GPROV) GPROV = G6963.length===1 ? G6963[0].provider
                    : (window.ethereum&&window.ethereum.request ? window.ethereum : null);
-  if(!GPROV){ $('osd').textContent='NO ETHEREUM WALLET FOUND'; return; }
+  if(!GPROV){ $('osd').textContent='NO ETHEREUM WALLET ANNOUNCED — IS ONE INSTALLED + ENABLED?'; return; }
+  $('osd').textContent='CALLING WALLET — CHECK ITS WINDOW';
   try{
     const acc=await GPROV.request({method:'eth_requestAccounts'});
     GADDR=(acc&&acc[0]||'').toLowerCase();
@@ -3790,7 +3822,7 @@ async function gConnect(){
       ensName(GADDR).then(n=>{ if(n){ $('gaddr').textContent=n; $('gconnect').textContent='◈ '+n; } });
       $('gplant').removeAttribute('disabled');
     }
-  }catch(e){ $('osd').textContent='WALLET REFUSED'; }
+  }catch(e){ GPROV=null; $('osd').textContent='WALLET: '+String(e&&e.message||e).slice(0,34); }
 }
 async function gSigned(action,card,thumb){
   const ts=Date.now();
