@@ -67,3 +67,15 @@ be deleted, the site can burn, and the loop still resurrects from 29 characters.
 **Everything else is noise.**
 
 *GREENCROSS × Claude — DITHERVOID, 2026*
+
+---
+
+## THE REPO IS THE APP
+
+    index.html          the entire engine — one file, served as dithervoid.art
+    CNAME               the domain
+    og.png / icon.png   link-preview and favicon assets
+    lazarus/            the corpus contract (ERC-1155) + 15-test hardhat suite
+    infra/              backend: Supabase schemas + the signed-action edge function
+
+Everything the project is, in one tree. Clone it and you hold the whole organism.
