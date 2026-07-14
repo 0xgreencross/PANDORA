@@ -143,7 +143,16 @@
     font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
     color:var(--txt);background:var(--panel);border:1px solid var(--line);}
   #vtoken::placeholder,#vrepo::placeholder{color:var(--mut);}
-  #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:248px;}
+  #gardenlist{max-height:280px;}
+  .voidscroll{overflow-y:auto;overscroll-behavior:contain;
+    scrollbar-width:thin;scrollbar-color:transparent transparent;}
+  .voidscroll:hover,.voidscroll.scrolling{scrollbar-color:rgba(255,255,255,.22) transparent;}
+  .voidscroll::-webkit-scrollbar{width:4px;height:4px;}
+  .voidscroll::-webkit-scrollbar-track{background:transparent;}
+  .voidscroll::-webkit-scrollbar-thumb{background:transparent;border-radius:2px;}
+  .voidscroll:hover::-webkit-scrollbar-thumb,
+  .voidscroll.scrolling::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);}
   .ve{position:relative;}
   .ve img{display:block;width:100%;aspect-ratio:1;border-radius:4px;cursor:pointer;
     image-rendering:pixelated;}
@@ -259,7 +268,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 10.6 · JANUS<br>ENS GARDENS</div>
+    <div class="ver">REV 10.7 · JANUS<br>GHOST SCROLL</div>
   </header>
 
   <div class="colL">
@@ -402,7 +411,7 @@
         <button id="vimport" class="vio">⇩ IMPORT</button>
         <input type="file" id="vfile" accept="application/json,.json" style="display:none">
       </div>
-      <div id="vaultlist"></div>
+      <div id="vaultlist" class="voidscroll"></div>
       <div class="field">
         <label>GARDENS <span class="v" id="gaddr"></span></label>
         <div class="duo">
@@ -410,7 +419,7 @@
           <button id="gplant" class="vio" disabled>⚘ SAVE TO MY GARDEN</button>
         </div>
       </div>
-      <div id="gardenlist"></div>
+      <div id="gardenlist" class="voidscroll"></div>
       <p class="labnote">YOUR WALLET IS YOUR SHELF. PLANT WITHOUT LIMIT: EVERY SAVE IS SIGNED, PUBLIC, AND CURATED BY YOU ALONE. WHAT GROWS HERE MINTS IN THE NEXT ERA. PLANT NOW, MINT LATER.</p>
       <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. The vault keeps them in this browser, surviving sessions and app upgrades.</p>
     </section>
@@ -3999,6 +4008,13 @@ document.addEventListener('click',ev=>{
   document.querySelectorAll('.tg').forEach(g=>{ if(g.dataset.fx&&TIP_SIG[g.dataset.fx])g.title=TIP_SIG[g.dataset.fx]; });
 })();
 
+document.querySelectorAll('.voidscroll').forEach(el=>{
+  let t=0;
+  el.addEventListener('scroll',()=>{
+    el.classList.add('scrolling');
+    clearTimeout(t); t=setTimeout(()=>el.classList.remove('scrolling'),700);
+  },{passive:true});
+});
 $('dice').addEventListener('click',randSeed);
 $('resetall').addEventListener('click',()=>{
   document.querySelectorAll('.tg').forEach(tg=>{ tg.dataset.on=0; state.fx[tg.dataset.fx]=false; });
