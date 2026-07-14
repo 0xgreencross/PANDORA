@@ -221,6 +221,8 @@
   #xm-compose{flex:1;color:#05050a;background:var(--cyan);border:1px solid var(--cyan);}
   #sellmodal{display:none;position:fixed;inset:0;z-index:61;background:rgba(3,3,6,.92);
     align-items:center;justify-content:center;padding:16px;}
+  #sellstat{font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;
+    color:var(--sulph);line-height:1.8;min-height:16px;}
   .fdim{opacity:.32;pointer-events:none;}
   #sellmodal .xm-box{width:min(420px,94vw);}
   #sellmodal input{appearance:none;width:100%;padding:12px 8px;border-radius:5px;
@@ -493,6 +495,7 @@
     </div>
     <div class="field"><label id="sell-l-price">PRICE ETH PER COPY</label><input type="text" id="sellprice" value="0.01" inputmode="decimal"></div>
     <div class="xm-note">ONE TRANSACTION: PAYS THE INSCRIPTION FEE, WRITES THE DNA ON-CHAIN FOREVER, MINTS COPY Nº1 TO YOU. COLLECTORS PAY YOU 100%.</div>
+    <div id="sellstat"></div>
     <div class="xm-row">
       <button id="sellgo">⛓ INSCRIBE</button>
     </div>
@@ -3959,10 +3962,27 @@ function openSell(card){
   $('sellcard').textContent=card;
   $('sellnet').textContent=LAZARUS_CHAIN==='0x1'?'· MAINNET':'· SEPOLIA REHEARSAL';
   sellUI();
+  $('sellstat').textContent='';
   $('sellmodal').style.display='flex';
 }
+function sstat(t){ $('sellstat').textContent=t; $('osd').textContent=t; }
 async function sellInscribe(){
   try{
+    /* the commitment must hash THIS card's loop — never whatever happens to
+       be on the monitor. Mismatch or empty: resurrect first, then continue. */
+    if($('dna').value.trim()!==SELL_CTX.card || !lastBytes){
+      sstat('RESURRECTING THE LOOP…');
+      const c=unpackCard(SELL_CTX.card);
+      if(!c){ sstat('CARD FAILED TO DECODE'); return; }
+      applyCard(c); generate();
+      const t0=Date.now();
+      while(busy || !lastBytes){
+        await new Promise(r=>setTimeout(r,300));
+        sstat('RESURRECTING THE LOOP… '+Math.round((Date.now()-t0)/1000)+'s');
+        if(Date.now()-t0>180000){ sstat('RENDER TIMED OUT — TRY AGAIN'); return; }
+      }
+      if($('dna').value.trim()!==SELL_CTX.card){ sstat('LOOP MISMATCH — RE-OPEN SELL'); return; }
+    }
     const kindStr=state._sellkind||'0';
     const kind=+kindStr;
     const editions=Math.max(2, +$('selled').value||10);
@@ -3974,21 +3994,22 @@ async function sellInscribe(){
     const dna=SELL_CTX.card;
     const traits=(state.scheme||'?')+'*'+(state.mode||'?')+'*'+(EPOCH?'CLASSIC':'SIGNAL');
     const ens=$('gaddr').textContent.includes('.')?$('gaddr').textContent:'';
-    if(!lastBytes){ $('osd').textContent='RENDER THE LOOP FIRST (HASH NEEDED)'; return; }
     const gh='0x'+await keccak256Async(lastBytes,p=>{
-      $('osd').textContent='SEALING COMMITMENT · HASHING MASTER '+Math.round(p*100)+'%';
+      sstat('SEALING COMMITMENT · HASHING MASTER '+Math.round(p*100)+'%');
     });
     try{
       await (GPROV||window.ethereum).request({method:'wallet_switchEthereumChain',params:[{chainId:LAZARUS_CHAIN}]});
-    }catch(e){ $('osd').textContent='WRONG NETWORK — SWITCH TO '+(LAZARUS_CHAIN==='0x1'?'MAINNET':'SEPOLIA'); return; }
+    }catch(e){ sstat('WRONG NETWORK — APPROVE THE SWITCH TO '+(LAZARUS_CHAIN==='0x1'?'MAINNET':'SEPOLIA')); return; }
+    sstat('READING THE LIVE FEE FROM THE CORPUS…');
     const fee=await ethCallLaz('0x'+keccak256(utf8('inscriptionFee()')).slice(0,8));
+    if(!fee){ sstat('RPC UNREACHABLE — TRY AGAIN'); return; }
     const data=encodeInscribe(dna,traits,ens,gh,kind,maxSupply,priceWei,saleEnd);
-    $('osd').textContent='CALLING WALLET — CONFIRM THE INSCRIPTION';
+    sstat('CALLING WALLET — CONFIRM THE INSCRIPTION');
     const tx=await (GPROV||window.ethereum).request({method:'eth_sendTransaction',
       params:[{from:GADDR,to:LAZARUS_ADDR,value:'0x'+BigInt(fee||'0x0').toString(16),data}]});
-    $('osd').textContent='INSCRIBED · TX '+tx.slice(0,10)+'…';
+    sstat('INSCRIBED · TX '+tx.slice(0,10)+'…');
     $('sellmodal').style.display='none';
-  }catch(e){ $('osd').textContent='SELL: '+String(e&&e.message||e).slice(0,32); }
+  }catch(e){ sstat('SELL: '+String(e&&e.message||e).slice(0,40)); }
 }
 async function ethCallLaz(data){
   for(const rpc of LAZ_RPCS){
