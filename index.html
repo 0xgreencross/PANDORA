@@ -144,10 +144,17 @@
     color:var(--txt);background:var(--panel);border:1px solid var(--line);}
   #vtoken::placeholder,#vrepo::placeholder{color:var(--mut);}
   #collections,#c-vault,#c-gardens{display:flex;flex-direction:column;gap:10px;}
-  #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:248px;}
-  #gardenlist{max-height:280px;}
-  .voidscroll{overflow-y:auto;overscroll-behavior:contain;scroll-snap-type:y proximity;scroll-padding-top:2px;}
-  .voidscroll .ve,.voidscroll .gsec{scroll-snap-align:start;}
+  #shelfseg{display:grid;grid-template-columns:1fr 1fr;}
+  .shelf-hidden{display:none;}
+  #vaultlist{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+
+  /* wells scroll ONLY where a mouse lives; touch gets one native scroll context */
+  @media (pointer:fine){
+    #colA .voidscroll,#p-lab .voidscroll{overflow-y:auto;overscroll-behavior:contain;
+      scroll-snap-type:y proximity;scroll-padding-top:2px;}
+    #p-lab #vaultlist,#p-lab #gardenlist{max-height:300px;}
+    .voidscroll .ve,.voidscroll .gsec{scroll-snap-align:start;}
+  }
   .voidscroll{
     scrollbar-width:thin;scrollbar-color:transparent transparent;}
   .voidscroll:hover,.voidscroll.scrolling{scrollbar-color:rgba(255,255,255,.22) transparent;}
@@ -300,7 +307,7 @@
     .colL{display:flex;flex-direction:column;gap:9px;flex:0 1 56%;max-width:660px;}
     .colR{display:flex;flex-direction:column;gap:10px;flex:1 1 360px;min-width:360px;}
     .monitor{width:min(100%,76dvh);align-self:flex-start;}
-    #shelfseg{display:none;}
+
     #arclabel{font-family:var(--fD);font-weight:700;font-size:9px;letter-spacing:0;color:var(--mut);}
     /* panels hug their content per tab — no more 600px void on SIGNAL/LAB.
        Mobile keeps the absolute-overlay panels untouched. */
@@ -310,7 +317,6 @@
       .screen-wrap{max-height:76dvh;}
       #colA{display:flex;flex-direction:column;gap:12px;flex:0 0 300px;min-width:0;
         max-height:calc(100dvh - 40px);position:sticky;top:20px;}
-      #colA #shelfseg{display:grid;grid-template-columns:1fr 1fr;}
       #colA #collections{display:flex;flex-direction:column;gap:12px;min-height:0;flex:1;}
       #colA #c-vault,#colA #c-gardens{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;}
       #colA #vaultlist,#colA #gardenlist{max-height:none;flex:1;min-height:0;}
