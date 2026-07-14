@@ -97,6 +97,7 @@ input[type=text],input[type=number],textarea{background:var(--well); color:var(-
   body[data-bay=archive] #bay-archive{display:flex;}
   body[data-bay=archive] #bay-engine{display:none;}
   #dock{display:flex;}
+  #dock-studio{display:none;}
   :root{--msz:min(calc(100svh - 56px - 260px), calc(100vw - 380px - 48px));}
 }
 /* SHORT landscape (phones rotated): monitor left, controls right */
@@ -108,22 +109,41 @@ input[type=text],input[type=number],textarea{background:var(--well); color:var(-
   body[data-bay=engine] #bay-engine{display:flex;}
   body[data-bay=archive] #bay-archive{display:flex;}
   #dock{display:flex; position:absolute; right:0; bottom:0; width:220px; border-left:1px solid var(--hair);}
+  #dock-studio{display:none;}
   :root{--msz:calc(100svh - 44px - 24px);}
   #stagewrap{width:auto;}
   #surface,#stagetelem{display:none;}   /* rotated phone = viewing mode; controls live in the bays */
 }
-/* PORTRAIT / NARROW: stage on top, dock at the thumb */
+/* PORTRAIT / NARROW — THE NATIVE APP BAND: three tabs, floating capsule bar */
 @media (orientation:portrait), (max-width:899px){
-  #cockpit{grid-template-rows:auto auto auto minmax(0,1fr); grid-template-columns:1fr;}
-  #bay-stage{display:contents;}
-  #stagewrap{grid-row:1;}
-  #stagetelem{grid-row:2;}
-  #surface{grid-row:3;}
-  #bay-engine,#bay-archive{grid-row:4; grid-column:1; border-top:1px solid var(--hair); display:none;}
+  #cockpit{grid-template-rows:minmax(0,1fr); grid-template-columns:1fr;}
+  #bay-stage,#bay-engine,#bay-archive{grid-area:1/1; display:none; border:none;}
+  body[data-bay=studio] #bay-stage{display:flex; flex-direction:column; overflow-y:auto;
+    -webkit-overflow-scrolling:touch; overscroll-behavior:contain;}
   body[data-bay=engine] #bay-engine{display:flex;}
   body[data-bay=archive] #bay-archive{display:flex;}
-  #dock{display:flex;}
-  :root{--msz:min(100vw - 20px, calc(100svh - 396px));}
+  .baybody{padding-bottom:96px;}
+  /* the floating tab capsule — navigation layer, glass, above everything */
+  #dock{display:flex; position:fixed; left:14px; right:14px;
+    bottom:calc(10px + env(safe-area-inset-bottom)); z-index:45;
+    height:58px; border:1px solid var(--hair2); border-radius:999px;
+    background:rgba(14,14,17,.72);
+    -webkit-backdrop-filter:blur(18px) saturate(1.3); backdrop-filter:blur(18px) saturate(1.3);
+    overflow:hidden;}
+  #dock button{border:none; box-shadow:none; font-size:9px; letter-spacing:2px;}
+  #dock button[aria-pressed=true]{color:var(--ox); box-shadow:none;}
+  :root{--msz:min(100vw - 24px, 52svh);}
+  #stagewrap{flex:0 0 auto; padding:10px 12px 4px;}
+  #stagetelem{flex:0 0 auto;}
+  #surface{flex:0 0 auto; border-top:none; overflow:visible; padding:0 12px 110px; gap:0;}
+  /* grouped cards — the content layer, flat, iOS inset-grouped grammar */
+  #surface>.card{background:var(--panel); border:1px solid var(--hair); border-radius:16px;
+    padding:12px 14px; margin:10px 0 0;}
+  /* TRANSMIT floats above the tab bar — the accessory pattern */
+  #go{order:99; position:sticky; bottom:calc(78px + env(safe-area-inset-bottom)); z-index:40;
+    margin-top:14px; border-radius:999px; box-shadow:0 8px 28px rgba(0,0,0,.55);}
+  #vaultlist,#gardenlist{max-height:none;}
+  details.fam{border-radius:14px; overflow:hidden;}
 }
 /* ============ STAGE — THE MONITOR IS SIZED BY LAW, NEVER BY FLEX ============ */
 #bay-stage{background:var(--void);}
@@ -277,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 15.3 · BLACKMASS<br>MONITOR DISCIPLINE</div>
+  <div id="mastrev">REV 16.0 · BLACKMASS<br>NATIVE</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -306,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 15.3 · BLACKMASS<br>MONITOR DISCIPLINE</div>
+    <div class="ver">REV 16.0 · BLACKMASS<br>NATIVE</div>
   </header>
 
   <div class="colL">
@@ -4861,7 +4881,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='15.3';
+const REV_SELF='16.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5096,19 +5116,31 @@ document.addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='Enter')
     d.appendChild(sec); sec.style.display='block'; sec.classList.remove('panel');
     eng.appendChild(d); };
   mkFold('TUNE — OVERRIDES','p-tune');
-  mkFold('SEED · DNA','p-lab');
+
 
   /* archive bay */
   mv(g('collections'), g('arcbody'));
   const notes=document.querySelectorAll('#arcbody .labnote');
 
-  /* dock */
+  /* seed + dna live on the studio surface — the performer's right hand */
+  const lab=g('p-lab');
+  if(lab){ lab.classList.remove('panel'); lab.classList.add('card'); lab.style.display='block';
+    g('surface').appendChild(lab); }
+  document.querySelectorAll('#surface > #surfdials, #surface > #surfrow2, #surface > #surfacts')
+    .forEach(el=>el.classList.add('card'));
+
+  /* dock: three rooms, studio first */
+  g('dock').insertAdjacentHTML('afterbegin','<button id="dock-studio" aria-pressed="false">STUDIO</button>');
+  const isApp=()=>matchMedia('(orientation:portrait), (max-width:899px)').matches;
   const setBay=b=>{ document.body.dataset.bay=b;
-    g('dock-engine').setAttribute('aria-pressed', b==='engine');
-    g('dock-archive').setAttribute('aria-pressed', b==='archive'); };
+    for(const k of ['studio','engine','archive'])
+      g('dock-'+k).setAttribute('aria-pressed', b===k); };
+  g('dock-studio').addEventListener('click',()=>setBay('studio'));
   g('dock-engine').addEventListener('click',()=>setBay('engine'));
   g('dock-archive').addEventListener('click',()=>setBay('archive'));
-  setBay('engine');
+  setBay(isApp()?'studio':'engine');
+  matchMedia('(orientation:portrait), (max-width:899px)').addEventListener('change',
+    e=>setBay(e.matches?'studio':'engine'));
 
   /* infobtn joins the mast */
   mv(g('infobtn'), g('mast'));
