@@ -221,6 +221,7 @@
   #xm-compose{flex:1;color:#05050a;background:var(--cyan);border:1px solid var(--cyan);}
   #sellmodal{display:none;position:fixed;inset:0;z-index:61;background:rgba(3,3,6,.92);
     align-items:center;justify-content:center;padding:16px;}
+  .fdim{opacity:.32;pointer-events:none;}
   #sellmodal .xm-box{width:min(420px,94vw);}
   #sellmodal input{appearance:none;width:100%;padding:12px 8px;border-radius:5px;
     font-family:var(--fD);font-weight:700;font-size:10px;letter-spacing:0;
@@ -487,10 +488,10 @@
     <div class="xm-head">INSCRIBE INTO LAZARUS <span id="sellnet"></span><br><span id="sellcard"></span></div>
     <div class="field"><label>EDITION</label><div class="seg" id="sellkind"></div></div>
     <div class="duo">
-      <div class="field" style="flex:1"><label>EDITIONS</label><input type="number" id="selled" value="10" min="2"></div>
-      <div class="field" style="flex:1"><label>OPEN DAYS</label><input type="number" id="selldays" value="3" min="1" max="30"></div>
+      <div class="field" style="flex:1" id="sell-f-ed"><label>EDITIONS</label><input type="number" id="selled" value="10" min="2"></div>
+      <div class="field" style="flex:1" id="sell-f-days"><label>OPEN DAYS</label><input type="number" id="selldays" value="3" min="1" max="30"></div>
     </div>
-    <div class="field"><label>PRICE ETH PER COPY</label><input type="text" id="sellprice" value="0.01" inputmode="decimal"></div>
+    <div class="field"><label id="sell-l-price">PRICE ETH PER COPY</label><input type="text" id="sellprice" value="0.01" inputmode="decimal"></div>
     <div class="xm-note">ONE TRANSACTION: PAYS THE INSCRIPTION FEE, WRITES THE DNA ON-CHAIN FOREVER, MINTS COPY Nº1 TO YOU. COLLECTORS PAY YOU 100%.</div>
     <div class="xm-row">
       <button id="sellgo">⛓ INSCRIBE</button>
@@ -3957,6 +3958,7 @@ function openSell(card){
   SELL_CTX={card};
   $('sellcard').textContent=card;
   $('sellnet').textContent=LAZARUS_CHAIN==='0x1'?'· MAINNET':'· SEPOLIA REHEARSAL';
+  sellUI();
   $('sellmodal').style.display='flex';
 }
 async function sellInscribe(){
@@ -4002,6 +4004,13 @@ $('sellgo').addEventListener('click',sellInscribe);
 $('sellclose').addEventListener('click',()=>{$('sellmodal').style.display='none';});
 buildSeg($('sellkind'),[{v:'0',label:'1/1'},{v:'1',label:'LIMITED'},{v:'2',label:'OPEN'}],'_sellkind');
 setSeg('sellkind','_sellkind','0');
+function sellUI(){
+  const k=+(state._sellkind||'0');
+  $('sell-f-ed').classList.toggle('fdim',k!==1);        // EDITIONS lives only for LIMITED
+  $('sell-f-days').classList.toggle('fdim',k!==2);      // OPEN DAYS lives only for OPEN
+  $('sell-l-price').textContent = k===0 ? 'PRICE ETH' : 'PRICE ETH PER COPY';
+}
+$('sellkind').addEventListener('click',()=>setTimeout(sellUI,0));
 
 (async function gRestore(){
   /* the wallet you chose is remembered by rdns; eth_accounts is popup-free,
