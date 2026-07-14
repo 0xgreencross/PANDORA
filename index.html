@@ -286,7 +286,7 @@
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 11.5b · LAZARUS<br>SESSION RESTORE</div>
+    <div class="ver">REV 11.5c · LAZARUS<br>SESSION RESTORE</div>
   </header>
 
   <div class="colL">
@@ -3836,8 +3836,11 @@ async function gConnect(){
     host.insertBefore(sec,host.firstChild);
     return;
   }
-  if(!GPROV) GPROV = G6963.length===1 ? G6963[0].provider
-                   : (window.ethereum&&window.ethereum.request ? window.ethereum : null);
+  if(!GPROV && G6963.length===1){
+    GPROV=G6963[0].provider;
+    try{ if(G6963[0].info&&G6963[0].info.rdns)localStorage.setItem('pndr_wallet_rdns',G6963[0].info.rdns); }catch(e){}
+  }
+  if(!GPROV) GPROV = (window.ethereum&&window.ethereum.request ? window.ethereum : null);
   if(!GPROV){ $('osd').textContent='NO ETHEREUM WALLET ANNOUNCED — IS ONE INSTALLED + ENABLED?'; return; }
   $('osd').textContent='CALLING WALLET — CHECK ITS WINDOW';
   try{
