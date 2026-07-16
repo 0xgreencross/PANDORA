@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 17.1 · BLACKMASS<br>ATELIER</div>
+  <div id="mastrev">REV 17.2 · BLACKMASS<br>SIXTY-FOUR BODIES</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 17.1 · BLACKMASS<br>ATELIER</div>
+    <div class="ver">REV 17.2 · BLACKMASS<br>SIXTY-FOUR BODIES</div>
   </header>
 
   <div class="colL">
@@ -1475,78 +1475,137 @@ function faultOf(scene){
 function massField(scene){
   if(scene._mf) return scene._mf;
   const rng=mulberry32((scene.seed^0x14CE55)>>>0);
-  const fam=(rng()*4)|0;               // 0 effigy · 1 monolith · 2 shroud · 3 relic
+  const fam=(rng()*64)|0;             // the sixty-four bodies
   let vf=(scene.voidamt|0)/100;
   if(scene.mode==='MASS'&&vf<=0)vf=0.45;
   vf=Math.max(0.12,Math.min(0.88,vf));
   const target=1-vf;
   const no=scene.noise;
-  const mirror=fam===0&&rng()<0.6;
+  const arr=fam>>3, prim=fam&7;          // 8 skeletons x 8 vocabularies = 64 bodies
+  const mirror=(arr===1)||((arr===3||arr===2)&&rng()<0.4);
   const ph=rng()*90;
-  /* --- the body: a signed distance field --- */
-  const sm=(a,b,k)=>{const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25;};
-  const blobs=[]; { let cy=0.30+rng()*0.06;
-    const nb=3+((rng()*3)|0);
-    for(let i=0;i<nb;i++){ blobs.push([ (rng()-0.5)*0.16, cy, (rng()-0.5)*0.12,
-      0.10+rng()*0.13, 0.9+rng()*0.5 ]); cy+=0.11+rng()*0.07; } }
-  const frac=[]; for(let i=0;i<3;i++)frac.push([rng()*2-1, rng()*2-1, (rng()-0.5)*0.5, 0.004+rng()*0.006]);
   const fbmA=0.02+rng()*0.035, fbmF=4+rng()*5;
+  /* ---- primitive vocabulary ---- */
+  const rotc=[],rots=[];
+  const P=[];    // parts: [type, x,y,z, a,b,c, k(blend), rot]
+  const C=[];    // carvings: spheres [x,y,z,r] subtracted
+  const F=[];    // fracture planes [nx,ny,off,halfwidth]
+  const pick=(base)=>{ const r=rng(); return r<0.62?base:( (base+1+((r*6)|0))&7 ); };
+  const addPart=(t,x,y,z,a,b,c,k)=>{ P.push([t,x,y,z,a,b,c,k, rng()*0.9-0.45]); };
+  let hasDrape=false;
+  if(arr===0){        // STACK — vertical accumulation
+    let cy=0.24+rng()*0.08; const n2=3+((rng()*4)|0);
+    for(let i=0;i<n2;i++){ addPart(pick(prim), (rng()-0.5)*0.14, cy, (rng()-0.5)*0.08,
+      0.09+rng()*0.12, 0.07+rng()*0.09, 0.07+rng()*0.07, 0.07+rng()*0.05); cy+=0.10+rng()*0.08; }
+  } else if(arr===1){ // MIRROR — bilateral figure
+    const n2=2+((rng()*3)|0); let cy=0.28+rng()*0.08;
+    for(let i=0;i<n2;i++){ addPart(pick(prim), 0.05+rng()*0.14, cy, (rng()-0.5)*0.06,
+      0.08+rng()*0.11, 0.07+rng()*0.10, 0.06+rng()*0.06, 0.06+rng()*0.06); cy+=0.13+rng()*0.08; }
+    addPart(pick(prim), 0, 0.30+rng()*0.30, 0, 0.10+rng()*0.10, 0.10+rng()*0.10, 0.07, 0.09);
+  } else if(arr===2){ // ORBIT — nucleus and satellites
+    addPart(pick(prim), 0, 0.46+rng()*0.08, 0, 0.15+rng()*0.09, 0.14+rng()*0.08, 0.10, 0.05);
+    const sats=3+((rng()*3)|0), R=0.24+rng()*0.10, a0=rng()*TAU;
+    for(let i=0;i<sats;i++){ const a=a0+i*TAU/sats;
+      addPart(pick(prim), Math.cos(a)*R, 0.48+Math.sin(a)*R*0.9, (rng()-0.5)*0.1,
+        0.05+rng()*0.05, 0.05+rng()*0.04, 0.04, 0.10+rng()*0.06); }
+  } else if(arr===3){ // SPINE — column with limbs
+    addPart(3, 0, 0.5, 0, 0.055+rng()*0.03, 0.34+rng()*0.08, 0, 0.05);
+    const limbs=2+((rng()*4)|0);
+    for(let i=0;i<limbs;i++){ addPart(pick(prim), (0.10+rng()*0.16), 0.24+rng()*0.5, (rng()-0.5)*0.08,
+      0.05+rng()*0.08, 0.04+rng()*0.05, 0.04, 0.08+rng()*0.05); }
+  } else if(arr===4){ // GATE — pillars and lintel
+    const px2=0.16+rng()*0.07;
+    addPart(3, px2, 0.62, 0, 0.05+rng()*0.03, 0.24+rng()*0.06, 0, 0.03);
+    addPart(3,-px2, 0.62, 0, 0.05+rng()*0.03, 0.24+rng()*0.06, 0, 0.03);
+    addPart(prim===2||prim===5?2:1, 0, 0.34+rng()*0.05, 0, px2+0.09, 0.06+rng()*0.03, 0.06, 0.05);
+  } else if(arr===5){ // STRATA — flattened slabs, displaced
+    let cy=0.26+rng()*0.06; const n2=4+((rng()*4)|0);
+    for(let i=0;i<n2;i++){ addPart(1, (rng()-0.5)*0.16, cy, (rng()-0.5)*0.05,
+      0.16+rng()*0.13, 0.028+rng()*0.03, 0.07, 0.02+rng()*0.02); cy+=0.075+rng()*0.05; }
+  } else if(arr===6){ // MONO — one mass, wounded
+    addPart(pick(prim), 0, 0.48+rng()*0.06, 0, 0.19+rng()*0.10, 0.24+rng()*0.12, 0.10, 0.03);
+  } else {            // FIELD — drapery with buried parts
+    hasDrape=true;
+    const n2=1+((rng()*2)|0);
+    for(let i=0;i<n2;i++) addPart(pick(prim), (rng()-0.5)*0.4, 0.3+rng()*0.4, -0.02,
+      0.07+rng()*0.08, 0.06+rng()*0.07, 0.05, 0.10);
+  }
+  const PB=[];
+  for(const p of P){ rotc.push(Math.cos(p[8])); rots.push(Math.sin(p[8]));
+    PB.push(Math.max(p[4],p[5],p[6]||0)+p[7]+0.02); }
+  /* wounds in the anatomy */
+  const sockets=(arr===6?2:((rng()*3)|0));
+  for(let i=0;i<sockets;i++) C.push([(rng()-0.5)*0.24, 0.3+rng()*0.35, 0.02+rng()*0.06, 0.04+rng()*0.05]);
+  const fracN=(arr===6||arr===5)?2+((rng()*2)|0):((rng()*2)|0);
+  for(let i=0;i<fracN;i++){ const a=rng()*TAU;
+    F.push([Math.cos(a), Math.sin(a), (rng()-0.5)*0.4, 0.004+rng()*0.006]); }
+  const sm=(a,b,k)=>{const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25;};
   const foldAt=(x,y,S)=>{
     let px=x/S, py=(y-0.5)/S+0.5;
     if(mirror)px=Math.abs(px);
     return Math.abs(no(px*3+ph, py*2.2))*0.16 + Math.abs(no(px*7, py*5+ph))*0.05;
   };
+  const prSDF=(t,px,py,pz,a,b,c)=>{
+    switch(t){
+      case 0:{ const l=Math.sqrt((px*px)/(a*a)+(py*py)/(b*b)+(pz*pz)/(c*c||a*a)); return (l-1)*Math.min(a,b); }
+      case 1:{ const qx=Math.abs(px)-a, qy=Math.abs(py)-b, qz=Math.abs(pz)-(c||0.07);
+        return Math.sqrt(Math.max(qx,0)**2+Math.max(qy,0)**2+Math.max(qz,0)**2)
+          +Math.min(Math.max(qx,Math.max(qy,qz)),0)-0.012; }
+      case 2:{ const q=Math.sqrt(px*px+py*py)-a; return Math.sqrt(q*q+pz*pz)-Math.max(0.03,b*0.5); }
+      case 3:{ const cy2=Math.max(Math.abs(py)-b,0); return Math.sqrt(px*px+pz*pz+cy2*cy2)-a; }
+      case 4:{ const r=a*(1-Math.max(0,Math.min(1,(py+b)/(2*b)))*0.7);
+        const dxz=Math.sqrt(px*px+pz*pz)-r; return Math.max(dxz, Math.abs(py)-b); }
+      case 5:{ const q=Math.sqrt(px*px+py*py)-a;
+        return Math.max(Math.sqrt(q*q+pz*pz)-Math.max(0.03,b*0.5), py); }
+      case 6:{ const qx=Math.abs(px)-a, qy=Math.abs(py)-b, qz=Math.abs(pz)-0.02;
+        return Math.sqrt(Math.max(qx,0)**2+Math.max(qy,0)**2+Math.max(qz,0)**2)
+          +Math.min(Math.max(qx,Math.max(qy,qz)),0); }
+      default:{ const l=Math.sqrt((px*px)/(a*a)+(py*py)/(b*b)+(pz*pz)/(a*a)); return (l-1)*Math.min(a,b); }
+    }
+  };
   const sdf=(x,y,z,S,fold)=>{
     let px=x/S, py=(y-0.5)/S+0.5, pz=z/S;
-    if(px>0.75||px<-0.75||py<-0.15||py>1.2) return 0.3;
+    if(px>0.85||px<-0.85||py<-0.2||py>1.25) return 0.3;
     if(mirror)px=Math.abs(px);
-    let d;
-    if(fam===0){        // EFFIGY — abstract figure, smooth unions
-      d=1e9;
-      for(const b of blobs){
-        const dx=px-(mirror?Math.abs(b[0]):b[0]), dy=py-b[1], dz=pz-b[2];
-        d=sm(d, Math.sqrt(dx*dx+dy*dy*b[4]*b[4]+dz*dz)-b[3], 0.09);
-      }
-    } else if(fam===1){ // MONOLITH — beveled fractured slab
-      const bx=Math.abs(px)-0.17, by=Math.abs(py-0.5)-0.34, bz=Math.abs(pz)-0.09;
-      d=Math.sqrt(Math.max(bx,0)**2+Math.max(by,0)**2+Math.max(bz,0)**2)
-        +Math.min(Math.max(bx,Math.max(by,bz)),0)-0.03;
-      for(const f of frac){ const pd=Math.abs(px*f[0]+py*f[1]+f[2])-f[3];
-        d=Math.max(d,-pd); }
-    } else if(fam===2){ // SHROUD — drapery, ridged folds (hoisted per ray)
-      d=pz+0.06-fold;
-      const rim2=Math.max(Math.abs(px)-0.30, Math.abs(py-0.5)-0.40);
-      d=Math.max(d, rim2);
-    } else {            // RELIC — broken arch
-      const ax=Math.abs(px), r=Math.sqrt(ax*ax+(py-0.60)*(py-0.60));
-      const arch=Math.abs(r-0.235)-0.085;
-      const top=Math.max(arch, py-0.60);
-      const pil=Math.max(Math.abs(ax-0.235)-0.085, Math.abs(py-0.80)-0.21);
-      d=Math.min(Math.max(top, Math.abs(pz)-0.085), Math.max(pil, Math.abs(pz)-0.085));
+    let d=1e9;
+    if(hasDrape){ d=pz+0.06-fold;
+      const rimB=Math.max(Math.abs(px)-0.32, Math.abs(py-0.5)-0.42);
+      d=Math.max(d, rimB);
     }
+    for(let i=0;i<P.length;i++){ const p=P[i];
+      const lx=px-p[1], ly=py-p[2], lz=pz-p[3];
+      const cd=Math.sqrt(lx*lx+ly*ly+lz*lz)-PB[i];
+      if(cd>0.06){ if(cd<d)d=cd; continue; }
+      const rx=lx*rotc[i]-ly*rots[i], ry=lx*rots[i]+ly*rotc[i];
+      d=sm(d, prSDF(p[0],rx,ry,lz,p[4],p[5],p[6]), p[7]);
+    }
+    for(const c2 of C){ const dx=px-c2[0],dy=py-c2[1],dz=pz-c2[2];
+      d=Math.max(d, -(Math.sqrt(dx*dx+dy*dy+dz*dz)-c2[3])); }
+    for(const f2 of F){ const pd=Math.abs(px*f2[0]+py*f2[1]+f2[2])-f2[3];
+      d=Math.max(d,-pd); }
     return d;
   };
   /* --- march at half grid, area-law scale iteration --- */
-  const FH=128;
+  const FH=96;
   let S=1;
   const march=(px,py,S,cheap)=>{  // returns [hit, z, nx,ny,nz] via ortho ray
-    let z=-0.7;
-    const fold=fam===2?foldAt(px,py,S):0;
-    for(let st=0;st<30;st++){
+    let z=-0.5;
+    const fold=hasDrape?foldAt(px,py,S):0;
+    for(let st=0;st<22;st++){
       const d=sdf(px,py,z,S,fold);
-      if(d<0.006){
+      if(d<0.008){
         if(cheap)return [1,z,0,0,0];
         const e=0.006;
-        const f2=fam===2?foldAt(px+e,py,S):0, f3=fam===2?foldAt(px-e,py,S):0;
-        const f4=fam===2?foldAt(px,py+e,S):0, f5=fam===2?foldAt(px,py-e,S):0;
+        const f2=hasDrape?foldAt(px+e,py,S):0, f3=hasDrape?foldAt(px-e,py,S):0;
+        const f4=hasDrape?foldAt(px,py+e,S):0, f5=hasDrape?foldAt(px,py-e,S):0;
         const nx=sdf(px+e,py,z,S,f2)-sdf(px-e,py,z,S,f3);
         const ny=sdf(px,py+e,z,S,f4)-sdf(px,py-e,z,S,f5);
         const nz=sdf(px,py,z+e,S,fold)-sdf(px,py,z-e,S,fold);
         const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
         return [1, z, nx/l, ny/l, nz/l];
       }
-      z+=Math.max(d,0.009);
-      if(z>0.7)break;
+      z+=Math.max(d,0.012);
+      if(z>0.55)break;
     }
     return [0,0,0,0,0];
   };
@@ -4959,7 +5018,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='17.1';
+const REV_SELF='17.2';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
