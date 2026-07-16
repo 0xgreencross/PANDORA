@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 17.3b · BLACKMASS<br>EXPORT TRUTH</div>
+  <div id="mastrev">REV 18.0 · BLACKMASS<br>THE ORACLE</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 17.3b · BLACKMASS<br>EXPORT TRUTH</div>
+    <div class="ver">REV 18.0 · BLACKMASS<br>THE ORACLE</div>
   </header>
 
   <div class="colL">
@@ -5031,7 +5031,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='17.3b';
+const REV_SELF='18.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5048,7 +5048,43 @@ $('revbar').addEventListener('click',()=>{ location.href=location.pathname+'?v='
 setTimeout(revCheck,8000);
 setInterval(revCheck,300000);
 
-$('dice').addEventListener('click',randSeed);
+$('dice').addEventListener('click',()=>{
+  /* THE ORACLE — one tap rolls the whole genome, taste-weighted from the
+     curator's own vault census: darkness always present, corruption hungry,
+     the deep dials finally alive. The seed field stays hand-editable. */
+  const R=Math.random;
+  randSeed();
+  // mode: MASS earns weight; the rest stay in rotation
+  const pool=['MASS','MASS','MASS','PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS'];
+  const m=pool[(R()*pool.length)|0];
+  state.mode=m; setSeg('mode','_x_mode',m); state._x_mode=m;
+  // palette: full roulette
+  const ss=Object.keys(SCHEMES); const sk=ss[(R()*ss.length)|0];
+  state.scheme=sk; setSeg('scheme','_x_scheme',sk); state._x_scheme=sk;
+  // corruption: hungry but not monotone
+  state.corr=35+((R()*66)|0); $('corr').value=state.corr; $('corr').dispatchEvent(new Event('input'));
+  // the fork dials wake up
+  state.voidamt=12+((R()*58)|0); $('voidamt').value=state.voidamt; $('voidamt').dispatchEvent(new Event('input'));
+  state.locality=25+((R()*75)|0); $('locality').value=state.locality; $('locality').dispatchEvent(new Event('input'));
+  state.chromacap=R()<0.22?1:0; setSeg('chromaseg','_chromaseg',String(state.chromacap)); state._chromaseg=String(state.chromacap);
+  // sigil constellation: the seven pillars survive most rolls; extras rotate; rarely a radical set
+  const chips={}; document.querySelectorAll('.tg').forEach(t=>chips[t.dataset.fx]=t);
+  const pillars=['chroma','tracking','pixelsort','grain','blocks','scanlines','echo'];
+  const radical=R()<0.12;
+  for(const k in chips){
+    let want;
+    if(radical) want=R()<0.30;
+    else want=pillars.includes(k) ? R()<0.85 : R()<0.16;
+    if((chips[k].dataset.on==='1')!==want) chips[k].click();
+  }
+  document.querySelectorAll('details.fam').forEach(d=>{ if(d._upd)d._upd(); });
+  if(typeof CARD_MOTION!=='undefined'&&R()<0.5){
+    const mo=CARD_MOTION[(R()*CARD_MOTION.length)|0];
+    if(typeof setMotion==='function')setMotion(mo);
+  }
+  $('osd').textContent='THE ORACLE HAS ROLLED \u00b7 TRANSMIT';
+  $('go').classList.add('needy');
+});
 function mutateCard(c,rng){
   const m=JSON.parse(JSON.stringify(c));
   const chs=CARD_CH.slice();
