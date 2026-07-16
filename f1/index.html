@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 17.2 · BLACKMASS<br>SIXTY-FOUR BODIES</div>
+  <div id="mastrev">REV 17.3 · BLACKMASS<br>EXPORT TRUTH</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 17.2 · BLACKMASS<br>SIXTY-FOUR BODIES</div>
+    <div class="ver">REV 17.3 · BLACKMASS<br>EXPORT TRUTH</div>
   </header>
 
   <div class="colL">
@@ -4099,10 +4099,23 @@ $('vaultadd').addEventListener('click',async ()=>{
   while(list.length>VMAX)list.shift();
   vSave(list); vRender();
 });
-$('vexport').addEventListener('click',()=>{
-  const list=vLoad(); if(!list.length){$('osd').textContent='VAULT EMPTY';return;}
-  const blob=new Blob([JSON.stringify({fmt:'pndr_vault',v:1,exported:Date.now(),entries:list})],{type:'application/json'});
-  triggerDownloadURL(URL.createObjectURL(blob),'PANDORA_VAULT_'+new Date().toISOString().slice(0,10)+'.json');
+$('vexport').addEventListener('click',async()=>{
+  $('osd').textContent='EXPORTING VAULT\u2026';
+  let entries=[];
+  try{
+    const r=await fetch(SB.url+'/rest/v1/vault?select=card,thumb,created_at&order=created_at.desc&limit=100',{headers:sbHeaders()});
+    const rows=await r.json();
+    if(Array.isArray(rows)) entries=rows.map(x=>({card:x.card, thumb:x.thumb, ts:Date.parse(x.created_at)||0}));
+  }catch(e){}
+  if(!entries.length){ const list=vLoad(); entries=list; }        // ancient local fallback
+  if(!entries.length){ $('osd').textContent='VAULT EMPTY'; return; }
+  const payload=JSON.stringify({fmt:'pndr_vault',v:2,exported:Date.now(),count:entries.length,entries});
+  try{ await navigator.clipboard.writeText(payload); }catch(e){}
+  try{
+    const blob=new Blob([payload],{type:'application/json'});
+    triggerDownloadURL(URL.createObjectURL(blob),'PANDORA_VAULT_'+new Date().toISOString().slice(0,10)+'.json');
+  }catch(e){}
+  $('osd').textContent='VAULT EXPORTED \u00b7 '+entries.length+' LOOPS \u00b7 ALSO ON CLIPBOARD';
 });
 $('vimport').addEventListener('click',()=>$('vfile').click());
 $('vfile').addEventListener('change',ev=>{
@@ -5018,7 +5031,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='17.2';
+const REV_SELF='17.3';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
