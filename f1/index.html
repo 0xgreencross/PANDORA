@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 18.0 · BLACKMASS<br>THE ORACLE</div>
+  <div id="mastrev">REV 18.1 · BLACKMASS<br>RECURSION</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 18.0 · BLACKMASS<br>THE ORACLE</div>
+    <div class="ver">REV 18.1 · BLACKMASS<br>RECURSION</div>
   </header>
 
   <div class="colL">
@@ -2973,17 +2973,36 @@ function downsampleCoarse(full, coarse){
       coarse[o]=full[so]; coarse[o+1]=full[so+1]; coarse[o+2]=full[so+2]; }
   }
 }
-function compositeEcho(buf, ring, weights){
+function fbOf(scene){
+  if(scene._fb)return scene._fb;
+  const rng=mulberry32((scene.seed^0xF8FB)>>>0);
+  const dA=(rng()<0.5?-1:1)*(0.05+rng()*0.17);          // tilt: the spiral's handedness
+  const sc=rng()<0.6?(0.90+rng()*0.07):(1.04+rng()*0.07); // zoom out = nesting, in = eruption
+  const px=FW*(0.30+rng()*0.40), py=FW*(0.30+rng()*0.40); // off-center pivot: asymmetric arms
+  return scene._fb={dA,sc,px,py};
+}
+function compositeEcho(buf, ring, weights, scene){
+  /* video feedback, simulated honestly: each older frame re-enters rotated and
+     rescaled about a seeded pivot. Recursion breeds spiral tunnels from trails. */
   const n=ring.length;
-  for(let y=0;y<H;y++){ const cyo=((y*FW/H)|0)*FW;
-    for(let x=0;x<W;x++){ const cx=(x*FW/W)|0; const co=(cyo+cx)*3, o=(y*W+x)*3;
+  const fb=scene?fbOf(scene):{dA:0,sc:1,px:FW/2,py:FW/2};
+  const cosA=[],sinA=[],scl=[];
+  for(let e=0;e<n;e++){ const t=(e+1)*fb.dA, z=Math.pow(fb.sc,e+1);
+    cosA.push(Math.cos(t)); sinA.push(Math.sin(t)); scl.push(z); }
+  for(let y=0;y<H;y++){ const cy=(y*FW/H)|0;
+    for(let x=0;x<W;x++){ const cx=(x*FW/W)|0; const o=(y*W+x)*3;
       let R=buf[o],G=buf[o+1],B=buf[o+2];
-      for(let e=0;e<n;e++){ const r=ring[e], w=weights[e];
+      const dx=cx-fb.px, dy=cy-fb.py;
+      for(let e=0;e<n;e++){ const w=weights[e]; if(w<=0.02)continue;
+        const sx=(fb.px + (dx*cosA[e]-dy*sinA[e])*scl[e])|0;
+        const sy=(fb.py + (dx*sinA[e]+dy*cosA[e])*scl[e])|0;
+        if(sx<0||sx>=FW||sy<0||sy>=FW)continue;
+        const co=(sy*FW+sx)*3, r=ring[e];
         const er=r[co]*w;   if(er>R)R=er;
         const eg=r[co+1]*w; if(eg>G)G=eg;
         const eb=r[co+2]*w; if(eb>B)B=eb;
       }
-      buf[o]=R; buf[o+1]=G; buf[o+2]=B;   // each term <=255, max stays in range
+      buf[o]=R; buf[o+1]=G; buf[o+2]=B;
     }
   }
 }
@@ -3162,7 +3181,7 @@ async function generateSeq(){
     }
     if(fx.echo){
       downsampleCoarse(rgbA, coarseCur);          // capture clean coarse of this frame
-      compositeEcho(rgbA, ring, weights);          // blend in trails from past frames
+      compositeEcho(rgbA, ring, weights, scene);  // feedback recursion on the trails
       const reclaimed=ring.shift(); ring.push(coarseCur); coarseCur=reclaimed; // advance ring (no alloc)
     }
     analogPass(rgbA, rgbB, scene, theta, corr, fx);
@@ -3350,7 +3369,7 @@ self.onmessage=function(e){
       }
       if(fx.echo){
         downsampleCoarse(rgbA,coarseCur);
-        compositeEcho(rgbA,ring,weights);
+        compositeEcho(rgbA,ring,weights,scene);
         const rec=ring.shift();ring.push(coarseCur);coarseCur=rec;
       }
       analogPass(rgbA,rgbB,scene,theta,corr,fx);
@@ -5031,7 +5050,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='18.0';
+const REV_SELF='18.1';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5062,11 +5081,11 @@ $('dice').addEventListener('click',()=>{
   const ss=Object.keys(SCHEMES); const sk=ss[(R()*ss.length)|0];
   state.scheme=sk; setSeg('scheme','_x_scheme',sk); state._x_scheme=sk;
   // corruption: hungry but not monotone
-  state.corr=35+((R()*66)|0); $('corr').value=state.corr; $('corr').dispatchEvent(new Event('input'));
-  // the fork dials wake up
-  state.voidamt=12+((R()*58)|0); $('voidamt').value=state.voidamt; $('voidamt').dispatchEvent(new Event('input'));
-  state.locality=25+((R()*75)|0); $('locality').value=state.locality; $('locality').dispatchEvent(new Event('input'));
-  state.chromacap=R()<0.22?1:0; setSeg('chromaseg','_chromaseg',String(state.chromacap)); state._chromaseg=String(state.chromacap);
+  const _corr=35+((R()*66)|0), _void=12+((R()*58)|0), _loc=25+((R()*75)|0), _cap=R()<0.22?1:0;
+  $('corr').value=_corr; $('corr').dispatchEvent(new Event('input')); state.corr=_corr;
+  $('voidamt').value=_void; $('voidamt').dispatchEvent(new Event('input')); state.voidamt=_void;
+  $('locality').value=_loc; $('locality').dispatchEvent(new Event('input')); state.locality=_loc;
+  setSeg('chromaseg','_chromaseg',String(_cap)); state._chromaseg=String(_cap); state.chromacap=_cap;
   // sigil constellation: the seven pillars survive most rolls; extras rotate; rarely a radical set
   const chips={}; document.querySelectorAll('.tg').forEach(t=>chips[t.dataset.fx]=t);
   const pillars=['chroma','tracking','pixelsort','grain','blocks','scanlines','echo'];
@@ -5082,7 +5101,7 @@ $('dice').addEventListener('click',()=>{
     const mo=CARD_MOTION[(R()*CARD_MOTION.length)|0];
     if(typeof setMotion==='function')setMotion(mo);
   }
-  $('osd').textContent='THE ORACLE HAS ROLLED \u00b7 TRANSMIT';
+  $('osd').textContent='ORACLE \u00b7 VOID '+state.voidamt+' \u00b7 LOC '+state.locality+(state.chromacap?' \u00b7 CAPPED':'')+' \u00b7 TRANSMIT';
   $('go').classList.add('needy');
 });
 function mutateCard(c,rng){
