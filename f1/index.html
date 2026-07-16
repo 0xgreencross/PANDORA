@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 19.0 · BLACKMASS<br>THE PERFECT MACHINE</div>
+  <div id="mastrev">REV 19.1 · BLACKMASS<br>ONE WRITER</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 19.0 · BLACKMASS<br>THE PERFECT MACHINE</div>
+    <div class="ver">REV 19.1 · BLACKMASS<br>ONE WRITER</div>
   </header>
 
   <div class="colL">
@@ -5123,7 +5123,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='19.0';
+const REV_SELF='19.1';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5149,22 +5149,20 @@ $('dice').addEventListener('click',()=>{
     'PNDR-BCBX-T0V7-1GJG-ZX10-0808-0222-0008-HW5M','PNDR-B65V-G8Y8-QFA0-ZY0G-000G-0222-0008-HW6C',
     'PNDR-B0GC-NZB7-5K9G-ZW10-1090-0222-0008-HW01','PNDR-AQ72-AB3T-8HKG-ZW41-2810-0222-0008-HW2Y',
     'PNDR-BBFP-AT6D-3A40-ZW40-321G-0222-0008-HW2Q','PNDR-B2HE-VNG2-JBA0-ZW0G-08H0-0222-0008-HW5F',
-    'PNDR-AZ0R-7EZ7-8BBG-ZW60-0WRR-0222-0008-HW70','PNDR-AF37-3EF8-QKBG-ZY00-100G-0222-0008-HW78'];
+    'PNDR-AZ0R-7EZ7-8BBG-ZW60-0WRR-0222-0008-HW70','PNDR-AF37-3EF8-QKBG-ZY00-100G-0222-0008-HW78',
+    'PNDR-ABE2-G44T-MAAG-ZYG1-10G8-0222-0008-HW7Y','PNDR-A465-Y5A2-7J40-ZW2C-30D4-0222-0008-HW22','PNDR-B3E6-RT4N-1BAG-ZX20-74J0-0222-0008-HW2F','PNDR-AS7A-TXQB-0K1G-ZW05-0G80-0222-0008-HW2W','PNDR-BZ71-V17T-RA20-ZW1H-2400-0222-0008-HW00','PNDR-AWX0-ESS8-3E1G-ZW00-1290-0222-0008-HW6T','PNDR-B6VT-F28N-7GBG-ZW10-900G-0222-0008-HW2Z','PNDR-BMPR-8ZDD-3FVG-ZY08-200G-0222-0008-HW4T','PNDR-ATK4-FNJ0-7HA0-ZW00-0G24-0222-0008-HW3W','PNDR-BMTA-XB75-4NSG-ZX00-041G-0222-0008-HW1C','PNDR-AQ70-SJ2Q-8B2G-ZZ0G-S900-0222-0008-HW14','PNDR-B5XT-55QQ-2D40-ZW5J-1324-0222-0008-HW2M','PNDR-ABV7-VRQ7-8MVG-ZY04-G004-0222-0008-HW0M'];
   const wpick=(pairs)=>{ let t=0; for(const p of pairs)t+=p[1]; let r=R()*t;
     for(const p of pairs){ r-=p[1]; if(r<=0)return p[0]; } return pairs[0][0]; };
-  const setDial=(id,v)=>{ const el=$(id); el.value=v; el.dispatchEvent(new Event('input')); };
-  const setChips=(pill,extraFav,extraOther,radical)=>{
-    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes']);
-    const chips={}; document.querySelectorAll('.tg').forEach(t=>chips[t.dataset.fx]=t);
-    const pillars=['chroma','tracking','pixelsort','grain','blocks','scanlines','echo'];
-    for(const k in chips){
-      let want;
-      if(radical) want=R()<0.30;
-      else if(pillars.includes(k)) want=R()<pill;
-      else want=R()<(FAV.has(k)?extraFav:extraOther);
-      if((chips[k].dataset.on==='1')!==want) chips[k].click();
+  const rollFx=(pill,extraFav,extraOther,radical)=>{
+    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes','meta','entropy','chimera','kaleido','hilb']);
+    const pillars=new Set(['chroma','tracking','pixelsort','grain','blocks','scanlines','echo']);
+    const fx={};
+    for(const k of CARD_CH){
+      if(radical) fx[k]=R()<0.30;
+      else if(pillars.has(k)) fx[k]=R()<pill;
+      else fx[k]=R()<(FAV.has(k)?extraFav:extraOther);
     }
-    document.querySelectorAll('details.fam').forEach(d=>{ if(d._upd)d._upd(); });
+    return fx;
   };
   let tag='';
   if(R()<0.60){
@@ -5174,42 +5172,37 @@ $('dice').addEventListener('click',()=>{
       const A=unpackCard(CANON[ia]), B=unpackCard(CANON[ib]);
       if(A&&B){
         const child=breedCards(A,B,(R()*0xffff)|0);
+        child.voidamt=22+((R()*30)|0);
+        child.locality=40+((R()*50)|0);
+        child.chromacap=R()<0.12?1:0;
         applyCard(child);
-        setDial('voidamt', 22+((R()*30)|0));
-        state.voidamt=+$('voidamt').value;
-        setDial('locality', 40+((R()*50)|0));
-        state.locality=+$('locality').value;
         tag='CANON BREED '+(ia+1)+'\u00d7'+(ib+1);
       }
     }
     if(!tag){
-      randSeed();
-      const m=wpick([['MASS',34],['TENDRILS',12],['RINGS',8],['ORBITALS',8],['SCANS',8],['GLYPHS',8],['STRATA',8],['LATTICE',7],['PLASMA',7]]);
-      state.mode=m; setSeg('mode','_x_mode',m); state._x_mode=m;
+      /* ONE WRITER: build the genome, let applyCard set everything */
+      const m=wpick([['MASS',30],['TENDRILS',14],['RINGS',8],['ORBITALS',8],['SCANS',9],['GLYPHS',8],['STRATA',8],['LATTICE',8],['PLASMA',7]]);
       const ss=Object.keys(SCHEMES);
-      const sk=R()<0.42?wpick([['GENESIS',22],['DES',10],['AIRNEON',6],['POLE',6],['TISGEN',6],['BONE',6]]):ss[(R()*ss.length)|0];
-      state.scheme=sk; setSeg('scheme','_x_scheme',sk); state._x_scheme=sk;
-      setDial('corr', 40+((R()*38)|0)); state.corr=+$('corr').value;
-      setDial('voidamt', 22+((R()*30)|0)); state.voidamt=+$('voidamt').value;
-      setDial('locality', 40+((R()*50)|0)); state.locality=+$('locality').value;
-      const cap=R()<0.12?1:0; setSeg('chromaseg','_chromaseg',String(cap)); state._chromaseg=String(cap); state.chromacap=cap;
-      setChips(0.88, 0.30, 0.08, false);
+      const sk=R()<0.48?wpick([['GENESIS',20],['POISONFROG',10],['DES',9],['FAUXRGB',7],['AIRNEON',6],['POLE',5],['TISGEN',6],['BONE',5]]):ss[(R()*ss.length)|0];
+      applyCard({ seed:(R()*0xFFFFFFFF)>>>0, scheme:sk, mode:m,
+        corr:40+((R()*38)|0), frames:state.frames,
+        fx:rollFx(0.88, 0.30, 0.08, false), motion:CARD_MOTION[(R()*CARD_MOTION.length)|0],
+        ov:null, epoch:0,
+        voidamt:22+((R()*30)|0), chromacap:R()<0.12?1:0, locality:40+((R()*50)|0) });
       tag='CANON ROLL';
     }
   } else {
-    randSeed();
     const MODESALL=['MASS','PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS'];
-    const m=MODESALL[(R()*MODESALL.length)|0];
-    state.mode=m; setSeg('mode','_x_mode',m); state._x_mode=m;
-    const ss=Object.keys(SCHEMES); const sk=ss[(R()*ss.length)|0];
-    state.scheme=sk; setSeg('scheme','_x_scheme',sk); state._x_scheme=sk;
-    setDial('corr', 20+((R()*81)|0)); state.corr=+$('corr').value;
-    setDial('voidamt', (R()*80)|0); state.voidamt=+$('voidamt').value;
-    setDial('locality', (R()*101)|0); state.locality=+$('locality').value;
-    const cap=R()<0.25?1:0; setSeg('chromaseg','_chromaseg',String(cap)); state._chromaseg=String(cap); state.chromacap=cap;
-    setChips(0.70, 0.22, 0.22, R()<0.20);
+    const ss=Object.keys(SCHEMES);
+    applyCard({ seed:(R()*0xFFFFFFFF)>>>0, scheme:ss[(R()*ss.length)|0],
+      mode:MODESALL[(R()*MODESALL.length)|0],
+      corr:20+((R()*81)|0), frames:state.frames,
+      fx:rollFx(0.70, 0.22, 0.22, R()<0.20), motion:CARD_MOTION[(R()*CARD_MOTION.length)|0],
+      ov:null, epoch:0,
+      voidamt:(R()*80)|0, chromacap:R()<0.25?1:0, locality:(R()*101)|0 });
     tag='FRONTIER';
   }
+  document.querySelectorAll('details.fam').forEach(dd=>{ if(dd._upd)dd._upd(); });
   if(typeof CARD_MOTION!=='undefined'&&R()<0.5){
     const mo=CARD_MOTION[(R()*CARD_MOTION.length)|0];
     if(typeof setMotion==='function')setMotion(mo);
