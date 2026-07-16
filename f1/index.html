@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 18.1 · BLACKMASS<br>RECURSION</div>
+  <div id="mastrev">REV 19.0 · BLACKMASS<br>THE PERFECT MACHINE</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 18.1 · BLACKMASS<br>RECURSION</div>
+    <div class="ver">REV 19.0 · BLACKMASS<br>THE PERFECT MACHINE</div>
   </header>
 
   <div class="colL">
@@ -2973,6 +2973,73 @@ function downsampleCoarse(full, coarse){
       coarse[o]=full[so]; coarse[o+1]=full[so+1]; coarse[o+2]=full[so+2]; }
   }
 }
+function lumenPass(buf, scene, theta, grad){
+  /* NEW BLOOD: luminous particulate — the curator kept embers/bloom in nearly
+     half his winners; lumen amplifies that taste into a dedicated organ.
+     Sparks rise off the composition's coastline, breathing with the loop. */
+  const rng=mulberry32((scene.seed^0x10E5)>>>0);
+  if(rng()>0.45)return;
+  const N=40+((rng()*100)|0);
+  let coast=null;
+  if(scene.mode==='MASS'&&scene._mf){
+    coast=[]; const z=scene._mf.z;
+    for(let y=2;y<FW-2;y+=2)for(let x=2;x<FW-2;x+=2){
+      if(z[y*FW+x]&&(!z[y*FW+x-2]||!z[y*FW+x+2]||!z[(y-2)*FW+x]||!z[(y+2)*FW+x]))coast.push((y<<16)|x);
+    }
+    if(!coast.length)coast=null;
+  }
+  const hot=[]; for(let k=0;k<3;k++){const gi=(226+((rng()*28)|0))*3; hot.push([grad[gi],grad[gi+1],grad[gi+2]]);}
+  for(let p=0;p<N;p++){
+    let ax,ay;
+    if(coast){ const c=coast[(rng()*coast.length)|0]; ax=((c&0xffff)/FW)*W; ay=((c>>16)/FW)*H; }
+    else { ax=rng()*W; ay=H*0.25+rng()*H*0.7; }
+    const ph2=rng()*TAU, amp=8+rng()*46, rise=14+rng()*60, sz=rng()<0.75?1:2;
+    const x=(ax+Math.sin(theta+ph2)*amp)|0;
+    const y=(ay-((theta/TAU+p*0.13)%1)*rise)|0;
+    const pulse=0.35+0.65*(0.5+0.5*Math.sin(theta*2+ph2));
+    const c2=hot[p%3];
+    for(let dy=-sz;dy<=sz;dy++)for(let dx=-sz;dx<=sz;dx++){
+      const px2=x+dx, py2=y+dy;
+      if(px2<0||px2>=W||py2<0||py2>=H)continue;
+      if(dx*dx+dy*dy>sz*sz)continue;
+      const o=(py2*W+px2)*3;
+      buf[o]=Math.min(255,buf[o]+c2[0]*pulse);
+      buf[o+1]=Math.min(255,buf[o+1]+c2[1]*pulse);
+      buf[o+2]=Math.min(255,buf[o+2]+c2[2]*pulse);
+    }
+  }
+}
+function seamRip(buf, scene, theta, grad){
+  /* NEW BLOOD: one great gesture — a single tear through the image, lips
+     displaced apart, hot fringe on the wound. The aperture breathes. */
+  const rng=mulberry32((scene.seed^0x5EAA)>>>0);
+  if(rng()>0.30)return;
+  const segs=3+((rng()*4)|0);
+  const xs=[]; let sx=W*(0.30+rng()*0.40);
+  for(let i=0;i<=segs;i++){ xs.push(sx); sx+=(rng()-0.5)*W*0.18; }
+  const maxD=(10+rng()*30)|0;
+  const breathe=0.55+0.45*Math.sin(theta+rng()*TAU);
+  const D=(maxD*breathe)|0; if(D<2)return;
+  const gi=(236+((rng()*18)|0))*3;
+  const fr=grad[gi],fg=grad[gi+1],fb2=grad[gi+2];
+  const row=new Uint8Array(W*3);
+  for(let y=0;y<H;y++){
+    const t=y/H*segs, i0=Math.min(segs-1,t|0), ft=t-i0;
+    const cxx=(xs[i0]*(1-ft)+xs[i0+1]*ft)|0;
+    const o0=y*W*3;
+    row.set(buf.subarray(o0,o0+W*3));
+    for(let x=0;x<W;x++){
+      const o=o0+x*3;
+      if(x<cxx){ const srcX=Math.min(W-1,x+D); const so=(srcX)*3;
+        buf[o]=row[so];buf[o+1]=row[so+1];buf[o+2]=row[so+2]; }
+      else { const srcX=Math.max(0,x-D); const so=(srcX)*3;
+        buf[o]=row[so];buf[o+1]=row[so+1];buf[o+2]=row[so+2]; }
+    }
+    const fw2=1+((D>16)?1:0);
+    for(let f2=-fw2;f2<=fw2;f2++){ const fx2=cxx+f2; if(fx2<0||fx2>=W)continue;
+      const o=o0+fx2*3; buf[o]=fr;buf[o+1]=fg;buf[o+2]=fb2; }
+  }
+}
 function fbOf(scene){
   if(scene._fb)return scene._fb;
   const rng=mulberry32((scene.seed^0xF8FB)>>>0);
@@ -3191,6 +3258,8 @@ async function generateSeq(){
     valhallaPixel(rgbB, snap, scene, theta, corr, fx);
     demiurgePixel(rgbB, snap, scene, theta, corr, fx, grad);
     sanctityRGB(rgbB, scene, theta, i, grad);
+    seamRip(rgbB, scene, theta, grad);
+    lumenPass(rgbB, scene, theta, grad);
     /* strobe frames: seeded single-frame inversions / flashes, loop-periodic */
     for(let sb=0;sb<MV.strobes.length;sb++){
       let d=Math.abs(raw-MV.strobes[sb].pos); if(d>TAU/2)d=TAU-d;
@@ -3379,6 +3448,10 @@ self.onmessage=function(e){
       valhallaPixel(rgbB,snap,scene,theta,corr,fx);
       demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
       sanctityRGB(rgbB, scene, theta, i, grad);
+      seamRip(rgbB, scene, theta, grad);
+      lumenPass(rgbB, scene, theta, grad);
+    seamRip(rgbB, scene, theta, grad);
+    lumenPass(rgbB, scene, theta, grad);
       quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
                (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
       if(scene.mode!=='MASS') indexPass(indices,pal.length,scene,theta,corr,fx);
@@ -5050,7 +5123,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='18.1';
+const REV_SELF='19.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5068,40 +5141,80 @@ setTimeout(revCheck,8000);
 setInterval(revCheck,300000);
 
 $('dice').addEventListener('click',()=>{
-  /* THE ORACLE — one tap rolls the whole genome, taste-weighted from the
-     curator's own vault census: darkness always present, corruption hungry,
-     the deep dials finally alive. The seed field stays hand-editable. */
+  /* THE PERFECT MACHINE — the curator's keeps are the fitness function.
+     60% of rolls serve the proven canon (including breeding from the winners'
+     own genomes); 40% explore the frontier the canon makes plausible. */
   const R=Math.random;
-  randSeed();
-  // mode: MASS earns weight; the rest stay in rotation
-  const pool=['MASS','MASS','MASS','PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS'];
-  const m=pool[(R()*pool.length)|0];
-  state.mode=m; setSeg('mode','_x_mode',m); state._x_mode=m;
-  // palette: full roulette
-  const ss=Object.keys(SCHEMES); const sk=ss[(R()*ss.length)|0];
-  state.scheme=sk; setSeg('scheme','_x_scheme',sk); state._x_scheme=sk;
-  // corruption: hungry but not monotone
-  const _corr=35+((R()*66)|0), _void=12+((R()*58)|0), _loc=25+((R()*75)|0), _cap=R()<0.22?1:0;
-  $('corr').value=_corr; $('corr').dispatchEvent(new Event('input')); state.corr=_corr;
-  $('voidamt').value=_void; $('voidamt').dispatchEvent(new Event('input')); state.voidamt=_void;
-  $('locality').value=_loc; $('locality').dispatchEvent(new Event('input')); state.locality=_loc;
-  setSeg('chromaseg','_chromaseg',String(_cap)); state._chromaseg=String(_cap); state.chromacap=_cap;
-  // sigil constellation: the seven pillars survive most rolls; extras rotate; rarely a radical set
-  const chips={}; document.querySelectorAll('.tg').forEach(t=>chips[t.dataset.fx]=t);
-  const pillars=['chroma','tracking','pixelsort','grain','blocks','scanlines','echo'];
-  const radical=R()<0.12;
-  for(const k in chips){
-    let want;
-    if(radical) want=R()<0.30;
-    else want=pillars.includes(k) ? R()<0.85 : R()<0.16;
-    if((chips[k].dataset.on==='1')!==want) chips[k].click();
+  const CANON=['PNDR-A8TY-XEG7-8AV0-ZW2G-0488-0222-0018-HW4R','PNDR-AR4H-YW0R-8BJG-ZW18-010G-0222-0008-HW39',
+    'PNDR-BCBX-T0V7-1GJG-ZX10-0808-0222-0008-HW5M','PNDR-B65V-G8Y8-QFA0-ZY0G-000G-0222-0008-HW6C',
+    'PNDR-B0GC-NZB7-5K9G-ZW10-1090-0222-0008-HW01','PNDR-AQ72-AB3T-8HKG-ZW41-2810-0222-0008-HW2Y',
+    'PNDR-BBFP-AT6D-3A40-ZW40-321G-0222-0008-HW2Q','PNDR-B2HE-VNG2-JBA0-ZW0G-08H0-0222-0008-HW5F',
+    'PNDR-AZ0R-7EZ7-8BBG-ZW60-0WRR-0222-0008-HW70','PNDR-AF37-3EF8-QKBG-ZY00-100G-0222-0008-HW78'];
+  const wpick=(pairs)=>{ let t=0; for(const p of pairs)t+=p[1]; let r=R()*t;
+    for(const p of pairs){ r-=p[1]; if(r<=0)return p[0]; } return pairs[0][0]; };
+  const setDial=(id,v)=>{ const el=$(id); el.value=v; el.dispatchEvent(new Event('input')); };
+  const setChips=(pill,extraFav,extraOther,radical)=>{
+    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes']);
+    const chips={}; document.querySelectorAll('.tg').forEach(t=>chips[t.dataset.fx]=t);
+    const pillars=['chroma','tracking','pixelsort','grain','blocks','scanlines','echo'];
+    for(const k in chips){
+      let want;
+      if(radical) want=R()<0.30;
+      else if(pillars.includes(k)) want=R()<pill;
+      else want=R()<(FAV.has(k)?extraFav:extraOther);
+      if((chips[k].dataset.on==='1')!==want) chips[k].click();
+    }
+    document.querySelectorAll('details.fam').forEach(d=>{ if(d._upd)d._upd(); });
+  };
+  let tag='';
+  if(R()<0.60){
+    if(R()<0.35){
+      /* BREED: two winners parent a child */
+      const ia=(R()*CANON.length)|0; let ib=(R()*CANON.length)|0; if(ib===ia)ib=(ib+1)%CANON.length;
+      const A=unpackCard(CANON[ia]), B=unpackCard(CANON[ib]);
+      if(A&&B){
+        const child=breedCards(A,B,(R()*0xffff)|0);
+        applyCard(child);
+        setDial('voidamt', 22+((R()*30)|0));
+        state.voidamt=+$('voidamt').value;
+        setDial('locality', 40+((R()*50)|0));
+        state.locality=+$('locality').value;
+        tag='CANON BREED '+(ia+1)+'\u00d7'+(ib+1);
+      }
+    }
+    if(!tag){
+      randSeed();
+      const m=wpick([['MASS',34],['TENDRILS',12],['RINGS',8],['ORBITALS',8],['SCANS',8],['GLYPHS',8],['STRATA',8],['LATTICE',7],['PLASMA',7]]);
+      state.mode=m; setSeg('mode','_x_mode',m); state._x_mode=m;
+      const ss=Object.keys(SCHEMES);
+      const sk=R()<0.42?wpick([['GENESIS',22],['DES',10],['AIRNEON',6],['POLE',6],['TISGEN',6],['BONE',6]]):ss[(R()*ss.length)|0];
+      state.scheme=sk; setSeg('scheme','_x_scheme',sk); state._x_scheme=sk;
+      setDial('corr', 40+((R()*38)|0)); state.corr=+$('corr').value;
+      setDial('voidamt', 22+((R()*30)|0)); state.voidamt=+$('voidamt').value;
+      setDial('locality', 40+((R()*50)|0)); state.locality=+$('locality').value;
+      const cap=R()<0.12?1:0; setSeg('chromaseg','_chromaseg',String(cap)); state._chromaseg=String(cap); state.chromacap=cap;
+      setChips(0.88, 0.30, 0.08, false);
+      tag='CANON ROLL';
+    }
+  } else {
+    randSeed();
+    const MODESALL=['MASS','PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS'];
+    const m=MODESALL[(R()*MODESALL.length)|0];
+    state.mode=m; setSeg('mode','_x_mode',m); state._x_mode=m;
+    const ss=Object.keys(SCHEMES); const sk=ss[(R()*ss.length)|0];
+    state.scheme=sk; setSeg('scheme','_x_scheme',sk); state._x_scheme=sk;
+    setDial('corr', 20+((R()*81)|0)); state.corr=+$('corr').value;
+    setDial('voidamt', (R()*80)|0); state.voidamt=+$('voidamt').value;
+    setDial('locality', (R()*101)|0); state.locality=+$('locality').value;
+    const cap=R()<0.25?1:0; setSeg('chromaseg','_chromaseg',String(cap)); state._chromaseg=String(cap); state.chromacap=cap;
+    setChips(0.70, 0.22, 0.22, R()<0.20);
+    tag='FRONTIER';
   }
-  document.querySelectorAll('details.fam').forEach(d=>{ if(d._upd)d._upd(); });
   if(typeof CARD_MOTION!=='undefined'&&R()<0.5){
     const mo=CARD_MOTION[(R()*CARD_MOTION.length)|0];
     if(typeof setMotion==='function')setMotion(mo);
   }
-  $('osd').textContent='ORACLE \u00b7 VOID '+state.voidamt+' \u00b7 LOC '+state.locality+(state.chromacap?' \u00b7 CAPPED':'')+' \u00b7 TRANSMIT';
+  $('osd').textContent=tag+' \u00b7 VOID '+state.voidamt+' \u00b7 LOC '+state.locality+(state.chromacap?' \u00b7 CAPPED':'')+' \u00b7 TRANSMIT';
   $('go').classList.add('needy');
 });
 function mutateCard(c,rng){
