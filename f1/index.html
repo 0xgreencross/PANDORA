@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 19.1 · BLACKMASS<br>ONE WRITER</div>
+  <div id="mastrev">REV 20.0 · BLACKMASS<br>WHERE THE FINGER IS</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 19.1 · BLACKMASS<br>ONE WRITER</div>
+    <div class="ver">REV 20.0 · BLACKMASS<br>WHERE THE FINGER IS</div>
   </header>
 
   <div class="colL">
@@ -5123,7 +5123,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='19.1';
+const REV_SELF='20.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5140,12 +5140,13 @@ $('revbar').addEventListener('click',()=>{ location.href=location.pathname+'?v='
 setTimeout(revCheck,8000);
 setInterval(revCheck,300000);
 
+$('dice').addEventListener('click',()=>{ pinAll(false); },{capture:true});
 $('dice').addEventListener('click',()=>{
   /* THE PERFECT MACHINE — the curator's keeps are the fitness function.
      60% of rolls serve the proven canon (including breeding from the winners'
      own genomes); 40% explore the frontier the canon makes plausible. */
   const R=Math.random;
-  const CANON=['PNDR-A8TY-XEG7-8AV0-ZW2G-0488-0222-0018-HW4R','PNDR-AR4H-YW0R-8BJG-ZW18-010G-0222-0008-HW39',
+  const CANON=window.ORACLE_CANON=window.ORACLE_CANON||['PNDR-A8TY-XEG7-8AV0-ZW2G-0488-0222-0018-HW4R','PNDR-AR4H-YW0R-8BJG-ZW18-010G-0222-0008-HW39',
     'PNDR-BCBX-T0V7-1GJG-ZX10-0808-0222-0008-HW5M','PNDR-B65V-G8Y8-QFA0-ZY0G-000G-0222-0008-HW6C',
     'PNDR-B0GC-NZB7-5K9G-ZW10-1090-0222-0008-HW01','PNDR-AQ72-AB3T-8HKG-ZW41-2810-0222-0008-HW2Y',
     'PNDR-BBFP-AT6D-3A40-ZW40-321G-0222-0008-HW2Q','PNDR-B2HE-VNG2-JBA0-ZW0G-08H0-0222-0008-HW5F',
@@ -5233,7 +5234,77 @@ $('resetall').addEventListener('click',()=>{
 });
 randSeed();
 
-$('go').addEventListener('click',generate);
+/* ======================================================================
+   WHERE THE FINGER IS — the perfect machine rides TRANSMIT itself.
+   Any control the curator touches becomes PINNED (his will); everything
+   unpinned is rolled by the 60/40 canon/frontier machine on every pull.
+   Resurrections (DNA load, gallery, mint) pin everything: they must
+   reproduce exactly. The dice returns all pins to fate.
+   ====================================================================== */
+const PIN={seed:false,mode:false,scheme:false,corr:false,voidamt:false,locality:false,chromacap:false,fx:false,motion:false};
+let ORACLE_APPLY=false;
+const pinAll=v=>{for(const k in PIN)PIN[k]=v;};
+(function(){
+  const p=(id,key,ev)=>{const el=$(id); if(el)el.addEventListener(ev||'input',()=>{PIN[key]=true;});};
+  p('seed','seed'); p('corr','corr'); p('voidamt','voidamt'); p('locality','locality');
+  p('mode','mode','click'); p('scheme','scheme','click'); p('chromaseg','chromacap','click');
+  document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.tg'))PIN.fx=true; },true);
+})();
+const _applyCard=applyCard;
+applyCard=function(c){ _applyCard(c); if(!ORACLE_APPLY)pinAll(true); };
+function machineRoll(){
+  const R=Math.random;
+  const allFree=!PIN.seed&&!PIN.mode&&!PIN.scheme&&!PIN.corr&&!PIN.fx&&!PIN.voidamt&&!PIN.locality&&!PIN.chromacap;
+  const card={ seed:PIN.seed?state.seed:((R()*0xFFFFFFFF)>>>0),
+    scheme:state.scheme, mode:state.mode, corr:state.corr, frames:state.frames,
+    fx:Object.assign({},state.fx), motion:state._motion||'AUTO', ov:(typeof OV!=='undefined'&&ovActive&&ovActive())?{...OV}:null,
+    epoch:(typeof EPOCH!=='undefined')?EPOCH:0,
+    voidamt:state.voidamt, chromacap:state.chromacap, locality:state.locality };
+  const wpick=(pairs)=>{ let t=0; for(const q of pairs)t+=q[1]; let r=R()*t;
+    for(const q of pairs){ r-=q[1]; if(r<=0)return q[0]; } return pairs[0][0]; };
+  const rollFx2=(pill,fav,oth,rad)=>{
+    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes','meta','entropy','chimera','kaleido','hilb']);
+    const PILL=new Set(['chroma','tracking','pixelsort','grain','blocks','scanlines','echo']);
+    const fx={};
+    for(const k of CARD_CH) fx[k]= rad?R()<0.30 : PILL.has(k)?R()<pill : R()<(FAV.has(k)?fav:oth);
+    return fx;
+  };
+  let tag;
+  if(allFree && R()<0.60 && R()<0.35 && typeof ORACLE_CANON!=='undefined'){
+    const ia=(R()*ORACLE_CANON.length)|0; let ib=(R()*ORACLE_CANON.length)|0; if(ib===ia)ib=(ib+1)%ORACLE_CANON.length;
+    const A=unpackCard(ORACLE_CANON[ia]), B=unpackCard(ORACLE_CANON[ib]);
+    if(A&&B){ const ch2=breedCards(A,B,(R()*0xffff)|0);
+      Object.assign(card, ch2);
+      card.voidamt=22+((R()*30)|0); card.locality=40+((R()*50)|0); card.chromacap=R()<0.12?1:0;
+      tag='BREED'; }
+  }
+  if(!tag){
+    const canon=R()<0.60;
+    if(!PIN.mode) card.mode= canon
+      ? wpick([['MASS',30],['TENDRILS',14],['RINGS',8],['ORBITALS',8],['SCANS',9],['GLYPHS',8],['STRATA',8],['LATTICE',8],['PLASMA',7]])
+      : MODES[(R()*(MODES.length))|0];
+    if(card.mode==='RANDOM')card.mode='MASS';
+    if(!PIN.scheme){ const ss=Object.keys(SCHEMES);
+      card.scheme= canon&&R()<0.48
+        ? wpick([['GENESIS',20],['POISONFROG',10],['DES',9],['FAUXRGB',7],['AIRNEON',6],['POLE',5],['TISGEN',6],['BONE',5]])
+        : ss[(R()*ss.length)|0]; }
+    if(!PIN.corr) card.corr= canon? 40+((R()*38)|0) : 20+((R()*81)|0);
+    if(!PIN.voidamt) card.voidamt= canon? 22+((R()*30)|0) : (R()*80)|0;
+    if(!PIN.locality) card.locality= canon? 40+((R()*50)|0) : (R()*101)|0;
+    if(!PIN.chromacap) card.chromacap= R()<(canon?0.12:0.25)?1:0;
+    if(!PIN.fx) card.fx= canon? rollFx2(0.88,0.30,0.08,false) : rollFx2(0.70,0.22,0.22,R()<0.20);
+    if(!PIN.motion&&typeof CARD_MOTION!=='undefined') card.motion=CARD_MOTION[(R()*CARD_MOTION.length)|0];
+    tag= canon?'CANON':'FRONTIER';
+  }
+  ORACLE_APPLY=true;
+  try{ applyCard(card); } finally { ORACLE_APPLY=false; }
+  return tag+' \u00b7 V'+state.voidamt+' L'+state.locality+(state.chromacap?' CAP':'');
+}
+$('go').addEventListener('click',()=>{
+  const rolled=machineRoll();
+  $('osd').textContent=rolled;
+  generate();
+});
 document.querySelectorAll('.tab').forEach(t=>{
   t.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(o=>o.setAttribute('aria-selected', o===t?'true':'false'));
