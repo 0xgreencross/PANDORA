@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 20.0 · BLACKMASS<br>WHERE THE FINGER IS</div>
+  <div id="mastrev">REV 20.1 · BLACKMASS<br>THE TRUE RITUALS</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 20.0 · BLACKMASS<br>WHERE THE FINGER IS</div>
+    <div class="ver">REV 20.1 · BLACKMASS<br>THE TRUE RITUALS</div>
   </header>
 
   <div class="colL">
@@ -5123,7 +5123,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='20.0';
+const REV_SELF='20.1';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5208,8 +5208,8 @@ $('dice').addEventListener('click',()=>{
     const mo=CARD_MOTION[(R()*CARD_MOTION.length)|0];
     if(typeof setMotion==='function')setMotion(mo);
   }
-  $('osd').textContent=tag+' \u00b7 VOID '+state.voidamt+' \u00b7 LOC '+state.locality+(state.chromacap?' \u00b7 CAPPED':'')+' \u00b7 TRANSMIT';
-  $('go').classList.add('needy');
+  $('osd').textContent=tag+' \u00b7 VOID '+state.voidamt+' \u00b7 LOC '+state.locality+(state.chromacap?' \u00b7 CAPPED':'');
+  generate();
 });
 function mutateCard(c,rng){
   const m=JSON.parse(JSON.stringify(c));
@@ -5252,7 +5252,8 @@ const pinAll=v=>{for(const k in PIN)PIN[k]=v;};
 })();
 const _applyCard=applyCard;
 applyCard=function(c){ _applyCard(c); if(!ORACLE_APPLY)pinAll(true); };
-function machineRoll(){
+function machineRoll(opts){
+  opts=opts||{};
   const R=Math.random;
   const allFree=!PIN.seed&&!PIN.mode&&!PIN.scheme&&!PIN.corr&&!PIN.fx&&!PIN.voidamt&&!PIN.locality&&!PIN.chromacap;
   const card={ seed:PIN.seed?state.seed:((R()*0xFFFFFFFF)>>>0),
@@ -5276,10 +5277,11 @@ function machineRoll(){
     if(A&&B){ const ch2=breedCards(A,B,(R()*0xffff)|0);
       Object.assign(card, ch2);
       card.voidamt=22+((R()*30)|0); card.locality=40+((R()*50)|0); card.chromacap=R()<0.12?1:0;
+      if(opts.corrLo!=null) card.corr=opts.corrLo+((R()*(opts.corrHi-opts.corrLo))|0);
       tag='BREED'; }
   }
   if(!tag){
-    const canon=R()<0.60;
+    const canon=R()<(opts.canonP!=null?opts.canonP:0.60);
     if(!PIN.mode) card.mode= canon
       ? wpick([['MASS',30],['TENDRILS',14],['RINGS',8],['ORBITALS',8],['SCANS',9],['GLYPHS',8],['STRATA',8],['LATTICE',8],['PLASMA',7]])
       : MODES[(R()*(MODES.length))|0];
@@ -5288,7 +5290,7 @@ function machineRoll(){
       card.scheme= canon&&R()<0.48
         ? wpick([['GENESIS',20],['POISONFROG',10],['DES',9],['FAUXRGB',7],['AIRNEON',6],['POLE',5],['TISGEN',6],['BONE',5]])
         : ss[(R()*ss.length)|0]; }
-    if(!PIN.corr) card.corr= canon? 40+((R()*38)|0) : 20+((R()*81)|0);
+    if(!PIN.corr) card.corr= opts.corrLo!=null? (opts.corrLo+((R()*(opts.corrHi-opts.corrLo))|0)) : (canon? 40+((R()*38)|0) : 20+((R()*81)|0));
     if(!PIN.voidamt) card.voidamt= canon? 22+((R()*30)|0) : (R()*80)|0;
     if(!PIN.locality) card.locality= canon? 40+((R()*50)|0) : (R()*101)|0;
     if(!PIN.chromacap) card.chromacap= R()<(canon?0.12:0.25)?1:0;
@@ -5415,7 +5417,9 @@ function applyCandidate(c, corrOverride){
 }
 $('oblivion').addEventListener('click',()=>{
   if(busy)return;
-  applyCandidate(mintDNA(), 100);
+  pinAll(false);
+  const t=machineRoll({corrLo:78, corrHi:101, canonP:0.40});
+  $('osd').textContent='\u2620 '+t;
   generate();
 });
 
@@ -5428,7 +5432,9 @@ function setSeg(hostId,key,v){
 }
 function pandorize(){
   if(busy)return;
-  applyCandidate(mintDNA());
+  pinAll(false);
+  const t=machineRoll();
+  $('osd').textContent=t;
   generate();
 }
 /* tap the box any time — even mid-render. A running transmission is
