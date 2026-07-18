@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">EIDO<b>LON</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV E1.0 · EIDOLON<br>FIRST LIGHT</div>
+  <div id="mastrev">REV E2.0 · EIDOLON<br>THREE BLOODS</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV E1.0 · EIDOLON<br>FIRST LIGHT</div>
+    <div class="ver">REV E2.0 · EIDOLON<br>THREE BLOODS</div>
   </header>
 
   <div class="colL">
@@ -775,7 +775,7 @@ for(const key in SCHEMES){ const sc=SCHEMES[key];
   sc.glitch=sc.glitch.map(st=>deWhiteHex(st, sc.stops[sc.stops.length-1]));
 }
 const SCHEME_KEYS = Object.keys(SCHEMES);
-const MODES = ['PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS','MASS'];
+const MODES = ['PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS','MASS','IDOL'];
 
 /* build a 256-entry smooth gradient LUT from stops */
 function buildGradient(stops){
@@ -1258,6 +1258,7 @@ function renderBase(rgb, scene, t, theta, grad){
         if(hits[i]===1){ if(field[i]<0.55)field[i]=0.55; }
         else if(hits[i]>=2){ if(field[i]<0.95)field[i]=0.95; }
       }
+    } else if(m==='IDOL'){ scene._corr=corr; renderIdol(field, scene, theta);
     } else if(m==='MASS'){ renderMass(field, scene, theta, massField(scene));
     } else if(m==='STRATA'){ // displaced geological bands
       const S=scene.rev4.strata, no=scene.noise;
@@ -1284,6 +1285,7 @@ function renderBase(rgb, scene, t, theta, grad){
           field[y*FW+x]=v;
         }}
     }
+    if(m!=='MASS'&&m!=='IDOL') depthField(field, scene, theta);
     // upscale (nearest -> chunky) + color
     for(let y=0;y<H;y++){const sy=(y*FW/H)|0;
       for(let x=0;x<W;x++){const sx=(x*FW/W)|0;
@@ -1640,8 +1642,260 @@ function massField(scene){
     }
   }
   const lightBase=rng()*TAU, grainPh=rng()*50;
-  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,lightBase,grainPh,mirror};
+  /* frame the body: probe perspective coverage at theta=0, tune the lens */
+  let fovK=0.34*Math.max(1,S);
+  { const dist=1.25*Math.max(1,S), el=0.20+(fam%9)*0.018, az=lightBase*0.7;
+    const ex=dist*Math.cos(el)*Math.sin(az), ey=0.5-dist*Math.sin(el), ez=dist*Math.cos(el)*Math.cos(az);
+    let fx3=-ex, fy3=0.5-ey, fz3=-ez; const fl=Math.hypot(fx3,fy3,fz3); fx3/=fl;fy3/=fl;fz3/=fl;
+    let rx=fz3, rz=-fx3; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
+    const ux=-rz*fy3, uy=rz*fx3-rx*fz3, uz=rx*fy3;
+    for(let it=0;it<2;it++){
+      let hits2=0, tot=0;
+      for(let gy=0;gy<60;gy+=3)for(let gx=0;gx<60;gx+=3){ tot++;
+        const sxc=(gx/60-0.5)*2*fovK, syc=(gy/60-0.5)*2*fovK;
+        let dx=fx3+rx*sxc+ux*syc, dy=fy3+syc*uy, dz=fz3+rz*sxc+uz*syc;
+        dy=fy3+ux*0; dy=fy3+uy*syc;
+        const dl=Math.hypot(dx,dy,dz); dx/=dl;dy/=dl;dz/=dl;
+        let t=dist-0.95*Math.max(1,S);
+        for(let st=0;st<22;st++){
+          const d2=sdf(ex+dx*t, ey+dy*t, ez+dz*t, S, 0);
+          if(d2<0.012){hits2++;break;}
+          t+=Math.max(d2,0.016);
+          if(t>dist+0.95*Math.max(1,S))break;
+        }
+      }
+      const cov=hits2/tot;
+      fovK*=Math.sqrt(Math.max(0.04,cov)/Math.max(0.15,target));
+      fovK=Math.max(0.14,Math.min(1.3,fovK));
+    }
+  }
+  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK};
   return scene._mf;
+}
+function eCam(mf, theta){
+  const S=mf.S, az=theta+mf.lightBase*0.7, el=0.20+(mf.fam%9)*0.018;
+  const dist=1.25*Math.max(1,S);
+  const ex=dist*Math.cos(el)*Math.sin(az), ey=0.5-dist*Math.sin(el), ez=dist*Math.cos(el)*Math.cos(az);
+  let fx=-ex, fy=0.5-ey, fz=-ez; const fl=Math.hypot(fx,fy,fz); fx/=fl;fy/=fl;fz/=fl;
+  let rx=fz, rz=-fx; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
+  const ux=-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy;
+  return {ex,ey,ez,fx,fy,fz,rx,ry:0,rz,ux,uy,uz,dist,fov:(mf.fovK||0.34*Math.max(1,S))};
+}
+function massView(scene, mf, theta){
+  /* BLOOD A — the turntable: a perspective camera orbits the body once per
+     loop. Marched fresh per frame at coarse grid; the film layer absorbs it. */
+  if(mf._vt===theta)return;
+  mf._vt=theta;
+  const VG=88, S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
+  const hitG=new Uint8Array(VG*VG), nxG=new Float32Array(VG*VG), nyG=new Float32Array(VG*VG),
+        nzG=new Float32Array(VG*VG), dpG=new Float32Array(VG*VG);
+  const t0=C.dist-0.95*Math.max(1,S), t1=C.dist+0.95*Math.max(1,S);
+  for(let gy=0;gy<VG;gy++){
+    const syc=(gy/VG-0.5)*2*C.fov;
+    for(let gx=0;gx<VG;gx++){
+      const sxc=(gx/VG-0.5)*2*C.fov;
+      let dx=C.fx+C.rx*sxc+C.ux*syc, dy=C.fy+C.ry*sxc+C.uy*syc, dz=C.fz+C.rz*sxc+C.uz*syc;
+      const dl=Math.hypot(dx,dy,dz); dx/=dl;dy/=dl;dz/=dl;
+      const fpx=C.ex+dx*C.dist, fpy=C.ey+dy*C.dist;
+      const fold=mf.hasDrape?mf.foldAt(fpx,fpy,S):0;
+      let t=t0, hit=0;
+      for(let st=0;st<30;st++){
+        const px=C.ex+dx*t, py=C.ey+dy*t, pz=C.ez+dz*t;
+        const d=sdf(px,py,pz,S,fold);
+        if(d<0.009){ hit=1;
+          const e=0.008, px2=px,py2=py,pz2=pz;
+          const nx=sdf(px2+e,py2,pz2,S,fold)-sdf(px2-e,py2,pz2,S,fold);
+          const ny=sdf(px2,py2+e,pz2,S,fold)-sdf(px2,py2-e,pz2,S,fold);
+          const nz=sdf(px2,py2,pz2+e,S,fold)-sdf(px2,py2,pz2-e,S,fold);
+          const nl=Math.hypot(nx,ny,nz)||1;
+          const gi=gy*VG+gx;
+          nxG[gi]=nx/nl; nyG[gi]=ny/nl; nzG[gi]=nz/nl; dpG[gi]=(t-C.dist)/Math.max(1,S);
+          break;
+        }
+        t+=Math.max(d,0.013);
+        if(t>t1)break;
+      }
+      hitG[gy*VG+gx]=hit;
+    }
+  }
+  for(let y=0;y<FW;y++){const gy=Math.min(VG-1,(y*VG/FW)|0);
+    for(let x=0;x<FW;x++){const gx=Math.min(VG-1,(x*VG/FW)|0), gi=gy*VG+gx, i=y*FW+x;
+      mf.z[i]=hitG[gi]?2:0;
+      mf.NX[i]=nxG[gi]; mf.NY[i]=nyG[gi]; mf.NZ[i]=nzG[gi]; mf.DP[i]=dpG[gi];
+    }
+  }
+}
+function idolMesh(scene){
+  /* BLOOD C — the idol: the same anatomy, incarnated as polygons. */
+  const mf=massField(scene);
+  if(mf._mesh)return mf._mesh;
+  const rng=mulberry32((scene.seed^0x1D01)>>>0);
+  const V=[], T=[];
+  const addTri=(a,b,c)=>T.push(a,b,c);
+  const emit=(lv,lt,px,py,pz,rc,rs)=>{
+    const base=V.length/3;
+    for(let i=0;i<lv.length;i+=3){
+      const x=lv[i], y=lv[i+1], z=lv[i+2];
+      V.push(px + x*rc - y*rs, py + x*rs + y*rc, pz + z);
+    }
+    for(const t of lt) addTri(base+t[0], base+t[1], base+t[2]);
+  };
+  const sphereGeo=(a,b,c)=>{ const lv=[],lt=[]; const LA=5,LO=7;
+    for(let i=0;i<=LA;i++){const ph=i/LA*Math.PI;
+      for(let j=0;j<LO;j++){const th=j/LO*TAU;
+        lv.push(a*Math.sin(ph)*Math.cos(th), b*Math.cos(ph), (c||a)*Math.sin(ph)*Math.sin(th)); }}
+    for(let i=0;i<LA;i++)for(let j=0;j<LO;j++){
+      const p0=i*LO+j, p1=i*LO+(j+1)%LO, p2=(i+1)*LO+j, p3=(i+1)*LO+(j+1)%LO;
+      lt.push([p0,p2,p1],[p1,p2,p3]); }
+    return [lv,lt]; };
+  const boxGeo=(a,b,c)=>{ const lv=[],lt=[];
+    for(let i=0;i<8;i++)lv.push((i&1?a:-a),(i&2?b:-b),(i&4?(c||0.05):-(c||0.05)));
+    const F=[[0,1,3,2],[4,6,7,5],[0,2,6,4],[1,5,7,3],[0,4,5,1],[2,3,7,6]];
+    for(const f of F){lt.push([f[0],f[1],f[2]],[f[0],f[2],f[3]]);}
+    return [lv,lt]; };
+  const torusGeo=(a,b,half)=>{ const lv=[],lt=[]; const SEG=half?6:10, TU=5;
+    const arc=half?Math.PI:TAU;
+    for(let i=0;i<=SEG;i++){const th=i/SEG*arc;
+      for(let j=0;j<TU;j++){const p2=j/TU*TAU;
+        const r=a+b*Math.cos(p2);
+        lv.push(r*Math.cos(th), r*Math.sin(th), b*Math.sin(p2)); }}
+    for(let i=0;i<SEG;i++)for(let j=0;j<TU;j++){
+      const p0=i*TU+j, p1=i*TU+(j+1)%TU, p2=(i+1)*TU+j, p3=(i+1)*TU+(j+1)%TU;
+      lt.push([p0,p2,p1],[p1,p2,p3]); }
+    return [lv,lt]; };
+  const cylGeo=(a,b)=>{ const lv=[],lt=[]; const SEG=8;
+    for(let i=0;i<SEG;i++){const th=i/SEG*TAU;
+      lv.push(a*Math.cos(th), b, a*Math.sin(th));
+      lv.push(a*Math.cos(th), -b, a*Math.sin(th)); }
+    for(let i=0;i<SEG;i++){const p0=i*2,p1=i*2+1,p2=((i+1)%SEG)*2,p3=((i+1)%SEG)*2+1;
+      lt.push([p0,p2,p1],[p1,p2,p3]); }
+    const ct=lv.length/3; lv.push(0,b,0); const cb=lv.length/3; lv.push(0,-b,0);
+    for(let i=0;i<SEG;i++){ lt.push([ct,((i+1)%SEG)*2,i*2]); lt.push([cb,i*2+1,((i+1)%SEG)*2+1]); }
+    return [lv,lt]; };
+  const coneGeo=(a,b)=>{ const lv=[],lt=[]; const SEG=8;
+    for(let i=0;i<SEG;i++){const th=i/SEG*TAU; lv.push(a*Math.cos(th),-b,a*Math.sin(th));}
+    const apex=lv.length/3; lv.push(0,b,0);
+    const cb=lv.length/3; lv.push(0,-b,0);
+    for(let i=0;i<SEG;i++){ lt.push([apex,(i+1)%SEG,i]); lt.push([cb,i,(i+1)%SEG]); }
+    return [lv,lt]; };
+  const drapeGeo=(a,b)=>{ const lv=[],lt=[]; const G=8;
+    for(let i=0;i<=G;i++)for(let j=0;j<=G;j++){
+      const x=(i/G-0.5)*2*a, y=(j/G-0.5)*2*b;
+      lv.push(x, y, mf.foldAt(x, y+0.5, mf.S)*0.8); }
+    for(let i=0;i<G;i++)for(let j=0;j<G;j++){
+      const p0=i*(G+1)+j,p1=p0+1,p2=p0+G+1,p3=p2+1;
+      lt.push([p0,p2,p1],[p1,p2,p3]); }
+    return [lv,lt]; };
+  const geoFor=(t,a,b,c)=>{
+    switch(t){
+      case 0: return sphereGeo(a,b,c);
+      case 1: return boxGeo(a,b,c);
+      case 2: return torusGeo(a,Math.max(0.03,b*0.5),false);
+      case 3: return cylGeo(a,b);
+      case 4: return coneGeo(a,b);
+      case 5: return torusGeo(a,Math.max(0.03,b*0.5),true);
+      case 6: return boxGeo(a,b,0.02);
+      default: return drapeGeo(Math.max(a,0.25),Math.max(b,0.3));
+    }
+  };
+  for(let i=0;i<mf.P.length;i++){ const p=mf.P[i];
+    const [lv,lt]=geoFor(p[0],p[4],p[5],p[6]);
+    emit(lv,lt,p[1],p[2],p[3],mf.rotc[i],mf.rots[i]);
+    if(mf.mirror&&Math.abs(p[1])>0.02) emit(lv,lt,-p[1],p[2],p[3],mf.rotc[i],-mf.rots[i]);
+  }
+  if(mf.hasDrape){ const [lv,lt]=drapeGeo(0.34,0.42); emit(lv,lt,0,0.5,0,1,0); }
+  mf._mesh={V:Float32Array.from(V), T:Uint32Array.from(T), wire:rng()<0.35, jseed:(rng()*0xffff)|0};
+  return mf._mesh;
+}
+function renderIdol(field, scene, theta){
+  const mf=massField(scene), M=idolMesh(scene), C=eCam(mf,theta);
+  const corr=(scene._corr!=null?scene._corr:60);
+  field.fill(0.035);
+  const n=M.V.length/3;
+  const sx=new Float32Array(n), sy=new Float32Array(n), sz=new Float32Array(n);
+  const wx=new Float32Array(n), wy=new Float32Array(n), wz=new Float32Array(n);
+  for(let j=0;j<n;j++){
+    let px=M.V[j*3], py=M.V[j*3+1], pz=M.V[j*3+2];
+    const h=((j*2654435761)>>>0)%100;
+    if(h<16){ const k=(M.jseed%5)+2;
+      px+=Math.sin(theta*k+j*0.7)*corr*0.00045;
+      py+=Math.cos(theta*k+j*1.3)*corr*0.00030; }
+    wx[j]=px; wy[j]=py; wz[j]=pz;
+    const ex=px-C.ex, ey=py-C.ey, ez=pz-C.ez;
+    const xv=ex*C.rx+ey*C.ry+ez*C.rz, yv=ex*C.ux+ey*C.uy+ez*C.uz, zv=ex*C.fx+ey*C.fy+ez*C.fz;
+    sz[j]=zv;
+    sx[j]=(xv/Math.max(0.06,zv))/(2*C.fov)*FW+FW/2;
+    sy[j]=(yv/Math.max(0.06,zv))/(2*C.fov)*FW+FW/2;
+  }
+  const nt=M.T.length/3, order=new Array(nt);
+  for(let t=0;t<nt;t++){ const a=M.T[t*3],b=M.T[t*3+1],c=M.T[t*3+2];
+    order[t]=[(sz[a]+sz[b]+sz[c])/3, t]; }
+  order.sort((a,b)=>b[0]-a[0]);
+  const laz=theta+mf.lightBase*0.7+0.8;
+  const lx=Math.cos(0.5)*Math.sin(laz), ly=-Math.sin(0.5), lz=Math.cos(0.5)*Math.cos(laz);
+  const edge=(x0,y0,x1,y1,v)=>{
+    const steps=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))|0;
+    for(let k=0;k<=steps;k++){ const x=(x0+(x1-x0)*k/Math.max(1,steps))|0, y=(y0+(y1-y0)*k/Math.max(1,steps))|0;
+      if(x>=0&&x<FW&&y>=0&&y<FW) field[y*FW+x]=v; } };
+  for(const [,t] of order){
+    const a=M.T[t*3], b=M.T[t*3+1], c=M.T[t*3+2];
+    if(sz[a]<0.06||sz[b]<0.06||sz[c]<0.06)continue;
+    const ux2=wx[b]-wx[a], uy2=wy[b]-wy[a], uz2=wz[b]-wz[a];
+    const vx2=wx[c]-wx[a], vy2=wy[c]-wy[a], vz2=wz[c]-wz[a];
+    let nx=uy2*vz2-uz2*vy2, ny=uz2*vx2-ux2*vz2, nz=ux2*vy2-uy2*vx2;
+    const nl=Math.hypot(nx,ny,nz)||1; nx/=nl;ny/=nl;nz/=nl;
+    const facing=nx*C.fx+ny*C.fy+nz*C.fz;
+    if(facing>0){nx=-nx;ny=-ny;nz=-nz;}
+    const diff=Math.max(0,nx*lx+ny*ly+nz*lz);
+    const v=Math.min(0.93, 0.13+diff*0.62+Math.pow(Math.max(0,1+ (nx*C.fx+ny*C.fy+nz*C.fz)),2)*0.14);
+    if(!M.wire){
+      let x0=sx[a],y0=sy[a],x1=sx[b],y1=sy[b],x2=sx[c],y2=sy[c];
+      if(y1<y0){[x0,x1]=[x1,x0];[y0,y1]=[y1,y0];}
+      if(y2<y0){[x0,x2]=[x2,x0];[y0,y2]=[y2,y0];}
+      if(y2<y1){[x1,x2]=[x2,x1];[y1,y2]=[y2,y1];}
+      const yA=Math.max(0,y0|0), yB=Math.min(FW-1,y2|0);
+      for(let y=yA;y<=yB;y++){
+        let xl,xr;
+        const t2=y2>y0?(y-y0)/(y2-y0):0; const xac=x0+(x2-x0)*t2;
+        let xbc;
+        if(y<y1) xbc=x0+((y1>y0)?(y-y0)/(y1-y0):0)*(x1-x0);
+        else xbc=x1+((y2>y1)?(y-y1)/(y2-y1):0)*(x2-x1);
+        xl=Math.min(xac,xbc); xr=Math.max(xac,xbc);
+        const XA=Math.max(0,xl|0), XB=Math.min(FW-1,xr|0);
+        for(let x=XA;x<=XB;x++) field[y*FW+x]=v;
+      }
+    }
+    const ev=M.wire?0.88:Math.min(0.97,v+0.22);
+    edge(sx[a],sy[a],sx[b],sy[b],ev); edge(sx[b],sy[b],sx[c],sy[c],ev); edge(sx[c],sy[c],sx[a],sy[a],ev);
+  }
+}
+function depthField(field, scene, theta){
+  /* BLOOD B — the deep field: every texture mode gains depth. Height from
+     luminance; parallax shear breathes with the loop; fog eats the distance. */
+  const rng=mulberry32((scene.seed^0x3DEE)>>>0);
+  if(rng()>0.65)return;
+  const fog=0.18+rng()*0.30, par=0.5+rng()*0.9, horiz=rng()<0.7, ph=rng()*TAU;
+  const DW=90;
+  const dep=depthField._d||(depthField._d=new Float32Array(DW*DW));
+  const K=FW/DW;
+  for(let gy=0;gy<DW;gy++)for(let gx=0;gx<DW;gx++){
+    let a=0,c2=0;
+    for(let oy=0;oy<K;oy+=2)for(let ox=0;ox<K;ox+=2){ a+=field[((gy*K+oy)|0)*FW+((gx*K+ox)|0)]; c2++; }
+    dep[gy*DW+gx]=a/c2;
+  }
+  const snap=depthField._s||(depthField._s=new Float32Array(FW*FW));
+  snap.set(field);
+  const sw=Math.sin(theta+ph);
+  for(let y=0;y<FW;y++){ const gy=Math.min(DW-1,(y/K)|0);
+    for(let x=0;x<FW;x++){
+      const d=dep[gy*DW+Math.min(DW-1,(x/K)|0)];
+      const off=Math.round(par*(d-0.5)*16*sw);
+      let sx2=horiz?x+off:x, sy2=horiz?y:y+off;
+      if(sx2<0)sx2=0; else if(sx2>=FW)sx2=FW-1;
+      if(sy2<0)sy2=0; else if(sy2>=FW)sy2=FW-1;
+      field[y*FW+x]=snap[sy2*FW+sx2]*(1-fog*(1-d));
+    }
+  }
 }
 function shadeAt(mf, i, theta){
   /* one key light orbiting slowly across the loop: living chiaroscuro */
@@ -1654,6 +1908,7 @@ function shadeAt(mf, i, theta){
   return Math.max(0.05,Math.min(0.97,v));
 }
 function renderMass(field, scene, theta, mf){
+  massView(scene, mf, theta);
   const F=faultOf(scene);
   const faultY=((theta/TAU)*FW)|0;
   const no2=scene.noise2, gp=mf.grainPh;
@@ -1680,7 +1935,7 @@ const DCT_C=(()=>{const c=new Float32Array(64);
 function dctGhost(buf, scene, theta, corr){
   /* authentic JPEG grief: 8x8 DCT, brutal quantization, inverse.
      Bands of macroblock rows are wounded; geometry survives in compression form. */
-  if(scene.mode!=='MASS'||corr<12)return;
+  if((scene.mode!=='MASS'&&scene.mode!=='IDOL')||corr<12)return;
   const rng=mulberry32((scene.seed^0xDC7)>>>0);
   const q=6+ (corr*0.9)|0;
   const bandN=1+((rng()*2)|0)+ (corr>70?1:0);
@@ -3271,7 +3526,7 @@ async function generateSeq(){
     }
     quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
              (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-    if(scene.mode!=='MASS') indexPass(indices, pal.length, scene, theta, corr, fx);
+    if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices, pal.length, scene, theta, corr, fx);
     sanctityIdx(indices, scene, i);
 
     // live preview from quantized indices
@@ -3454,7 +3709,7 @@ self.onmessage=function(e){
     lumenPass(rgbB, scene, theta, grad);
       quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
                (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-      if(scene.mode!=='MASS') indexPass(indices,pal.length,scene,theta,corr,fx);
+      if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices,pal.length,scene,theta,corr,fx);
       sanctityIdx(indices, scene, i);
       const chunks=[];
       { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,DELAY,MCS[0]); chunks.push(cs.done().slice()); }
@@ -5123,7 +5378,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='E1.0';
+const REV_SELF='E2.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5194,7 +5449,7 @@ $('dice').addEventListener('click',()=>{
       tag='CANON ROLL';
     }
   } else {
-    const MODESALL=['MASS','PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS'];
+    const MODESALL=['IDOL','MASS','PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS'];
     const ss=Object.keys(SCHEMES);
     applyCard({ seed:(R()*0xFFFFFFFF)>>>0, scheme:ss[(R()*ss.length)|0],
       mode:MODESALL[(R()*MODESALL.length)|0],
@@ -5284,7 +5539,7 @@ function machineRoll(opts){
   if(!tag){
     const canon=R()<(opts.canonP!=null?opts.canonP:0.60);
     if(!PIN.mode) card.mode= canon
-      ? wpick([['MASS',30],['TENDRILS',14],['RINGS',8],['ORBITALS',8],['SCANS',9],['GLYPHS',8],['STRATA',8],['LATTICE',8],['PLASMA',7]])
+      ? wpick([['IDOL',24],['MASS',24],['TENDRILS',11],['RINGS',6],['ORBITALS',6],['SCANS',7],['GLYPHS',6],['STRATA',6],['LATTICE',5],['PLASMA',5]])
       : MODES[(R()*(MODES.length))|0];
     if(card.mode==='RANDOM')card.mode='MASS';
     if(card.mode==='MASS'&&!PIN.seed&&R()<0.60){
