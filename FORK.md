@@ -15,3 +15,13 @@
 
 ## Verdict
 PENDING — judged at `dithervoid.art/f1/`.
+
+
+## FORK THREE — EIDOLON // PANDORA (`/f3/`)
+Forked from BLACKMASS REV 21.0 (f1) at the arbiter build: canon 51 bloodlines,
+perfect machine riding all rituals, atelier bodies, codec wounds.
+Mission: 3D integration — a new visual regime.
+- Live: dithervoid.art/f3/
+- Kill ritual: delete `f3/` — trunk and f1 untouched.
+- Promote ritual: copy `f3/index.html` over root `index.html`.
+Vault is shared with f1 (same commons, same DNA v5).
