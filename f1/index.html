@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 20.2 · BLACKMASS<br>THE TRUE RITUALS</div>
+  <div id="mastrev">REV 21.0 · BLACKMASS<br>THE ARBITER</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 20.2 · BLACKMASS<br>THE TRUE RITUALS</div>
+    <div class="ver">REV 21.0 · BLACKMASS<br>THE ARBITER</div>
   </header>
 
   <div class="colL">
@@ -5123,7 +5123,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='20.2';
+const REV_SELF='21.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5151,11 +5151,12 @@ $('dice').addEventListener('click',()=>{
     'PNDR-B0GC-NZB7-5K9G-ZW10-1090-0222-0008-HW01','PNDR-AQ72-AB3T-8HKG-ZW41-2810-0222-0008-HW2Y',
     'PNDR-BBFP-AT6D-3A40-ZW40-321G-0222-0008-HW2Q','PNDR-B2HE-VNG2-JBA0-ZW0G-08H0-0222-0008-HW5F',
     'PNDR-AZ0R-7EZ7-8BBG-ZW60-0WRR-0222-0008-HW70','PNDR-AF37-3EF8-QKBG-ZY00-100G-0222-0008-HW78',
-    'PNDR-ABE2-G44T-MAAG-ZYG1-10G8-0222-0008-HW7Y','PNDR-A465-Y5A2-7J40-ZW2C-30D4-0222-0008-HW22','PNDR-B3E6-RT4N-1BAG-ZX20-74J0-0222-0008-HW2F','PNDR-AS7A-TXQB-0K1G-ZW05-0G80-0222-0008-HW2W','PNDR-BZ71-V17T-RA20-ZW1H-2400-0222-0008-HW00','PNDR-AWX0-ESS8-3E1G-ZW00-1290-0222-0008-HW6T','PNDR-B6VT-F28N-7GBG-ZW10-900G-0222-0008-HW2Z','PNDR-BMPR-8ZDD-3FVG-ZY08-200G-0222-0008-HW4T','PNDR-ATK4-FNJ0-7HA0-ZW00-0G24-0222-0008-HW3W','PNDR-BMTA-XB75-4NSG-ZX00-041G-0222-0008-HW1C','PNDR-AQ70-SJ2Q-8B2G-ZZ0G-S900-0222-0008-HW14','PNDR-B5XT-55QQ-2D40-ZW5J-1324-0222-0008-HW2M','PNDR-ABV7-VRQ7-8MVG-ZY04-G004-0222-0008-HW0M'];
+    'PNDR-ABE2-G44T-MAAG-ZYG1-10G8-0222-0008-HW7Y','PNDR-A465-Y5A2-7J40-ZW2C-30D4-0222-0008-HW22','PNDR-B3E6-RT4N-1BAG-ZX20-74J0-0222-0008-HW2F','PNDR-AS7A-TXQB-0K1G-ZW05-0G80-0222-0008-HW2W','PNDR-BZ71-V17T-RA20-ZW1H-2400-0222-0008-HW00','PNDR-AWX0-ESS8-3E1G-ZW00-1290-0222-0008-HW6T','PNDR-B6VT-F28N-7GBG-ZW10-900G-0222-0008-HW2Z','PNDR-BMPR-8ZDD-3FVG-ZY08-200G-0222-0008-HW4T','PNDR-ATK4-FNJ0-7HA0-ZW00-0G24-0222-0008-HW3W','PNDR-BMTA-XB75-4NSG-ZX00-041G-0222-0008-HW1C','PNDR-AQ70-SJ2Q-8B2G-ZZ0G-S900-0222-0008-HW14','PNDR-B5XT-55QQ-2D40-ZW5J-1324-0222-0008-HW2M','PNDR-ABV7-VRQ7-8MVG-ZY04-G004-0222-0008-HW0M',
+    'PNDR-BSQP-CSGV-5EHG-ZW88-1000-0222-0008-HW45','PNDR-ABB4-MK2N-1NA0-ZY10-1080-0222-0008-HW5S','PNDR-ARWX-BF22-RM2G-ZY2K-0000-0222-0008-HW36','PNDR-BNWP-MN17-2QVG-ZX82-0R50-0222-0008-HW7Y','PNDR-BPHG-PE77-3S40-ZW52-G2AG-0222-0008-HW18','PNDR-A48J-N557-8GJG-ZW0B-0AV0-0222-0008-HW01','PNDR-AX8S-1B3X-0QC0-ZX08-A94G-0222-0008-HW19','PNDR-AWEH-3EZ7-5G9G-ZY00-10MC-0222-0008-HW65','PNDR-ARVW-YY1B-3QT0-ZW00-G0RW-0222-0008-HW62','PNDR-BJJY-G45D-3B1G-ZW28-850G-0222-0008-HW0J','PNDR-AKE3-36W7-2B20-ZX09-00G0-0222-0008-HW69','PNDR-AP77-Y3X0-6DB0-ZW04-G088-0222-0008-HW6C','PNDR-B08X-X8B7-1J20-ZW0G-0A00-0222-0008-HW07','PNDR-ANYF-7TZ5-3PJ0-ZW80-010G-0222-0008-HW0D','PNDR-BWW8-3E0A-RFSG-ZW0R-70A8-0222-0008-HW0C','PNDR-A3FT-2Y7G-6G28-ZWG0-0000-0222-0008-HW0S','PNDR-B8BR-9MEW-0MW0-ZWJ4-MGS0-0222-0008-HW4K','PNDR-A9R0-QCZ7-JH1G-ZYCG-2M30-0222-0008-HW44','PNDR-B453-AYGJ-8AM0-ZW48-9080-0222-0008-HW7S','PNDR-BEFX-TTB9-RCVG-ZW00-40G4-0222-0008-HW5Q','PNDR-BVWE-3V3J-HNSG-ZY50-6G58-0222-0008-HW3A','PNDR-AAD3-2KGQ-4AKG-ZWR0-J89G-0222-0008-HW6Q','PNDR-B5VR-PE2T-8DT8-QW42-0418-0222-000B-9D48','PNDR-AS3J-V0PR-8JA8-J4J0-HHM4-0222-000H-K44Y','PNDR-AVZ1-QFRV-8F28-ZW00-1810-0222-000C-YG5J','PNDR-AN33-CBXX-0DM0-ZW02-S854-0222-0008-HW4P','PNDR-AR92-KZW8-3CT8-YW20-0120-0222-000C-1J7Q','PNDR-ATB4-QE1T-0HA8-Y510-8060-0222-000B-J16Y'];
   const wpick=(pairs)=>{ let t=0; for(const p of pairs)t+=p[1]; let r=R()*t;
     for(const p of pairs){ r-=p[1]; if(r<=0)return p[0]; } return pairs[0][0]; };
   const rollFx=(pill,extraFav,extraOther,radical)=>{
-    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes','meta','entropy','chimera','kaleido','hilb']);
+    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes','meta','entropy','chimera','kaleido','hilb','tunnel','chrono']);
     const pillars=new Set(['chroma','tracking','pixelsort','grain','blocks','scanlines','echo']);
     const fx={};
     for(const k of CARD_CH){
@@ -5264,7 +5265,7 @@ function machineRoll(opts){
   const wpick=(pairs)=>{ let t=0; for(const q of pairs)t+=q[1]; let r=R()*t;
     for(const q of pairs){ r-=q[1]; if(r<=0)return q[0]; } return pairs[0][0]; };
   const rollFx2=(pill,fav,oth,rad)=>{
-    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes','meta','entropy','chimera','kaleido','hilb']);
+    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes','meta','entropy','chimera','kaleido','hilb','tunnel','chrono']);
     const PILL=new Set(['chroma','tracking','pixelsort','grain','blocks','scanlines','echo']);
     const fx={};
     for(const k of CARD_CH) fx[k]= rad?R()<0.30 : PILL.has(k)?R()<pill : R()<(FAV.has(k)?fav:oth);
@@ -5276,7 +5277,7 @@ function machineRoll(opts){
     const A=unpackCard(ORACLE_CANON[ia]), B=unpackCard(ORACLE_CANON[ib]);
     if(A&&B){ const ch2=breedCards(A,B,(R()*0xffff)|0);
       Object.assign(card, ch2);
-      card.voidamt=22+((R()*30)|0); card.locality=40+((R()*50)|0); card.chromacap=R()<0.12?1:0;
+      card.voidamt=38+((R()*21)|0); card.locality=45+((R()*51)|0); card.chromacap=R()<0.12?1:0;
       if(opts.corrLo!=null) card.corr=opts.corrLo+((R()*(opts.corrHi-opts.corrLo))|0);
       tag='BREED'; }
   }
@@ -5286,13 +5287,20 @@ function machineRoll(opts){
       ? wpick([['MASS',30],['TENDRILS',14],['RINGS',8],['ORBITALS',8],['SCANS',9],['GLYPHS',8],['STRATA',8],['LATTICE',8],['PLASMA',7]])
       : MODES[(R()*(MODES.length))|0];
     if(card.mode==='RANDOM')card.mode='MASS';
+    if(card.mode==='MASS'&&!PIN.seed&&R()<0.60){
+      for(let t2=0;t2<12;t2++){
+        const f2=(mulberry32((card.seed^0x14CE55)>>>0)()*64)|0;
+        if(((f2>>3)===5)||((f2>>3)===7))break;
+        card.seed=(R()*0xFFFFFFFF)>>>0;
+      }
+    }
     if(!PIN.scheme){ const ss=Object.keys(SCHEMES);
       card.scheme= canon&&R()<0.48
-        ? wpick([['GENESIS',20],['POISONFROG',10],['DES',9],['FAUXRGB',7],['AIRNEON',6],['POLE',5],['TISGEN',6],['BONE',5]])
+        ? wpick([['GENESIS',18],['POLE',9],['POISONFROG',9],['AIRNEON',8],['DES',8],['FAUXRGB',6],['TISGEN',6],['BONE',4]])
         : ss[(R()*ss.length)|0]; }
-    if(!PIN.corr) card.corr= opts.corrLo!=null? (opts.corrLo+((R()*(opts.corrHi-opts.corrLo))|0)) : (canon? 40+((R()*38)|0) : 20+((R()*81)|0));
-    if(!PIN.voidamt) card.voidamt= canon? 22+((R()*30)|0) : (R()*80)|0;
-    if(!PIN.locality) card.locality= canon? 40+((R()*50)|0) : (R()*101)|0;
+    if(!PIN.corr) card.corr= opts.corrLo!=null? (opts.corrLo+((R()*(opts.corrHi-opts.corrLo))|0)) : (canon? 45+((R()*30)|0) : 20+((R()*81)|0));
+    if(!PIN.voidamt) card.voidamt= canon? 38+((R()*21)|0) : (R()*80)|0;
+    if(!PIN.locality) card.locality= canon? 45+((R()*51)|0) : (R()*101)|0;
     if(!PIN.chromacap) card.chromacap= R()<(canon?0.12:0.25)?1:0;
     if(!PIN.fx) card.fx= canon? rollFx2(0.88,0.30,0.08,false) : rollFx2(0.70,0.22,0.22,R()<0.20);
     if(!PIN.motion&&typeof CARD_MOTION!=='undefined') card.motion=CARD_MOTION[(R()*CARD_MOTION.length)|0];
@@ -5418,7 +5426,7 @@ function applyCandidate(c, corrOverride){
 $('oblivion').addEventListener('click',()=>{
   if(busy)return;
   pinAll(false);
-  const t=machineRoll({corrLo:78, corrHi:101, canonP:0.40});
+  const t=machineRoll({corrLo:68, corrHi:96, canonP:0.40});
   $('osd').textContent='\u2620 '+t;
   generate();
 });
