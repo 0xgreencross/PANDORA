@@ -1,5 +1,5 @@
 # HANDOFF — DITHERVOID / PANDORA LINEAGE
-For the next Claude instance. Written 2026-07-19 at the close of the Fable era.
+For the next Claude instance. Living document — kept cutoff-ready every session. Last updated 2026-07-19 after feedback cycle 6 (REV E5.0).
 Read this whole file before touching anything.
 
 ## WHO YOU WORK FOR
@@ -16,8 +16,10 @@ Repo: github.com/0xgreencross/PANDORA · Live: dithervoid.art (GitHub Pages, cus
   Sepolia rehearsal complete. DO NOT TOUCH except by promote ritual.
 - **FORK ONE** `/f1/` — BLACKMASS // PANDORA REV 21.0 "THE ARBITER". DNA v5 (32
   chars, void/cap/locality genes). The feedback-machine instrument.
-- **FORK THREE** `/f3/` — EIDOLON // PANDORA REV E4.0 "TABULA RASA". The ground-up
-  3D rebuild. Same DNA v5. Newest, awaiting the curator's verdict.
+- **FORK THREE** `/f3/` — EIDOLON // PANDORA REV E5.0 "THE WIDE CANON". The
+  ground-up 3D rebuild, VERDICT DELIVERED: cycle-6 census = 37 keeps in one
+  sitting (3x record), all ten dialects kept, "very much close to what I have
+  envisioned". This is the active instrument. Same DNA v5.
 Kill ritual: delete the fork dir. Promote ritual: copy fork index.html over root.
 FORK.md in repo documents this.
 
@@ -74,8 +76,12 @@ The old generator is deleted. One renderer:
 - 2D storm stack: retired (PROT=true everywhere) but code dormant in file.
   fringePass (silhouette chroma fringe, reads sv.kind) + lumenPass still run.
 - Frame ~1.1s in the vm harness, roughly half in-browser; workers carry masters.
-- STATUS: awaiting the curator's first verdict on E4.0. Expect tuning demands
-  (material frequencies, floor probability, camera elevation/distance variety).
+- REV E5.0 additions: canon bands widened to cycle-6 evidence (corr 40-85,
+  void 25-65, loc 30-95, cap 20%), skeleton bias 45% incl IDOL, palette lock 35%
+  POLE/BONE-led (applied to BOTH roll paths — a cycle-5 ghost had left
+  machineRoll's list stale), framing air (fov target *0.88), ORACLE_CANON = 88.
+- STATUS: E4/E5 approved. Continue fine-tuning per feedback cycles. He saved
+  many iterations expressly so the next model can tune from evidence.
 
 ## THE FEEDBACK MACHINE (STANDING PROTOCOL — memory edit #9)
 He curates loops into the shared Supabase vault, sends the export JSON. Each cycle:
@@ -102,8 +108,9 @@ wounds only; the void is sacred.
 2. Headless renderer (promised: render frames in-sandbox, look with own eyes,
    iterate before he judges). High value, unbuilt.
 3. Backport worker double seam/lumen fix to f1.
-4. Next feedback cycle on whichever fork he curates (dedupe vs ALL five uploads:
-   PANDORA_VAULT_2026-07-16.json, _1, __1_, 2026-07-17, 2026-07-18).
+4. Next feedback cycle: dedupe vs ALL SIX uploads (PANDORA_VAULT_2026-07-16.json,
+   _1, __1_, 2026-07-17, 2026-07-18, 2026-07-19__1_). Census log in outputs:
+   census_cycle3/4/5/6.json.
 5. MAINNET Lazarus deploy (trunk): Sepolia rehearsal done at
    0x072B09Cf9F428cd09D771a75c3b9889Ba7a3E3CD; Remix solc 0.8.24, cancun,
    optimizer 800, viaIR; fee-recipient deploy, 0.01 ETH ceiling. Check live gas
