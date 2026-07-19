@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">EIDO<b>LON</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV E2.0 · EIDOLON<br>THREE BLOODS</div>
+  <div id="mastrev">REV E3.0 · EIDOLON<br>THE PROTAGONIST</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV E2.0 · EIDOLON<br>THREE BLOODS</div>
+    <div class="ver">REV E3.0 · EIDOLON<br>THE PROTAGONIST</div>
   </header>
 
   <div class="colL">
@@ -1259,7 +1259,7 @@ function renderBase(rgb, scene, t, theta, grad){
         else if(hits[i]>=2){ if(field[i]<0.95)field[i]=0.95; }
       }
     } else if(m==='IDOL'){ scene._corr=corr; renderIdol(field, scene, theta);
-    } else if(m==='MASS'){ renderMass(field, scene, theta, massField(scene));
+    } else if(m==='MASS'){ scene._corr=corr; renderMass(field, scene, theta, massField(scene));
     } else if(m==='STRATA'){ // displaced geological bands
       const S=scene.rev4.strata, no=scene.noise;
       for(let y=0;y<FW;y++){const fy=y/FW;
@@ -1669,8 +1669,28 @@ function massField(scene){
       fovK=Math.max(0.14,Math.min(1.3,fovK));
     }
   }
-  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK};
+  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,PX:new Float32Array(FW*FW),PY:new Float32Array(FW*FW),PZ:new Float32Array(FW*FW),AO:new Float32Array(FW*FW),lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK};
   return scene._mf;
+}
+function matOf(scene){
+  if(scene._mat)return scene._mat;
+  const rng=mulberry32((scene.seed^0x7E10)>>>0);
+  return scene._mat={
+    bandF:14+rng()*26, bandA:0.10+rng()*0.12, bandTh:0.25+rng()*0.4,
+    cellF:9+rng()*14, cellA:0.08+rng()*0.10,
+    crawl:(rng()<0.5?-1:1)*(0.5+rng()*1.0),
+    tearF1:17+rng()*14, tearF2:8+rng()*10, sortA:0.05+rng()*0.09,
+    fogA:0.22+rng()*0.22, expo:1.10+rng()*0.35
+  };
+}
+function surfTear(px,py,pz,theta,M,amp){
+  /* the silhouette itself glitches: a periodic interference field displaces
+     the surface. corruption is the amplitude of the wound in the geometry. */
+  const sn=Math.sin(theta), cs=Math.cos(theta);
+  const d1=Math.sin(px*M.tearF1+py*11+sn*2.4);
+  const d2=Math.sin(py*M.tearF2-pz*13+cs*2.1);
+  const d3=Math.sin((px+pz)*9+py*M.tearF2*0.6-sn*1.3);
+  return (d1*d2+d3*0.5)*amp;
 }
 function eCam(mf, theta){
   const S=mf.S, az=theta+mf.lightBase*0.7, el=0.20+(mf.fam%9)*0.018;
@@ -1682,13 +1702,17 @@ function eCam(mf, theta){
   return {ex,ey,ez,fx,fy,fz,rx,ry:0,rz,ux,uy,uz,dist,fov:(mf.fovK||0.34*Math.max(1,S))};
 }
 function massView(scene, mf, theta){
+  mf.mat=mf.mat||matOf(scene);
+  mf.tearAmp=((scene._corr!=null?scene._corr:60)/100)*0.045;
   /* BLOOD A — the turntable: a perspective camera orbits the body once per
      loop. Marched fresh per frame at coarse grid; the film layer absorbs it. */
   if(mf._vt===theta)return;
   mf._vt=theta;
   const VG=88, S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
   const hitG=new Uint8Array(VG*VG), nxG=new Float32Array(VG*VG), nyG=new Float32Array(VG*VG),
-        nzG=new Float32Array(VG*VG), dpG=new Float32Array(VG*VG);
+        nzG=new Float32Array(VG*VG), dpG=new Float32Array(VG*VG),
+        pxG=new Float32Array(VG*VG), pyG=new Float32Array(VG*VG), pzG=new Float32Array(VG*VG);
+  const aoG=new Float32Array(VG*VG);
   const t0=C.dist-0.95*Math.max(1,S), t1=C.dist+0.95*Math.max(1,S);
   for(let gy=0;gy<VG;gy++){
     const syc=(gy/VG-0.5)*2*C.fov;
@@ -1701,7 +1725,7 @@ function massView(scene, mf, theta){
       let t=t0, hit=0;
       for(let st=0;st<30;st++){
         const px=C.ex+dx*t, py=C.ey+dy*t, pz=C.ez+dz*t;
-        const d=sdf(px,py,pz,S,fold);
+        const d=sdf(px,py,pz,S,fold)+(mf.tearAmp?surfTear(px,py,pz,theta,mf.mat,mf.tearAmp):0);
         if(d<0.009){ hit=1;
           const e=0.008, px2=px,py2=py,pz2=pz;
           const nx=sdf(px2+e,py2,pz2,S,fold)-sdf(px2-e,py2,pz2,S,fold);
@@ -1710,6 +1734,7 @@ function massView(scene, mf, theta){
           const nl=Math.hypot(nx,ny,nz)||1;
           const gi=gy*VG+gx;
           nxG[gi]=nx/nl; nyG[gi]=ny/nl; nzG[gi]=nz/nl; dpG[gi]=(t-C.dist)/Math.max(1,S);
+          pxG[gi]=px; pyG[gi]=py; pzG[gi]=pz;
           break;
         }
         t+=Math.max(d,0.013);
@@ -1722,8 +1747,19 @@ function massView(scene, mf, theta){
     for(let x=0;x<FW;x++){const gx=Math.min(VG-1,(x*VG/FW)|0), gi=gy*VG+gx, i=y*FW+x;
       mf.z[i]=hitG[gi]?2:0;
       mf.NX[i]=nxG[gi]; mf.NY[i]=nyG[gi]; mf.NZ[i]=nzG[gi]; mf.DP[i]=dpG[gi];
+      mf.PX[i]=pxG[gi]; mf.PY[i]=pyG[gi]; mf.PZ[i]=pzG[gi];
     }
   }
+  /* cheap ambient occlusion: one probe along the normal, at coarse grid */
+  for(let gy=0;gy<VG;gy++)for(let gx=0;gx<VG;gx++){
+    const gi=gy*VG+gx;
+    if(!hitG[gi]){aoG[gi]=1;continue;}
+    const d1=sdf(pxG[gi]+nxG[gi]*0.07, pyG[gi]+nyG[gi]*0.07, pzG[gi]+nzG[gi]*0.07, S, 0);
+    aoG[gi]=Math.max(0.45, Math.min(1, 0.5+d1*8));
+  }
+  for(let y=0;y<FW;y++){const gy=Math.min(VG-1,(y*VG/FW)|0);
+    for(let x=0;x<FW;x++){const gx=Math.min(VG-1,(x*VG/FW)|0);
+      mf.AO[y*FW+x]=aoG[gy*VG+gx]; } }
 }
 function idolMesh(scene){
   /* BLOOD C — the idol: the same anatomy, incarnated as polygons. */
@@ -1810,7 +1846,8 @@ function idolMesh(scene){
 function renderIdol(field, scene, theta){
   const mf=massField(scene), M=idolMesh(scene), C=eCam(mf,theta);
   const corr=(scene._corr!=null?scene._corr:60);
-  field.fill(0.035);
+  const M2=matOf(scene);
+  field.fill(0.022);
   const n=M.V.length/3;
   const sx=new Float32Array(n), sy=new Float32Array(n), sz=new Float32Array(n);
   const wx=new Float32Array(n), wy=new Float32Array(n), wz=new Float32Array(n);
@@ -1847,7 +1884,13 @@ function renderIdol(field, scene, theta){
     const facing=nx*C.fx+ny*C.fy+nz*C.fz;
     if(facing>0){nx=-nx;ny=-ny;nz=-nz;}
     const diff=Math.max(0,nx*lx+ny*ly+nz*lz);
-    const v=Math.min(0.93, 0.13+diff*0.62+Math.pow(Math.max(0,1+ (nx*C.fx+ny*C.fy+nz*C.fz)),2)*0.14);
+    let v=0.10+diff*0.60+Math.pow(Math.max(0,1+(nx*C.fx+ny*C.fy+nz*C.fz)),2.2)*0.20;
+    const cx3=(wx[a]+wx[b]+wx[c])/3, cy3=(wy[a]+wy[b]+wy[c])/3, cz3=(wz[a]+wz[b]+wz[c])/3;
+    const bandV=Math.sin(cy3*M2.bandF+cx3*2.2+Math.sin(theta)*M2.crawl);
+    if(bandV>M2.bandTh)v+=M2.bandA*0.8;
+    const ci2=(((cx3*M2.cellF)|0)*7+((cy3*M2.cellF)|0)*13+((cz3*M2.cellF)|0)*29)|0;
+    v+=((((ci2*2654435761)>>>9)&255)/255-0.5)*M2.cellA*1.4;
+    v=Math.pow(Math.max(0.001,Math.min(0.93,v)),M2.expo);
     if(!M.wire){
       let x0=sx[a],y0=sy[a],x1=sx[b],y1=sy[b],x2=sx[c],y2=sy[c];
       if(y1<y0){[x0,x1]=[x1,x0];[y0,y1]=[y1,y0];}
@@ -1867,6 +1910,25 @@ function renderIdol(field, scene, theta){
     }
     const ev=M.wire?0.88:Math.min(0.97,v+0.22);
     edge(sx[a],sy[a],sx[b],sy[b],ev); edge(sx[b],sy[b],sx[c],sy[c],ev); edge(sx[c],sy[c],sx[a],sy[a],ev);
+  }
+}
+function fringePass(buf, scene, theta){
+  /* the single permitted screen artifact: chromatic fringe on the silhouette.
+     the body reads as a hologram whose edges cannot fully cohere. */
+  const mf=scene._mf; if(!mf)return;
+  const off=2+((scene._corr||60)>70?1:0);
+  for(let y=1;y<H-1;y++){
+    const cy=(y*FW/H)|0;
+    for(let x=off;x<W-off;x++){
+      const cx=(x*FW/W)|0, ci=cy*FW+cx;
+      const zc=mf.z[ci];
+      const zl=mf.z[cy*FW+Math.max(0,cx-1)], zr=mf.z[cy*FW+Math.min(FW-1,cx+1)];
+      if(zc!==zl||zc!==zr){
+        const o=(y*W+x)*3;
+        buf[o]=buf[o+off*3]||buf[o];
+        buf[o+2]=buf[o+2-off*3]||buf[o+2];
+      }
+    }
   }
 }
 function depthField(field, scene, theta){
@@ -1898,34 +1960,56 @@ function depthField(field, scene, theta){
   }
 }
 function shadeAt(mf, i, theta){
-  /* one key light orbiting slowly across the loop: living chiaroscuro */
+  /* THE MATERIAL — light on a glitch-textured surface:
+     key + rim + occlusion, then object-space corruption bands and cells
+     that ride the sculpture as it turns. */
+  const M=mf.mat||{bandF:20,bandA:0.1,bandTh:0.4,cellF:12,cellA:0.08,crawl:0.8,sortA:0.06,fogA:0.3,expo:1.2};
   const az=mf.lightBase+Math.sin(theta)*0.42, el=0.62;
   const lx=Math.cos(el)*Math.cos(az), ly=-Math.sin(el), lz=Math.cos(el)*Math.sin(az);
   const diff=Math.max(0, mf.NX[i]*lx+mf.NY[i]*ly+mf.NZ[i]*lz);
-  const rim=Math.pow(Math.max(0,1+mf.NZ[i]),2)*0.16;
-  const haze=Math.max(0,Math.min(1,(mf.DP[i]+0.35)*0.7));
-  let v=0.10+diff*0.68+rim-haze*0.10+mf.BP[i]*(0.25+diff*0.75);
-  return Math.max(0.05,Math.min(0.97,v));
+  const rim=Math.pow(Math.max(0,1+mf.NZ[i]),2.2)*0.22;
+  const ao=mf.AO?mf.AO[i]:1;
+  let v=0.07+diff*0.62*ao+rim;
+  /* object-space glitch texture: scan bands crawl along the body */
+  const px=mf.PX[i], py=mf.PY[i], pz=mf.PZ[i];
+  const band=Math.sin(py*M.bandF + Math.sin(px*3.1)*1.4 + theta*0)+Math.sin(theta)*0*0;
+  const crawlPh=Math.sin(theta)*M.crawl;
+  const bandV=Math.sin(py*M.bandF + px*2.2 + crawlPh);
+  if(bandV>M.bandTh) v+=M.bandA*(0.4+diff);
+  else if(bandV<-0.85) v-=M.bandA*0.7;
+  /* corruption cells: block-grief welded to the surface */
+  const ci=(((px*M.cellF)|0)*7+((py*M.cellF)|0)*13+((pz*M.cellF)|0)*29)|0;
+  const ch=(((ci*2654435761)>>>9)&255)/255;
+  v+=(ch-0.5)*M.cellA*(1+((scene_corr_g||60)/100));
+  /* sorted striation: luminance ramp inside each band */
+  const fr=(py*M.bandF+crawlPh)%1;
+  v+=(fr<0?fr+1:fr)*M.sortA-M.sortA*0.5;
+  /* atmosphere: depth fog toward the void */
+  const haze=Math.max(0,Math.min(1,(mf.DP[i]+0.55)*M.fogA*1.6));
+  v=v*(1-haze*0.55)+0.02*haze;
+  v+=mf.BP[i]*(0.20+diff*0.5);
+  v=Math.pow(Math.max(0.001,v), M.expo);
+  return Math.max(0.03,Math.min(0.97,v));
 }
+let scene_corr_g=60;
 function renderMass(field, scene, theta, mf){
+  scene_corr_g=(scene._corr!=null?scene._corr:60);
   massView(scene, mf, theta);
-  const F=faultOf(scene);
-  const faultY=((theta/TAU)*FW)|0;
   const no2=scene.noise2, gp=mf.grainPh;
   for(let y=0;y<FW;y++){
-    let shift=0;
-    let dy=Math.abs(y-faultY); dy=Math.min(dy,FW-dy);
-    if(dy<F.faultH) shift=Math.round(F.faultA*(1-dy/F.faultH));
     const row=y*FW, fy=y/FW;
     for(let x=0;x<FW;x++){
-      let sx=x+shift; if(sx>=FW)sx-=FW; if(sx<0)sx+=FW;
-      const i=row+sx;
-      if(!mf.z[i]){ field[row+x]=0.03+no2(x*0.11,y*0.11+gp)*0.012; continue; }  // void breathes grain
+      const i=row+x;
+      if(!mf.z[i]){
+        /* the void is sacred: deep, graded, barely breathing */
+        const g2=0.018+0.020*(1-fy)+no2(x*0.07,y*0.07+gp)*0.008;
+        field[i]=g2; continue;
+      }
       let v=shadeAt(mf,i,theta);
-      v+=no2(x*0.37+gp, y*0.37)*0.045;                         // film grain
+      v+=no2(x*0.37+gp, y*0.37)*0.030;
       const fx2=x/FW-0.5;
-      v*=1-0.28*(fx2*fx2+(fy-0.5)*(fy-0.5))*2.2;               // vignette
-      field[row+x]=Math.max(0.04,Math.min(0.97,v));
+      v*=1-0.22*(fx2*fx2+(fy-0.5)*(fy-0.5))*2.2;
+      field[i]=Math.max(0.03,Math.min(0.97,v));
     }
   }
 }
@@ -3501,19 +3585,25 @@ async function generateSeq(){
       compositeTunnel(rgbA, ring2, scene.demi.tunnel, Math.min(150,corr*scene.vibe.g.tunnel));
       const rec=ring2.shift(); ring2.push(coarse2); coarse2=rec;
     }
-    if(fx.echo){
+    if(fx.echo&&scene.mode!=='MASS'&&scene.mode!=='IDOL'){
       downsampleCoarse(rgbA, coarseCur);          // capture clean coarse of this frame
       compositeEcho(rgbA, ring, weights, scene);  // feedback recursion on the trails
       const reclaimed=ring.shift(); ring.push(coarseCur); coarseCur=reclaimed; // advance ring (no alloc)
     }
-    analogPass(rgbA, rgbB, scene, theta, corr, fx);
-    digitalPass(rgbB, snap, scene, theta, corr, fx);
-    heavyCorruption(rgbB, snap, scene, theta, corr, fx);
-    oblivionPixel(rgbB, snap, scene, theta, corr, fx);
-    valhallaPixel(rgbB, snap, scene, theta, corr, fx);
-    demiurgePixel(rgbB, snap, scene, theta, corr, fx, grad);
-    sanctityRGB(rgbB, scene, theta, i, grad);
-    seamRip(rgbB, scene, theta, grad);
+    const PROT=(scene.mode==='MASS'||scene.mode==='IDOL');
+    if(!PROT){
+      analogPass(rgbA, rgbB, scene, theta, corr, fx);
+      digitalPass(rgbB, snap, scene, theta, corr, fx);
+      heavyCorruption(rgbB, snap, scene, theta, corr, fx);
+      oblivionPixel(rgbB, snap, scene, theta, corr, fx);
+      valhallaPixel(rgbB, snap, scene, theta, corr, fx);
+      demiurgePixel(rgbB, snap, scene, theta, corr, fx, grad);
+      sanctityRGB(rgbB, scene, theta, i, grad);
+      seamRip(rgbB, scene, theta, grad);
+    } else {
+      rgbB.set(rgbA);
+      fringePass(rgbB, scene, theta);
+    }
     lumenPass(rgbB, scene, theta, grad);
     /* strobe frames: seeded single-frame inversions / flashes, loop-periodic */
     for(let sb=0;sb<MV.strobes.length;sb++){
@@ -3691,22 +3781,26 @@ self.onmessage=function(e){
         compositeTunnel(rgbA,ring2,scene.demi.tunnel,Math.min(150,corr*scene.vibe.g.tunnel));
         const rec=ring2.shift();ring2.push(coarse2);coarse2=rec;
       }
-      if(fx.echo){
+      if(fx.echo&&scene.mode!=='MASS'&&scene.mode!=='IDOL'){
         downsampleCoarse(rgbA,coarseCur);
         compositeEcho(rgbA,ring,weights,scene);
         const rec=ring.shift();ring.push(coarseCur);coarseCur=rec;
       }
-      analogPass(rgbA,rgbB,scene,theta,corr,fx);
-      digitalPass(rgbB,snap,scene,theta,corr,fx);
-      heavyCorruption(rgbB,snap,scene,theta,corr,fx);
-      oblivionPixel(rgbB,snap,scene,theta,corr,fx);
-      valhallaPixel(rgbB,snap,scene,theta,corr,fx);
-      demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
-      sanctityRGB(rgbB, scene, theta, i, grad);
-      seamRip(rgbB, scene, theta, grad);
+      const PROT2=(scene.mode==='MASS'||scene.mode==='IDOL');
+      if(!PROT2){
+        analogPass(rgbA,rgbB,scene,theta,corr,fx);
+        digitalPass(rgbB,snap,scene,theta,corr,fx);
+        heavyCorruption(rgbB,snap,scene,theta,corr,fx);
+        oblivionPixel(rgbB,snap,scene,theta,corr,fx);
+        valhallaPixel(rgbB,snap,scene,theta,corr,fx);
+        demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
+        sanctityRGB(rgbB, scene, theta, i, grad);
+        seamRip(rgbB, scene, theta, grad);
+      } else {
+        rgbB.set(rgbA);
+        fringePass(rgbB, scene, theta);
+      }
       lumenPass(rgbB, scene, theta, grad);
-    seamRip(rgbB, scene, theta, grad);
-    lumenPass(rgbB, scene, theta, grad);
       quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
                (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
       if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices,pal.length,scene,theta,corr,fx);
@@ -5378,7 +5472,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='E2.0';
+const REV_SELF='E3.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
