@@ -25,3 +25,12 @@ Mission: 3D integration — a new visual regime.
 - Kill ritual: delete `f3/` — trunk and f1 untouched.
 - Promote ritual: copy `f3/index.html` over root `index.html`.
 Vault is shared with f1 (same commons, same DNA v5).
+
+---
+STATE AS OF 2026-07-19 (Fable handoff):
+- trunk: REV 13.0 baseline (untouched, mainnet-ready)
+- /f1/: BLACKMASS // PANDORA REV 21.0 THE ARBITER (perfect machine, canon 51,
+  known bug: worker loop double seam/lumen - fixed only in f3)
+- /f3/: EIDOLON // PANDORA REV E4.0 TABULA RASA (ground-up 3D scene renderer,
+  ten material dialects, mirror floor, Bayer-dithered fine surface)
+See HANDOFF.md for the full succession document.
