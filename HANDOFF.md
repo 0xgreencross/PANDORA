@@ -16,10 +16,21 @@ Repo: github.com/0xgreencross/PANDORA · Live: dithervoid.art (GitHub Pages, cus
   Sepolia rehearsal complete. DO NOT TOUCH except by promote ritual.
 - **FORK ONE** `/f1/` — BLACKMASS // PANDORA REV 21.0 "THE ARBITER". DNA v5 (32
   chars, void/cap/locality genes). The feedback-machine instrument.
-- **FORK THREE** `/f3/` — EIDOLON // PANDORA REV E6.0 "PURE BLOOD". The
-  ground-up 3D rebuild, VERDICT DELIVERED: cycle-6 census = 37 keeps in one
-  sitting (3x record), all ten dialects kept, "very much close to what I have
-  envisioned". This is the active instrument. Same DNA v5.
+- **FORK THREE** `/f3/` — EIDOLON // PANDORA REV E7.0 "TABULA RASA REDUX".
+  The ground-up 3D rebuild and ACTIVE instrument. Same DNA v5. Approved look =
+  E4.0 TABULA RASA; cycle-6 census on it: 37 keeps in one sitting, all ten
+  dialects kept, "very much close to what I have envisioned". Machine settings
+  = E4.0 values exactly. ORACLE_CANON = the 25 pure TABULA-RASA-era keeps.
+  BREEDING IS PARKED (BREED_P=0.0 in machineRoll): when the dormant-canon bug
+  was fixed in E6.0 the breeding arm woke and its hybrid children were the
+  pulls he REJECTED — raise BREED_P only deliberately, with his approval
+  (0.35 was the E6.0 rate). Era stamping: every vault store carries
+  rev:'EIDOLON <REV_SELF>' and the EXPORT JSON carries rev per entry
+  (Supabase vault table needs a nullable text column `rev`; engine falls back
+  gracefully without it). E5.x lesson recorded: widening roll bands to match
+  keep RANGES overfits outliers — aim at the center. Era-gate stamp-less
+  legacy cards via deploy-history timestamps (audit + pure census in outputs:
+  cycle6_era_audit.json, census_cycle6_pure.json).
 Kill ritual: delete the fork dir. Promote ritual: copy fork index.html over root.
 FORK.md in repo documents this.
 
