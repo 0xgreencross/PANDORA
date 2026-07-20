@@ -180,8 +180,12 @@ input[type=text],input[type=number],textarea{background:var(--well); color:var(-
 #chromaseg button{min-height:36px; padding:0 8px; font-size:8px; white-space:nowrap;}
 #surfrow2{display:flex; gap:8px; align-items:center; min-height:0;}
 #surfrow2 .field{flex:1; min-width:0; margin:0;}
-#surfacts{display:flex; gap:6px; flex:0 0 auto;}
+#surfacts{display:flex; gap:6px; flex:0 0 auto; flex-wrap:wrap;}
 #surfacts button{min-width:var(--tap); padding:0 8px;}
+#gavel{color:var(--ox); border-color:var(--oxd); font-size:15px;}
+#chipstrip{display:none; gap:6px; flex-wrap:wrap; margin-top:6px;}
+#chipstrip.on{display:flex;}
+#chipstrip button{font-size:9px; min-height:32px; padding:0 10px; color:var(--mut); border-color:var(--hair);}
 #dice,#mutate{min-width:var(--tap); font-size:15px;}
 #oblivion{color:var(--ox); border-color:var(--oxd);}
 #download.ready,#xsave.ready{border-color:var(--ok); color:var(--ok);}
@@ -189,7 +193,7 @@ input[type=text],input[type=number],textarea{background:var(--well); color:var(-
 .ribbon .seg{display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; gap:6px;
   padding-bottom:2px; scrollbar-width:thin;}
 @media(min-width:560px){
-  .seg{flex-wrap:wrap; overflow-x:visible; padding-bottom:0;}
+  .seg, .ribbon .seg{flex-wrap:wrap; overflow-x:visible; padding-bottom:0;}
 }
 .ribbon .seg::-webkit-scrollbar{height:3px;} .seg::-webkit-scrollbar-thumb{background:var(--hair2);}
 .ribbon .seg button{flex:0 0 auto;}
@@ -303,7 +307,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">EIDO<b>LON</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV E7.1 · EIDOLON<br>THE INSTRUMENT</div>
+  <div id="mastrev">REV E8.0 · EIDOLON<br>THE AUTONOMOUS CANON</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -332,7 +336,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV E7.1 · EIDOLON<br>THE INSTRUMENT</div>
+    <div class="ver">REV E8.0 · EIDOLON<br>THE AUTONOMOUS CANON</div>
   </header>
 
   <div class="colL">
@@ -4434,6 +4438,64 @@ async function sbList(){
   if(!r.ok)throw new Error('list '+r.status);
   return r.json();
 }
+function sbEvent(type, card, reason){
+  /* the machine's senses: every pull logged, every burial recorded.
+     Fire-and-forget; falls back to a local ring if the events table
+     does not exist yet. */
+  const row={ts:Date.now(), type, card, reason:reason||null, rev:'EIDOLON '+REV_SELF};
+  const toLS=()=>{ try{
+    const ring=JSON.parse(localStorage.getItem('PANDORA_EVT')||'[]');
+    ring.push(row); while(ring.length>600)ring.shift();
+    localStorage.setItem('PANDORA_EVT', JSON.stringify(ring));
+  }catch(e){} };
+  if(!SB.url){ toLS(); return; }
+  fetch(SB.url+'/rest/v1/events',{method:'POST',headers:{...sbHeaders(),'Prefer':'return=minimal'},
+    body:JSON.stringify(row)}).then(r=>{ if(!r.ok)toLS(); }).catch(toLS);
+}
+window.LEARNED={ready:false};
+async function learnFromVault(){
+  /* SELF-UPGRADE: read keeps, rolls, and burials; compute per-gene keep-rates;
+     reweight the canon arm. Statistics live in data, not code. */
+  try{
+    let ev=[], keeps=[];
+    if(SB.url){
+      ev=await fetch(SB.url+'/rest/v1/events?select=type,card,reason&order=ts.desc&limit=600',
+        {headers:sbHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[]);
+      keeps=await fetch(SB.url+'/rest/v1/vault?select=card&order=ts.desc&limit=300',
+        {headers:sbHeaders()}).then(r=>r.ok?r.json():[]).catch(()=>[]);
+    }
+    try{ ev=ev.concat(JSON.parse(localStorage.getItem('PANDORA_EVT')||'[]')); }catch(e){}
+    const rolls=ev.filter(e=>e.type==='roll'), rejects=ev.filter(e=>e.type==='reject');
+    const tally=(rows)=>{ const T={mode:{},scheme:{},vd:{},cd:{},arr:{}};
+      for(const x of rows){ const c=unpackCard(x.card); if(!c)continue;
+        T.mode[c.mode]=(T.mode[c.mode]||0)+1;
+        T.scheme[c.scheme]=(T.scheme[c.scheme]||0)+1;
+        T.vd[(c.voidamt/10)|0]=(T.vd[(c.voidamt/10)|0]||0)+1;
+        T.cd[(c.corr/10)|0]=(T.cd[(c.corr/10)|0]||0)+1;
+        const fam=(mulberry32((c.seed^0x14CE55)>>>0)()*64)|0;
+        T.arr[fam>>3]=(T.arr[fam>>3]||0)+1; }
+      return T; };
+    const K=tally(keeps), R=tally(rolls), X=tally(rejects);
+    const w=(fam)=>{ const out={};
+      const keys=new Set([...Object.keys(K[fam]),...Object.keys(R[fam]),...Object.keys(X[fam])]);
+      for(const k of keys){ const kk=K[fam][k]||0, rr=R[fam][k]||0, xx=X[fam][k]||0;
+        let v=(kk+1)/(rr+4);
+        if(xx>=3)v*=0.15;            /* three burials: near-ban */
+        if(xx>=6)v=0.02;             /* six burials: dealt almost never */
+        out[k]=v; }
+      return out; };
+    if(rolls.length>=30)
+      window.LEARNED={ready:true, n:rolls.length,
+        mode:w('mode'), scheme:w('scheme'), vd:w('vd'), cd:w('cd'), arr:w('arr')};
+  }catch(e){}
+}
+setTimeout(learnFromVault, 1200);
+function lPick(W, keys, R){
+  let t=0; const ws=keys.map(k=>{ const v=Math.max(0.02, W&&W[k]!=null?W[k]:0.35); t+=v; return v; });
+  let r=R()*t;
+  for(let i=0;i<keys.length;i++){ r-=ws[i]; if(r<=0)return keys[i]; }
+  return keys[keys.length-1];
+}
 async function sbAdd(card,thumb){
   /* era stamp: every stored loop carries the engine revision that rendered it,
      so future censuses can filter by build with zero forensics. Falls back to
@@ -5502,7 +5564,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='E7.1';
+const REV_SELF='E8.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5558,7 +5620,8 @@ $('dice').addEventListener('click',()=>{
       /* ONE WRITER: build the genome, let applyCard set everything */
       const m=wpick([['MASS',30],['TENDRILS',14],['RINGS',8],['ORBITALS',8],['SCANS',9],['GLYPHS',8],['STRATA',8],['LATTICE',8],['PLASMA',7]]);
       const ss=Object.keys(SCHEMES);
-      const sk=R()<0.48?wpick([['GENESIS',20],['POISONFROG',10],['DES',9],['FAUXRGB',7],['AIRNEON',6],['POLE',5],['TISGEN',6],['BONE',5]]):ss[(R()*ss.length)|0];
+      const sk=(LW&&LW.ready) ? lPick(LW.scheme, ss, R)
+        : (R()<0.48?wpick([['GENESIS',20],['POISONFROG',10],['DES',9],['FAUXRGB',7],['AIRNEON',6],['POLE',5],['TISGEN',6],['BONE',5]]):ss[(R()*ss.length)|0]);
       applyCard({ seed:(R()*0xFFFFFFFF)>>>0, scheme:sk, mode:m,
         corr:40+((R()*38)|0), frames:state.frames,
         fx:rollFx(0.88, 0.30, 0.08, false), motion:CARD_MOTION[(R()*CARD_MOTION.length)|0],
@@ -5661,8 +5724,10 @@ function machineRoll(opts){
   }
   if(!tag){
     const canon=R()<(opts.canonP!=null?opts.canonP:0.60);
+    const LW=window.LEARNED;
     if(!PIN.mode) card.mode= canon
-      ? wpick([['MASS',18],['IDOL',14],['SEDIMENT',11],['VEINED',10],['LATHE',9],['BROADCAST',9],['MOLTEN',8],['ENGRAVED',8],['GRID',7],['SATELLITE',6]])
+      ? (LW&&LW.ready ? lPick(LW.mode, MODES.filter(m2=>m2!=='RANDOM'), R)
+         : wpick([['MASS',18],['IDOL',14],['SEDIMENT',11],['VEINED',10],['LATHE',9],['BROADCAST',9],['MOLTEN',8],['ENGRAVED',8],['GRID',7],['SATELLITE',6]]))
       : MODES[(R()*(MODES.length))|0];
     if(card.mode==='RANDOM')card.mode='MASS';
     if(card.mode==='MASS'&&!PIN.seed&&R()<0.60){
@@ -5676,8 +5741,11 @@ function machineRoll(opts){
       card.scheme= canon&&R()<0.48
         ? wpick([['GENESIS',18],['POLE',9],['POISONFROG',9],['AIRNEON',8],['DES',8],['FAUXRGB',6],['TISGEN',6],['BONE',4]])
         : ss[(R()*ss.length)|0]; }
-    if(!PIN.corr) card.corr= opts.corrLo!=null? (opts.corrLo+((R()*(opts.corrHi-opts.corrLo))|0)) : (canon? 45+((R()*30)|0) : 20+((R()*81)|0));
-    if(!PIN.voidamt) card.voidamt= canon? 38+((R()*21)|0) : (R()*80)|0;
+    if(!PIN.corr) card.corr= opts.corrLo!=null? (opts.corrLo+((R()*(opts.corrHi-opts.corrLo))|0))
+      : (canon? ((LW&&LW.ready) ? (+lPick(LW.cd,['2','3','4','5','6','7'],R))*10+((R()*10)|0) : 45+((R()*30)|0)) : 20+((R()*81)|0));
+    if(!PIN.voidamt) card.voidamt= canon
+      ? ((LW&&LW.ready) ? (+lPick(LW.vd,['1','2','3','4','5','6'],R))*10+((R()*10)|0) : 38+((R()*21)|0))
+      : (R()*80)|0;
     if(!PIN.locality) card.locality= canon? 45+((R()*51)|0) : (R()*101)|0;
     if(!PIN.chromacap) card.chromacap= R()<(canon?0.12:0.25)?1:0;
     if(!PIN.fx) card.fx= canon? rollFx2(0.88,0.30,0.08,false) : rollFx2(0.70,0.22,0.22,R()<0.20);
@@ -5686,6 +5754,7 @@ function machineRoll(opts){
   }
   ORACLE_APPLY=true;
   try{ applyCard(card); } finally { ORACLE_APPLY=false; }
+  try{ sbEvent('roll', $('dna').value); }catch(e){}
   return tag+' \u00b7 V'+state.voidamt+' L'+state.locality+(state.chromacap?' CAP':'');
 }
 /* TRANSMIT is the manual instrument: it renders EXACTLY the panel state.
@@ -5850,6 +5919,27 @@ document.addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='Enter')
   mv(fieldOf('chromaseg'), g('surfdials'));
   const acts=['dice','download','xsave','oblivion','resetall'];
   for(const a of acts) mv(g(a), g('surfacts'));
+  /* THE GAVEL: bury a pull the machine should learn to stop dealing */
+  const gav=document.createElement('button');
+  gav.id='gavel'; gav.textContent='\u2717';
+  gav.title='BURY: teach the machine this pull is wrong. Tap a reason after, or just move on.';
+  g('surfacts').appendChild(gav);
+  const strip=document.createElement('div');
+  strip.id='chipstrip';
+  for(const rz of ['BODY','PALETTE','MATERIAL','COMPO','WOUNDS']){
+    const bch=document.createElement('button'); bch.textContent=rz;
+    bch.addEventListener('click',()=>{ sbEvent('reject', $('dna').value, rz);
+      $('osd').textContent='BURIED \u00b7 '+rz; strip.classList.remove('on'); });
+    strip.appendChild(bch);
+  }
+  g('surfacts').insertAdjacentElement('afterend', strip);
+  let chipT=null;
+  gav.addEventListener('click',()=>{
+    sbEvent('reject', $('dna').value, null);
+    $('osd').textContent='BURIED';
+    strip.classList.add('on');
+    clearTimeout(chipT); chipT=setTimeout(()=>strip.classList.remove('on'), 6000);
+  });
   const rib=fieldOf('scheme'); if(rib){ rib.classList.add('ribbon'); mv(rib, g('surfrow2')); }
 
   /* engine bay */
