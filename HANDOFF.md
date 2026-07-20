@@ -16,7 +16,7 @@ Repo: github.com/0xgreencross/PANDORA · Live: dithervoid.art (GitHub Pages, cus
   Sepolia rehearsal complete. DO NOT TOUCH except by promote ritual.
 - **FORK ONE** `/f1/` — BLACKMASS // PANDORA REV 21.0 "THE ARBITER". DNA v5 (32
   chars, void/cap/locality genes). The feedback-machine instrument.
-- **FORK THREE** `/f3/` — EIDOLON // PANDORA REV E7.0 "TABULA RASA REDUX".
+- **FORK THREE** `/f3/` — EIDOLON // PANDORA REV E8.0 "THE AUTONOMOUS CANON".
   The ground-up 3D rebuild and ACTIVE instrument. Same DNA v5. Approved look =
   E4.0 TABULA RASA; cycle-6 census on it: 37 keeps in one sitting, all ten
   dialects kept, "very much close to what I have envisioned". Machine settings
@@ -31,6 +31,20 @@ Repo: github.com/0xgreencross/PANDORA · Live: dithervoid.art (GitHub Pages, cus
   keep RANGES overfits outliers — aim at the center. Era-gate stamp-less
   legacy cards via deploy-history timestamps (audit + pure census in outputs:
   cycle6_era_audit.json, census_cycle6_pure.json).
+  E7.1: TRANSMIT renders panel state exactly (no rolls — fate = box/skull/dice
+  only); seg + ribbon active states solid oxide via aria-pressed; all control
+  rows wrap on >=560px screens (no hidden swipe rows anywhere).
+  E8.0 THE AUTONOMOUS CANON: sbEvent logs every fate pull ('roll') and gavel
+  burial ('reject', optional reason BODY/PALETTE/MATERIAL/COMPO/WOUNDS) to a
+  Supabase `events` table (localStorage ring 'PANDORA_EVT' fallback, both
+  rev-stamped). learnFromVault() at load computes per-gene keep-rates
+  (keeps+1)/(rolls+4) over dialect/palette/void-decile/corr-decile/skeleton;
+  3 same-gene burials = x0.15, 6 = 0.02; reweights the CANON ARM live via
+  lPick once >=30 rolls are logged; frontier arm stays wild; falls back to E4
+  bands until then. HE MUST CREATE the events table: columns ts int8,
+  type text, card text, reason text null, rev text null; same anon RLS as
+  vault. Feedback cycles now focus on RENDERER evolution; parameter taste
+  runs itself from his gavel and keeps.
 Kill ritual: delete the fork dir. Promote ritual: copy fork index.html over root.
 FORK.md in repo documents this.
 
