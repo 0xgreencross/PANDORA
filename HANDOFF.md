@@ -79,7 +79,7 @@ The old generator is deleted. One renderer:
 - REV E5.0 additions: canon bands widened to cycle-6 evidence (corr 40-85,
   void 25-65, loc 30-95, cap 20%), skeleton bias 45% incl IDOL, palette lock 35%
   POLE/BONE-led (applied to BOTH roll paths — a cycle-5 ghost had left
-  machineRoll's list stale), framing air (fov target *0.88), ORACLE_CANON = 88.
+  machineRoll's list stale), framing air (fov target *0.88), ORACLE_CANON = 76 (12 pre-TABULA-RASA cards pruned after the era audit).
 - STATUS: E4/E5 approved. Continue fine-tuning per feedback cycles. He saved
   many iterations expressly so the next model can tune from evidence.
 
@@ -92,7 +92,17 @@ He curates loops into the shared Supabase vault, sends the export JSON. Each cyc
    thumbs, then VIEW it with your own eyes).
 3. Diagnose taste. 4. Research skills for the diagnosed gap. 5. Refine + push.
 6. Grow ORACLE_CANON with the new winners. Ratio law: 60% known direction / 40% new.
-Vault export: card,thumb,ts columns (timestamp column is `ts`, NOT created_at).
+Vault export: card,thumb,ts (+`rev` since E5.1) columns (timestamp column is
+`ts`, NOT created_at).
+ERA GATING (E5.1+): every store stamps `rev:'EIDOLON <REV_SELF>'` (graceful
+fallback if the Supabase `rev` column is missing — ask him to add a nullable
+text column `rev` to the vault table if exports lack it). For cards WITHOUT a
+rev stamp, date them against deploy history: fetch commit timestamps for the
+fork's index.html and gate card `ts` against the revision's push time
+(cycle-6 audit: /mnt/user-data/outputs/cycle6_era_audit.json — 12 of 37 keeps
+predated TABULA RASA and were pruned from canon; pure census in
+census_cycle6_pure.json). A timestamp proves a card too OLD for a build, never
+that it came from that build — the rev stamp is the only hard proof.
 
 ## THE AESTHETIC CANON (LEARNED, 71 KEEPS ACROSS 5 CYCLES)
 Subject on darkness always. Void sweet spot 45-51 (one glorious keep at V70/L100).
