@@ -16,7 +16,7 @@ Repo: github.com/0xgreencross/PANDORA · Live: dithervoid.art (GitHub Pages, cus
   Sepolia rehearsal complete. DO NOT TOUCH except by promote ritual.
 - **FORK ONE** `/f1/` — BLACKMASS // PANDORA REV 21.0 "THE ARBITER". DNA v5 (32
   chars, void/cap/locality genes). The feedback-machine instrument.
-- **FORK THREE** `/f3/` — EIDOLON // PANDORA REV E5.0 "THE WIDE CANON". The
+- **FORK THREE** `/f3/` — EIDOLON // PANDORA REV E6.0 "PURE BLOOD". The
   ground-up 3D rebuild, VERDICT DELIVERED: cycle-6 census = 37 keeps in one
   sitting (3x record), all ten dialects kept, "very much close to what I have
   envisioned". This is the active instrument. Same DNA v5.
@@ -76,10 +76,6 @@ The old generator is deleted. One renderer:
 - 2D storm stack: retired (PROT=true everywhere) but code dormant in file.
   fringePass (silhouette chroma fringe, reads sv.kind) + lumenPass still run.
 - Frame ~1.1s in the vm harness, roughly half in-browser; workers carry masters.
-- REV E5.0 additions: canon bands widened to cycle-6 evidence (corr 40-85,
-  void 25-65, loc 30-95, cap 20%), skeleton bias 45% incl IDOL, palette lock 35%
-  POLE/BONE-led (applied to BOTH roll paths — a cycle-5 ghost had left
-  machineRoll's list stale), framing air (fov target *0.88), ORACLE_CANON = 76 (12 pre-TABULA-RASA cards pruned after the era audit).
 - STATUS: E4/E5 approved. Continue fine-tuning per feedback cycles. He saved
   many iterations expressly so the next model can tune from evidence.
 
