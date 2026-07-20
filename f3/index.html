@@ -297,7 +297,7 @@ body.embed #stagewrap{padding:0;}
 <body>
 <header id="mast">
   <div id="wordmark">EIDO<b>LON</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV E6.0 · EIDOLON<br>PURE BLOOD</div>
+  <div id="mastrev">REV E7.0 · EIDOLON<br>TABULA RASA REDUX</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -326,7 +326,7 @@ body.embed #stagewrap{padding:0;}
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV E6.0 · EIDOLON<br>PURE BLOOD</div>
+    <div class="ver">REV E7.0 · EIDOLON<br>TABULA RASA REDUX</div>
   </header>
 
   <div class="colL">
@@ -5496,7 +5496,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='E6.0';
+const REV_SELF='E7.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5641,7 +5641,10 @@ function machineRoll(opts){
     return fx;
   };
   let tag;
-  if(allFree && R()<0.60 && R()<0.35 && typeof ORACLE_CANON!=='undefined'){
+  const BREED_P=0.0; /* parked by curator verdict (E7.0): the bred hybrids were
+     the pulls he rejected in E6.0. Machinery + pure-25 canon kept intact —
+     re-enable deliberately by raising BREED_P (0.35 was the E6.0 rate). */
+  if(allFree && R()<0.60 && R()<BREED_P && typeof ORACLE_CANON!=='undefined'){
     const ia=(R()*ORACLE_CANON.length)|0; let ib=(R()*ORACLE_CANON.length)|0; if(ib===ia)ib=(ib+1)%ORACLE_CANON.length;
     const A=unpackCard(ORACLE_CANON[ia]), B=unpackCard(ORACLE_CANON[ib]);
     if(A&&B){ const ch2=breedCards(A,B,(R()*0xffff)|0);
