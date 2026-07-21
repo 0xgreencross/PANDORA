@@ -1,0 +1,845 @@
+[
+ {
+  "inputs": [
+   {
+    "internalType": "string",
+    "name": "_engineVersion",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "_rendererBase",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "_imageBase",
+    "type": "string"
+   }
+  ],
+  "stateMutability": "nonpayable",
+  "type": "constructor"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "bool",
+    "name": "approved",
+    "type": "bool"
+   }
+  ],
+  "name": "ApprovalForAll",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "version",
+    "type": "string"
+   },
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "rendererBase",
+    "type": "string"
+   }
+  ],
+  "name": "EngineAdded",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "collector",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "qty",
+    "type": "uint256"
+   }
+  ],
+  "name": "LoopCollected",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "indexed": true,
+    "internalType": "uint32",
+    "name": "seed",
+    "type": "uint32"
+   },
+   {
+    "indexed": false,
+    "internalType": "enum PANDORA.EditionType",
+    "name": "kind",
+    "type": "uint8"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "creator",
+    "type": "address"
+   }
+  ],
+  "name": "LoopCreated",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "from",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256[]",
+    "name": "ids",
+    "type": "uint256[]"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256[]",
+    "name": "values",
+    "type": "uint256[]"
+   }
+  ],
+  "name": "TransferBatch",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "from",
+    "type": "address"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "value",
+    "type": "uint256"
+   }
+  ],
+  "name": "TransferSingle",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": false,
+    "internalType": "string",
+    "name": "value",
+    "type": "string"
+   },
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   }
+  ],
+  "name": "URI",
+  "type": "event"
+ },
+ {
+  "inputs": [],
+  "name": "ARTIST",
+  "outputs": [
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "FEE_EDITION",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "FEE_UNIQUE",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "string",
+    "name": "version",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "rendererBase",
+    "type": "string"
+   }
+  ],
+  "name": "addEngine",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "account",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   }
+  ],
+  "name": "balanceOf",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address[]",
+    "name": "accounts",
+    "type": "address[]"
+   },
+   {
+    "internalType": "uint256[]",
+    "name": "ids",
+    "type": "uint256[]"
+   }
+  ],
+  "name": "balanceOfBatch",
+  "outputs": [
+   {
+    "internalType": "uint256[]",
+    "name": "out",
+    "type": "uint256[]"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "qty",
+    "type": "uint256"
+   }
+  ],
+  "name": "collect",
+  "outputs": [],
+  "stateMutability": "payable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "currentEngine",
+  "outputs": [
+   {
+    "internalType": "string",
+    "name": "",
+    "type": "string"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "string",
+    "name": "",
+    "type": "string"
+   }
+  ],
+  "name": "engineRenderer",
+  "outputs": [
+   {
+    "internalType": "string",
+    "name": "",
+    "type": "string"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "imageBase",
+  "outputs": [
+   {
+    "internalType": "string",
+    "name": "",
+    "type": "string"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   },
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "name": "isApprovedForAll",
+  "outputs": [
+   {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "name": "loops",
+  "outputs": [
+   {
+    "internalType": "uint32",
+    "name": "seed",
+    "type": "uint32"
+   },
+   {
+    "internalType": "uint64",
+    "name": "supplyCap",
+    "type": "uint64"
+   },
+   {
+    "internalType": "uint64",
+    "name": "minted",
+    "type": "uint64"
+   },
+   {
+    "internalType": "uint64",
+    "name": "deadline",
+    "type": "uint64"
+   },
+   {
+    "internalType": "uint128",
+    "name": "price",
+    "type": "uint128"
+   },
+   {
+    "internalType": "address",
+    "name": "creator",
+    "type": "address"
+   },
+   {
+    "internalType": "enum PANDORA.EditionType",
+    "name": "kind",
+    "type": "uint8"
+   },
+   {
+    "internalType": "string",
+    "name": "dna",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "loopedBy",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "palette",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "engine",
+    "type": "string"
+   },
+   {
+    "internalType": "uint8",
+    "name": "corruption",
+    "type": "uint8"
+   },
+   {
+    "internalType": "uint8",
+    "name": "voidLevel",
+    "type": "uint8"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint32",
+    "name": "seed",
+    "type": "uint32"
+   },
+   {
+    "internalType": "string",
+    "name": "dna",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "loopedBy",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "palette",
+    "type": "string"
+   },
+   {
+    "internalType": "uint8",
+    "name": "corruption",
+    "type": "uint8"
+   },
+   {
+    "internalType": "uint8",
+    "name": "voidLevel",
+    "type": "uint8"
+   },
+   {
+    "internalType": "uint64",
+    "name": "supplyCap",
+    "type": "uint64"
+   },
+   {
+    "internalType": "uint128",
+    "name": "pricePerCopy",
+    "type": "uint128"
+   }
+  ],
+  "name": "mintLimited",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "payable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint32",
+    "name": "seed",
+    "type": "uint32"
+   },
+   {
+    "internalType": "string",
+    "name": "dna",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "loopedBy",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "palette",
+    "type": "string"
+   },
+   {
+    "internalType": "uint8",
+    "name": "corruption",
+    "type": "uint8"
+   },
+   {
+    "internalType": "uint8",
+    "name": "voidLevel",
+    "type": "uint8"
+   },
+   {
+    "internalType": "uint64",
+    "name": "deadline",
+    "type": "uint64"
+   },
+   {
+    "internalType": "uint128",
+    "name": "pricePerCopy",
+    "type": "uint128"
+   }
+  ],
+  "name": "mintOpen",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "payable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint32",
+    "name": "seed",
+    "type": "uint32"
+   },
+   {
+    "internalType": "string",
+    "name": "dna",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "loopedBy",
+    "type": "string"
+   },
+   {
+    "internalType": "string",
+    "name": "palette",
+    "type": "string"
+   },
+   {
+    "internalType": "uint8",
+    "name": "corruption",
+    "type": "uint8"
+   },
+   {
+    "internalType": "uint8",
+    "name": "voidLevel",
+    "type": "uint8"
+   }
+  ],
+  "name": "mintUnique",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "payable",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "nextId",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [],
+  "name": "owner",
+  "outputs": [
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "from",
+    "type": "address"
+   },
+   {
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256[]",
+    "name": "ids",
+    "type": "uint256[]"
+   },
+   {
+    "internalType": "uint256[]",
+    "name": "amounts",
+    "type": "uint256[]"
+   },
+   {
+    "internalType": "bytes",
+    "name": "data",
+    "type": "bytes"
+   }
+  ],
+  "name": "safeBatchTransferFrom",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "from",
+    "type": "address"
+   },
+   {
+    "internalType": "address",
+    "name": "to",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint256",
+    "name": "amount",
+    "type": "uint256"
+   },
+   {
+    "internalType": "bytes",
+    "name": "data",
+    "type": "bytes"
+   }
+  ],
+  "name": "safeTransferFrom",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint32",
+    "name": "",
+    "type": "uint32"
+   }
+  ],
+  "name": "seedToToken",
+  "outputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "operator",
+    "type": "address"
+   },
+   {
+    "internalType": "bool",
+    "name": "approved",
+    "type": "bool"
+   }
+  ],
+  "name": "setApprovalForAll",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "string",
+    "name": "version",
+    "type": "string"
+   }
+  ],
+  "name": "setCurrentEngine",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "string",
+    "name": "base",
+    "type": "string"
+   }
+  ],
+  "name": "setImageBase",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "bytes4",
+    "name": "interfaceId",
+    "type": "bytes4"
+   }
+  ],
+  "name": "supportsInterface",
+  "outputs": [
+   {
+    "internalType": "bool",
+    "name": "",
+    "type": "bool"
+   }
+  ],
+  "stateMutability": "pure",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "address",
+    "name": "n",
+    "type": "address"
+   }
+  ],
+  "name": "transferOwnership",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   }
+  ],
+  "name": "uri",
+  "outputs": [
+   {
+    "internalType": "string",
+    "name": "",
+    "type": "string"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ }
+]
