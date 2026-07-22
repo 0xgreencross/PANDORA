@@ -6281,6 +6281,28 @@ function pubBoot(){
    +'<div class="row"><b>CC0 \u2014 NO RIGHTS RESERVED.</b> Copy it, remix it, sell it, build it into your own work. You are encouraged to. Made something with a loop? <a href="showcase.html#submit">Submit it to the showcase</a>.</div>'
    +'<div class="row"><a href="gardens.html">GARDENS</a> \u00b7 <a href="showcase.html">SHOWCASE</a> \u00b7 <a href="original/">THE ORIGINAL ENGINE</a> \u00b7 <a target="_blank" rel="noopener" href="'+W3.explorer+'/address/'+W3.contract+'">CONTRACT \u2197</a> \u00b7 ENGINE: EIDOLON E8.0</div>'
    +'</div>');
+  /* rail tabs: LOOP is the instrument; ARCHIVE and ENGINE come along, tamed */
+  setTimeout(function(){
+    const r=$g('rcol'); if(!r) return;
+    const tb=document.createElement('div'); tb.id='railtabs';
+    const secs={};
+    const mkSec=(id,src)=>{ const d=document.createElement('div'); d.id=id; d.classList.add('pubhide');
+      const b2=$g(src); if(b2){ b2.classList.remove('pubhide'); d.appendChild(b2); } r.appendChild(d); secs[id]=d; return d; };
+    r.insertBefore(tb, r.firstChild);
+    secs['rail-loop']=$g('surface');
+    mkSec('rail-archive','bay-archive'); mkSec('rail-engine','bay-engine');
+    const names=[['LOOP','rail-loop'],['ARCHIVE','rail-archive'],['ENGINE','rail-engine']];
+    for(const [label,sid] of names){
+      const bt=document.createElement('button'); bt.textContent=label;
+      bt.setAttribute('aria-pressed', sid==='rail-loop'?'true':'false');
+      bt.addEventListener('click',()=>{
+        for(const [l2,s2] of names){ const el=(s2==='rail-loop')?$g('surface'):secs[s2];
+          if(el) el.classList.toggle('pubhide', s2!==sid); }
+        tb.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed', x===bt?'true':'false'));
+      });
+      tb.appendChild(bt);
+    }
+  }, 60);
   const pf=$g('pubfoot');
   if(pf){ const fx=document.createElement('button'); fx.className='fx'; fx.textContent='\u2715';
     fx.addEventListener('click',()=>pf.classList.remove('on')); pf.appendChild(fx); }
@@ -6663,9 +6685,18 @@ html,body{height:auto !important; overflow-x:hidden; overflow-y:auto !important;
 #bay-stage{grid-column:1; width:100% !important; min-width:0; overflow:visible; flex:1 1 auto !important; display:block !important;}
 #stagewrap{flex:1 1 auto !important; display:block !important;}
 #rcol{grid-column:2; min-width:0; display:flex; flex-direction:column; gap:12px;}
-/* THE HERO: the monitor takes everything its column gives */
-.monitor, #stagewrap{width:100% !important; max-width:none !important; height:auto !important; margin:0 !important;}
-#view{width:100% !important; height:auto !important; aspect-ratio:1/1; display:block;}
+#railtabs{display:flex; gap:6px; margin-bottom:2px;}
+#railtabs button{flex:1; background:none; border:1px solid var(--hair,#26263a); color:var(--mut,#8b8ba4);
+  font:inherit; font-size:9px; letter-spacing:.16em; padding:9px 4px; cursor:pointer; border-radius:7px;}
+#railtabs button[aria-pressed="true"]{background:#eaff2e; color:#000; border-color:#eaff2e; box-shadow:0 0 14px rgba(234,255,46,.4);}
+#rail-archive, #rail-engine{min-width:0;}
+#rail-archive .bayhead, #rail-engine .bayhead{display:none;}
+/* THE HERO: the whole frame fits the screen — art never requires scrolling */
+#stagewrap{width:100% !important; max-width:none !important; height:auto !important; margin:0 !important; display:flex !important; justify-content:center;}
+.monitor{width:fit-content !important; max-width:100% !important; height:auto !important; margin:0 auto !important;}
+#view{display:block; width:auto !important; height:auto !important; aspect-ratio:1/1;
+  max-width:100%; max-height:calc(100vh - 220px);}
+@media(max-width:1079px){ #view{max-height:56vh;} }
 .monitor{position:relative; outline:1px solid rgba(255,255,255,.08);}
 .monitor::before,.monitor::after{content:''; position:absolute; width:22px; height:22px; border:2px solid #eaff2e; z-index:5;}
 .monitor::before{top:-2px; left:-2px; border-right:none; border-bottom:none;}
