@@ -6233,6 +6233,14 @@ function pubBoot(){
   if(schF&&sf){ if(!sf.contains(schF))sf.appendChild(schF); schF.style.order=6; schF.style.flex='1 1 100%'; schF.style.maxWidth='100%'; }
   /* the studio does not merely hide — it is not here */
   for(const bid of ['bay-engine','bay-archive']){ const b2=$g(bid); if(b2)b2.remove(); }
+  /* the shell re-kidnaps organs on resize; adoption must be law, not event */
+  window.__adopt=function(){ try{
+    for(const [id,ord] of ADOPT){ const el=$g(id); if(el&&sf){ if(!sf.contains(el))sf.appendChild(el); el.style.order=ord; el.style.flex='1 1 100%'; el.style.maxWidth='100%'; } }
+    if(seedF&&sf){ if(!sf.contains(seedF))sf.appendChild(seedF); seedF.style.order=5; seedF.style.flex='1 1 100%'; }
+    if(schF&&sf){ if(!sf.contains(schF))sf.appendChild(schF); schF.style.order=6; schF.style.flex='1 1 100%'; schF.style.maxWidth='100%'; }
+  }catch(e){} };
+  window.addEventListener('resize', ()=>setTimeout(window.__adopt, 120));
+  setTimeout(window.__adopt, 500); setTimeout(window.__adopt, 1600);
   for(const id of ['mode','locality','epochseg','frames']){ const f=fieldOf(id); if(f)f.classList.add('pubhide'); }
   const go=$g('go'); if(go)go.textContent='SPLICE';
   /* the surface grows its public organs */
@@ -6691,8 +6699,8 @@ html, body{height:100% !important; overflow:hidden !important;}
 #rcol{max-height:calc(100vh - 104px); overflow-y:auto; overscroll-behavior:contain; padding-right:4px; scrollbar-width:thin;}
 @media(max-width:1023px){
   #cockpit{display:flex !important; flex-direction:column; height:calc(100vh - 76px) !important; gap:10px;}
-  #bay-stage{flex:0 0 52vh; height:52vh;}
-  #stagewrap{max-height:52vh;}
+  #bay-stage{flex:0 0 44vh; height:44vh;}
+  #stagewrap{max-height:44vh;}
   #rcol{flex:1 1 auto; min-height:0; max-height:none; overflow-y:auto;}
 }
 
