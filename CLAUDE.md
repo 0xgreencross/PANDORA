@@ -11,10 +11,13 @@ his eye is the spec. Never call something "ready" without evidence.
    as any approved change.
 2. NEVER touch /f3 (his private studio), /f1 (historical), /original
    (aesthetic source of truth) unless explicitly ordered.
-3. THE MANIFEST (public page, locked): monitor, CORRUPTION, VOID, CHROMA
-   toggle, PALETTE grid (wrapped, never past an edge), SPLICE (52px button),
-   DOWNLOAD/X/GARDEN/MINT row, SEED+DNA+RESURRECT, .brand header, 
-   INSTRUCTIONS modal. NOTHING else may render. Studio organs stay at /f3.
+3. THE MANIFEST (public page, locked; amended by curator 2026-07-22):
+   monitor, CORRUPTION, VOID, CHROMA toggle, PALETTE grid (wrapped, never
+   past an edge), SPLICE (52px button), DOWNLOAD/X/GARDEN/MINT row,
+   SEED+DNA+RESURRECT, .brand header with ROOMS NAV (GARDENS · SHOWCASE ·
+   THE SEALED) next to INSTRUCTIONS, INSTRUCTIONS modal, X-SAFE TRANSMISSION
+   modal (f3 behavior verbatim). NOTHING else may render. Studio stays at /f3.
+   /original is linked from NOWHERE (dir stays, no UI path to it).
 4. LAYOUT LAWS: app frame, one viewport, zero page scroll, 320px→4K.
    Art is king: largest, square, centered, contained at every size.
 5. PANDORA_PUBLIC guard: public rolls/gavels NEVER train the canon.
@@ -42,11 +45,24 @@ Supabase: https://llirnynoyarbvtxcekwy.supabase.co (anon key in engine SB
 config; RLS is the lock). Posters bucket: public, anon INSERT only.
 Fees: UNIQUE 0.01 ETH, LIMITED/OPEN 0.001 ETH, auto-forwarded in-tx.
 
+## Sharing law (permanent)
+X transmissions NEVER contain URLs — links kill post reach. Format is canon:
+glitch-tongue phrase + DNA card + "dithervoid dot art" spelled out + runes +
+#DITHERVOID. Applies to every current and future share feature.
+
+## THE ROOMS (shipped 2026-07-22)
+gardens.html — every wallet a shelf; tap loop → /?dna= resurrection; likes.
+showcase.html — works made with loops; submit form; source-loop resurrect.
+sealed.html — THE SEALED: all minted loops; editions collect at creator price;
+v2 secondary market (list/delist/buy incl. 1/1s, SELLER 100%) feature-detects
+the v2 contract and awakens on deployment. Likes attach to LOOPS everywhere.
+
 ## Current mission order
-1. PROMPT A (docs/PROMPT_A_UI_REBUILD.md): rebuild public shell from zero.
-2. User approval of evidence bundle.
-3. PROMPT B (docs/PROMPT_B_MAINNET.md): mainnet ceremony.
-4. gardens.html + showcase.html + loop pages.
-5. Feedback cycles on the renderer (f3) continue forever.
+1. DONE: public shell rebuilt (d076b15), X share f3-port (05e51e9),
+   rooms + contract v2 (this push).
+2. Sepolia rehearsal of PANDORA.sol v2 (Remix ceremony, user signs), then
+   flip W3.contract in index.html + sealed.html to the v2 address.
+3. PROMPT B (docs/PROMPT_B_MAINNET.md): mainnet ceremony ON V2.
+4. Feedback cycles on the renderer (f3) continue forever.
 
 Read repo HANDOFF.md for full history and named root causes of past defects.

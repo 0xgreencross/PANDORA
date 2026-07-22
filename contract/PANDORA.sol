@@ -165,6 +165,52 @@ contract PANDORA {
         }
     }
 
+    // ---------------------------------------------------------- THE SEALED (secondary market)
+    // The market lives inside the token itself: listings are per (id, seller),
+    // sales move balances internally (no approvals, no escrow), and the seller
+    // takes 100% in the same transaction. The contract holds nothing, ever.
+    struct Listing { uint128 price; uint64 qty; }
+    mapping(uint256 => mapping(address => Listing)) public listings;
+
+    event Listed(uint256 indexed id, address indexed seller, uint64 qty, uint128 pricePerCopy);
+    event Delisted(uint256 indexed id, address indexed seller);
+    event Bought(uint256 indexed id, address indexed seller, address buyer, uint256 qty, uint256 paid);
+
+    function list(uint256 id, uint64 qty, uint128 pricePerCopy) external {
+        require(loops[id].creator != address(0), "no such loop");
+        require(qty > 0, "qty 0");
+        require(pricePerCopy > 0, "price 0");
+        require(_bal[id][msg.sender] >= qty, "insufficient copies");
+        listings[id][msg.sender] = Listing(pricePerCopy, qty);
+        emit Listed(id, msg.sender, qty, pricePerCopy);
+    }
+
+    function delist(uint256 id) external {
+        require(listings[id][msg.sender].qty != 0, "not listed");
+        delete listings[id][msg.sender];
+        emit Delisted(id, msg.sender);
+    }
+
+    function buy(uint256 id, address seller, uint256 qty) external payable nonReentrant {
+        Listing storage S = listings[id][seller];
+        require(S.qty != 0, "not listed");
+        require(qty > 0 && qty <= S.qty, "qty exceeds listing");
+        require(msg.sender != seller, "self buy");
+        uint256 b = _bal[id][seller];
+        require(b >= qty, "seller lacks copies");
+        require(msg.value == uint256(S.price) * qty, "wrong payment");
+        if (qty == uint256(S.qty)) delete listings[id][seller];
+        else S.qty -= uint64(qty);
+        unchecked { _bal[id][seller] = b - qty; }
+        _bal[id][msg.sender] += qty;
+        emit TransferSingle(msg.sender, seller, msg.sender, id, qty);
+        emit Bought(id, seller, msg.sender, qty, msg.value);
+        _checkReceiver(msg.sender, seller, msg.sender, id, qty, "");
+        // the seller takes all: 100%, in-tx, nothing retained
+        (bool ok, ) = seller.call{value: msg.value}("");
+        require(ok, "seller transfer failed");
+    }
+
     // ---------------------------------------------------------- ERC-1155 surface
     function balanceOf(address account, uint256 id) public view returns (uint256) {
         require(account != address(0), "zero address");

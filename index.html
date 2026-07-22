@@ -57,8 +57,11 @@ input{font:inherit;color:inherit;}
 
 /* ---- app frame: header / deck · one viewport · zero page scroll ---- */
 #shell{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:var(--sat);}
-#topbar{flex:0 0 auto;height:52px;display:flex;align-items:center;gap:14px;
-  justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line);}
+#topbar{flex:0 0 auto;min-height:52px;display:flex;align-items:center;gap:10px 14px;
+  flex-wrap:wrap;justify-content:space-between;padding:6px 16px;border-bottom:1px solid var(--line);}
+#shellrooms{display:flex;gap:12px;align-items:center;}
+#shellrooms a{font-size:8px;letter-spacing:.14em;color:var(--mut);text-decoration:none;padding:6px 0;}
+#shellrooms a:hover{color:var(--sulph);}
 .brand{font-weight:700;font-size:16px;letter-spacing:0;text-transform:uppercase;white-space:nowrap;}
 .brand b{color:var(--mag);font-weight:800;}
 .brand i{color:var(--cyan);font-style:normal;font-weight:800;}
@@ -253,6 +256,11 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
     <div id="topright">
       <div id="tagline">ENGINE · EIDOLON E8.0<br>ONE SEED · ONE TOKEN · ONE CHANCE</div>
+      <nav id="shellrooms">
+        <a href="gardens.html">GARDENS</a>
+        <a href="showcase.html">SHOWCASE</a>
+        <a href="sealed.html">THE SEALED</a>
+      </nav>
       <button id="instrbtn">INSTRUCTIONS</button>
     </div>
   </header>
@@ -312,7 +320,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   <div class="row"><b>DNA IS THE ARTWORK'S PROOF.</b> The card in the DNA field is the loop's complete genome. Copy it, post it, keep it: RESURRECT rebuilds the exact loop from any card, on any device, forever.</div>
   <div class="row"><b>MINTING CARRIES A SMALL FEE</b> — 0.01 ETH for a 1/1, 0.001 ETH for editions — because this is an art project by <b>GREENCROSS</b> and the fee pays the artist's monthly AI bill. One seed, one token, one chance.</div>
   <div class="row"><b>CC0 — NO RIGHTS RESERVED.</b> Copy it, remix it, sell it, build it into your own work. You are encouraged to. Made something with a loop? <a href="showcase.html#submit">Submit it to the showcase</a>.</div>
-  <div class="row"><a href="gardens.html">GARDENS</a> · <a href="showcase.html">SHOWCASE</a> · <a href="original/">THE ORIGINAL ENGINE</a> · <a target="_blank" rel="noopener" id="instr-contract" href="#">CONTRACT ↗</a> · ENGINE: EIDOLON E8.0</div>
+  <div class="row"><a href="gardens.html">GARDENS</a> · <a href="showcase.html">SHOWCASE</a> · <a href="sealed.html">THE SEALED</a> · <a target="_blank" rel="noopener" id="instr-contract" href="#">CONTRACT ↗</a> · ENGINE: EIDOLON E8.0</div>
 </div></div>
 
 <!-- ==== EIDOLON E8.0 — untouched engine markup, headless ==== -->

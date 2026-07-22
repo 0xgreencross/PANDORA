@@ -49,6 +49,22 @@ Repo: github.com/0xgreencross/PANDORA · Live: dithervoid.art (GitHub Pages, cus
   THEN: gardens.html + showcase.html (plumbing exists in layer fns),
   loop pages, mainnet ceremony, flip W3 CONFIG to mainnet, ship.
   Session PAT ends …vkkBT — USER MUST REVOKE.
+  ---- 2026-07-22 UPDATE (this session) ----
+  SHELL REBUILT AND SHIPPED: main d076b15 (PUBLIC SHELL 1.0, clean shell,
+  engine headless in #legacy-root, gate passed 6 sizes + functional walk),
+  05e51e9 (X share = f3 X-SAFE TRANSMISSION verbatim). SHARING LAW: no URLs
+  in tweets, ever (kills reach) — glitch-tongue + card + "dithervoid dot art"
+  spelled out. /original linked from NOWHERE. ROOMS SHIPPED: gardens.html,
+  showcase.html, sealed.html (THE SEALED = the marketplace room; header nav
+  on the box). Likes = LOOPS everywhere (wallet+card). Every saved/minted
+  loop click-resurrects via /?dna=. CONTRACT V2: PANDORA.sol grew THE SEALED
+  secondary market (list/delist/buy inside the 1155, internal balance moves,
+  no approvals/escrow, SELLER 100%, contract holds 0; 1/1s tradable). 34/34
+  in-process EVM tests at pinned solc 0.8.24+e11b9ed9/cancun/800/viaIR.
+  NEXT: v2 Sepolia rehearsal ceremony (user signs in Remix), flip W3.contract
+  in index.html + sealed.html, THEN mainnet ceremony on v2. The v1 Sepolia
+  0x48b1… remains rehearsal history. LOCAL SYNC LAW: every push same-turn
+  syncs his PANDORA-PROJECT/repo clone (see Cowork memory).
   ==============================================================================
   The ground-up 3D rebuild and ACTIVE instrument. Same DNA v5. Approved look =
   E4.0 TABULA RASA; cycle-6 census on it: 37 keeps in one sitting, all ten
