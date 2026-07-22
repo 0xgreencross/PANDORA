@@ -11,9 +11,8 @@ Paste PANDORA.sol, compile, zero errors expected.
 ## Constructor arguments (Deploy panel)
 1. _engineVersion:  EIDOLON E8.0
 2. _rendererBase:   https://dithervoid.art/?dna=
-3. _imageBase:      <YOUR SUPABASE STORAGE PUBLIC URL>/posters/
-   (created in SUPABASE_SETUP.sql step; looks like
-    https://<project>.supabase.co/storage/v1/object/public/posters/)
+3. _imageBase:      https://llirnynoyarbvtxcekwy.supabase.co/storage/v1/object/public/posters/
+   (bucket created PUBLIC 2026-07-22, anon INSERT policy live; verified)
 
 ## Order of operations
 1. SEPOLIA FIRST. Deploy, then in Remix call:
