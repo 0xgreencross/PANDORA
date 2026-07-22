@@ -6223,8 +6223,16 @@ function pubBoot(){
   const $g=id=>document.getElementById(id);
   const fieldOf=id=>{ const el=$g(id); return el ? (el.closest('.field')||el) : null; };
   const sf=$g('surface');
-  for(const id of ['seed','dna']){ const f=fieldOf(id); if(f&&sf&&!sf.contains(f))sf.appendChild(f); }
-  for(const bid of ['bay-engine','bay-archive']){ const b2=$g(bid); if(b2)b2.classList.add('pubhide'); }
+  /* THE MANIFEST, IN ORDER: splice, dials, chroma, actions, seed, palette. Nothing else exists. */
+  const seedF=fieldOf('seed')||fieldOf('dna');
+  const sch=$g('scheme');
+  const schF=sch?(sch.closest('.field')||sch.closest('.ribbon')||sch):null;
+  const ADOPT=[['go',1],['surfdials',2],['chromaseg',3],['surfacts',4]];
+  for(const [id,ord] of ADOPT){ const el=$g(id); if(el&&sf){ if(!sf.contains(el))sf.appendChild(el); el.style.order=ord; el.style.flex='1 1 100%'; el.style.maxWidth='100%'; } }
+  if(seedF&&sf){ if(!sf.contains(seedF))sf.appendChild(seedF); seedF.style.order=5; seedF.style.flex='1 1 100%'; }
+  if(schF&&sf){ if(!sf.contains(schF))sf.appendChild(schF); schF.style.order=6; schF.style.flex='1 1 100%'; schF.style.maxWidth='100%'; }
+  /* the studio does not merely hide — it is not here */
+  for(const bid of ['bay-engine','bay-archive']){ const b2=$g(bid); if(b2)b2.remove(); }
   for(const id of ['mode','locality','epochseg','frames']){ const f=fieldOf(id); if(f)f.classList.add('pubhide'); }
   const go=$g('go'); if(go)go.textContent='SPLICE';
   /* the surface grows its public organs */
@@ -6281,28 +6289,6 @@ function pubBoot(){
    +'<div class="row"><b>CC0 \u2014 NO RIGHTS RESERVED.</b> Copy it, remix it, sell it, build it into your own work. You are encouraged to. Made something with a loop? <a href="showcase.html#submit">Submit it to the showcase</a>.</div>'
    +'<div class="row"><a href="gardens.html">GARDENS</a> \u00b7 <a href="showcase.html">SHOWCASE</a> \u00b7 <a href="original/">THE ORIGINAL ENGINE</a> \u00b7 <a target="_blank" rel="noopener" href="'+W3.explorer+'/address/'+W3.contract+'">CONTRACT \u2197</a> \u00b7 ENGINE: EIDOLON E8.0</div>'
    +'</div>');
-  /* rail tabs: LOOP is the instrument; ARCHIVE and ENGINE come along, tamed */
-  setTimeout(function(){
-    const r=$g('rcol'); if(!r) return;
-    const tb=document.createElement('div'); tb.id='railtabs';
-    const secs={};
-    const mkSec=(id,src)=>{ const d=document.createElement('div'); d.id=id; d.classList.add('pubhide');
-      const b2=$g(src); if(b2){ b2.classList.remove('pubhide'); d.appendChild(b2); } r.appendChild(d); secs[id]=d; return d; };
-    r.insertBefore(tb, r.firstChild);
-    secs['rail-loop']=$g('surface');
-    mkSec('rail-archive','bay-archive'); mkSec('rail-engine','bay-engine');
-    const names=[['LOOP','rail-loop'],['ARCHIVE','rail-archive'],['ENGINE','rail-engine']];
-    for(const [label,sid] of names){
-      const bt=document.createElement('button'); bt.textContent=label;
-      bt.setAttribute('aria-pressed', sid==='rail-loop'?'true':'false');
-      bt.addEventListener('click',()=>{
-        for(const [l2,s2] of names){ const el=(s2==='rail-loop')?$g('surface'):secs[s2];
-          if(el) el.classList.toggle('pubhide', s2!==sid); }
-        tb.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed', x===bt?'true':'false'));
-      });
-      tb.appendChild(bt);
-    }
-  }, 60);
   const pf=$g('pubfoot');
   if(pf){ const fx=document.createElement('button'); fx.className='fx'; fx.textContent='\u2715';
     fx.addEventListener('click',()=>pf.classList.remove('on')); pf.appendChild(fx); }
@@ -6719,6 +6705,9 @@ html, body{height:100% !important; overflow:hidden !important;}
 .seg, .ribbon .seg{flex-wrap:wrap !important; overflow:visible !important; min-width:0;}
 .seg button{border-radius:7px;}
 #surfdials{flex-wrap:wrap; min-width:0;}
+#surface .seg, #surface .ribbon .seg{display:flex !important; flex-wrap:wrap !important; overflow:visible !important; max-width:100% !important; min-width:0;}
+#surface .seg button{flex:0 1 auto; min-width:0;}
+#surface .ribbon{max-width:100%; min-width:0;}
 #go{flex:1 1 100% !important; height:52px !important; min-height:52px !important; max-height:52px !important;
   order:0 !important; position:static !important; align-self:auto !important; margin:0 !important;
   background:linear-gradient(90deg,#ff1f9c,#19f0ff) !important; color:#000 !important;
