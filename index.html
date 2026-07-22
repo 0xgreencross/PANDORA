@@ -6659,7 +6659,9 @@ if(!window.PANDORA_LAYER_TEST){ try{ pubBoot(); }catch(e){ console.error('pubBoo
 html,body{height:auto !important; overflow-x:hidden; overflow-y:auto !important;}
 #cockpit{display:grid !important; grid-template-columns:minmax(0,1fr) minmax(300px,380px);
   gap:26px; align-items:start; width:100%; max-width:1440px; margin:0 auto; padding:14px 20px 60px; height:auto !important;}
-#bay-stage{grid-column:1; width:100%; min-width:0; overflow:visible;}
+#cockpit{width:100% !important; flex:1 1 100% !important;}
+#bay-stage{grid-column:1; width:100% !important; min-width:0; overflow:visible; flex:1 1 auto !important; display:block !important;}
+#stagewrap{flex:1 1 auto !important; display:block !important;}
 #rcol{grid-column:2; min-width:0; display:flex; flex-direction:column; gap:12px;}
 /* THE HERO: the monitor takes everything its column gives */
 .monitor, #stagewrap{width:100% !important; max-width:none !important; height:auto !important; margin:0 !important;}
