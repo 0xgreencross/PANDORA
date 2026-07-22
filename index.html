@@ -6209,8 +6209,8 @@ function pubBoot(){
   const nav=document.querySelector('nav.tabs'); if(nav)nav.classList.add('pubhide');
   const $g=id=>document.getElementById(id);
   const fieldOf=id=>{ const el=$g(id); return el ? (el.closest('.field')||el) : null; };
-  const ps=$g('p-signal');
-  for(const id of ['seed','dna']){ const f=fieldOf(id); if(f&&ps)ps.appendChild(f); }
+  const eb=$g('engbody')||$g('p-signal');
+  for(const id of ['seed','dna']){ const f=fieldOf(id); if(f&&eb&&!eb.contains(f))eb.appendChild(f); }
   for(const id of ['mode','locality','epochseg','frames']){ const f=fieldOf(id); if(f)f.classList.add('pubhide'); }
   const go=$g('go'); if(go)go.textContent='SPLICE';
   /* the surface grows its public organs */
