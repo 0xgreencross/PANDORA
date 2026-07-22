@@ -6232,7 +6232,11 @@ function pubBoot(){
   if(seedF&&sf){ if(seedF.parentElement!==sf)sf.appendChild(seedF); seedF.style.order=5; seedF.style.flex='1 1 100%'; }
   if(schF&&sf){ if(schF.parentElement!==sf)sf.appendChild(schF); schF.style.order=6; schF.style.flex='1 1 100%'; schF.style.maxWidth='100%'; }
   /* the studio does not merely hide — it is not here */
-  for(const bid of ['bay-engine','bay-archive']){ const b2=$g(bid); if(b2)b2.remove(); }
+  let grave=$g('studiograve');
+  if(!grave){ grave=document.createElement('div'); grave.id='studiograve';
+    grave.style.display='none'; grave.setAttribute('inert',''); grave.setAttribute('aria-hidden','true');
+    document.body.appendChild(grave); }
+  for(const bid of ['bay-engine','bay-archive']){ const b2=$g(bid); if(b2&&b2.parentElement!==grave)grave.appendChild(b2); }
   /* the shell re-kidnaps organs on resize; adoption must be law, not event */
   window.__adopt=function(){ try{
     for(const [id,ord] of ADOPT){ const el=$g(id); if(el&&sf){ if(el.parentElement!==sf)sf.appendChild(el); el.style.order=ord; el.style.flex='1 1 100%'; el.style.maxWidth='100%'; } }
