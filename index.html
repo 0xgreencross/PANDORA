@@ -6054,6 +6054,11 @@ document.addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='Enter')
 #mstat{margin-top:10px; font-size:9px; color:var(--mut); letter-spacing:.1em; min-height:14px;}
 #mfee{font-size:9px; color:var(--mut); margin-top:12px; line-height:1.7;}
 #surfacts #pubmint{color:var(--ox); border-color:var(--ox);}
+/* the original silhouette: one column, the monitor in the middle of the room */
+#cockpit{display:block !important; height:auto !important; min-height:0 !important; max-width:760px; margin:0 auto; padding:0 12px;}
+#bay-stage{width:100%; overflow:visible;}
+body{height:auto !important; overflow-y:auto !important;}
+#pubfoot{position:static; border-top:1px solid var(--hair); padding-top:18px;}
 </style>
 <script>
 /* ============================================================================
@@ -6209,8 +6214,9 @@ function pubBoot(){
   const nav=document.querySelector('nav.tabs'); if(nav)nav.classList.add('pubhide');
   const $g=id=>document.getElementById(id);
   const fieldOf=id=>{ const el=$g(id); return el ? (el.closest('.field')||el) : null; };
-  const eb=$g('engbody')||$g('p-signal');
-  for(const id of ['seed','dna']){ const f=fieldOf(id); if(f&&eb&&!eb.contains(f))eb.appendChild(f); }
+  const sf=$g('surface');
+  for(const id of ['seed','dna']){ const f=fieldOf(id); if(f&&sf&&!sf.contains(f))sf.appendChild(f); }
+  for(const bid of ['bay-engine','bay-archive']){ const b2=$g(bid); if(b2)b2.classList.add('pubhide'); }
   for(const id of ['mode','locality','epochseg','frames']){ const f=fieldOf(id); if(f)f.classList.add('pubhide'); }
   const go=$g('go'); if(go)go.textContent='SPLICE';
   /* the surface grows its public organs */
