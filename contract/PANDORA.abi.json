@@ -49,6 +49,62 @@
   "anonymous": false,
   "inputs": [
    {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "seller",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "address",
+    "name": "buyer",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "qty",
+    "type": "uint256"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint256",
+    "name": "paid",
+    "type": "uint256"
+   }
+  ],
+  "name": "Bought",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "seller",
+    "type": "address"
+   }
+  ],
+  "name": "Delisted",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
     "indexed": false,
     "internalType": "string",
     "name": "version",
@@ -62,6 +118,37 @@
    }
   ],
   "name": "EngineAdded",
+  "type": "event"
+ },
+ {
+  "anonymous": false,
+  "inputs": [
+   {
+    "indexed": true,
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "indexed": true,
+    "internalType": "address",
+    "name": "seller",
+    "type": "address"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint64",
+    "name": "qty",
+    "type": "uint64"
+   },
+   {
+    "indexed": false,
+    "internalType": "uint128",
+    "name": "pricePerCopy",
+    "type": "uint128"
+   }
+  ],
+  "name": "Listed",
   "type": "event"
  },
  {
@@ -326,6 +413,29 @@
     "type": "uint256"
    },
    {
+    "internalType": "address",
+    "name": "seller",
+    "type": "address"
+   },
+   {
+    "internalType": "uint256",
+    "name": "qty",
+    "type": "uint256"
+   }
+  ],
+  "name": "buy",
+  "outputs": [],
+  "stateMutability": "payable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
     "internalType": "uint256",
     "name": "qty",
     "type": "uint256"
@@ -347,6 +457,19 @@
    }
   ],
   "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   }
+  ],
+  "name": "delist",
+  "outputs": [],
+  "stateMutability": "nonpayable",
   "type": "function"
  },
  {
@@ -400,6 +523,58 @@
     "internalType": "bool",
     "name": "",
     "type": "bool"
+   }
+  ],
+  "stateMutability": "view",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "id",
+    "type": "uint256"
+   },
+   {
+    "internalType": "uint64",
+    "name": "qty",
+    "type": "uint64"
+   },
+   {
+    "internalType": "uint128",
+    "name": "pricePerCopy",
+    "type": "uint128"
+   }
+  ],
+  "name": "list",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+ },
+ {
+  "inputs": [
+   {
+    "internalType": "uint256",
+    "name": "",
+    "type": "uint256"
+   },
+   {
+    "internalType": "address",
+    "name": "",
+    "type": "address"
+   }
+  ],
+  "name": "listings",
+  "outputs": [
+   {
+    "internalType": "uint128",
+    "name": "price",
+    "type": "uint128"
+   },
+   {
+    "internalType": "uint64",
+    "name": "qty",
+    "type": "uint64"
    }
   ],
   "stateMutability": "view",
