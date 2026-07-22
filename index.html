@@ -6692,11 +6692,12 @@ html,body{height:auto !important; overflow-x:hidden; overflow-y:auto !important;
 #rail-archive, #rail-engine{min-width:0;}
 #rail-archive .bayhead, #rail-engine .bayhead{display:none;}
 /* THE HERO: the whole frame fits the screen — art never requires scrolling */
-#stagewrap{width:100% !important; max-width:none !important; height:auto !important; margin:0 !important; display:flex !important; justify-content:center;}
-.monitor{width:fit-content !important; max-width:100% !important; height:auto !important; margin:0 auto !important;}
-#view{display:block; width:auto !important; height:auto !important; aspect-ratio:1/1;
-  max-width:100%; max-height:calc(100vh - 220px);}
-@media(max-width:1079px){ #view{max-height:56vh;} }
+#stagewrap{width:100% !important; max-width:none !important; height:auto !important; margin:0 !important; display:block !important;}
+.monitor{width:100% !important; max-width:none !important; height:auto !important; margin:0 !important;
+  display:flex !important; justify-content:center; align-items:flex-start;}
+#view{display:block; height:calc(100vh - 220px) !important; width:auto !important;
+  max-width:100%; aspect-ratio:1/1;}
+@media(max-width:1079px){ #view{height:56vh !important;} }
 .monitor{position:relative; outline:1px solid rgba(255,255,255,.08);}
 .monitor::before,.monitor::after{content:''; position:absolute; width:22px; height:22px; border:2px solid #eaff2e; z-index:5;}
 .monitor::before{top:-2px; left:-2px; border-right:none; border-bottom:none;}
