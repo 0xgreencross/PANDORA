@@ -17,6 +17,39 @@ Repo: github.com/0xgreencross/PANDORA · Live: dithervoid.art (GitHub Pages, cus
 - **FORK ONE** `/f1/` — BLACKMASS // PANDORA REV 21.0 "THE ARBITER". DNA v5 (32
   chars, void/cap/locality genes). The feedback-machine instrument.
 - **FORK THREE** `/f3/` — EIDOLON // PANDORA REV E8.0 "THE AUTONOMOUS CANON".
+
+  ================= PRODUCTION STATE (2026-07-23, session end) =================
+  CONTRACT — DONE. PANDORA.sol (ERC-1155) 16/16 EVM tests. Sepolia:
+  0x48b1A56033d0a896232001d4C7072712C36CaB83 (Sourcify+Blockscout verified,
+  rehearsal token #1 minted+verified incl fee forward + wrong-fee revert).
+  MAINNET: ceremony fully specified in contract/REMIX_CEREMONY.md with the
+  real posters URL; run it in a FRESH SESSION only AFTER the public shell is
+  approved (animation_url targets the live site). ~3.3M gas.
+  SUPABASE — DONE. Tables events/garden_items/likes/showcase + vault.rev live;
+  PUBLIC bucket `posters` created with anon INSERT policy (no update/delete =
+  posters immutable). Project ref llirnynoyarbvtxcekwy.
+  PUBLIC ROOT — FUNCTIONAL BUT REJECTED ON UX. Current index.html = E8 engine
+  + transplanted trunk CSS + public layer + skin layers: cascade wars caused
+  recurring defects (caption over art in RENDERED state — my centering
+  !important beats engine inline hide; shell re-kidnaps organs on resize;
+  studio entombed in #studiograve after .remove() broke applyCard).
+  Working & proven: mint modal + hand-rolled ABI encoder (byte-identical to
+  ethers), garden personal_sign save, poster upload, ?dna= deep link,
+  seed watchdog, box roll fires, palette wraps in-edge, PANDORA_PUBLIC guard
+  (public rolls never train canon).
+  NEXT SESSION MANDATE — REBUILD, DON'T PATCH: new clean shell, author 100%
+  of layout CSS, engine embedded headless (#legacy-root hidden), manifest
+  controls wired by direct calls (pandorize/generate/applyCard/SCHEMES),
+  STATE MATRIX verification (STANDBY/RENDERING/RENDERED/SPLICE/MINT states
+  x six sizes), evidence bundle before "ready". User holds the exact prompt.
+  MANIFEST (locked): monitor, corruption, void, chroma toggle, palette grid,
+  SPLICE 52px, download/X/garden/mint row, seed+dna+resurrect, .brand header
+  (magenta DITHER cyan VOID, harvested from /original), instructions modal.
+  NOTHING else. Studio lives at /f3 only.
+  THEN: gardens.html + showcase.html (plumbing exists in layer fns),
+  loop pages, mainnet ceremony, flip W3 CONFIG to mainnet, ship.
+  Session PAT ends …vkkBT — USER MUST REVOKE.
+  ==============================================================================
   The ground-up 3D rebuild and ACTIVE instrument. Same DNA v5. Approved look =
   E4.0 TABULA RASA; cycle-6 census on it: 37 keeps in one sitting, all ten
   dialects kept, "very much close to what I have envisioned". Machine settings
