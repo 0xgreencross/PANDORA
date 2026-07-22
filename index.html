@@ -6098,8 +6098,8 @@ async function rpcRaw(method, params){
   }
   throw new Error('rpc unreachable');
 }
-const ethCall=(data)=>rpcRaw('eth_call',[{to:W3.contract,data},'latest']);
-async function seedToken(seed){ try{ return parseInt(await ethCall(W3.SEL.seedToToken+_hx(seed>>>0)),16)||0; }catch(e){ return -1; } }
+const pubEthCall=(data)=>rpcRaw('eth_call',[{to:W3.contract,data},'latest']);
+async function seedToken(seed){ try{ return parseInt(await pubEthCall(W3.SEL.seedToToken+_hx(seed>>>0)),16)||0; }catch(e){ return -1; } }
 
 let WALLET=null;
 async function connectWallet(){
