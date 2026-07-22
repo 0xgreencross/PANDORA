@@ -6691,17 +6691,25 @@ html,body{height:auto !important; overflow-x:hidden; overflow-y:auto !important;
 #railtabs button[aria-pressed="true"]{background:#eaff2e; color:#000; border-color:#eaff2e; box-shadow:0 0 14px rgba(234,255,46,.4);}
 #rail-archive, #rail-engine{min-width:0;}
 #rail-archive .bayhead, #rail-engine .bayhead{display:none;}
-/* THE HERO: the whole frame fits the screen — art never requires scrolling */
-#stagewrap{width:100% !important; max-width:none !important; height:auto !important; margin:0 !important; display:block !important;}
-.monitor{width:100% !important; max-width:none !important; height:auto !important; margin:0 !important;
-  display:flex !important; justify-content:center; align-items:flex-start;}
-#view{display:block; height:calc(100vh - 220px) !important; width:auto !important;
-  max-width:100%; aspect-ratio:1/1;}
-@media(max-width:1079px){ #view{height:56vh !important;} }
-.monitor{position:relative; outline:1px solid rgba(255,255,255,.08);}
-.monitor::before,.monitor::after{content:''; position:absolute; width:22px; height:22px; border:2px solid #eaff2e; z-index:5;}
-.monitor::before{top:-2px; left:-2px; border-right:none; border-bottom:none;}
-.monitor::after{bottom:-2px; right:-2px; border-left:none; border-top:none;}
+/* APP FRAME: the page owns exactly one viewport. Nothing bleeds, ever. */
+html, body{height:100% !important; overflow:hidden !important;}
+#cockpit{height:calc(100vh - 84px) !important; overflow:hidden; align-items:stretch; padding-bottom:10px;}
+#bay-stage{height:100%; min-height:0; display:flex !important; flex-direction:column; justify-content:center; align-items:center;}
+#stagewrap{width:100% !important; height:auto !important; min-height:0; margin:0 !important;
+  display:flex !important; justify-content:center; align-items:center; flex:1 1 auto; overflow:hidden;}
+.monitor{width:auto !important; height:auto !important; aspect-ratio:1/1 !important;
+  max-width:100% !important; max-height:100% !important;
+  padding:0 !important; margin:0 !important; position:relative; flex:0 1 auto;
+  min-width:220px; min-height:220px;}
+#view{position:absolute !important; inset:0; width:100% !important; height:100% !important; display:block;}
+#rcol{max-height:calc(100vh - 104px); overflow-y:auto; overscroll-behavior:contain; padding-right:4px; scrollbar-width:thin;}
+@media(max-width:1079px){
+  #cockpit{display:flex !important; flex-direction:column; height:calc(100vh - 76px) !important; gap:10px;}
+  #bay-stage{flex:0 0 auto; height:auto; max-height:52vh;}
+  #stagewrap{max-height:52vh;}
+  #rcol{flex:1 1 auto; min-height:0; max-height:none; overflow-y:auto;}
+}
+
 /* THE RAIL: everything wraps, nothing clips */
 #surface{position:static !important; display:flex; flex-wrap:wrap; gap:10px; margin:0; padding:0; max-width:none; min-width:0;}
 #surface > *{position:static !important; min-width:0;}
