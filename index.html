@@ -6228,16 +6228,16 @@ function pubBoot(){
   const sch=$g('scheme');
   const schF=sch?(sch.closest('.field')||sch.closest('.ribbon')||sch):null;
   const ADOPT=[['go',1],['surfdials',2],['chromaseg',3],['surfacts',4]];
-  for(const [id,ord] of ADOPT){ const el=$g(id); if(el&&sf){ if(!sf.contains(el))sf.appendChild(el); el.style.order=ord; el.style.flex='1 1 100%'; el.style.maxWidth='100%'; } }
-  if(seedF&&sf){ if(!sf.contains(seedF))sf.appendChild(seedF); seedF.style.order=5; seedF.style.flex='1 1 100%'; }
-  if(schF&&sf){ if(!sf.contains(schF))sf.appendChild(schF); schF.style.order=6; schF.style.flex='1 1 100%'; schF.style.maxWidth='100%'; }
+  for(const [id,ord] of ADOPT){ const el=$g(id); if(el&&sf){ if(el.parentElement!==sf)sf.appendChild(el); el.style.order=ord; el.style.flex='1 1 100%'; el.style.maxWidth='100%'; } }
+  if(seedF&&sf){ if(seedF.parentElement!==sf)sf.appendChild(seedF); seedF.style.order=5; seedF.style.flex='1 1 100%'; }
+  if(schF&&sf){ if(schF.parentElement!==sf)sf.appendChild(schF); schF.style.order=6; schF.style.flex='1 1 100%'; schF.style.maxWidth='100%'; }
   /* the studio does not merely hide — it is not here */
   for(const bid of ['bay-engine','bay-archive']){ const b2=$g(bid); if(b2)b2.remove(); }
   /* the shell re-kidnaps organs on resize; adoption must be law, not event */
   window.__adopt=function(){ try{
-    for(const [id,ord] of ADOPT){ const el=$g(id); if(el&&sf){ if(!sf.contains(el))sf.appendChild(el); el.style.order=ord; el.style.flex='1 1 100%'; el.style.maxWidth='100%'; } }
-    if(seedF&&sf){ if(!sf.contains(seedF))sf.appendChild(seedF); seedF.style.order=5; seedF.style.flex='1 1 100%'; }
-    if(schF&&sf){ if(!sf.contains(schF))sf.appendChild(schF); schF.style.order=6; schF.style.flex='1 1 100%'; schF.style.maxWidth='100%'; }
+    for(const [id,ord] of ADOPT){ const el=$g(id); if(el&&sf){ if(el.parentElement!==sf)sf.appendChild(el); el.style.order=ord; el.style.flex='1 1 100%'; el.style.maxWidth='100%'; } }
+    if(seedF&&sf){ if(seedF.parentElement!==sf)sf.appendChild(seedF); seedF.style.order=5; seedF.style.flex='1 1 100%'; }
+    if(schF&&sf){ if(schF.parentElement!==sf)sf.appendChild(schF); schF.style.order=6; schF.style.flex='1 1 100%'; schF.style.maxWidth='100%'; }
   }catch(e){} };
   window.addEventListener('resize', ()=>setTimeout(window.__adopt, 120));
   setTimeout(window.__adopt, 500); setTimeout(window.__adopt, 1600);
