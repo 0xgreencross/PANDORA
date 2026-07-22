@@ -184,6 +184,28 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
 #mfee{font-size:9px;color:var(--mut);margin-top:12px;line-height:1.7;}
 .pubhide{display:none;}
 
+/* ---- X transmission modal — the engine's own organ (f3 behavior, verbatim);
+        the shell only relocates it to the body and makes it fit the screen ---- */
+#xmodal{position:fixed;inset:0;z-index:65;display:none;background:rgba(4,4,6,.92);
+  padding:14px;align-items:center;justify-content:center;}
+#xmodal .xm-box{width:min(430px,94vw);max-height:92dvh;overflow-y:auto;
+  background:var(--panel);border:1px solid var(--line);padding:16px;}
+.xm-head{font-family:var(--fT);font-size:11px;margin-bottom:10px;color:var(--txt);letter-spacing:.1em;}
+#xm-size{color:var(--mut);}
+#xm-img{display:block;width:100%;max-height:44dvh;object-fit:contain;
+  image-rendering:pixelated;background:#000;}
+#xm-tweet{white-space:pre-wrap;word-break:break-word;border:1px solid var(--line);
+  background:var(--well);color:var(--txt);font-family:var(--fT);font-size:10px;
+  line-height:1.8;padding:10px;margin-top:12px;}
+.xm-row{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 0;}
+.xm-row button{flex:1 1 auto;border:1px solid var(--line);background:var(--panel);
+  color:var(--txt);font-size:9px;letter-spacing:.08em;padding:10px 8px;}
+.xm-row button:hover{border-color:var(--cyan);color:var(--cyan);}
+.xm-note{color:var(--mut);font-size:8.5px;line-height:1.8;letter-spacing:.06em;margin-top:10px;}
+#xm-close{width:100%;margin-top:10px;border:1px solid var(--line);color:var(--mut);
+  padding:9px;font-size:9px;letter-spacing:.14em;}
+#xm-close:hover{border-color:var(--line2);color:var(--txt);}
+
 /* ---- instructions modal ---- */
 #instrmodal{display:none;position:fixed;inset:0;background:rgba(4,4,6,.96);z-index:70;overflow:auto;}
 #instrmodal.on{display:block;}
@@ -265,7 +287,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
       <button id="pub-splice">SPLICE</button>
       <div id="pub-actions">
         <button id="pub-download" disabled>⤓ DOWNLOAD</button>
-        <button id="pub-xpost">𝕏 POST</button>
+        <button id="pub-xpost" disabled>𝕏 POST</button>
         <button id="pub-garden">⚘ GARDEN</button>
         <button id="pub-mint">⛓ MINT</button>
       </div>
@@ -6018,8 +6040,12 @@ function hideMintedBand(){ const b=document.getElementById('mintedband'); if(b)b
 (function(){
 const $g=id=>document.getElementById(id);
 
-/* 1 · relocate the one permitted organ: the engine's canvas */
+/* 1 · relocate the sanctioned organs: the engine's canvas, and the X
+       transmission modal (curator's order 2026-07-22: port f3's X share
+       identically — the modal, its glitch-tongue composer, reroll, save,
+       compose are all engine code; moving the node preserves its bindings) */
 $g('artframe').appendChild($g('view'));
+document.body.appendChild($g('xmodal'));
 
 /* 2 · box tap = pandorize — the engine's own ritual, called directly */
 $g('stage').addEventListener('click',()=>{
@@ -6076,12 +6102,7 @@ $g('pub-download').addEventListener('click',()=>{
   if($g('download').hasAttribute('disabled'))return;
   saveLoop();
 });
-$g('pub-xpost').addEventListener('click',()=>{
-  const card=($g('dna')||{}).value||'';
-  const u='https://dithervoid.art/?dna='+encodeURIComponent(card);
-  const t='I opened the box. A loop from DITHERVOID // PANDORA — CC0 generative glitch by @0xgreencross.';
-  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(t)+'&url='+encodeURIComponent(u),'_blank');
-});
+$g('pub-xpost').addEventListener('click',()=>openXModal());   /* f3 behavior, verbatim */
 $g('pub-garden').addEventListener('click',saveToGarden);
 $g('pub-mint').addEventListener('click',()=>{ const m=$g('mintmodal'); if(m){ m.classList.add('on'); mintStat(''); } });
 
@@ -6104,6 +6125,8 @@ function paint(){
   if(document.activeElement!==$g('pub-dna'))  $g('pub-dna').value=$g('dna').value;
   if($g('download').hasAttribute('disabled')) $g('pub-download').setAttribute('disabled','');
   else $g('pub-download').removeAttribute('disabled');
+  if($g('xsave').hasAttribute('disabled')) $g('pub-xpost').setAttribute('disabled','');
+  else $g('pub-xpost').removeAttribute('disabled');
   $g('pub-splice').disabled=busy;
 }
 setInterval(paint,250); paint();
