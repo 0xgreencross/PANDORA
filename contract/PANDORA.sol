@@ -60,6 +60,7 @@ contract PANDORA {
         string  engine;       // engine version at mint
         uint8   corruption;
         uint8   voidLevel;
+        bool    chromaCapped; // FULL SPECTRUM (false) or CAPPED (true)
     }
 
     uint256 public nextId = 1;
@@ -89,7 +90,7 @@ contract PANDORA {
     // ---------------------------------------------------------- creation
     function _create(
         uint32 seed, string calldata dna, string calldata loopedBy,
-        string calldata palette, uint8 corruption, uint8 voidLevel,
+        string calldata palette, uint8 corruption, uint8 voidLevel, bool chromaCapped,
         EditionType kind, uint64 supplyCap, uint64 deadline, uint128 price
     ) internal returns (uint256 id) {
         require(seedToToken[seed] == 0, "SEED ALREADY MINTED");
@@ -102,7 +103,7 @@ contract PANDORA {
         L.supplyCap = supplyCap; L.deadline = deadline; L.price = price;
         L.dna = dna; L.loopedBy = loopedBy; L.palette = palette;
         L.engine = currentEngine;
-        L.corruption = corruption; L.voidLevel = voidLevel;
+        L.corruption = corruption; L.voidLevel = voidLevel; L.chromaCapped = chromaCapped;
         // the creator's copy
         L.minted = 1;
         _bal[id][msg.sender] += 1;
@@ -115,32 +116,32 @@ contract PANDORA {
 
     function mintUnique(
         uint32 seed, string calldata dna, string calldata loopedBy,
-        string calldata palette, uint8 corruption, uint8 voidLevel
+        string calldata palette, uint8 corruption, uint8 voidLevel, bool chromaCapped
     ) external payable nonReentrant returns (uint256) {
         require(msg.value == FEE_UNIQUE, "fee is 0.01 ETH");
-        return _create(seed, dna, loopedBy, palette, corruption, voidLevel,
+        return _create(seed, dna, loopedBy, palette, corruption, voidLevel, chromaCapped,
                        EditionType.UNIQUE, 1, 0, 0);
     }
 
     function mintLimited(
         uint32 seed, string calldata dna, string calldata loopedBy,
-        string calldata palette, uint8 corruption, uint8 voidLevel,
+        string calldata palette, uint8 corruption, uint8 voidLevel, bool chromaCapped,
         uint64 supplyCap, uint128 pricePerCopy
     ) external payable nonReentrant returns (uint256) {
         require(msg.value == FEE_EDITION, "fee is 0.001 ETH");
         require(supplyCap >= 2, "limited needs supply >= 2");
-        return _create(seed, dna, loopedBy, palette, corruption, voidLevel,
+        return _create(seed, dna, loopedBy, palette, corruption, voidLevel, chromaCapped,
                        EditionType.LIMITED, supplyCap, 0, pricePerCopy);
     }
 
     function mintOpen(
         uint32 seed, string calldata dna, string calldata loopedBy,
-        string calldata palette, uint8 corruption, uint8 voidLevel,
+        string calldata palette, uint8 corruption, uint8 voidLevel, bool chromaCapped,
         uint64 deadline, uint128 pricePerCopy
     ) external payable nonReentrant returns (uint256) {
         require(msg.value == FEE_EDITION, "fee is 0.001 ETH");
         require(deadline == 0 || deadline > block.timestamp, "deadline passed");
-        return _create(seed, dna, loopedBy, palette, corruption, voidLevel,
+        return _create(seed, dna, loopedBy, palette, corruption, voidLevel, chromaCapped,
                        EditionType.OPEN, 0, deadline, pricePerCopy);
     }
 
@@ -301,6 +302,7 @@ contract PANDORA {
             '{"trait_type":"CORRUPTION","value":', _u(L.corruption), '},',
             '{"trait_type":"VOID","value":', _u(L.voidLevel), '},',
             '{"trait_type":"PALETTE","value":"', L.palette, '"},',
+            '{"trait_type":"CHROMA","value":"', L.chromaCapped ? "CAPPED" : "FULL SPECTRUM", '"},',
             '{"trait_type":"ENGINE VERSION","value":"', L.engine, '"}',
             ']}'
         );

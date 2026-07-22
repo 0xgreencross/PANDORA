@@ -181,7 +181,8 @@ async function loopOf(id){const hex=await ethCall(W3.SEL.loops+_hx(id));
 return {id,seed:Number(word(hex,0)),supplyCap:Number(word(hex,1)),minted:Number(word(hex,2)),
 deadline:Number(word(hex,3)),price:word(hex,4),creator:wAddr(hex,5),kind:Number(word(hex,6)),
 dna:wStr(hex,7),loopedBy:wStr(hex,8),palette:wStr(hex,9),engine:wStr(hex,10),
-corr:Number(word(hex,11)),voidL:Number(word(hex,12))};}
+corr:Number(word(hex,11)),voidL:Number(word(hex,12)),
+chroma:V2?Number(word(hex,13)):-1};}
 async function offersOf(id){const out=[];if(!V2||!SELLERS[id])return out;
 for(const s of SELLERS[id]){try{
 const hex=await ethCall(W3.SEL.listings+_hx(id)+_hx(s));
@@ -235,7 +236,7 @@ r1.appendChild(likeBtn(L.dna));m.appendChild(r1);
 const r2=document.createElement('div');r2.className='row';
 const supply=L.kind===0?'SEALED 1/1':L.kind===1?L.minted+'/'+L.supplyCap+' COLLECTED'
 :(L.deadline&&L.deadline*1000<Date.now()?'CLOSED \u00b7 '+L.minted+' EXIST':'OPEN \u00b7 '+L.minted+' EXIST');
-r2.innerHTML='<span class="kind">'+KINDS[L.kind]+'</span><span class="mut">'+supply+'</span>';
+r2.innerHTML='<span class="kind">'+KINDS[L.kind]+(L.chroma===1?' · CAPPED':'')+'</span><span class="mut">'+supply+'</span>';
 m.appendChild(r2);
 /* primary: editions collect at creator price */
 const soldOut=L.kind===1&&L.minted>=L.supplyCap;

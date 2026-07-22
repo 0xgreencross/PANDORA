@@ -5903,7 +5903,9 @@ const W3={chainId:'0xaa36a7', chainName:'Sepolia',            /* FLIP TO MAINNET
   rpcs:['https://ethereum-sepolia-rpc.publicnode.com','https://1rpc.io/sepolia'],
   explorer:'https://sepolia.etherscan.io',
   FEE_UNIQUE:'0x2386f26fc10000', FEE_EDITION:'0x38d7ea4c68000',
-  SEL:{mintUnique:'0xf1ea2cd6',mintLimited:'0xfe43b8c7',mintOpen:'0x0d644bda',seedToToken:'0x1a40f1d3'}};
+  SEL:{mintUnique:'0xf1ea2cd6',mintLimited:'0xfe43b8c7',mintOpen:'0x0d644bda',seedToToken:'0x1a40f1d3',listings:'0x927fbfc8'},
+  /* v2 mint selectors — the mints grew a chromaCapped bool (CHROMA trait) */
+  SEL2:{mintUnique:'0xe91e1b16',mintLimited:'0xe63ad838',mintOpen:'0xe45ec504'}};
 const SBP={url:'https://llirnynoyarbvtxcekwy.supabase.co', key:'sb_publishable_0-do8FDOXiv-7LgxGqjxdA_74-QTOkq'};
 
 /* ---- minimal ABI encoder (tested against ethers) ---- */
@@ -5936,6 +5938,11 @@ async function rpcRaw(method, params){
 }
 const pubEthCall=(data)=>rpcRaw('eth_call',[{to:W3.contract,data},'latest']);
 async function seedToken(seed){ try{ return parseInt(await pubEthCall(W3.SEL.seedToToken+_hx(seed>>>0)),16)||0; }catch(e){ return -1; } }
+/* v2 detect: listings() only exists on the v2 contract. Cached once. */
+let _V2=null;
+async function isV2(){ if(_V2!==null)return _V2;
+  try{ await pubEthCall(W3.SEL.listings+_hx(1)+_hx(0)); _V2=true; }catch(e){ _V2=false; }
+  return _V2; }
 
 let WALLET=null;
 async function connectWallet(){
@@ -5994,21 +6001,24 @@ async function doMint(){
     const nameEl=document.getElementById('mname'), anonEl=document.getElementById('manon');
     const looped=(anonEl&&anonEl.checked)?'ANONYMOUS':((nameEl&&nameEl.value.trim())||'ANONYMOUS');
     if(looped.length>38){ mintStat('NAME TOO LONG (38 MAX)'); return; }
+    const v2=await isV2();
+    const SEL=v2?W3.SEL2:W3.SEL;
     const base=[{t:'u',v:seed},{t:'s',v:card},{t:'s',v:looped},{t:'s',v:String(c.scheme)},{t:'u',v:c.corr|0},{t:'u',v:c.voidamt|0}];
+    if(v2) base.push({t:'u',v:c.chromacap?1:0});   /* CHROMA: FULL SPECTRUM / CAPPED, sealed into the token */
     let data, value=W3.FEE_EDITION;
-    if(MKIND==='UNIQUE'){ data=encodeCall(W3.SEL.mintUnique, base); value=W3.FEE_UNIQUE; }
+    if(MKIND==='UNIQUE'){ data=encodeCall(SEL.mintUnique, base); value=W3.FEE_UNIQUE; }
     else if(MKIND==='LIMITED'){
       const sup=parseInt((document.getElementById('msupply')||{}).value,10);
       const pr=parseFloat((document.getElementById('mprice')||{}).value);
       if(!(sup>=2)){ mintStat('SUPPLY MUST BE 2+'); return; }
       if(!(pr>=0)){ mintStat('SET A PRICE (ETH, 0 OK)'); return; }
-      data=encodeCall(W3.SEL.mintLimited,[...base,{t:'u',v:sup},{t:'u',v:BigInt(Math.round(pr*1e6))*1000000000000n}]);
+      data=encodeCall(SEL.mintLimited,[...base,{t:'u',v:sup},{t:'u',v:BigInt(Math.round(pr*1e6))*1000000000000n}]);
     } else {
       const pr=parseFloat((document.getElementById('mprice')||{}).value);
       const days=parseInt((document.getElementById('mdays')||{}).value,10)||0;
       if(!(pr>=0)){ mintStat('SET A PRICE (ETH, 0 OK)'); return; }
       const dl=days>0? Math.floor(Date.now()/1000)+days*86400 : 0;
-      data=encodeCall(W3.SEL.mintOpen,[...base,{t:'u',v:dl},{t:'u',v:BigInt(Math.round(pr*1e6))*1000000000000n}]);
+      data=encodeCall(SEL.mintOpen,[...base,{t:'u',v:dl},{t:'u',v:BigInt(Math.round(pr*1e6))*1000000000000n}]);
     }
     const w=await connectWallet();
     mintStat('CAPTURING THE POSTER\u2026'); await uploadPoster(seed); await uploadPreview(seed);
@@ -6080,6 +6090,7 @@ function mirrorSeg(engId,hostId,rerender){
     b.addEventListener('click',()=>{
       if(busy)return;
       src.click();                              /* engine's own handler sets state */
+      if(engId==='chromaseg') state.chromacap=+b.dataset.v;  /* the engine defers this by a tick; set it now (same seam applyCard uses) so the button lights instantly */
       paint();
       if(rerender && lastBlob) generate();      /* a finished loop re-renders in the new colorway */
     });
