@@ -200,11 +200,32 @@ for(let i=0;i<80;i++){await new Promise(r=>setTimeout(r,3000));
 const rc=await rpcRaw('eth_getTransactionReceipt',[tx]).catch(()=>null);
 if(rc){toast(rc.status==='0x1'?'SEALED \u2713':'TRANSACTION REVERTED');return rc.status==='0x1';}}
 toast('STILL PENDING \u2014 CHECK EXPLORER');return false;}
+/* animated previews, memory-safe: every tile rests as a static poster PNG;
+   the looping 270² GIF plays ONLY while the tile is on screen (capped), and
+   scrolling away swaps the still back in, releasing the decoder. */
+const NOGIF=new Set(); let ANIM=0; const ANIM_MAX=14;
+const IO=new IntersectionObserver(es=>{for(const e of es){const im=e.target;
+const gif=im.dataset.gif; if(!gif)continue;
+if(e.isIntersecting){
+  if(im.dataset.on||NOGIF.has(gif)||ANIM>=ANIM_MAX)continue;
+  im.dataset.on='1';ANIM++;
+  const probe=new Image();
+  probe.onload=()=>{ if(im.dataset.on)im.src=gif; };
+  probe.onerror=()=>{ NOGIF.add(gif); delete im.dataset.on; ANIM--; };
+  probe.src=gif;
+}else if(im.dataset.on){ im.src=im.dataset.png; delete im.dataset.on; ANIM--; }
+}},{rootMargin:'160px'});
 async function tile(L){
 const t=document.createElement('div');t.className='tile';
 const a=document.createElement('div');a.className='art';
-const im=document.createElement('img');im.src=W3.posters+L.seed+'.png';im.alt=L.dna;
-im.addEventListener('error',()=>{a.innerHTML='<div class="ghost">'+L.dna+'</div>';});
+const im=document.createElement('img');im.loading='lazy';im.alt=L.dna;
+im.dataset.png=W3.posters+L.seed+'.png'; im.dataset.gif=W3.posters+L.seed+'.gif';
+im.src=im.dataset.png;
+im.addEventListener('error',()=>{
+  if(im.src===im.dataset.gif){ NOGIF.add(im.dataset.gif); delete im.dataset.on; ANIM--; im.src=im.dataset.png; }
+  else a.innerHTML='<div class="ghost">'+L.dna+'</div>';
+});
+IO.observe(im);
 a.appendChild(im);a.title='tap to resurrect this loop on the generator';
 a.addEventListener('click',()=>resurrect(L.dna));
 const m=document.createElement('div');m.className='meta';

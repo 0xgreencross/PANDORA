@@ -6011,7 +6011,7 @@ async function doMint(){
       data=encodeCall(W3.SEL.mintOpen,[...base,{t:'u',v:dl},{t:'u',v:BigInt(Math.round(pr*1e6))*1000000000000n}]);
     }
     const w=await connectWallet();
-    mintStat('CAPTURING THE POSTER\u2026'); await uploadPoster(seed);
+    mintStat('CAPTURING THE POSTER\u2026'); await uploadPoster(seed); await uploadPreview(seed);
     mintStat('AWAITING YOUR SIGNATURE\u2026');
     const tx=await ethereum.request({method:'eth_sendTransaction', params:[{from:w, to:W3.contract, value:value, data:data}]});
     mintStat('SEALING ON CHAIN\u2026 '+tx.slice(0,12)+'\u2026');
@@ -6188,15 +6188,102 @@ try{
     setTimeout(()=>{ const rb=$g('dnaload'); if(rb)rb.click(); },700); } }
 }catch(e){}
 
-/* seed watchdog: whenever the dna changes, ask the chain (verbatim) */
-let lastDna='';
+/* seed watchdog: whenever the dna changes, ask the chain — and SELF-HEAL:
+   a rendered loop whose seed is already minted backfills any missing poster
+   and animated preview into the bucket (INSERT-only storage: existing files
+   reject the write, so media stays immutable). This is how pre-shell mints
+   grow their thumbnails: resurrect them once. */
+let lastDna='', MINTED_CARD='', MINTED_SEED=0;
+const HEALED=new Set();
 setInterval(async()=>{
   const v=($g('dna')||{}).value||'';
-  if(v && v!==lastDna){ lastDna=v; hideMintedBand();
-    try{ const c=unpackCard(v); if(c){ const t=await seedToken(c.seed>>>0); if(t>0)showMintedBand(t); } }catch(e){}
+  if(v && v!==lastDna){ lastDna=v; hideMintedBand(); MINTED_CARD='';
+    try{ const c=unpackCard(v); if(c){ const t=await seedToken(c.seed>>>0);
+      if(t>0){ showMintedBand(t); MINTED_CARD=v; MINTED_SEED=c.seed>>>0; } } }catch(e){}
+  }
+  if(MINTED_CARD && MINTED_CARD===v && !busy && lastBlob && !HEALED.has(MINTED_SEED)){
+    HEALED.add(MINTED_SEED);
+    uploadPoster(MINTED_SEED); uploadPreview(MINTED_SEED);
   }
 }, 1500);
 })();
+
+/* ============================================================================
+   ANIMATED PREVIEW — shell-owned GIF89a writer. Re-encodes the player's
+   retained 540² index frames into a small looping 270² GIF with the exact
+   render palette, uploaded beside the poster as <seed>.gif. THE SEALED plays
+   these viewport-gated so many tiles never pile up in memory.
+   ========================================================================== */
+function pvGifEncode(frames, pal, srcDim, outDim, delayCs){
+  const step = srcDim / outDim;
+  const P = Math.min(pal.length, 256);
+  const out = [];
+  const push = (...b) => { for (const x of b) out.push(x & 255); };
+  const pushStr = s => { for (let i = 0; i < s.length; i++) push(s.charCodeAt(i)); };
+  pushStr('GIF89a');
+  push(outDim & 255, outDim >> 8, outDim & 255, outDim >> 8, 0xF7, 0, 0);
+  for (let i = 0; i < 256; i++) {
+    const c = i < P ? pal[i] : [0, 0, 0];
+    push(c[0], c[1], c[2]);
+  }
+  push(0x21, 0xFF, 0x0B); pushStr('NETSCAPE2.0'); push(3, 1, 0, 0, 0);
+  const N = frames.length;
+  const px = new Uint8Array(outDim * outDim);
+  for (let f = 0; f < N; f++) {
+    const src = frames[f];
+    let q = 0;
+    for (let y = 0; y < outDim; y++) {
+      const sy = (y * step) | 0;
+      for (let x = 0; x < outDim; x++) px[q++] = src[sy * srcDim + ((x * step) | 0)];
+    }
+    push(0x21, 0xF9, 4, 0, delayCs & 255, delayCs >> 8, 0, 0);
+    push(0x2C, 0, 0, 0, 0, outDim & 255, outDim >> 8, outDim & 255, outDim >> 8, 0);
+    push(8);
+    const CLEAR = 256, EOI = 257;
+    let dictSize, codeSize, dict;
+    const resetDict = () => { dict = new Map(); dictSize = 258; codeSize = 9; };
+    let acc = 0, accBits = 0;
+    const chunk = [];
+    const emit = code => {
+      acc |= code << accBits; accBits += codeSize;
+      while (accBits >= 8) { chunk.push(acc & 255); acc >>= 8; accBits -= 8; }
+    };
+    resetDict();
+    emit(CLEAR);
+    let prev = px[0];
+    for (let i = 1; i < px.length; i++) {
+      const k = (prev << 8) | px[i];
+      const hit = dict.get(k);
+      if (hit !== undefined) { prev = hit; continue; }
+      emit(prev);
+      dict.set(k, dictSize++);
+      if (dictSize === (1 << codeSize) + 1) {
+        if (codeSize < 12) codeSize++;
+        else { emit(CLEAR); resetDict(); }
+      }
+      prev = px[i];
+    }
+    emit(prev); emit(EOI);
+    if (accBits > 0) chunk.push(acc & 255);
+    for (let o = 0; o < chunk.length; o += 255) {
+      const n = Math.min(255, chunk.length - o);
+      push(n);
+      for (let j = 0; j < n; j++) push(chunk[o + j]);
+    }
+    push(0);
+  }
+  push(0x3B);
+  return new Uint8Array(out);
+}
+async function uploadPreview(seed){
+  try{
+    if(!(typeof PLAYER!=='undefined' && PLAYER.args)) return;
+    const [frames,pal,dim,N,delayMs]=PLAYER.args;
+    const gif=pvGifEncode(frames,pal,dim,270,Math.max(2,Math.round(delayMs/10)));
+    await fetch(SBP.url+'/storage/v1/object/posters/'+(seed>>>0)+'.gif',
+      {method:'POST',headers:{apikey:SBP.key,'Content-Type':'image/gif'},body:gif});
+  }catch(e){}
+}
 </script>
 </body>
 </html>
