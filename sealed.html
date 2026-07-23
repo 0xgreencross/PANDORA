@@ -137,9 +137,109 @@ if(MYLIKES.has(card))b.classList.add('on');
 b.title='TASTE \u2014 one like per wallet per loop, permanent. No unlikes; taste is a commitment.';
 b.addEventListener('click',ev=>{ev.stopPropagation();likeLoop(card,b);});return b;}
 const resurrect=card=>{location.href='/?dna='+encodeURIComponent(card);};
+/* ---- ENS — the chain may know a name; prefer it over the long address.
+        Shell-owned keccak256 + namehash; reverse-resolve then FORWARD-VERIFY
+        (a name only shows if it resolves back to the same address). ---- */
+function keccak256(bytes){
+  const RC=[0x0000000000000001n,0x0000000000008082n,0x800000000000808an,0x8000000080008000n,
+    0x000000000000808bn,0x0000000080000001n,0x8000000080008081n,0x8000000000008009n,
+    0x000000000000008an,0x0000000000000088n,0x0000000080008009n,0x000000008000000an,
+    0x000000008000808bn,0x800000000000008bn,0x8000000000008089n,0x8000000000008003n,
+    0x8000000000008002n,0x8000000000000080n,0x000000000000800an,0x800000008000000an,
+    0x8000000080008081n,0x8000000000008080n,0x0000000080000001n,0x8000000080008008n];
+  const RHO=[[0,36,3,41,18],[1,44,10,45,2],[62,6,43,15,61],[28,55,25,21,56],[27,20,39,8,14]];
+  const M=(1n<<64n)-1n;
+  const rot=(x,n)=>n===0?x:(((x<<BigInt(n))|(x>>BigInt(64-n)))&M);
+  const S=Array.from({length:5},()=>[0n,0n,0n,0n,0n]);
+  const rate=136;
+  const padLen=rate-(bytes.length%rate);
+  const p=new Uint8Array(bytes.length+padLen);
+  p.set(bytes); p[bytes.length]|=0x01; p[p.length-1]|=0x80;
+  for(let off=0;off<p.length;off+=rate){
+    for(let i=0;i<17;i++){
+      let lane=0n;
+      for(let b=7;b>=0;b--) lane=(lane<<8n)|BigInt(p[off+i*8+b]);
+      S[i%5][(i/5)|0]^=lane;
+    }
+    for(let rd=0;rd<24;rd++){
+      const C=[0,1,2,3,4].map(x=>S[x][0]^S[x][1]^S[x][2]^S[x][3]^S[x][4]);
+      const D=[0,1,2,3,4].map(x=>C[(x+4)%5]^rot(C[(x+1)%5],1));
+      for(let x=0;x<5;x++)for(let y=0;y<5;y++)S[x][y]^=D[x];
+      const B=Array.from({length:5},()=>[0n,0n,0n,0n,0n]);
+      for(let x=0;x<5;x++)for(let y=0;y<5;y++)B[y][(2*x+3*y)%5]=rot(S[x][y],RHO[x][y]);
+      for(let x=0;x<5;x++)for(let y=0;y<5;y++)S[x][y]=B[x][y]^((~B[(x+1)%5][y]&M)&B[(x+2)%5][y]);
+      S[0][0]^=RC[rd];
+    }
+  }
+  let out='';
+  for(let i=0;i<4;i++){
+    let lane=S[i%5][(i/5)|0];
+    for(let b=0;b<8;b++){ out+=Number(lane&0xffn).toString(16).padStart(2,'0'); lane>>=8n; }
+  }
+  return out;
+}
+const _hx2b=h=>{const a=new Uint8Array(h.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(h.substr(i*2,2),16);return a;};
+function namehash(name){
+  let node='0'.repeat(64);
+  if(name){const L=name.split('.');
+    for(let i=L.length-1;i>=0;i--)
+      node=keccak256(_hx2b(node+keccak256(new TextEncoder().encode(L[i]))));}
+  return node;
+}
+const ENS_RPCS=['https://ethereum-rpc.publicnode.com','https://1rpc.io/eth'];
+const ENS_REG='0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+const _ensDecStr=r=>{if(!r||r.length<130)return null;const b=r.slice(2);
+  const off=parseInt(b.slice(0,64),16)*2;const len=parseInt(b.slice(off,off+64),16);
+  if(!len)return null;let s='';
+  for(let i=0;i<len;i++)s+=String.fromCharCode(parseInt(b.slice(off+64+i*2,off+66+i*2),16));
+  try{return decodeURIComponent(escape(s));}catch(e){return s;}};
+const ENS_MEM={};
+async function ensName(addr){
+  addr=(addr||'').toLowerCase(); if(!addr.startsWith('0x'))return null;
+  if(ENS_MEM[addr]!==undefined)return ENS_MEM[addr];
+  let saved={}; try{saved=JSON.parse(localStorage.getItem('PNDR_ENS')||'{}');}catch(e){}
+  const hit=saved[addr];
+  if(hit&&Date.now()-hit.ts<86400000){ENS_MEM[addr]=hit.n;return hit.n;}
+  let name=null;
+  try{
+    const rpc=async(to,data)=>{for(const u of ENS_RPCS){try{
+      const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to,data},'latest']})});
+      const j=await r.json(); if(j&&j.result&&j.result!=='0x')return j.result;}catch(e){}}
+      return null;};
+    const node=namehash(addr.slice(2)+'.addr.reverse');
+    const rr=await rpc(ENS_REG,'0x0178b8bf'+node);
+    const resolver=rr&&rr.length>=66?'0x'+rr.slice(26,66):null;
+    if(resolver&&!/^0x0{40}$/.test(resolver)){
+      name=_ensDecStr(await rpc(resolver,'0x691f3431'+node));
+      if(name){
+        const fn=namehash(name);
+        const fr=await rpc(ENS_REG,'0x0178b8bf'+fn);
+        const fres=fr&&fr.length>=66?'0x'+fr.slice(26,66):null;
+        let fwd=null;
+        if(fres&&!/^0x0{40}$/.test(fres)){
+          const fa=await rpc(fres,'0x3b3b57de'+fn);
+          fwd=fa&&fa.length>=66?('0x'+fa.slice(26,66)).toLowerCase():null;
+        }
+        if(fwd!==addr)name=null;   /* unverified names never render */
+      }
+    }
+  }catch(e){name=null;}
+  ENS_MEM[addr]=name;
+  saved[addr]={n:name,ts:Date.now()};
+  try{localStorage.setItem('PNDR_ENS',JSON.stringify(saved));}catch(e){}
+  return name;
+}
+/* swap an element's short-address text for the verified name, keep 0x in the title */
+function ensify(el,addr,prefix,suffix){
+  ensName(addr).then(n=>{ if(!n||!el)return;
+    el.textContent=(prefix||'')+n+(suffix||'');
+    el.title=(el.title?el.title+' — ':'')+addr;
+  }).catch(()=>{});
+}
 
 
-/* one flip to mainnet: this W3 mirrors the box's */
+/* MAINNET — this W3 mirrors the box's (contract/DEPLOYMENTS.md) */
 const W3={chainId:'0x1', chainName:'Ethereum',
  contract:'0xe3a029de59741aa0631b83194ac1893a922296eb',
  rpcs:['https://ethereum-rpc.publicnode.com','https://1rpc.io/eth'],
@@ -257,6 +357,7 @@ for(const o of offers.slice(0,3)){
 const r4=document.createElement('div');r4.className='row';
 const lbl=document.createElement('span');lbl.className='mut';
 lbl.textContent=fmtEth(o.price)+' \u00b7 '+o.qty+' \u00d7 \u00b7 '+short(o.seller);
+ensify(lbl,o.seller,fmtEth(o.price)+' \u00b7 '+o.qty+' \u00d7 \u00b7 ');
 const b=document.createElement('button');b.className='act';b.textContent='BUY';
 b.title='BUY \u2014 the copy moves and the seller is paid 100%, in one transaction. No escrow, no fees, nothing held.';
 b.addEventListener('click',async ev=>{ev.stopPropagation();
@@ -299,7 +400,7 @@ $('status').textContent=(NEXT-1)+' SEALED'+(V2?'':' \u00b7 LISTINGS AWAKEN WITH 
 }catch(e){$('status').textContent='LEDGER UNREACHABLE';}}
 $('more').addEventListener('click',load);
 $('f-conn').addEventListener('click',async()=>{try{await connect();
-$('f-conn').textContent='\u25c8 '+short(WALLET);await loadLikes();
+$('f-conn').textContent='\u25c8 '+short(WALLET);ensify($('f-conn'),WALLET,'\u25c8 ');await loadLikes();
 $('grid').innerHTML='';NEXT=0;await load();}catch(e){}});
 (async()=>{await loadLikes();load();})();
 
