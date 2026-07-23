@@ -95,13 +95,13 @@ remix it, sell it, build on it. Made something? <a href="#submit" style="color:v
   <h1 style="font-size:12px">SUBMIT A WORK</h1>
   <div class="sub">Auto-published. The house prunes what rots. No login — the work speaks.</div>
   <div style="display:flex;flex-direction:column;gap:10px">
-    <input type="text" id="s-artist" maxlength="60" placeholder="ARTIST NAME *">
-    <input type="text" id="s-xhandle" maxlength="30" placeholder="X HANDLE (no @)">
-    <input type="text" id="s-url" maxlength="300" placeholder="LINK TO THE WORK *">
-    <input type="text" id="s-image" maxlength="300" placeholder="DIRECT IMAGE URL (optional)">
-    <input type="text" id="s-dna" maxlength="63" placeholder="SOURCE LOOP DNA (PNDR-…, optional)">
-    <textarea id="s-note" rows="3" maxlength="280" placeholder="ONE-LINE STATEMENT (optional)"></textarea>
-    <button class="act hot" id="s-go" style="padding:12px">HANG IT</button>
+    <input type="text" id="s-artist" maxlength="60" placeholder="ARTIST NAME *" title="ARTIST NAME — who made it. The only identity the wall requires.">
+    <input type="text" id="s-xhandle" maxlength="30" placeholder="X HANDLE (no @)" title="X HANDLE — optional. Lets visitors find you; the wall links it.">
+    <input type="text" id="s-url" maxlength="300" placeholder="LINK TO THE WORK *" title="LINK — where the work lives: your site, the listing, the print shop, the video. Required.">
+    <input type="text" id="s-image" maxlength="300" placeholder="DIRECT IMAGE URL (optional)" title="IMAGE — a direct image URL for the tile. Without it the wall shows your name on black.">
+    <input type="text" id="s-dna" maxlength="63" placeholder="SOURCE LOOP DNA (PNDR-…, optional)" title="SOURCE DNA — the card of the loop you built from. Ties your work to its genome and lets anyone resurrect the source.">
+    <textarea id="s-note" rows="3" maxlength="280" placeholder="ONE-LINE STATEMENT (optional)" title="STATEMENT — one line under the work. What you did to the ghost."></textarea>
+    <button class="act hot" id="s-go" style="padding:12px" title="HANG IT — auto-published to the walls, no login. The house prunes what rots.">HANG IT</button>
     <div id="s-stat" class="faint" style="font-size:8px;letter-spacing:.1em;min-height:12px"></div>
   </div>
 </section>
@@ -142,7 +142,7 @@ else toast('LIKE ERROR '+r.status);
 function likeBtn(card){const b=document.createElement('button');b.className='like';
 const n=LIKES.get(card)||0;b.textContent='\u2665 '+(n||'');
 if(MYLIKES.has(card))b.classList.add('on');
-b.title='like this loop \u2014 one per wallet, forever';
+b.title='TASTE \u2014 one like per wallet per loop, permanent. No unlikes; taste is a commitment.';
 b.addEventListener('click',ev=>{ev.stopPropagation();likeLoop(card,b);});return b;}
 const resurrect=card=>{location.href='/?dna='+encodeURIComponent(card);};
 
@@ -163,21 +163,21 @@ if(r.image){const im=document.createElement('img');im.src=r.image;im.alt=r.artis
 im.addEventListener('error',()=>{a.innerHTML='<div class="ghost">'+(r.artist||'')+'</div>';});
 a.appendChild(im);}else a.innerHTML='<div class="ghost">'+(r.artist||'WORK')+'</div>';
 a.addEventListener('click',()=>{if(r.url)window.open(r.url,'_blank','noopener');});
-a.title='view the work';
+a.title='VIEW WORK \u2014 leaves DITHERVOID for the artist\u2019s own wall.';
 const m=document.createElement('div');m.className='meta';
 const r1=document.createElement('div');r1.className='row';
 const nm=document.createElement('span');nm.textContent=r.artist||'ANONYMOUS';nm.style.color='var(--txt)';
 r1.appendChild(nm);
-if(r.xhandle){const x=document.createElement('a');x.className='faint';x.textContent='@'+r.xhandle;
+if(r.xhandle){const x=document.createElement('a');x.className='faint';x.textContent='@'+r.xhandle;x.title='@'+r.xhandle+' on X';
 x.href='https://x.com/'+encodeURIComponent(r.xhandle);x.target='_blank';x.rel='noopener';r1.appendChild(x);}
 m.appendChild(r1);
 if(r.statement){const st=document.createElement('div');st.className='mut';
 st.style.lineHeight='1.7';st.textContent=r.statement;m.appendChild(st);}
 const r2=document.createElement('div');r2.className='row';
-const v=document.createElement('button');v.className='act';v.textContent='VIEW WORK \u2197';
+const v=document.createElement('button');v.className='act';v.textContent='VIEW WORK \u2197';v.title='VIEW WORK \u2014 leaves DITHERVOID for the artist\u2019s own wall.';
 v.addEventListener('click',()=>window.open(r.url,'_blank','noopener'));r2.appendChild(v);
 if(r.dna){const res=document.createElement('button');res.className='act';res.textContent='\u27f3 SOURCE LOOP';
-res.title='resurrect the source loop on the generator';
+res.title='SOURCE LOOP \u2014 resurrects the loop this work was built from, byte-exact, on the generator.';
 res.addEventListener('click',()=>resurrect(r.dna));r2.appendChild(res);
 r2.appendChild(likeBtn(r.dna));}
 m.appendChild(r2);

@@ -90,14 +90,14 @@ input:focus,textarea:focus{outline:none;border-color:var(--line2);}
 owner alone. Tap any loop to resurrect it on the generator, byte-exact. What grows here
 matters for the next era.</div>
 <div class="toolbar">
-  <button id="f-all" aria-pressed="true">ALL GARDENS</button>
-  <button id="f-mine" aria-pressed="false">◈ MY GARDEN</button>
+  <button id="f-all" aria-pressed="true" title="ALL GARDENS — every plant from every wallet, newest first.">ALL GARDENS</button>
+  <button id="f-mine" aria-pressed="false" title="MY GARDEN — connect your wallet and see only your shelf. Planting stays free, no gas, ever.">◈ MY GARDEN</button>
   <span id="f-wallet" class="chipbtn" style="display:none"></span>
   <span id="status"></span>
 </div>
 <div class="grid" id="grid"></div>
 <div id="empty" style="display:none">NO LOOPS PLANTED HERE YET —<br>OPEN THE BOX, TAP GARDEN, SIGN. NO GAS, EVER.</div>
-<button id="more" style="display:none">MORE</button>
+<button id="more" style="display:none" title="MORE — deeper into the gardens; older plants.">MORE</button>
 
 </main>
 <div id="toast"></div>
@@ -135,7 +135,7 @@ else toast('LIKE ERROR '+r.status);
 function likeBtn(card){const b=document.createElement('button');b.className='like';
 const n=LIKES.get(card)||0;b.textContent='\u2665 '+(n||'');
 if(MYLIKES.has(card))b.classList.add('on');
-b.title='like this loop \u2014 one per wallet, forever';
+b.title='TASTE \u2014 one like per wallet per loop, permanent. No unlikes; taste is a commitment.';
 b.addEventListener('click',ev=>{ev.stopPropagation();likeLoop(card,b);});return b;}
 const resurrect=card=>{location.href='/?dna='+encodeURIComponent(card);};
 
@@ -161,12 +161,12 @@ const t=document.createElement('div');t.className='tile';
 const a=document.createElement('div');a.className='art';
 if(r.thumb){const im=document.createElement('img');im.src=r.thumb;im.alt=r.card;a.appendChild(im);}
 else a.innerHTML='<div class="ghost">'+r.card+'</div>';
-a.title='tap to resurrect this loop on the generator';
+a.title='RESURRECT \u2014 tap to rebuild this exact loop on the generator, byte-exact, from its DNA.';
 a.addEventListener('click',()=>resurrect(r.card));
 const m=document.createElement('div');m.className='meta';
 const row=document.createElement('div');row.className='row';
 const w=document.createElement('span');w.className='wallet';w.textContent=short(r.wallet);
-w.title='view this garden';
+w.title='THE GARDEN OF '+short(r.wallet)+' \u2014 tap to walk this wallet\u2019s shelf alone.';
 w.addEventListener('click',ev=>{ev.stopPropagation();setFilter(r.wallet);});
 row.appendChild(w);row.appendChild(likeBtn(r.card));
 m.appendChild(row);
@@ -175,6 +175,7 @@ function setFilter(w){FILTER=w;
 $('f-all').setAttribute('aria-pressed','false');$('f-mine').setAttribute('aria-pressed','false');
 const c=$('f-wallet');c.style.display='';c.textContent='GARDEN OF '+short(w)+' \u2715';
 history.replaceState(null,'','?w='+w);load(true);}
+$('f-wallet').title='CLEAR \u2014 leave this shelf, back to all gardens.';
 $('f-wallet').addEventListener('click',()=>{FILTER=null;$('f-wallet').style.display='none';
 $('f-all').setAttribute('aria-pressed','true');history.replaceState(null,'','gardens.html');load(true);});
 $('f-all').addEventListener('click',()=>{FILTER=null;$('f-wallet').style.display='none';

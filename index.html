@@ -6080,12 +6080,18 @@ function wireSlider(mine,eng){
 wireSlider('pub-corr','corr');
 wireSlider('pub-void','voidamt');
 
-/* 4 · chroma + palette grids mirror the engine's own seg buttons (SCHEMES keys) */
+/* 4 · chroma + palette grids mirror the engine's own seg buttons (SCHEMES keys).
+       Tooltips come from the engine's own TIP layer (TIP_PAL/TIP_SEG via tipFor)
+       — every colorway individually described in canon. */
+const CHROMA_TIPS={
+  '0':'FULL SPECTRUM — the whole palette breathes: every stop, every gradient the colorway owns.',
+  '1':'CAPPED — quantized to a few flat fields: pop discipline, color as punctuation.'};
 function mirrorSeg(engId,hostId,rerender){
   const host=$g(hostId); host.innerHTML='';
   [...$g(engId).children].forEach(src=>{
     const b=document.createElement('button');
     b.textContent=src.textContent; b.dataset.v=src.dataset.v;
+    b.title=(engId==='chromaseg'?CHROMA_TIPS[src.dataset.v]:(typeof tipFor==='function'&&tipFor(src)))||'';
     b.setAttribute('aria-pressed',src.getAttribute('aria-pressed')||'false');
     b.addEventListener('click',()=>{
       if(busy)return;
@@ -6183,6 +6189,46 @@ document.querySelectorAll('.mkind button').forEach(b=>b.addEventListener('click'
   $g('f-days').classList.toggle('pubhide', MKIND!=='OPEN');
 }));
 $g('mseal').addEventListener('click', doMint);
+
+/* tooltips — the engine's own TIP layer surfaced on every shell control,
+   plus canon lines for the organs the shell itself grew. Nothing generic. */
+(function(){
+  const T=(id,t)=>{const e=$g(id); if(e&&t)e.title=t;};
+  T('stage','THE MONITOR — tap to open the box: full roulette — colorway, source, corruption, seed, a random sigil storm — and immediate transmit. Every tap mints a loop no one has seen and no one will see again.');
+  T('pub-corr',TIP_ID.corr);
+  T('pub-void',TIP_ID.voidamt);
+  T('pub-splice','SPLICE — renders the loop from the current dials. Same seed + same dials = the exact same loop, forever.');
+  T('pub-download',TIP_ID.download);
+  T('pub-xpost',TIP_ID.xsave);
+  T('pub-garden',TIP_ID.gplant);
+  T('pub-mint','MINT — seals this loop on Ethereum. One seed, one token, one chance: once sealed, this DNA can never be minted again, by anyone.');
+  T('pub-seed',TIP_ID.seed);
+  T('pub-dna',TIP_ID.dna);
+  T('pub-resurrect',TIP_ID.dnago);
+  T('instrbtn','INSTRUCTIONS — what the box is, what is free, what sealing costs, and where the rooms are.');
+  T('pubosd','THE READOUT — the machine narrates its state here: STANDBY, RENDERING, or the finished loop and its weight.');
+  document.querySelectorAll('#shellrooms a').forEach(a=>{
+    a.title={'gardens.html':'GARDENS — every wallet a shelf: signed, public, curated by its owner alone. Tap any loop there to resurrect it here.',
+      'showcase.html':'SHOWCASE — works made with the loops. Everything is CC0; the walls hold what strangers built.',
+      'sealed.html':'THE SEALED — every loop sealed on the chain. Collect editions, list and buy 1/1s and copies; the seller is paid 100%, in the same transaction.'}[a.getAttribute('href')]||'';
+  });
+  /* mint modal organs */
+  T('mx','CLOSE — nothing is lost; the loop stays rendered.');
+  document.querySelectorAll('.mkind button').forEach(b=>{
+    b.title={UNIQUE:'1/1 — a single sealed copy, forever. Creation fee 0.01 ETH straight to the artist; the token is yours to keep, or to list in THE SEALED.',
+      LIMITED:'LIMITED — you set the supply (2+) and your price. The contract runs the sale and pays you 100%, instantly, every copy.',
+      OPEN:'OPEN — your price, an optional closing window, no cap. Anyone collects while it breathes; every sale pays you instantly.'}[b.dataset.k]||'';
+  });
+  T('mname','LOOPED BY — the name sealed into the token metadata, forever. 38 characters of posterity.');
+  T('manon','ANONYMOUS — seal the loop without a name. The work speaks; you do not have to.');
+  T('mseal','SEAL IT — one transaction: pays the creation fee, writes the DNA on-chain forever, mints copy Nº1 to you.');
+  T('msupply','EDITION SUPPLY — how many copies will ever exist. Locked at sealing; not even you can raise it.');
+  T('mprice','YOUR PRICE — per copy, in ETH. Zero is a legitimate price; every sale pays you 100%.');
+  T('mdays','OPEN FOR — days until the edition closes. Zero keeps it open forever.');
+  /* the engine titled its own X-modal buttons via TIP_ID; give CLOSE a voice */
+  T('xm-close','CLOSE — the transmission stays rendered; save or compose any time.');
+  T('ix','CLOSE');
+})();
 
 /* instructions */
 $g('instr-contract').href=W3.explorer+'/address/'+W3.contract;

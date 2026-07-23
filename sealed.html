@@ -90,13 +90,13 @@ input:focus,textarea:focus{outline:none;border-color:var(--line2);}
 price; anything — 1/1s included — can be listed and bought here, seller paid 100%
 in the same transaction. The contract holds nothing. Tap the art to resurrect the loop.</div>
 <div class="toolbar">
-  <button id="f-conn">◈ CONNECT WALLET</button>
+  <button id="f-conn" title="CONNECT WALLET — Ethereum only, one tap. Needed to collect, list, buy, or like; never to look.">◈ CONNECT WALLET</button>
   <span id="net" class="faint" style="font-size:8px;letter-spacing:.1em"></span>
   <span id="status"></span>
 </div>
 <div class="grid" id="grid" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))"></div>
 <div id="empty" style="display:none">NOTHING SEALED YET —<br>THE FIRST GHOST TO ENTER THE LEDGER HANGS HERE.</div>
-<button id="more" style="display:none">MORE</button>
+<button id="more" style="display:none" title="MORE — deeper into the ledger; earlier seals.">MORE</button>
 
 </main>
 <div id="toast"></div>
@@ -134,7 +134,7 @@ else toast('LIKE ERROR '+r.status);
 function likeBtn(card){const b=document.createElement('button');b.className='like';
 const n=LIKES.get(card)||0;b.textContent='\u2665 '+(n||'');
 if(MYLIKES.has(card))b.classList.add('on');
-b.title='like this loop \u2014 one per wallet, forever';
+b.title='TASTE \u2014 one like per wallet per loop, permanent. No unlikes; taste is a commitment.';
 b.addEventListener('click',ev=>{ev.stopPropagation();likeLoop(card,b);});return b;}
 const resurrect=card=>{location.href='/?dna='+encodeURIComponent(card);};
 
@@ -221,13 +221,14 @@ const t=document.createElement('div');t.className='tile';
 const a=document.createElement('div');a.className='art';
 const im=document.createElement('img');im.loading='lazy';im.alt=L.dna;
 im.dataset.png=W3.posters+L.seed+'.png'; im.dataset.gif=W3.posters+L.seed+'.gif';
+im.title='';
 im.src=im.dataset.png;
 im.addEventListener('error',()=>{
   if(im.src===im.dataset.gif){ NOGIF.add(im.dataset.gif); delete im.dataset.on; ANIM--; im.src=im.dataset.png; }
   else a.innerHTML='<div class="ghost">'+L.dna+'</div>';
 });
 IO.observe(im);
-a.appendChild(im);a.title='tap to resurrect this loop on the generator';
+a.appendChild(im);a.title='RESURRECT \u2014 tap to rebuild this exact loop on the generator, byte-exact, from its sealed DNA.';
 a.addEventListener('click',()=>resurrect(L.dna));
 const m=document.createElement('div');m.className='meta';
 const r1=document.createElement('div');r1.className='row';
@@ -245,7 +246,7 @@ if(L.kind!==0&&!soldOut&&!closed){
 const r3=document.createElement('div');r3.className='row';
 const b=document.createElement('button');b.className='act hot';
 b.textContent='\u26d3 COLLECT \u00b7 '+fmtEth(L.price);
-b.title='mint a copy at the creator\u2019s price \u2014 pays the creator 100%, in-tx';
+b.title='COLLECT \u2014 mints a copy at the creator\u2019s price. The creator is paid 100%, in the same transaction; the contract keeps nothing.';
 b.addEventListener('click',async ev=>{ev.stopPropagation();
 await sendTx(encU(W3.SEL.collect,[L.id,1]),L.price);});
 r3.appendChild(b);m.appendChild(r3);}
@@ -257,7 +258,7 @@ const r4=document.createElement('div');r4.className='row';
 const lbl=document.createElement('span');lbl.className='mut';
 lbl.textContent=fmtEth(o.price)+' \u00b7 '+o.qty+' \u00d7 \u00b7 '+short(o.seller);
 const b=document.createElement('button');b.className='act';b.textContent='BUY';
-b.title='seller takes 100%, in the same transaction';
+b.title='BUY \u2014 the copy moves and the seller is paid 100%, in one transaction. No escrow, no fees, nothing held.';
 b.addEventListener('click',async ev=>{ev.stopPropagation();
 await sendTx(W3.SEL.buy+_hx(L.id)+_hx(o.seller)+_hx(1),o.price);});
 r4.appendChild(lbl);r4.appendChild(b);m.appendChild(r4);}
@@ -266,7 +267,7 @@ const bal=Number(word(await ethCall(W3.SEL.balanceOf+_hx(WALLET)+_hx(L.id)),0));
 if(bal>0){const r5=document.createElement('div');r5.className='row';
 const own=document.createElement('span');own.className='faint';own.textContent='YOU HOLD '+bal;
 const lb=document.createElement('button');lb.className='act';lb.textContent='LIST';
-lb.title='list your copies for sale \u2014 you are paid 100%';
+lb.title='LIST \u2014 offer your copies at your price in THE SEALED. Copies never leave your wallet until sold; every sale pays you 100%.';
 lb.addEventListener('click',async ev=>{ev.stopPropagation();
 const p=prompt('PRICE PER COPY (ETH)');if(!p||!(parseFloat(p)>0))return;
 const q=bal>1?parseInt(prompt('COPIES TO LIST (1-'+bal+')','1'),10)||1:1;
@@ -274,7 +275,7 @@ const wei=BigInt(Math.round(parseFloat(p)*1e6))*1000000000000n;
 await sendTx(encU(W3.SEL.list,[L.id,Math.min(q,bal),wei]),0n);});
 r5.appendChild(own);r5.appendChild(lb);
 const mine=SELLERS[L.id]&&[...SELLERS[L.id]].some(s=>s===WALLET);
-if(mine){const db=document.createElement('button');db.className='act';db.textContent='DELIST';
+if(mine){const db=document.createElement('button');db.className='act';db.textContent='DELIST';db.title='DELIST \u2014 withdraws your offer. The copies never left your wallet.';
 db.addEventListener('click',async ev=>{ev.stopPropagation();
 await sendTx(encU(W3.SEL.delist,[L.id]),0n);});r5.appendChild(db);}
 m.appendChild(r5);}}catch(e){}}
