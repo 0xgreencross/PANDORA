@@ -76,6 +76,20 @@ display:none;z-index:50;max-width:90vw;}
 input[type=text],input[type=number],textarea{background:var(--well);border:1px solid var(--line);
 padding:9px;font-size:10px;font-family:var(--fT);width:100%;}
 input:focus,textarea:focus{outline:none;border-color:var(--line2);}
+/* wallet rites modal */
+#wmodal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
+background:rgba(4,4,6,.92);padding:14px;}
+#wbox{width:min(360px,94vw);max-height:88dvh;overflow-y:auto;background:var(--panel);
+border:1px solid var(--line);padding:18px;}
+#wttl{font-size:12px;letter-spacing:.2em;color:var(--txt);margin-bottom:8px;}
+#wsub{font-size:8.5px;color:var(--mut);letter-spacing:.06em;line-height:1.8;margin-bottom:14px;}
+.wopt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--well);
+color:var(--txt);font-size:10px;letter-spacing:.1em;padding:12px;margin-bottom:8px;}
+.wopt:hover{border-color:var(--cyan);color:var(--cyan);}
+#wnone{font-size:8.5px;color:var(--mut);letter-spacing:.08em;line-height:1.8;margin-bottom:10px;}
+#wcancel{display:block;width:100%;border:1px solid var(--line);background:none;
+color:var(--mut);font-size:9px;letter-spacing:.14em;padding:10px;margin-top:4px;}
+#wcancel:hover{color:var(--txt);border-color:var(--line2);}
 </style>
 </head>
 <body>
@@ -113,11 +127,64 @@ if(!r.ok)throw new Error('SB '+r.status);return r.json();}
 async function sbPost(table,body){return fetch(SB.url+'/rest/v1/'+table,{method:'POST',
 headers:{apikey:SB.key,'Content-Type':'application/json','Prefer':'return=minimal'},
 body:JSON.stringify(body)});}
-let WALLET=null;
+let WALLET=null, WPROV=null;
+/* WALLET RITES \u2014 the room asks; the curator chooses the keeper. Phones never
+   get a built-in wallet assumed (Brave's is offered, not imposed); a handoff
+   deep-links this page into the chosen wallet's own browser. */
+const W6963=[];
+try{
+window.addEventListener('eip6963:announceProvider',e=>{const d=e.detail;
+if(d&&d.provider&&d.info&&!W6963.some(x=>x.info&&x.info.uuid===d.info.uuid))W6963.push(d);});
+window.dispatchEvent(new Event('eip6963:requestProvider'));
+}catch(e){}
+const PUB_MOBILE=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function walletHandoffURL(kind){
+const here=location.href;
+if(kind==='metamask')return 'https://metamask.app.link/dapp/'+here.replace(/^https?:\/\//,'');
+if(kind==='coinbase')return 'https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(here);
+if(kind==='trust')return 'https://link.trustwallet.com/open_url?coin_id=60&url='+encodeURIComponent(here);
+return here;}
+function walletModal(){
+return new Promise((res,rej)=>{
+const old=document.getElementById('wmodal');if(old)old.remove();
+const wrap=document.createElement('div');wrap.id='wmodal';
+const inj=W6963.slice();
+if(!inj.length&&window.ethereum)
+inj.push({info:{name:(window.ethereum.isBraveWallet?'BRAVE WALLET \u00b7 THIS BROWSER'
+:window.ethereum.isMetaMask?'METAMASK \u00b7 THIS BROWSER':'THIS BROWSER\u2019S WALLET')},provider:window.ethereum});
+let h='<div id="wbox"><div id="wttl">SUMMON A WALLET</div>'
++'<div id="wsub">CHOOSE THE KEEPER OF YOUR KEYS.'
++(PUB_MOBILE?' A HANDOFF \u2197 OPENS THIS PAGE IN THE WALLET\u2019S OWN BROWSER \u2014 TAP THE SAME BUTTON AGAIN THERE TO SIGN.':'')+'</div>';
+inj.forEach((p,i)=>{h+='<button class="wopt" data-i="'+i+'">\u25c8 '
++String((p.info&&p.info.name)||'WALLET').toUpperCase().replace(/</g,'')+'</button>';});
+if(PUB_MOBILE){
+h+='<button class="wopt" data-link="metamask">\u25c6 METAMASK \u2197</button>'
++'<button class="wopt" data-link="coinbase">\u25c6 COINBASE WALLET \u2197</button>'
++'<button class="wopt" data-link="trust">\u25c6 TRUST WALLET \u2197</button>';}
+if(!inj.length&&!PUB_MOBILE)h+='<div id="wnone">NO WALLET ANNOUNCED \u2014 INSTALL METAMASK, THEN RETURN.</div>';
+h+='<button id="wcancel">CANCEL</button></div>';
+wrap.innerHTML=h;document.body.appendChild(wrap);
+wrap.addEventListener('click',e=>{
+const b=e.target.closest('button');
+if(!b){if(e.target===wrap){wrap.remove();rej(new Error('wallet choice cancelled'));}return;}
+if(b.id==='wcancel'){wrap.remove();rej(new Error('wallet choice cancelled'));return;}
+if(b.dataset.link){location.href=walletHandoffURL(b.dataset.link);return;}
+wrap.remove();res(inj[+b.dataset.i].provider);});});}
+async function pickProvider(){
+if(WPROV)return WPROV;
+const e=window.ethereum;
+if(PUB_MOBILE){
+if(e&&!e.isBraveWallet)return WPROV=e;
+return WPROV=await walletModal();}
+if(W6963.length>1)return WPROV=await walletModal();
+if(W6963.length===1)return WPROV=W6963[0].provider;
+if(e)return WPROV=e;
+toast('NO WALLET FOUND \u2014 INSTALL METAMASK');throw new Error('no wallet');}
 async function connect(){
 if(WALLET)return WALLET;
-if(!window.ethereum){toast('NO WALLET FOUND \u2014 INSTALL METAMASK');throw new Error('no wallet');}
-const a=await ethereum.request({method:'eth_requestAccounts'});WALLET=a[0].toLowerCase();return WALLET;}
+const P=await pickProvider();
+const a=await P.request({method:'eth_requestAccounts'});WALLET=a[0].toLowerCase();return WALLET;}
 /* likes: attach to LOOPS (wallet+card), permanent, one per wallet */
 let LIKES=new Map(), MYLIKES=new Set();
 async function loadLikes(){try{

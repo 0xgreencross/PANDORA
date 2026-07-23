@@ -216,6 +216,21 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
 #mfee{font-size:9px;color:var(--mut);margin-top:12px;line-height:1.7;}
 .pubhide{display:none;}
 
+/* ---- wallet rites modal — the curator chooses the keeper of the keys ---- */
+#wmodal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
+  background:rgba(4,4,6,.92);padding:14px;}
+#wbox{width:min(360px,94vw);max-height:88dvh;overflow-y:auto;background:var(--panel);
+  border:1px solid var(--line);padding:18px;}
+#wttl{font-size:12px;letter-spacing:.2em;color:var(--txt);margin-bottom:8px;}
+#wsub{font-size:8.5px;color:var(--mut);letter-spacing:.06em;line-height:1.8;margin-bottom:14px;}
+.wopt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#000;
+  color:var(--txt);font-size:10px;letter-spacing:.1em;padding:12px;margin-bottom:8px;}
+.wopt:hover{border-color:var(--cyan);color:var(--cyan);}
+#wnone{font-size:8.5px;color:var(--mut);letter-spacing:.08em;line-height:1.8;margin-bottom:10px;}
+#wcancel{display:block;width:100%;border:1px solid var(--line);background:none;
+  color:var(--mut);font-size:9px;letter-spacing:.14em;padding:10px;margin-top:4px;}
+#wcancel:hover{color:var(--txt);border-color:var(--line2,var(--line));}
+
 /* ---- X transmission modal — the engine's own organ (f3 behavior, verbatim);
         the shell only relocates it to the body and makes it fit the screen ---- */
 #xmodal{position:fixed;inset:0;z-index:65;display:none;background:rgba(4,4,6,.92);
@@ -5984,14 +5999,79 @@ async function isV2(){ if(_V2!==null)return _V2;
   try{ await pubEthCall(W3.SEL.listings+_hx(1)+_hx(0)); _V2=true; }catch(e){ _V2=false; }
   return _V2; }
 
-let WALLET=null;
+let WALLET=null, WPROV=null;
+/* ---- WALLET RITES \u2014 the chain asks; the curator chooses the keeper.
+   The box never assumes a phone's built-in wallet (Brave taught us that).
+   EIP-6963 providers are collected; on phones the box asks, and can hand
+   this exact loop to a wallet's own browser via deep link. ---- */
+const W6963=[];
+try{
+  window.addEventListener('eip6963:announceProvider',e=>{ const d=e.detail;
+    if(d&&d.provider&&d.info&&!W6963.some(x=>x.info&&x.info.uuid===d.info.uuid))W6963.push(d); });
+  window.dispatchEvent(new Event('eip6963:requestProvider'));
+}catch(e){}
+const PUB_MOBILE=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+  ||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function walletHandoffURL(kind){
+  const card=(document.getElementById('dna')||{}).value||'';
+  const here=location.origin+'/'+(card?'?dna='+encodeURIComponent(card):'');
+  if(kind==='metamask') return 'https://metamask.app.link/dapp/'+here.replace(/^https?:\/\//,'');
+  if(kind==='coinbase') return 'https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(here);
+  if(kind==='trust')    return 'https://link.trustwallet.com/open_url?coin_id=60&url='+encodeURIComponent(here);
+  return here;
+}
+function walletModal(){
+  return new Promise((res,rej)=>{
+    const old=document.getElementById('wmodal'); if(old)old.remove();
+    const wrap=document.createElement('div'); wrap.id='wmodal';
+    const inj=W6963.slice();
+    if(!inj.length&&window.ethereum)
+      inj.push({info:{name:(window.ethereum.isBraveWallet?'BRAVE WALLET \u00b7 THIS BROWSER'
+        :window.ethereum.isMetaMask?'METAMASK \u00b7 THIS BROWSER':'THIS BROWSER\u2019S WALLET')},provider:window.ethereum});
+    let h='<div id="wbox"><div id="wttl">SUMMON A WALLET</div>'
+      +'<div id="wsub">CHOOSE THE KEEPER OF YOUR KEYS.'
+      +(PUB_MOBILE?' A HANDOFF \u2197 CARRIES THIS EXACT LOOP INTO THE WALLET\u2019S OWN BROWSER \u2014 TAP THE SAME BUTTON AGAIN THERE TO SIGN.':'')+'</div>';
+    inj.forEach((p,i)=>{ h+='<button class="wopt" data-i="'+i+'">\u25c8 '
+      +String((p.info&&p.info.name)||'WALLET').toUpperCase().replace(/</g,'')+'</button>'; });
+    if(PUB_MOBILE){
+      h+='<button class="wopt" data-link="metamask">\u25c6 METAMASK \u2197</button>'
+       +'<button class="wopt" data-link="coinbase">\u25c6 COINBASE WALLET \u2197</button>'
+       +'<button class="wopt" data-link="trust">\u25c6 TRUST WALLET \u2197</button>';
+    }
+    if(!inj.length&&!PUB_MOBILE)
+      h+='<div id="wnone">NO WALLET ANNOUNCED \u2014 INSTALL METAMASK, THEN RETURN.</div>';
+    h+='<button id="wcancel">CANCEL</button></div>';
+    wrap.innerHTML=h; document.body.appendChild(wrap);
+    wrap.addEventListener('click',e=>{
+      const b=e.target.closest('button');
+      if(!b){ if(e.target===wrap){ wrap.remove(); rej(new Error('wallet choice cancelled')); } return; }
+      if(b.id==='wcancel'){ wrap.remove(); rej(new Error('wallet choice cancelled')); return; }
+      if(b.dataset.link){ location.href=walletHandoffURL(b.dataset.link); return; } /* handoff \u2014 never resolves */
+      wrap.remove(); res(inj[+b.dataset.i].provider);
+    });
+  });
+}
+async function pickProvider(){
+  if(WPROV)return WPROV;
+  const e=window.ethereum;
+  if(PUB_MOBILE){
+    /* inside a wallet's own browser (MetaMask, Coinbase, Trust\u2026) that IS the
+       choice; Brave's built-in is never assumed \u2014 curator's law. */
+    if(e&&!e.isBraveWallet)return WPROV=e;
+    return WPROV=await walletModal();
+  }
+  if(W6963.length>1)return WPROV=await walletModal();
+  if(W6963.length===1)return WPROV=W6963[0].provider;
+  if(e)return WPROV=e;
+  pubOsd('NO WALLET FOUND \u2014 INSTALL METAMASK'); throw new Error('no wallet');
+}
 async function connectWallet(){
-  if(!window.ethereum){ pubOsd('NO WALLET FOUND \u2014 INSTALL METAMASK'); throw new Error('no wallet'); }
-  const a=await ethereum.request({method:'eth_requestAccounts'}); WALLET=a[0];
-  const cid=await ethereum.request({method:'eth_chainId'});
+  const P=await pickProvider();
+  const a=await P.request({method:'eth_requestAccounts'}); WALLET=a[0];
+  const cid=await P.request({method:'eth_chainId'});
   if(cid!==W3.chainId){
-    try{ await ethereum.request({method:'wallet_switchEthereumChain', params:[{chainId:W3.chainId}]}); }
-    catch(e){ pubOsd('SWITCH WALLET TO '+W3.chainName.toUpperCase()); throw e; }
+    try{ await P.request({method:'wallet_switchEthereumChain', params:[{chainId:W3.chainId}]}); }
+    catch(e2){ pubOsd('SWITCH WALLET TO '+W3.chainName.toUpperCase()); throw e2; }
   }
   return WALLET;
 }
@@ -6003,7 +6083,7 @@ async function gardenAuth(){
   let g=null; try{ g=JSON.parse(localStorage.getItem('PNDR_GDN')||'null'); }catch(e){}
   if(g && g.w===w) return g;
   const msg='DITHERVOID // PANDORA \u2014 GARDEN KEY\nThis signature only proves this garden is yours.\nNo transaction. No gas. No access to funds.';
-  const sig=await ethereum.request({method:'personal_sign', params:[msg, w]});
+  const sig=await WPROV.request({method:'personal_sign', params:[msg, w]});
   g={w:w, sig:sig}; localStorage.setItem('PNDR_GDN', JSON.stringify(g)); return g;
 }
 function pubThumb(){ const c=document.getElementById('view'); const t=document.createElement('canvas'); t.width=t.height=128; t.getContext('2d').drawImage(c,0,0,128,128); return t.toDataURL('image/jpeg',0.72); }
@@ -6063,7 +6143,7 @@ async function doMint(){
     const w=await connectWallet();
     mintStat('CAPTURING THE POSTER\u2026'); await uploadPoster(seed); await uploadPreview(seed);
     mintStat('AWAITING YOUR SIGNATURE\u2026');
-    const tx=await ethereum.request({method:'eth_sendTransaction', params:[{from:w, to:W3.contract, value:value, data:data}]});
+    const tx=await WPROV.request({method:'eth_sendTransaction', params:[{from:w, to:W3.contract, value:value, data:data}]});
     mintStat('SEALING ON CHAIN\u2026 '+tx.slice(0,12)+'\u2026');
     for(let i=0;i<80;i++){
       await new Promise(r=>setTimeout(r,3000));
@@ -6119,6 +6199,28 @@ function pubRitual(id){ if(busy){ RUN++; busy=false; killPool(); } $g(id).click(
 $g('pub-dice').addEventListener('click',()=>pubRitual('dice'));
 $g('pub-mutate').addEventListener('click',()=>{ if(busy)return; $g('mutate').click(); });
 $g('pub-oblivion').addEventListener('click',()=>pubRitual('oblivion'));
+
+/* 2c · X LAUNCH OVERRIDE (shell-owned; the engine's function binding is
+       reassigned, its bytes untouched). The twitter:// custom scheme summons
+       an iOS "switch apps?" interrogation — Brave shows the whole raw payload
+       and the timed web fallback races the dialog. The https intent is a
+       universal link: the X app claims it directly with no dialog, and the
+       web composer is the graceful fallback when the app is absent. */
+xLaunch=function(txt){
+  const enc=encodeURIComponent(txt);
+  const web='https://x.com/intent/tweet?text='+enc;
+  const ua=navigator.userAgent||'';
+  const iOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const android=/Android/i.test(ua);
+  if(android){
+    location.href='intent://post?message='+enc
+      +'#Intent;scheme=twitter;package=com.twitter.android;S.browser_fallback_url='
+      +encodeURIComponent(web)+';end';
+    return;
+  }
+  if(iOS){ location.href=web; return; }
+  window.open(web,'_blank','noopener');
+};
 
 /* 3 · sliders → engine state through the applyCard-proven seam */
 function wireSlider(mine,eng){
