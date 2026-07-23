@@ -23,5 +23,14 @@
   bought cross-wallet (0x6963c5…63ea) → seller credited exactly 0.05 in-tx,
   listing self-cleared, contract holds 0 wei.
 
-## Mainnet — pending
-- Same ceremony. REQUIRES: real posters bucket URL as _imageBase.
+## MAINNET — 2026-07-23 — **THE LEDGER. Wired into the site.**
+- Contract: 0xe3a029de59741aa0631b83194ac1893a922296eb
+- Deploy tx: 0x4566c7373914eb5628b3f53b9d07826806200d6805f5069f1792919a93525e0d (block 25592810, gas 3,842,325, ~0.0004 ETH at 0.095 gwei)
+- Deployer/owner: 0x0dd399a7ed92283e4983c2974fe377070d67f4eb
+- Compiler: 0.8.24+commit.e11b9ed9, cancun, optimizer 800, viaIR — deployed code 16,619 bytes;
+  code-body SHA-256 byte-identical to the tested artifact AND the Sepolia v2 deploy
+- Source verified: Sourcify + Blockscout (auto, via Remix)
+- Constructor: "EIDOLON E8.0" / "https://dithervoid.art/?dna=" / posters bucket public URL
+- On-chain state verified post-deploy: owner, ARTIST, FEE_UNIQUE 0.01, FEE_EDITION 0.001,
+  currentEngine, engineRenderer, imageBase, listings() live
+- nextId = 1 at flip: NO test mint — the first real seed is the artist's, chosen deliberately.

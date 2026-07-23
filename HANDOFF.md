@@ -65,6 +65,13 @@ Repo: github.com/0xgreencross/PANDORA · Live: dithervoid.art (GitHub Pages, cus
   in index.html + sealed.html, THEN mainnet ceremony on v2. The v1 Sepolia
   0x48b1… remains rehearsal history. LOCAL SYNC LAW: every push same-turn
   syncs his PANDORA-PROJECT/repo clone (see Cowork memory).
+  ---- 2026-07-23 MAINNET ----
+  PANDORA v2 IS ON MAINNET: 0xe3a029de59741aa0631b83194ac1893a922296eb
+  (deploy tx 0x4566c737…525e0d, block 25592810, Sourcify+Blockscout verified,
+  code byte-identical to tested artifact). Site W3 flipped to mainnet
+  (chainId 0x1, ethereum-rpc.publicnode.com + 1rpc.io/eth, etherscan.io).
+  Ledger virgin at flip (nextId 1) — first real seed is the artist's.
+  Sepolia v2 0x5fc2ea02 remains rehearsal history (token #1 + first trade).
   ==============================================================================
   The ground-up 3D rebuild and ACTIVE instrument. Same DNA v5. Approved look =
   E4.0 TABULA RASA; cycle-6 census on it: 37 keeps in one sitting, all ten
