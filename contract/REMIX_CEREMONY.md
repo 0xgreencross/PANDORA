@@ -15,18 +15,27 @@ compile, zero errors expected. Deployed size must read ~16,619 bytes.
 3. _imageBase:      https://llirnynoyarbvtxcekwy.supabase.co/storage/v1/object/public/posters/
 
 ## Order of operations
+0. HARVEST A REAL GENOME FIRST. On dithervoid.art: tap the box, let it
+   finish, then copy the SEED number and the full DNA card from the rail.
+   LAW: only real cards enter the ledger — a made-up dna string mints a
+   token that can NEVER resurrect (v1's token #1 died exactly this way;
+   its "PNDR-REHEARSAL-0001" is not a genome). The box's own mint flow
+   validates cards; Remix does not — so you must.
 1. SEPOLIA FIRST. Two funded wallets (A = you, B = second; faucet:
    sepolia-faucet.pk910.de). Deploy from A, verify via Sourcify (Remix auto).
 2. REHEARSAL WALK (in Remix, wallet A unless noted):
-   a. mintUnique(4321, "PNDR-V2-REHEARSAL", "GREENCROSS", "POLE", 55, 48, true)
-      with value 0.01 ETH → artist wallet receives fee; seedToToken(4321)==1.
-   b. uri(1) → base64-decode → CHROMA trait must read "CAPPED".
+   a. mintUnique(<SEED>, "<DNA CARD>", "GREENCROSS", "<its palette>",
+      <its corruption>, <its void>, <true if CAPPED>) with value 0.01 ETH
+      → artist wallet receives fee; seedToToken(<SEED>)==1.
+   b. uri(1) → base64-decode → CHROMA trait matches, animation_url ends in
+      your card → open it: the exact loop must resurrect on the live box.
    c. list(1, 1, <price wei>) → listings(1, A) shows price+qty.
    d. WALLET B: buy(1, A, 1) with exact value → A receives 100%,
       balanceOf(B,1)==1, listing cleared.
-   e. delist test: A mintLimited(5555, "PNDR-V2-ED", "GREENCROSS", "VAPOR",
-      50, 40, false, 5, <price>) value 0.001 → B collect(2,1) with value →
-      A paid; B list(2,1,<price>) → B delist(2) → listings cleared.
+   e. delist test: roll a SECOND loop on the box, harvest its seed+card,
+      A mintLimited(<seed2>, "<card2>", "GREENCROSS", "<palette2>",
+      <corr2>, <void2>, false, 5, <price>) value 0.001 → B collect(2,1)
+      with value → A paid; B list(2,1,<price>) → B delist(2) → cleared.
    f. Contract balance must read 0 the whole way.
 3. Send me the deployed address — I flip W3.contract in index.html +
    sealed.html the same turn; THE SEALED's listings awaken; we walk the full
