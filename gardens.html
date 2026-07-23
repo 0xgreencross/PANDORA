@@ -144,6 +144,9 @@ const here=location.href;
 if(kind==='metamask')return 'https://metamask.app.link/dapp/'+here.replace(/^https?:\/\//,'');
 if(kind==='coinbase')return 'https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(here);
 if(kind==='trust')return 'https://link.trustwallet.com/open_url?coin_id=60&url='+encodeURIComponent(here);
+if(kind==='phantom')return 'https://phantom.app/ul/browse/'+encodeURIComponent(here)+'?ref='+encodeURIComponent(location.origin);
+if(kind==='zerion')return 'https://link.zerion.io/pt3gdRP0njb';
+if(kind==='rainbow')return 'https://rainbow.download';
 return here;}
 function walletModal(){
 return new Promise((res,rej)=>{
@@ -155,13 +158,16 @@ inj.push({info:{name:(window.ethereum.isBraveWallet?'BRAVE WALLET \u00b7 THIS BR
 :window.ethereum.isMetaMask?'METAMASK \u00b7 THIS BROWSER':'THIS BROWSER\u2019S WALLET')},provider:window.ethereum});
 let h='<div id="wbox"><div id="wttl">SUMMON A WALLET</div>'
 +'<div id="wsub">CHOOSE THE KEEPER OF YOUR KEYS.'
-+(PUB_MOBILE?' A HANDOFF \u2197 OPENS THIS PAGE IN THE WALLET\u2019S OWN BROWSER \u2014 TAP THE SAME BUTTON AGAIN THERE TO SIGN.':'')+'</div>';
++(PUB_MOBILE?' A HANDOFF \u2197 OPENS THIS PAGE IN THE WALLET\u2019S OWN BROWSER \u2014 TAP THE SAME BUTTON AGAIN THERE TO SIGN. FOR \u29c9 WALLETS THE PAGE LINK IS COPIED \u2014 PASTE IT IN THE WALLET\u2019S BROWSER.':'')+'</div>';
 inj.forEach((p,i)=>{h+='<button class="wopt" data-i="'+i+'">\u25c8 '
 +String((p.info&&p.info.name)||'WALLET').toUpperCase().replace(/</g,'')+'</button>';});
 if(PUB_MOBILE){
 h+='<button class="wopt" data-link="metamask">\u25c6 METAMASK \u2197</button>'
 +'<button class="wopt" data-link="coinbase">\u25c6 COINBASE WALLET \u2197</button>'
-+'<button class="wopt" data-link="trust">\u25c6 TRUST WALLET \u2197</button>';}
++'<button class="wopt" data-link="trust">\u25c6 TRUST WALLET \u2197</button>'
++'<button class="wopt" data-link="phantom">\u25c6 PHANTOM \u2197</button>'
++'<button class="wopt" data-copyopen="zerion">\u25c6 ZERION \u29c9</button>'
++'<button class="wopt" data-copyopen="rainbow">\u25c6 RAINBOW \u29c9</button>';}
 if(!inj.length&&!PUB_MOBILE)h+='<div id="wnone">NO WALLET ANNOUNCED \u2014 INSTALL METAMASK, THEN RETURN.</div>';
 h+='<button id="wcancel">CANCEL</button></div>';
 wrap.innerHTML=h;document.body.appendChild(wrap);
@@ -169,6 +175,8 @@ wrap.addEventListener('click',e=>{
 const b=e.target.closest('button');
 if(!b){if(e.target===wrap){wrap.remove();rej(new Error('wallet choice cancelled'));}return;}
 if(b.id==='wcancel'){wrap.remove();rej(new Error('wallet choice cancelled'));return;}
+if(b.dataset.copyopen){try{navigator.clipboard.writeText(location.href);}catch(e2){}
+location.href=walletHandoffURL(b.dataset.copyopen);return;}
 if(b.dataset.link){location.href=walletHandoffURL(b.dataset.link);return;}
 wrap.remove();res(inj[+b.dataset.i].provider);});});}
 async function pickProvider(){
