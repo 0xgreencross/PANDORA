@@ -110,6 +110,14 @@ input{font:inherit;color:inherit;}
 .ctl label .v{color:var(--cyan);font-family:var(--fT);}
 .ctl label .tag{color:var(--mag);}
 
+/* rituals — the studio's fate triggers, resurrected for the shell */
+#pub-rituals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+#pub-rituals button{border:1px solid var(--line);background:#000;color:var(--txt);
+  font-size:9px;letter-spacing:.06em;padding:9px 2px;min-height:34px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;}
+#pub-rituals button:hover{border-color:var(--cyan);color:var(--cyan);}
+#pub-rituals #pub-oblivion:hover{border-color:var(--mag);color:var(--mag);}
+
 /* sliders */
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:none;}
 input[type=range]::-webkit-slider-runnable-track{height:3px;
@@ -297,6 +305,14 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
     </div>
     <div id="rail">
       <div id="mintedband"></div>
+      <div class="ctl">
+        <label>RITUALS</label>
+        <div id="pub-rituals">
+          <button id="pub-dice">⚄ DICE</button>
+          <button id="pub-mutate">Ω MUTATE</button>
+          <button id="pub-oblivion">☠ OBLIVION</button>
+        </div>
+      </div>
       <div class="ctl">
         <label>CORRUPTION <span class="tag" id="pub-corrtag"></span><span class="v" id="pub-corrval">62</span></label>
         <input type="range" id="pub-corr" min="0" max="100" value="62">
@@ -5605,6 +5621,9 @@ $('dice').addEventListener('click',()=>{
      own genomes); 40% explore the frontier the canon makes plausible. */
   const R=Math.random;
   const CANON=window.ORACLE_CANON;
+  const LW=window.LEARNED; /* E8.0 regression repair: the learned-pick line below
+     referenced LW without declaring it, so every canon (non-breed) dice roll
+     died on a ReferenceError. Declared exactly as machineRoll declares it. */
   const wpick=(pairs)=>{ let t=0; for(const p of pairs)t+=p[1]; let r=R()*t;
     for(const p of pairs){ r-=p[1]; if(r<=0)return p[0]; } return pairs[0][0]; };
   const rollFx=(pill,extraFav,extraOther,radical)=>{
@@ -6092,6 +6111,15 @@ $g('stage').addEventListener('click',()=>{
   pandorize();
 });
 
+/* 2b · the studio's other fate rituals, same direct-call law. TABULA RASA's
+       instrument had four pulls — tap, DICE, MUTATE, OBLIVION — and the shell
+       had kept only the tap. The buttons live entombed in the studio; the
+       shell only pulls their triggers. */
+function pubRitual(id){ if(busy){ RUN++; busy=false; killPool(); } $g(id).click(); }
+$g('pub-dice').addEventListener('click',()=>pubRitual('dice'));
+$g('pub-mutate').addEventListener('click',()=>{ if(busy)return; $g('mutate').click(); });
+$g('pub-oblivion').addEventListener('click',()=>pubRitual('oblivion'));
+
 /* 3 · sliders → engine state through the applyCard-proven seam */
 function wireSlider(mine,eng){
   const m=$g(mine), e=$g(eng);
@@ -6219,6 +6247,9 @@ $g('mseal').addEventListener('click', doMint);
   T('pub-corr',TIP_ID.corr);
   T('pub-void',TIP_ID.voidamt);
   T('pub-splice','SPLICE — renders the loop from the current dials. Same seed + same dials = the exact same loop, forever.');
+  T('pub-dice','DICE — THE PERFECT MACHINE: 60% of rolls serve the proven canon, 40% hunt the frontier it makes plausible. Every pin returns to fate.');
+  T('pub-mutate','MUTATE — one sigil flips, corruption drifts, the seed holds. Same soul, new scars. Hunt around a loop you almost love.');
+  T('pub-oblivion','OBLIVION — the max-hunger ritual: corruption 68–96, canon-leaning. Total abandon; the dense chaos lives here.');
   T('pub-download',TIP_ID.download);
   T('pub-xpost',TIP_ID.xsave);
   T('pub-garden',TIP_ID.gplant);
