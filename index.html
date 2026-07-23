@@ -299,7 +299,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   <header id="topbar">
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
     <div id="topright">
-      <div id="tagline">ENGINE · BLACKMASS 21.0<br>ONE SEED · ONE TOKEN · ONE CHANCE</div>
+      <div id="tagline">ENGINE · EIDOLON E4.0 TABULA RASA<br>ONE SEED · ONE TOKEN · ONE CHANCE</div>
       <nav id="shellrooms">
         <a href="gardens.html">GARDENS</a>
         <a href="showcase.html">SHOWCASE</a>
@@ -379,8 +379,8 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
 <div id="legacy-root" style="display:none">
 
 <header id="mast">
-  <div id="wordmark">BLACK<b>MASS</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV 21.0 · BLACKMASS<br>THE ARBITER</div>
+  <div id="wordmark">EIDO<b>LON</b> <span class="pnd">// PANDORA</span></div>
+  <div id="mastrev">REV E4.0 · EIDOLON<br>TABULA RASA</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -409,7 +409,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV 21.0 · BLACKMASS<br>THE ARBITER</div>
+    <div class="ver">REV E4.0 · EIDOLON<br>TABULA RASA</div>
   </header>
 
   <div class="colL">
@@ -862,7 +862,7 @@ for(const key in SCHEMES){ const sc=SCHEMES[key];
   sc.glitch=sc.glitch.map(st=>deWhiteHex(st, sc.stops[sc.stops.length-1]));
 }
 const SCHEME_KEYS = Object.keys(SCHEMES);
-const MODES = ['PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS','MASS'];
+const MODES = ['MOLTEN','LATHE','ENGRAVED','BROADCAST','GRID','SATELLITE','SEDIMENT','VEINED','MASS','IDOL'];
 
 /* build a 256-entry smooth gradient LUT from stops */
 function buildGradient(stops){
@@ -1233,199 +1233,214 @@ function makeGlyphSet(rng){
 /* ============================================================================
    BASE RENDER  (writes full-res rgb Uint8Array)
    ========================================================================== */
-function renderBase(rgb, scene, t, theta, grad){
+function famMat(scene){
+  /* ten material dialects on one stage — the old modes reborn as surfaces */
+  if(scene._fmat)return scene._fmat;
+  const rng=mulberry32((scene.seed^0x7A8)>>>0);
   const m=scene.mode;
-  if(m==='PLASMA'||m==='RINGS'||m==='LATTICE'||m==='ORBITALS'||m==='STRATA'||m==='TENDRILS'||m==='MASS'){
-    // coarse scalar field then chunky upscale
-    const field=renderBase._f || (renderBase._f=new Float32Array(FW*FW));
-    const cs=Math.cos(theta), sn=Math.sin(theta);
-    if(m==='PLASMA'){
-      const P=scene.plasma, no=scene.noise, no2=scene.noise2;
-      const ox=cs*P.orbit, oy=sn*P.orbit, rc=Math.cos(theta+P.rot)*P.orbit, rs=Math.sin(theta+P.rot)*P.orbit;
-      for(let y=0;y<FW;y++){const fy=y/FW;
-        for(let x=0;x<FW;x++){const fx=x/FW;
-          const wx=no2(fx*P.s+ox, fy*P.s+oy);
-          const wy=no2(fx*P.s+5.2+ox, fy*P.s+1.7+oy);
-          let v=0,amp=1,fr=P.s*1.3;
-          let sx=fx*fr+wx*P.warp+rc, sy=fy*fr+wy*P.warp+rs;
-          for(let o=0;o<P.oct;o++){ v+=no(sx,sy)*amp; sx*=1.98; sy*=1.98; amp*=0.5; }
-          field[y*FW+x]=v*0.6+0.5;
-        }}
-    } else if(m==='RINGS'){ // interference
-      const C=scene.centers;
-      for(let y=0;y<FW;y++){const fy=y/FW;
-        for(let x=0;x<FW;x++){const fx=x/FW; let v=0;
-          for(let i=0;i<C.length;i++){const c=C[i];
-            const cx=c.x+Math.cos(theta*c.k+c.ph)*c.r, cy=c.y+Math.sin(theta*c.k+c.ph)*c.r;
-            const dx=fx-cx, dy=fy-cy; const d=Math.sqrt(dx*dx+dy*dy);
-            v+=Math.sin(d*c.freq+theta*c.sp);
-          }
-          field[y*FW+x]=(v/C.length)*0.5+0.5;
-        }}
-    } else if(m==='LATTICE'){ // circuit-board grid, pulse traveling through cells
-      const L=scene.rev4.lattice, no=scene.noise;
-      const gsC=Math.max(4,(L.gs*FW/W)|0), lwC=Math.max(1,(L.lw*FW/W)|0);
-      for(let y=0;y<FW;y++){const cy=(y/gsC)|0, iy=y-cy*gsC;
-        for(let x=0;x<FW;x++){const cx=(x/gsC)|0, ix=x-cx*gsC;
-          const pulse=0.5+0.5*Math.sin(theta*L.k-(cx+cy)*L.sp+L.ph);
-          let v;
-          if(ix<lwC||iy<lwC){ v=0.5+0.5*pulse; }                     // conductor lines
-          else{
-            const cv=no(cx*0.7+3.1,cy*0.7+8.8)*0.5+0.5;
-            v = cv<L.thr ? 0.22+0.62*pulse*(0.4+cv) : 0.05+0.10*cv;  // live pads vs void
-          }
-          field[y*FW+x]=v;
-        }}
-    } else if(m==='ORBITALS'){ // up to 50 bodies, 30 forms, bbox-rasterized, XOR overlaps
-      const O=scene.rev4.orbs;
-      const hits=renderBase._ht||(renderBase._ht=new Uint8Array(FW*FW));
-      hits.fill(0);
-      for(let i=0;i<FW*FW;i++)field[i]=0.05;
-      const S=Math.sin, C=Math.cos;
-      for(let bi=0;bi<O.length;bi++){const b=O[bi];
-        const f=b.form|0;
-        let R=b.r;
-        if(f===28) R*=1+0.25*S(theta*b.kx+b.phx);              // PULSAR breathes
-        if(f===29 && shp(S(theta*3+b.phy),1)<0) continue;      // GLITCHBIT flickers (periodic)
-        const bx=0.5+b.ax*S(theta*b.kx+b.phx), by=0.5+b.ay*C(theta*b.ky+b.phy);
-        const ext=(f===13||f===26)?R*1.6:R*1.15;
-        const x0=Math.max(0,((bx-ext)*FW)|0), x1=Math.min(FW-1,((bx+ext)*FW)|0);
-        const y0=Math.max(0,((by-ext)*FW)|0), y1=Math.min(FW-1,((by+ext)*FW)|0);
-        const r2=R*R;
-        let mx=0,my=0,c1x=0,c2x=0,c1y=0,c2y=0;
-        if(f===26){mx=bx+R*1.3*C(theta*3+b.phy); my=by+R*1.3*S(theta*3+b.phy);}
-        if(f===14||f===16){c1x=bx-R*0.45;c2x=bx+R*0.45;}
-        if(f===15){c1y=by-R*0.45;c2y=by+R*0.45;}
-        for(let y=y0;y<=y1;y++){const fy=y/FW, dy=fy-by, ady=dy<0?-dy:dy, row=y*FW;
-          for(let x=x0;x<=x1;x++){const fx2=x/FW, dx=fx2-bx, adx=dx<0?-dx:dx;
-            const d2=dx*dx+dy*dy, o=row+x;
-            let solid=false, lum=0;
-            switch(f){
-              case 0: solid=d2<r2; break;
-              case 1: if(Math.abs(d2-r2)<R*0.055)lum=0.9; break;
-              case 2: solid=adx<R*0.8&&ady<R*0.8; break;
-              case 3: {const mM=Math.max(adx,ady); if(mM<R*0.8&&mM>R*0.6)lum=0.85; break;}
-              case 4: solid=(adx+ady)<R; break;
-              case 5: {const dd=adx+ady; if(dd<R&&dd>R*0.76)lum=0.85; break;}
-              case 6: solid=ady<R*0.28&&adx<R; break;
-              case 7: solid=adx<R*0.28&&ady<R; break;
-              case 8: solid=(ady<R*0.22&&adx<R)||(adx<R*0.22&&ady<R); break;
-              case 9: {const dgap=Math.abs(adx-ady); if(dgap<R*0.2&&adx<R&&ady<R)lum=0.85; break;}
-              case 10: solid=dy>-R*0.75&&dy<R*0.75&&adx<(R*0.75-dy)*0.62; break;
-              case 11: solid=dy>-R*0.75&&dy<R*0.75&&adx<(R*0.75+dy)*0.62; break;
-              case 12: solid=d2<r2*0.14; break;
-              case 13: {const rr=R*1.25; if(Math.abs(d2-rr*rr)<R*0.05)lum=0.85; break;}
-              case 14: solid=((fx2-c1x)*(fx2-c1x)+dy*dy<r2)&&((fx2-c2x)*(fx2-c2x)+dy*dy<r2); break;
-              case 15: solid=(dx*dx+(fy-c1y)*(fy-c1y)<r2)&&(dx*dx+(fy-c2y)*(fy-c2y)<r2); break;
-              case 16: solid=(d2<r2)&&!((fx2-c2x)*(fx2-c2x)+dy*dy<r2*0.9); break;
-              case 17: {const cxr=dx<-R*0.5?-R*0.5:(dx>R*0.5?R*0.5:dx); solid=(dx-cxr)*(dx-cxr)+dy*dy<r2*0.2; break;}
-              case 18: {const cyr=dy<-R*0.5?-R*0.5:(dy>R*0.5?R*0.5:dy); solid=dx*dx+(dy-cyr)*(dy-cyr)<r2*0.2; break;}
-              case 19: if(d2<r2&&(((x>>2)^(y>>2))&1))lum=0.6; break;
-              case 20: if(d2<r2&&((y>>1)&1)===0)lum=0.62; break;
-              case 21: solid=d2<r2*0.2; if(Math.abs(d2-r2)<R*0.05)lum=0.9; break;
-              case 22: {const dgap=Math.abs(adx-ady); if((dgap<R*0.12&&d2<r2)||Math.abs(d2-r2)<R*0.05)lum=0.85; break;}
-              case 23: if(adx*ady<r2*0.045&&adx<R&&ady<R)lum=0.82; break;
-              case 24: {const mM=Math.max(adx,ady); if(mM<R*0.5&&mM>R*0.32)lum=0.85; break;}
-              case 25: {const qx=adx-R*0.66, qy=ady-R*0.66; solid=qx*qx+qy*qy<r2*0.09; break;}
-              case 26: solid=d2<r2*0.7;
-                {const mdx=fx2-mx, mdy=fy-my; if(mdx*mdx+mdy*mdy<r2*0.06)lum=0.95;} break;
-              case 27: solid=d2<r2*0.6;
-                for(let t=1;t<3;t++){const th2=theta-t*0.12;
-                  const tx=0.5+b.ax*S(th2*b.kx+b.phx), ty=0.5+b.ay*C(th2*b.ky+b.phy);
-                  const tdx=fx2-tx, tdy=fy-ty;
-                  if(tdx*tdx+tdy*tdy<r2*0.6*(1-t*0.32)*(1-t*0.32)) lum=Math.max(lum,0.55-t*0.18);} break;
-              case 28: solid=d2<R*R; break;
-              default: solid=adx<R*0.7&&ady<R*0.7;                // GLITCHBIT square
+  const base={bandF:16+rng()*18, bandA:0.12, bandAxis:0, cellF:10+rng()*10, cellA:0.07,
+    cellSharp:0, warp:0.4+rng()*0.8, veinA:0, scanRoll:0, sparkle:0,
+    crawl:(rng()<0.5?-1:1)*(0.6+rng()*0.9), expo:1.08+rng()*0.30, fogA:0.22+rng()*0.22};
+  const D={
+    MOLTEN:   {warp:2.4+rng()*1.6, bandA:0.15, bandF:8+rng()*8, cellA:0.04},
+    LATHE:    {bandAxis:1, bandF:22+rng()*20, bandA:0.17, cellA:0.03},
+    ENGRAVED: {cellSharp:1, cellA:0.16, cellF:14+rng()*12, bandA:0.05},
+    BROADCAST:{bandF:44+rng()*30, bandA:0.20, scanRoll:1, cellA:0.03},
+    GRID:     {bandAxis:2, bandF:20+rng()*14, bandA:0.15, cellA:0.05},
+    SATELLITE:{sparkle:0.9, bandA:0.05, cellA:0.04},
+    SEDIMENT: {bandF:9+rng()*6, bandA:0.22, cellA:0.06},
+    VEINED:   {veinA:0.24+rng()*0.12, bandA:0.05, cellA:0.04},
+    MASS:     {},
+    IDOL:     {}
+  };
+  return scene._fmat=Object.assign(base, D[m]||{});
+}
+const SW=448, FLY=1.06;
+function sceneView(scene, theta){
+  /* THE STAGE: body + mirror floor + void, marched per frame at VG,
+     reflections and contact shadow included. */
+  const mf=massField(scene);
+  mf.mat=mf.mat||matOf(scene);
+  mf.tearAmp=((scene._corr!=null?scene._corr:60)/100)*0.045;
+  if(mf._svt===theta)return mf._sv;
+  mf._svt=theta;
+  const VG=88, S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
+  const M=VG*VG;
+  const sv=mf._sv||(mf._sv={kind:new Uint8Array(M),nx:new Float32Array(M),ny:new Float32Array(M),
+    nz:new Float32Array(M),px:new Float32Array(M),py:new Float32Array(M),pz:new Float32Array(M),
+    dp:new Float32Array(M),ao:new Float32Array(M),rf:new Float32Array(M),VG});
+  const hasFloor=(mulberry32((scene.seed^0xF700)>>>0)())<0.65;
+  const laz=theta*0+mf.lightBase+0.6;
+  const lx=Math.cos(0.6)*Math.cos(laz), ly=-Math.sin(0.6), lz=Math.cos(0.6)*Math.sin(laz);
+  const t0=C.dist-0.95*Math.max(1,S), t1=C.dist+1.6*Math.max(1,S);
+  for(let gy=0;gy<VG;gy++){
+    const syc=(gy/VG-0.5)*2*C.fov;
+    for(let gx=0;gx<VG;gx++){
+      const gi=gy*VG+gx, sxc=(gx/VG-0.5)*2*C.fov;
+      let dx=C.fx+C.rx*sxc+C.ux*syc, dy=C.fy+C.ry*sxc+C.uy*syc, dz=C.fz+C.rz*sxc+C.uz*syc;
+      const dl=Math.hypot(dx,dy,dz); dx/=dl;dy/=dl;dz/=dl;
+      const fold=mf.hasDrape?mf.foldAt(C.ex+dx*C.dist, C.ey+dy*C.dist, S):0;
+      sv.kind[gi]=0; sv.rf[gi]=0;
+      let t=t0, hit=0;
+      for(let st=0;st<30;st++){
+        const px=C.ex+dx*t, py=C.ey+dy*t, pz=C.ez+dz*t;
+        if(py>FLY)break;
+        let d=sdf(px,py,pz,S,fold);
+        if(d<0.08&&mf.tearAmp) d+=surfTear(px,py,pz,theta,mf.mat,mf.tearAmp);
+        if(d<0.009){
+          hit=1;
+          const e=0.008;
+          const nx=sdf(px+e,py,pz,S,fold)-sdf(px-e,py,pz,S,fold);
+          const ny=sdf(px,py+e,pz,S,fold)-sdf(px,py-e,pz,S,fold);
+          const nz=sdf(px,py,pz+e,S,fold)-sdf(px,py,pz-e,S,fold);
+          const nl=Math.hypot(nx,ny,nz)||1;
+          sv.kind[gi]=1; sv.nx[gi]=nx/nl; sv.ny[gi]=ny/nl; sv.nz[gi]=nz/nl;
+          sv.px[gi]=px; sv.py[gi]=py; sv.pz[gi]=pz; sv.dp[gi]=(t-C.dist)/Math.max(1,S);
+          const dAo=sdf(px+sv.nx[gi]*0.07, py+sv.ny[gi]*0.07, pz+sv.nz[gi]*0.07, S, 0);
+          sv.ao[gi]=Math.max(0.45, Math.min(1, 0.5+dAo*8));
+          break;
+        }
+        t+=Math.max(d,0.013);
+        if(t>t1)break;
+      }
+      if(!hit&&hasFloor&&dy>0.02){
+        const tF=(FLY-C.ey)/dy;
+        const fxp=C.ex+dx*tF, fzp=C.ez+dz*tF;
+        if(tF>0.1&&tF<C.dist*2.4){
+          sv.kind[gi]=2; sv.px[gi]=fxp; sv.py[gi]=FLY; sv.pz[gi]=fzp;
+          sv.dp[gi]=(tF-C.dist)/Math.max(1,S);
+          /* mirror: march the reflected ray */
+          let rt=0.03, rl2=0;
+          for(let st=0;st<16;st++){
+            const rx2=fxp+dx*rt, ry2=FLY-dy*rt, rz2=fzp+dz*rt;
+            let d2=sdf(rx2,ry2,rz2,S,fold);
+            if(d2<0.09&&mf.tearAmp) d2+=surfTear(rx2,ry2,rz2,theta,mf.mat,mf.tearAmp);
+            if(d2<0.012){
+              const e=0.01;
+              const nnx=sdf(rx2+e,ry2,rz2,S,fold)-sdf(rx2-e,ry2,rz2,S,fold);
+              const nny=sdf(rx2,ry2+e,rz2,S,fold)-sdf(rx2,ry2-e,rz2,S,fold);
+              const nnz=sdf(rx2,ry2,rz2+e,S,fold)-sdf(rx2,ry2,rz2-e,S,fold);
+              const nl2=Math.hypot(nnx,nny,nnz)||1;
+              const dif=Math.max(0,(nnx*lx+nny*ly+nnz*lz)/nl2);
+              rl2=(0.18+dif*0.6)*Math.max(0.15,1-rt*0.55);
+              break;
             }
-            if(solid)hits[o]++;
-            if(lum>field[o])field[o]=lum;
-          }}
+            rt+=Math.max(d2,0.016);
+            if(rt>2.4)break;
+          }
+          sv.rf[gi]=rl2;
+          const dBody=sdf(fxp,FLY,fzp,S,0);
+          sv.ao[gi]=Math.max(0.25, Math.min(1, dBody*4.5));
+        }
       }
-      for(let i=0;i<FW*FW;i++){
-        if(hits[i]===1){ if(field[i]<0.55)field[i]=0.55; }
-        else if(hits[i]>=2){ if(field[i]<0.95)field[i]=0.95; }
+    }
+  }
+  sv.lx=lx; sv.ly=ly; sv.lz=lz; sv.hasFloor=hasFloor;
+  return sv;
+}
+const BAYER4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+function renderScene(rgb, scene, theta, corr, grad){
+  scene._corr=corr;
+  const mf=massField(scene);
+  const F=famMat(scene), M=mf.mat=mf.mat||matOf(scene);
+  const sv=sceneView(scene, theta);
+  const VG=sv.VG;
+  const fld=renderScene._f||(renderScene._f=new Float32Array(SW*SW));
+  const gp=(mf.grainPh*1013)|0;
+  const gh=(x,y)=>{ let h=(x*374761393+y*668265263+gp)|0; h=(h^(h>>13))*1274126177;
+    return ((((h^(h>>16))>>>0)&1023)/1023)-0.5; };
+  const crawlPh=Math.sin(theta)*F.crawl;
+  const roll=(theta/TAU)%1;
+  for(let y=0;y<SW;y++){
+    const gyf=y*VG/SW, gy=Math.min(VG-1,gyf|0), fy=y/SW;
+    for(let x=0;x<SW;x++){
+      const gxf=x*VG/SW, gx=Math.min(VG-1,gxf|0);
+      const gi=gy*VG+gx, k=sv.kind[gi], i=y*SW+x;
+      if(k===0){
+        fld[i]=0.016+0.020*(1-fy)+gh(x>>2,y>>2)*0.010;
+        continue;
       }
-    } else if(m==='MASS'){ renderMass(field, scene, theta, massField(scene));
-    } else if(m==='STRATA'){ // displaced geological bands
-      const S=scene.rev4.strata, no=scene.noise;
-      for(let y=0;y<FW;y++){const fy=y/FW;
-        const band=(fy/S.bh)|0, inb=fy-band*S.bh;
-        const off=S.amp*Math.sin(theta*S.k+band*2.399);
-        for(let x=0;x<FW;x++){const fx=x/FW;
-          let v=no((fx+off)*S.f, band*0.73+4.2)*0.5+0.5;
-          v = v<0.5 ? v*0.62 : 0.36+(v-0.5)*1.25;                    // contrast crunch
-          if(inb<S.bh*0.09) v=Math.min(1,v+0.4);                     // stratum seam glow
-          field[y*FW+x]=v;
-        }}
-    } else { // TENDRILS — radial anatomy from a seeded heart
-      const T=scene.rev4.tendr, no=scene.noise;
-      for(let y=0;y<FW;y++){const fy=y/FW;
-        for(let x=0;x<FW;x++){const fx=x/FW;
-          const dx=fx-T.cx, dy=fy-T.cy;
-          const r=Math.sqrt(dx*dx+dy*dy), ang=Math.atan2(dy,dx);
-          const edge=T.R0*(0.72+0.25*Math.sin(ang*T.n+theta*T.k)+0.16*Math.sin(ang*T.m-theta*T.k2));
-          let v;
-          if(r<edge) v=0.32+0.62*(1-r/Math.max(edge,1e-4));
-          else if(r<edge*1.07) v=0.92;                               // rim
-          else v=0.05+0.08*(no(fx*3.3,fy*3.3)*0.5+0.5);
-          field[y*FW+x]=v;
-        }}
+      const px=sv.px[gi], py=sv.py[gi], pz=sv.pz[gi];
+      if(k===2){
+        let v=0.05*sv.ao[gi] + sv.rf[gi]*0.5*Math.pow(Math.max(0,1-Math.abs(fy-0.5)),1.2);
+        v*=Math.max(0.12, 1-Math.max(0,sv.dp[gi])*F.fogA*1.4);
+        const bandF2=Math.sin(px*8+pz*8+crawlPh*0.5);
+        if(bandF2>0.75)v+=0.015;
+        fld[i]=Math.max(0.02,Math.min(0.55,v))+gh(x,y)*0.028;
+        continue;
+      }
+      const dif=Math.max(0, sv.nx[gi]*sv.lx+sv.ny[gi]*sv.ly+sv.nz[gi]*sv.lz);
+      const rimV=Math.pow(Math.max(0, 1 - Math.abs(sv.nx[gi]*(-Math.sin(theta+mf.lightBase*0.7)) + sv.nz[gi]*(-Math.cos(theta+mf.lightBase*0.7)))),3)*0.24;
+      let v=0.07+dif*0.60*sv.ao[gi]+rimV;
+      /* the material dialect */
+      let bc;
+      if(F.bandAxis===1) bc=Math.atan2(px,pz)*4 + py*F.bandF*0.4;
+      else if(F.bandAxis===2) bc=Math.min(Math.sin(px*F.bandF), Math.sin(py*F.bandF))*2;
+      else bc=py*F.bandF + px*2.2*F.warp + Math.sin(px*3.1+pz*2.2)*F.warp;
+      const bandV=(F.bandAxis===2)?bc:Math.sin(bc+crawlPh);
+      if(bandV>0.3) v+=F.bandA*(0.4+dif);
+      else if(bandV<-0.85) v-=F.bandA*0.7;
+      if(F.scanRoll){ const ry=((py*0.5+0.5)-roll+2)%1; if(ry<0.05)v+=0.22; }
+      const ci=(((px*F.cellF)|0)*7+((py*F.cellF)|0)*13+((pz*F.cellF)|0)*29)|0;
+      const ch=(((ci*2654435761)>>>9)&255)/255;
+      if(F.cellSharp){ v+=(ch>0.5?0.10:-0.10)*(F.cellA*8*(0.3+corr/150));
+        const fr2=(px*F.cellF)%1; if(Math.abs(fr2)<0.06||Math.abs(fr2)>0.94)v-=0.14; }
+      else v+=(ch-0.5)*F.cellA*(1+corr/100);
+      if(F.veinA){ const vn=Math.abs(Math.sin(px*7+Math.sin(py*5+pz*4)*2.2+crawlPh*0.6));
+        if(vn<0.12)v-=F.veinA; }
+      if(F.sparkle&&ch>0.93) v+=F.sparkle*(0.5+0.5*Math.sin(theta*2+ci));
+      const haze=Math.max(0,Math.min(1,(sv.dp[gi]+0.55)*F.fogA*1.6));
+      v=v*(1-haze*0.55)+0.02*haze;
+      v+=mf.BP[Math.min(FW*FW-1,((y*FW/SW)|0)*FW+((x*FW/SW)|0))]*(0.18+dif*0.4);
+      v+=gh(x,y)*0.038;
+      const cx2=x/SW-0.5;
+      v*=1-0.20*(cx2*cx2+(fy-0.5)*(fy-0.5))*2.2;
+      v=Math.pow(Math.max(0.001,v),F.expo);
+      fld[i]=Math.max(0.02,Math.min(0.97,v));
     }
-    // upscale (nearest -> chunky) + color
-    for(let y=0;y<H;y++){const sy=(y*FW/H)|0;
-      for(let x=0;x<W;x++){const sx=(x*FW/W)|0;
-        let v=field[sy*FW+sx]; if(v<0)v=0; else if(v>1)v=1; const gi=(v*255)|0;
-        const o=(y*W+x)*3; rgb[o]=grad[gi*3]; rgb[o+1]=grad[gi*3+1]; rgb[o+2]=grad[gi*3+2];
-      }}
   }
-  else if(m==='GLYPHS'){
-    const cell=24, cols=Math.ceil(W/cell), no=scene.noise;
-    const cs=Math.cos(theta)*.5, sn=Math.sin(theta)*.5;
-    // precompute per-cell brightness + glyph id + palette-band hue
-    const bright=renderBase._b || (renderBase._b=new Float32Array(46*46));
-    const gid=renderBase._g || (renderBase._g=new Int8Array(46*46));
-    const hue=renderBase._h || (renderBase._h=new Float32Array(46*46));
-    for(let cy=0;cy<cols;cy++)for(let cx=0;cx<cols;cx++){
-      let v=no(cx*0.18+cs, cy*0.18+sn)*0.6+0.5;
-      v+= no(cx*0.5+sn, cy*0.5+cs)*0.18; if(v<0)v=0; else if(v>1)v=1;
-      bright[cy*46+cx]=v; gid[cy*46+cx]=(v*(scene.glyphset.length-1))|0;
-      let hh=no(cx*0.11+7.3, cy*0.11-2.1)*0.5+0.5; if(hh<0)hh=0; else if(hh>1)hh=1;
-      hue[cy*46+cx]=hh;                            // static color patch per cell
+  /* fine bilinear upscale + ordered dither: the new surface signature */
+  let UX=renderScene._ux;
+  if(!UX){ UX=renderScene._ux={x0:new Int32Array(W),x1:new Int32Array(W),tx:new Float32Array(W)};
+    for(let x=0;x<W;x++){ const sx=x*SW/W; UX.x0[x]=Math.min(SW-1,sx|0);
+      UX.x1[x]=Math.min(SW-1,UX.x0[x]+1); UX.tx[x]=sx-UX.x0[x]; } }
+  for(let y=0;y<H;y++){
+    const sy=y*SW/H, y0=Math.min(SW-1,sy|0), y1=Math.min(SW-1,y0+1), ty=sy-y0;
+    const rowA=y0*SW, rowB=y1*SW, by=(y&3)*4;
+    for(let x=0;x<W;x++){
+      const x0=UX.x0[x], x1=UX.x1[x], tx=UX.tx[x];
+      const a2=fld[rowA+x0], b2=fld[rowA+x1], c2=fld[rowB+x0], d2=fld[rowB+x1];
+      const v=a2+(b2-a2)*tx + ((c2+(d2-c2)*tx)-(a2+(b2-a2)*tx))*ty;
+      let gi2=(v*255 + (BAYER4[by+(x&3)]-7.5)*1.7)|0;
+      if(gi2<0)gi2=0; else if(gi2>255)gi2=255;
+      const o=(y*W+x)*3;
+      rgb[o]=grad[gi2*3]; rgb[o+1]=grad[gi2*3+1]; rgb[o+2]=grad[gi2*3+2];
     }
-    // lit glyphs sample the SATURATED band of the active palette (0.22–0.88 of
-    // the gradient), never the white-hot tip — color follows the colorway.
-    for(let y=0;y<H;y++){const cy=(y/cell)|0, iy=((y%cell)*7/cell)|0;
-      for(let x=0;x<W;x++){const cx=(x/cell)|0, ix=((x%cell)*5/cell)|0;
-        const ci=cy*46+cx, v=bright[ci]; const on=scene.glyphset[gid[ci]][iy*5+ix];
-        const gi=on?(((0.22+v*0.42+hue[ci]*0.24)*255)|0) : ((v*0.18)*255)|0;
-        const o=(y*W+x)*3; rgb[o]=grad[gi*3]; rgb[o+1]=grad[gi*3+1]; rgb[o+2]=grad[gi*3+2];
-      }}
-  }
-  else { // SCANS — oscilloscope traces
-    const T=scene.traces;
-    const yt=renderBase._yt || (renderBase._yt=[new Float32Array(W),new Float32Array(W),new Float32Array(W)]);
-    for(let i=0;i<3;i++){const tr=T[i];
-      for(let x=0;x<W;x++){const fx=x/W;
-        let w=Math.sin(fx*tr.f*6.283+theta*tr.k+tr.ph);
-        w+=0.4*Math.sin(fx*tr.f*2.1*6.283-theta*tr.k+tr.ph*1.7);
-        yt[i][x]=0.5+tr.amp*w;
-      }}
-    for(let y=0;y<H;y++){const fy=y/H;
-      for(let x=0;x<W;x++){
-        // background: faint vertical gradient
-        let gi=(fy*42)|0, best=-1, bd=999;
-        for(let i=0;i<3;i++){const d=Math.abs(fy-yt[i][x]); if(d<bd){bd=d;best=i;}}
-        if(bd<0.006){ gi=(120+T[best].col*135)|0; }
-        else if(bd<0.02){ gi=(40+(0.02-bd)*1800)|0; }
-        if(gi>255)gi=255; if(gi<0)gi=0;
-        const o=(y*W+x)*3; rgb[o]=grad[gi*3]; rgb[o+1]=grad[gi*3+1]; rgb[o+2]=grad[gi*3+2];
-      }}
   }
 }
+function renderBase(rgb, scene, t, theta, grad){
+  const m=scene.mode;
+  if(m==='IDOL'){
+    const field=renderBase._fi||(renderBase._fi=new Float32Array(FW*FW));
+    scene._corr=(scene._corr!=null?scene._corr:60);
+    renderIdol(field, scene, theta);
+    for(let y=0;y<H;y++){
+      const sy=y*FW/H, y0=Math.min(FW-1,sy|0), y1=Math.min(FW-1,y0+1), ty=sy-y0;
+      for(let x=0;x<W;x++){
+        const sx=x*FW/W, x0=Math.min(FW-1,sx|0), x1=Math.min(FW-1,x0+1), tx=sx-x0;
+        const v=field[y0*FW+x0]*(1-tx)*(1-ty)+field[y0*FW+x1]*tx*(1-ty)
+               +field[y1*FW+x0]*(1-tx)*ty+field[y1*FW+x1]*tx*ty;
+        let gi2=(v*255 + (BAYER4[(y&3)*4+(x&3)]-7.5)*1.7)|0;
+        if(gi2<0)gi2=0; else if(gi2>255)gi2=255;
+        const o=(y*W+x)*3;
+        rgb[o]=grad[gi2*3]; rgb[o+1]=grad[gi2*3+1]; rgb[o+2]=grad[gi2*3+2];
+      }
+    }
+    return;
+  }
+  renderScene(rgb, scene, theta, (scene._corr!=null?scene._corr:60), grad);
+}
 
-/* ============================================================================
-   ANALOG PASS  (chroma split + tracking + scanlines + grain)  src->dst
-   ========================================================================== */
 function analogPass(src,dst,scene,theta,corr,fx){
   const V=scene.vibe;
   // chroma split along a seeded axis with seeded waveform + tempo
@@ -1727,37 +1742,376 @@ function massField(scene){
     }
   }
   const lightBase=rng()*TAU, grainPh=rng()*50;
-  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,lightBase,grainPh,mirror};
+  /* frame the body: probe perspective coverage at theta=0, tune the lens */
+  let fovK=0.34*Math.max(1,S);
+  { const dist=1.25*Math.max(1,S), el=0.20+(fam%9)*0.018, az=lightBase*0.7;
+    const ex=dist*Math.cos(el)*Math.sin(az), ey=0.5-dist*Math.sin(el), ez=dist*Math.cos(el)*Math.cos(az);
+    let fx3=-ex, fy3=0.5-ey, fz3=-ez; const fl=Math.hypot(fx3,fy3,fz3); fx3/=fl;fy3/=fl;fz3/=fl;
+    let rx=fz3, rz=-fx3; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
+    const ux=-rz*fy3, uy=rz*fx3-rx*fz3, uz=rx*fy3;
+    for(let it=0;it<2;it++){
+      let hits2=0, tot=0;
+      for(let gy=0;gy<60;gy+=3)for(let gx=0;gx<60;gx+=3){ tot++;
+        const sxc=(gx/60-0.5)*2*fovK, syc=(gy/60-0.5)*2*fovK;
+        let dx=fx3+rx*sxc+ux*syc, dy=fy3+syc*uy, dz=fz3+rz*sxc+uz*syc;
+        dy=fy3+ux*0; dy=fy3+uy*syc;
+        const dl=Math.hypot(dx,dy,dz); dx/=dl;dy/=dl;dz/=dl;
+        let t=dist-0.95*Math.max(1,S);
+        for(let st=0;st<22;st++){
+          const d2=sdf(ex+dx*t, ey+dy*t, ez+dz*t, S, 0);
+          if(d2<0.012){hits2++;break;}
+          t+=Math.max(d2,0.016);
+          if(t>dist+0.95*Math.max(1,S))break;
+        }
+      }
+      const cov=hits2/tot;
+      fovK*=Math.sqrt(Math.max(0.04,cov)/Math.max(0.15,target));
+      fovK=Math.max(0.14,Math.min(1.3,fovK));
+    }
+  }
+  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,PX:new Float32Array(FW*FW),PY:new Float32Array(FW*FW),PZ:new Float32Array(FW*FW),AO:new Float32Array(FW*FW),lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK};
   return scene._mf;
 }
+function matOf(scene){
+  if(scene._mat)return scene._mat;
+  const rng=mulberry32((scene.seed^0x7E10)>>>0);
+  return scene._mat={
+    bandF:14+rng()*26, bandA:0.10+rng()*0.12, bandTh:0.25+rng()*0.4,
+    cellF:9+rng()*14, cellA:0.08+rng()*0.10,
+    crawl:(rng()<0.5?-1:1)*(0.5+rng()*1.0),
+    tearF1:17+rng()*14, tearF2:8+rng()*10, sortA:0.05+rng()*0.09,
+    fogA:0.22+rng()*0.22, expo:1.10+rng()*0.35
+  };
+}
+function surfTear(px,py,pz,theta,M,amp){
+  /* the silhouette itself glitches: a periodic interference field displaces
+     the surface. corruption is the amplitude of the wound in the geometry. */
+  const sn=Math.sin(theta), cs=Math.cos(theta);
+  const d1=Math.sin(px*M.tearF1+py*11+sn*2.4);
+  const d2=Math.sin(py*M.tearF2-pz*13+cs*2.1);
+  const d3=Math.sin((px+pz)*9+py*M.tearF2*0.6-sn*1.3);
+  return (d1*d2+d3*0.5)*amp;
+}
+function eCam(mf, theta){
+  const S=mf.S, az=theta+mf.lightBase*0.7, el=0.20+(mf.fam%9)*0.018;
+  const dist=1.25*Math.max(1,S);
+  const ex=dist*Math.cos(el)*Math.sin(az), ey=0.5-dist*Math.sin(el), ez=dist*Math.cos(el)*Math.cos(az);
+  let fx=-ex, fy=0.5-ey, fz=-ez; const fl=Math.hypot(fx,fy,fz); fx/=fl;fy/=fl;fz/=fl;
+  let rx=fz, rz=-fx; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
+  const ux=-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy;
+  return {ex,ey,ez,fx,fy,fz,rx,ry:0,rz,ux,uy,uz,dist,fov:(mf.fovK||0.34*Math.max(1,S))};
+}
+function massView(scene, mf, theta){
+  mf.mat=mf.mat||matOf(scene);
+  mf.tearAmp=((scene._corr!=null?scene._corr:60)/100)*0.045;
+  /* BLOOD A — the turntable: a perspective camera orbits the body once per
+     loop. Marched fresh per frame at coarse grid; the film layer absorbs it. */
+  if(mf._vt===theta)return;
+  mf._vt=theta;
+  const VG=88, S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
+  const hitG=new Uint8Array(VG*VG), nxG=new Float32Array(VG*VG), nyG=new Float32Array(VG*VG),
+        nzG=new Float32Array(VG*VG), dpG=new Float32Array(VG*VG),
+        pxG=new Float32Array(VG*VG), pyG=new Float32Array(VG*VG), pzG=new Float32Array(VG*VG);
+  const aoG=new Float32Array(VG*VG);
+  const t0=C.dist-0.95*Math.max(1,S), t1=C.dist+0.95*Math.max(1,S);
+  for(let gy=0;gy<VG;gy++){
+    const syc=(gy/VG-0.5)*2*C.fov;
+    for(let gx=0;gx<VG;gx++){
+      const sxc=(gx/VG-0.5)*2*C.fov;
+      let dx=C.fx+C.rx*sxc+C.ux*syc, dy=C.fy+C.ry*sxc+C.uy*syc, dz=C.fz+C.rz*sxc+C.uz*syc;
+      const dl=Math.hypot(dx,dy,dz); dx/=dl;dy/=dl;dz/=dl;
+      const fpx=C.ex+dx*C.dist, fpy=C.ey+dy*C.dist;
+      const fold=mf.hasDrape?mf.foldAt(fpx,fpy,S):0;
+      let t=t0, hit=0;
+      for(let st=0;st<30;st++){
+        const px=C.ex+dx*t, py=C.ey+dy*t, pz=C.ez+dz*t;
+        let d=sdf(px,py,pz,S,fold);
+        if(d<0.08&&mf.tearAmp) d+=surfTear(px,py,pz,theta,mf.mat,mf.tearAmp);
+        if(d<0.009){ hit=1;
+          const e=0.008, px2=px,py2=py,pz2=pz;
+          const nx=sdf(px2+e,py2,pz2,S,fold)-sdf(px2-e,py2,pz2,S,fold);
+          const ny=sdf(px2,py2+e,pz2,S,fold)-sdf(px2,py2-e,pz2,S,fold);
+          const nz=sdf(px2,py2,pz2+e,S,fold)-sdf(px2,py2,pz2-e,S,fold);
+          const nl=Math.hypot(nx,ny,nz)||1;
+          const gi=gy*VG+gx;
+          nxG[gi]=nx/nl; nyG[gi]=ny/nl; nzG[gi]=nz/nl; dpG[gi]=(t-C.dist)/Math.max(1,S);
+          pxG[gi]=px; pyG[gi]=py; pzG[gi]=pz;
+          break;
+        }
+        t+=Math.max(d,0.013);
+        if(t>t1)break;
+      }
+      hitG[gy*VG+gx]=hit;
+    }
+  }
+  for(let y=0;y<FW;y++){const gy=Math.min(VG-1,(y*VG/FW)|0);
+    for(let x=0;x<FW;x++){const gx=Math.min(VG-1,(x*VG/FW)|0), gi=gy*VG+gx, i=y*FW+x;
+      mf.z[i]=hitG[gi]?2:0;
+      mf.NX[i]=nxG[gi]; mf.NY[i]=nyG[gi]; mf.NZ[i]=nzG[gi]; mf.DP[i]=dpG[gi];
+      mf.PX[i]=pxG[gi]; mf.PY[i]=pyG[gi]; mf.PZ[i]=pzG[gi];
+    }
+  }
+  /* cheap ambient occlusion: one probe along the normal, at coarse grid */
+  for(let gy=0;gy<VG;gy++)for(let gx=0;gx<VG;gx++){
+    const gi=gy*VG+gx;
+    if(!hitG[gi]){aoG[gi]=1;continue;}
+    const d1=sdf(pxG[gi]+nxG[gi]*0.07, pyG[gi]+nyG[gi]*0.07, pzG[gi]+nzG[gi]*0.07, S, 0);
+    aoG[gi]=Math.max(0.45, Math.min(1, 0.5+d1*8));
+  }
+  for(let y=0;y<FW;y++){const gy=Math.min(VG-1,(y*VG/FW)|0);
+    for(let x=0;x<FW;x++){const gx=Math.min(VG-1,(x*VG/FW)|0);
+      mf.AO[y*FW+x]=aoG[gy*VG+gx]; } }
+}
+function idolMesh(scene){
+  /* BLOOD C — the idol: the same anatomy, incarnated as polygons. */
+  const mf=massField(scene);
+  if(mf._mesh)return mf._mesh;
+  const rng=mulberry32((scene.seed^0x1D01)>>>0);
+  const V=[], T=[];
+  const addTri=(a,b,c)=>T.push(a,b,c);
+  const emit=(lv,lt,px,py,pz,rc,rs)=>{
+    const base=V.length/3;
+    for(let i=0;i<lv.length;i+=3){
+      const x=lv[i], y=lv[i+1], z=lv[i+2];
+      V.push(px + x*rc - y*rs, py + x*rs + y*rc, pz + z);
+    }
+    for(const t of lt) addTri(base+t[0], base+t[1], base+t[2]);
+  };
+  const sphereGeo=(a,b,c)=>{ const lv=[],lt=[]; const LA=5,LO=7;
+    for(let i=0;i<=LA;i++){const ph=i/LA*Math.PI;
+      for(let j=0;j<LO;j++){const th=j/LO*TAU;
+        lv.push(a*Math.sin(ph)*Math.cos(th), b*Math.cos(ph), (c||a)*Math.sin(ph)*Math.sin(th)); }}
+    for(let i=0;i<LA;i++)for(let j=0;j<LO;j++){
+      const p0=i*LO+j, p1=i*LO+(j+1)%LO, p2=(i+1)*LO+j, p3=(i+1)*LO+(j+1)%LO;
+      lt.push([p0,p2,p1],[p1,p2,p3]); }
+    return [lv,lt]; };
+  const boxGeo=(a,b,c)=>{ const lv=[],lt=[];
+    for(let i=0;i<8;i++)lv.push((i&1?a:-a),(i&2?b:-b),(i&4?(c||0.05):-(c||0.05)));
+    const F=[[0,1,3,2],[4,6,7,5],[0,2,6,4],[1,5,7,3],[0,4,5,1],[2,3,7,6]];
+    for(const f of F){lt.push([f[0],f[1],f[2]],[f[0],f[2],f[3]]);}
+    return [lv,lt]; };
+  const torusGeo=(a,b,half)=>{ const lv=[],lt=[]; const SEG=half?6:10, TU=5;
+    const arc=half?Math.PI:TAU;
+    for(let i=0;i<=SEG;i++){const th=i/SEG*arc;
+      for(let j=0;j<TU;j++){const p2=j/TU*TAU;
+        const r=a+b*Math.cos(p2);
+        lv.push(r*Math.cos(th), r*Math.sin(th), b*Math.sin(p2)); }}
+    for(let i=0;i<SEG;i++)for(let j=0;j<TU;j++){
+      const p0=i*TU+j, p1=i*TU+(j+1)%TU, p2=(i+1)*TU+j, p3=(i+1)*TU+(j+1)%TU;
+      lt.push([p0,p2,p1],[p1,p2,p3]); }
+    return [lv,lt]; };
+  const cylGeo=(a,b)=>{ const lv=[],lt=[]; const SEG=8;
+    for(let i=0;i<SEG;i++){const th=i/SEG*TAU;
+      lv.push(a*Math.cos(th), b, a*Math.sin(th));
+      lv.push(a*Math.cos(th), -b, a*Math.sin(th)); }
+    for(let i=0;i<SEG;i++){const p0=i*2,p1=i*2+1,p2=((i+1)%SEG)*2,p3=((i+1)%SEG)*2+1;
+      lt.push([p0,p2,p1],[p1,p2,p3]); }
+    const ct=lv.length/3; lv.push(0,b,0); const cb=lv.length/3; lv.push(0,-b,0);
+    for(let i=0;i<SEG;i++){ lt.push([ct,((i+1)%SEG)*2,i*2]); lt.push([cb,i*2+1,((i+1)%SEG)*2+1]); }
+    return [lv,lt]; };
+  const coneGeo=(a,b)=>{ const lv=[],lt=[]; const SEG=8;
+    for(let i=0;i<SEG;i++){const th=i/SEG*TAU; lv.push(a*Math.cos(th),-b,a*Math.sin(th));}
+    const apex=lv.length/3; lv.push(0,b,0);
+    const cb=lv.length/3; lv.push(0,-b,0);
+    for(let i=0;i<SEG;i++){ lt.push([apex,(i+1)%SEG,i]); lt.push([cb,i,(i+1)%SEG]); }
+    return [lv,lt]; };
+  const drapeGeo=(a,b)=>{ const lv=[],lt=[]; const G=8;
+    for(let i=0;i<=G;i++)for(let j=0;j<=G;j++){
+      const x=(i/G-0.5)*2*a, y=(j/G-0.5)*2*b;
+      lv.push(x, y, mf.foldAt(x, y+0.5, mf.S)*0.8); }
+    for(let i=0;i<G;i++)for(let j=0;j<G;j++){
+      const p0=i*(G+1)+j,p1=p0+1,p2=p0+G+1,p3=p2+1;
+      lt.push([p0,p2,p1],[p1,p2,p3]); }
+    return [lv,lt]; };
+  const geoFor=(t,a,b,c)=>{
+    switch(t){
+      case 0: return sphereGeo(a,b,c);
+      case 1: return boxGeo(a,b,c);
+      case 2: return torusGeo(a,Math.max(0.03,b*0.5),false);
+      case 3: return cylGeo(a,b);
+      case 4: return coneGeo(a,b);
+      case 5: return torusGeo(a,Math.max(0.03,b*0.5),true);
+      case 6: return boxGeo(a,b,0.02);
+      default: return drapeGeo(Math.max(a,0.25),Math.max(b,0.3));
+    }
+  };
+  for(let i=0;i<mf.P.length;i++){ const p=mf.P[i];
+    const [lv,lt]=geoFor(p[0],p[4],p[5],p[6]);
+    emit(lv,lt,p[1],p[2],p[3],mf.rotc[i],mf.rots[i]);
+    if(mf.mirror&&Math.abs(p[1])>0.02) emit(lv,lt,-p[1],p[2],p[3],mf.rotc[i],-mf.rots[i]);
+  }
+  if(mf.hasDrape){ const [lv,lt]=drapeGeo(0.34,0.42); emit(lv,lt,0,0.5,0,1,0); }
+  mf._mesh={V:Float32Array.from(V), T:Uint32Array.from(T), wire:rng()<0.35, jseed:(rng()*0xffff)|0};
+  return mf._mesh;
+}
+function renderIdol(field, scene, theta){
+  const mf=massField(scene), M=idolMesh(scene), C=eCam(mf,theta);
+  const corr=(scene._corr!=null?scene._corr:60);
+  const M2=matOf(scene);
+  field.fill(0.022);
+  const n=M.V.length/3;
+  const sx=new Float32Array(n), sy=new Float32Array(n), sz=new Float32Array(n);
+  const wx=new Float32Array(n), wy=new Float32Array(n), wz=new Float32Array(n);
+  for(let j=0;j<n;j++){
+    let px=M.V[j*3], py=M.V[j*3+1], pz=M.V[j*3+2];
+    const h=((j*2654435761)>>>0)%100;
+    if(h<16){ const k=(M.jseed%5)+2;
+      px+=Math.sin(theta*k+j*0.7)*corr*0.00045;
+      py+=Math.cos(theta*k+j*1.3)*corr*0.00030; }
+    wx[j]=px; wy[j]=py; wz[j]=pz;
+    const ex=px-C.ex, ey=py-C.ey, ez=pz-C.ez;
+    const xv=ex*C.rx+ey*C.ry+ez*C.rz, yv=ex*C.ux+ey*C.uy+ez*C.uz, zv=ex*C.fx+ey*C.fy+ez*C.fz;
+    sz[j]=zv;
+    sx[j]=(xv/Math.max(0.06,zv))/(2*C.fov)*FW+FW/2;
+    sy[j]=(yv/Math.max(0.06,zv))/(2*C.fov)*FW+FW/2;
+  }
+  const nt=M.T.length/3, order=new Array(nt);
+  for(let t=0;t<nt;t++){ const a=M.T[t*3],b=M.T[t*3+1],c=M.T[t*3+2];
+    order[t]=[(sz[a]+sz[b]+sz[c])/3, t]; }
+  order.sort((a,b)=>b[0]-a[0]);
+  const laz=theta+mf.lightBase*0.7+0.8;
+  const lx=Math.cos(0.5)*Math.sin(laz), ly=-Math.sin(0.5), lz=Math.cos(0.5)*Math.cos(laz);
+  const edge=(x0,y0,x1,y1,v)=>{
+    const steps=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))|0;
+    for(let k=0;k<=steps;k++){ const x=(x0+(x1-x0)*k/Math.max(1,steps))|0, y=(y0+(y1-y0)*k/Math.max(1,steps))|0;
+      if(x>=0&&x<FW&&y>=0&&y<FW) field[y*FW+x]=v; } };
+  for(const [,t] of order){
+    const a=M.T[t*3], b=M.T[t*3+1], c=M.T[t*3+2];
+    if(sz[a]<0.06||sz[b]<0.06||sz[c]<0.06)continue;
+    const ux2=wx[b]-wx[a], uy2=wy[b]-wy[a], uz2=wz[b]-wz[a];
+    const vx2=wx[c]-wx[a], vy2=wy[c]-wy[a], vz2=wz[c]-wz[a];
+    let nx=uy2*vz2-uz2*vy2, ny=uz2*vx2-ux2*vz2, nz=ux2*vy2-uy2*vx2;
+    const nl=Math.hypot(nx,ny,nz)||1; nx/=nl;ny/=nl;nz/=nl;
+    const facing=nx*C.fx+ny*C.fy+nz*C.fz;
+    if(facing>0){nx=-nx;ny=-ny;nz=-nz;}
+    const diff=Math.max(0,nx*lx+ny*ly+nz*lz);
+    let v=0.10+diff*0.60+Math.pow(Math.max(0,1+(nx*C.fx+ny*C.fy+nz*C.fz)),2.2)*0.20;
+    const cx3=(wx[a]+wx[b]+wx[c])/3, cy3=(wy[a]+wy[b]+wy[c])/3, cz3=(wz[a]+wz[b]+wz[c])/3;
+    const bandV=Math.sin(cy3*M2.bandF+cx3*2.2+Math.sin(theta)*M2.crawl);
+    if(bandV>M2.bandTh)v+=M2.bandA*0.8;
+    const ci2=(((cx3*M2.cellF)|0)*7+((cy3*M2.cellF)|0)*13+((cz3*M2.cellF)|0)*29)|0;
+    v+=((((ci2*2654435761)>>>9)&255)/255-0.5)*M2.cellA*1.4;
+    v=Math.pow(Math.max(0.001,Math.min(0.93,v)),M2.expo);
+    if(!M.wire){
+      let x0=sx[a],y0=sy[a],x1=sx[b],y1=sy[b],x2=sx[c],y2=sy[c];
+      if(y1<y0){[x0,x1]=[x1,x0];[y0,y1]=[y1,y0];}
+      if(y2<y0){[x0,x2]=[x2,x0];[y0,y2]=[y2,y0];}
+      if(y2<y1){[x1,x2]=[x2,x1];[y1,y2]=[y2,y1];}
+      const yA=Math.max(0,y0|0), yB=Math.min(FW-1,y2|0);
+      for(let y=yA;y<=yB;y++){
+        let xl,xr;
+        const t2=y2>y0?(y-y0)/(y2-y0):0; const xac=x0+(x2-x0)*t2;
+        let xbc;
+        if(y<y1) xbc=x0+((y1>y0)?(y-y0)/(y1-y0):0)*(x1-x0);
+        else xbc=x1+((y2>y1)?(y-y1)/(y2-y1):0)*(x2-x1);
+        xl=Math.min(xac,xbc); xr=Math.max(xac,xbc);
+        const XA=Math.max(0,xl|0), XB=Math.min(FW-1,xr|0);
+        for(let x=XA;x<=XB;x++) field[y*FW+x]=v;
+      }
+    }
+    const ev=M.wire?0.88:Math.min(0.97,v+0.22);
+    edge(sx[a],sy[a],sx[b],sy[b],ev); edge(sx[b],sy[b],sx[c],sy[c],ev); edge(sx[c],sy[c],sx[a],sy[a],ev);
+  }
+}
+function fringePass(buf, scene, theta){
+  /* the single permitted screen artifact: chromatic fringe on the silhouette.
+     the body reads as a hologram whose edges cannot fully cohere. */
+  const mf=scene._mf; if(!mf||!mf._sv)return;
+  const sv=mf._sv, VG=sv.VG;
+  const off=2+((scene._corr||60)>70?1:0);
+  for(let y=1;y<H-1;y++){
+    const cy=Math.min(VG-1,(y*VG/H)|0);
+    for(let x=off;x<W-off;x++){
+      const cx=(x*VG/W)|0, ci=cy*VG+cx;
+      const zc=sv.kind[ci];
+      const zl=sv.kind[cy*VG+Math.max(0,cx-1)], zr=sv.kind[cy*VG+Math.min(VG-1,cx+1)];
+      if(zc!==zl||zc!==zr){
+        const o=(y*W+x)*3;
+        buf[o]=buf[o+off*3]||buf[o];
+        buf[o+2]=buf[o+2-off*3]||buf[o+2];
+      }
+    }
+  }
+}
+function depthField(field, scene, theta){
+  /* BLOOD B — the deep field: every texture mode gains depth. Height from
+     luminance; parallax shear breathes with the loop; fog eats the distance. */
+  const rng=mulberry32((scene.seed^0x3DEE)>>>0);
+  if(rng()>0.65)return;
+  const fog=0.18+rng()*0.30, par=0.5+rng()*0.9, horiz=rng()<0.7, ph=rng()*TAU;
+  const DW=90;
+  const dep=depthField._d||(depthField._d=new Float32Array(DW*DW));
+  const K=FW/DW;
+  for(let gy=0;gy<DW;gy++)for(let gx=0;gx<DW;gx++){
+    let a=0,c2=0;
+    for(let oy=0;oy<K;oy+=2)for(let ox=0;ox<K;ox+=2){ a+=field[((gy*K+oy)|0)*FW+((gx*K+ox)|0)]; c2++; }
+    dep[gy*DW+gx]=a/c2;
+  }
+  const snap=depthField._s||(depthField._s=new Float32Array(FW*FW));
+  snap.set(field);
+  const sw=Math.sin(theta+ph);
+  for(let y=0;y<FW;y++){ const gy=Math.min(DW-1,(y/K)|0);
+    for(let x=0;x<FW;x++){
+      const d=dep[gy*DW+Math.min(DW-1,(x/K)|0)];
+      const off=Math.round(par*(d-0.5)*16*sw);
+      let sx2=horiz?x+off:x, sy2=horiz?y:y+off;
+      if(sx2<0)sx2=0; else if(sx2>=FW)sx2=FW-1;
+      if(sy2<0)sy2=0; else if(sy2>=FW)sy2=FW-1;
+      field[y*FW+x]=snap[sy2*FW+sx2]*(1-fog*(1-d));
+    }
+  }
+}
 function shadeAt(mf, i, theta){
-  /* one key light orbiting slowly across the loop: living chiaroscuro */
+  /* THE MATERIAL — light on a glitch-textured surface:
+     key + rim + occlusion, then object-space corruption bands and cells
+     that ride the sculpture as it turns. */
+  const M=mf.mat||{bandF:20,bandA:0.1,bandTh:0.4,cellF:12,cellA:0.08,crawl:0.8,sortA:0.06,fogA:0.3,expo:1.2};
   const az=mf.lightBase+Math.sin(theta)*0.42, el=0.62;
   const lx=Math.cos(el)*Math.cos(az), ly=-Math.sin(el), lz=Math.cos(el)*Math.sin(az);
   const diff=Math.max(0, mf.NX[i]*lx+mf.NY[i]*ly+mf.NZ[i]*lz);
-  const rim=Math.pow(Math.max(0,1+mf.NZ[i]),2)*0.16;
-  const haze=Math.max(0,Math.min(1,(mf.DP[i]+0.35)*0.7));
-  let v=0.10+diff*0.68+rim-haze*0.10+mf.BP[i]*(0.25+diff*0.75);
-  return Math.max(0.05,Math.min(0.97,v));
+  const rim=Math.pow(Math.max(0,1+mf.NZ[i]),2.2)*0.22;
+  const ao=mf.AO?mf.AO[i]:1;
+  let v=0.07+diff*0.62*ao+rim;
+  /* object-space glitch texture: scan bands crawl along the body */
+  const px=mf.PX[i], py=mf.PY[i], pz=mf.PZ[i];
+  const band=Math.sin(py*M.bandF + Math.sin(px*3.1)*1.4 + theta*0)+Math.sin(theta)*0*0;
+  const crawlPh=Math.sin(theta)*M.crawl;
+  const bandV=Math.sin(py*M.bandF + px*2.2 + crawlPh);
+  if(bandV>M.bandTh) v+=M.bandA*(0.4+diff);
+  else if(bandV<-0.85) v-=M.bandA*0.7;
+  /* corruption cells: block-grief welded to the surface */
+  const ci=(((px*M.cellF)|0)*7+((py*M.cellF)|0)*13+((pz*M.cellF)|0)*29)|0;
+  const ch=(((ci*2654435761)>>>9)&255)/255;
+  v+=(ch-0.5)*M.cellA*(1+((scene_corr_g||60)/100));
+  /* sorted striation: luminance ramp inside each band */
+  const fr=(py*M.bandF+crawlPh)%1;
+  v+=(fr<0?fr+1:fr)*M.sortA-M.sortA*0.5;
+  /* atmosphere: depth fog toward the void */
+  const haze=Math.max(0,Math.min(1,(mf.DP[i]+0.55)*M.fogA*1.6));
+  v=v*(1-haze*0.55)+0.02*haze;
+  v+=mf.BP[i]*(0.20+diff*0.5);
+  v=Math.pow(Math.max(0.001,v), M.expo);
+  return Math.max(0.03,Math.min(0.97,v));
 }
+let scene_corr_g=60;
 function renderMass(field, scene, theta, mf){
-  const F=faultOf(scene);
-  const faultY=((theta/TAU)*FW)|0;
+  scene_corr_g=(scene._corr!=null?scene._corr:60);
+  massView(scene, mf, theta);
   const no2=scene.noise2, gp=mf.grainPh;
   for(let y=0;y<FW;y++){
-    let shift=0;
-    let dy=Math.abs(y-faultY); dy=Math.min(dy,FW-dy);
-    if(dy<F.faultH) shift=Math.round(F.faultA*(1-dy/F.faultH));
     const row=y*FW, fy=y/FW;
     for(let x=0;x<FW;x++){
-      let sx=x+shift; if(sx>=FW)sx-=FW; if(sx<0)sx+=FW;
-      const i=row+sx;
-      if(!mf.z[i]){ field[row+x]=0.03+no2(x*0.11,y*0.11+gp)*0.012; continue; }  // void breathes grain
+      const i=row+x;
+      if(!mf.z[i]){
+        /* the void is sacred: deep, graded, barely breathing */
+        const g2=0.018+0.020*(1-fy)+no2(x*0.07,y*0.07+gp)*0.008;
+        field[i]=g2; continue;
+      }
       let v=shadeAt(mf,i,theta);
-      v+=no2(x*0.37+gp, y*0.37)*0.045;                         // film grain
+      v+=no2(x*0.37+gp, y*0.37)*0.030;
       const fx2=x/FW-0.5;
-      v*=1-0.28*(fx2*fx2+(fy-0.5)*(fy-0.5))*2.2;               // vignette
-      field[row+x]=Math.max(0.04,Math.min(0.97,v));
+      v*=1-0.22*(fx2*fx2+(fy-0.5)*(fy-0.5))*2.2;
+      field[i]=Math.max(0.03,Math.min(0.97,v));
     }
   }
 }
@@ -1767,7 +2121,7 @@ const DCT_C=(()=>{const c=new Float32Array(64);
 function dctGhost(buf, scene, theta, corr){
   /* authentic JPEG grief: 8x8 DCT, brutal quantization, inverse.
      Bands of macroblock rows are wounded; geometry survives in compression form. */
-  if(scene.mode!=='MASS'||corr<12)return;
+  if((scene.mode!=='MASS'&&scene.mode!=='IDOL')||corr<12)return;
   const rng=mulberry32((scene.seed^0xDC7)>>>0);
   const q=6+ (corr*0.9)|0;
   const bandN=1+((rng()*2)|0)+ (corr>70?1:0);
@@ -3333,19 +3687,25 @@ async function generateSeq(){
       compositeTunnel(rgbA, ring2, scene.demi.tunnel, Math.min(150,corr*scene.vibe.g.tunnel));
       const rec=ring2.shift(); ring2.push(coarse2); coarse2=rec;
     }
-    if(fx.echo){
+    if(false){
       downsampleCoarse(rgbA, coarseCur);          // capture clean coarse of this frame
       compositeEcho(rgbA, ring, weights, scene);  // feedback recursion on the trails
       const reclaimed=ring.shift(); ring.push(coarseCur); coarseCur=reclaimed; // advance ring (no alloc)
     }
-    analogPass(rgbA, rgbB, scene, theta, corr, fx);
-    digitalPass(rgbB, snap, scene, theta, corr, fx);
-    heavyCorruption(rgbB, snap, scene, theta, corr, fx);
-    oblivionPixel(rgbB, snap, scene, theta, corr, fx);
-    valhallaPixel(rgbB, snap, scene, theta, corr, fx);
-    demiurgePixel(rgbB, snap, scene, theta, corr, fx, grad);
-    sanctityRGB(rgbB, scene, theta, i, grad);
-    seamRip(rgbB, scene, theta, grad);
+    const PROT=true;
+    if(!PROT){
+      analogPass(rgbA, rgbB, scene, theta, corr, fx);
+      digitalPass(rgbB, snap, scene, theta, corr, fx);
+      heavyCorruption(rgbB, snap, scene, theta, corr, fx);
+      oblivionPixel(rgbB, snap, scene, theta, corr, fx);
+      valhallaPixel(rgbB, snap, scene, theta, corr, fx);
+      demiurgePixel(rgbB, snap, scene, theta, corr, fx, grad);
+      sanctityRGB(rgbB, scene, theta, i, grad);
+      seamRip(rgbB, scene, theta, grad);
+    } else {
+      rgbB.set(rgbA);
+      fringePass(rgbB, scene, theta);
+    }
     lumenPass(rgbB, scene, theta, grad);
     /* strobe frames: seeded single-frame inversions / flashes, loop-periodic */
     for(let sb=0;sb<MV.strobes.length;sb++){
@@ -3358,7 +3718,7 @@ async function generateSeq(){
     }
     quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
              (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-    if(scene.mode!=='MASS') indexPass(indices, pal.length, scene, theta, corr, fx);
+    if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices, pal.length, scene, theta, corr, fx);
     sanctityIdx(indices, scene, i);
 
     // live preview from quantized indices
@@ -3389,7 +3749,7 @@ async function generateSeq(){
   if(lastURL)URL.revokeObjectURL(lastURL);
   lastBlob=new Blob([bytes],{type:'image/gif'}); lastBytes=bytes;
   lastURL=URL.createObjectURL(lastBlob);
-  lastName='BLACKMASS_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
+  lastName='EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
   $('dna').value=packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
 
   const LIMIT=14900000;  // 15MB platform cap, safe under both MB and MiB readings
@@ -3402,7 +3762,7 @@ async function generateSeq(){
   const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
   let xInfo='';
   if(xBytes){
-    xName = xDim===W ? lastName : 'BLACKMASS_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
+    xName = xDim===W ? lastName : 'EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
     xInfo = xDim===W ? ' · 𝕏 FULL' : ' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
     $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
   }
@@ -3523,25 +3883,29 @@ self.onmessage=function(e){
         compositeTunnel(rgbA,ring2,scene.demi.tunnel,Math.min(150,corr*scene.vibe.g.tunnel));
         const rec=ring2.shift();ring2.push(coarse2);coarse2=rec;
       }
-      if(fx.echo){
+      if(false){
         downsampleCoarse(rgbA,coarseCur);
         compositeEcho(rgbA,ring,weights,scene);
         const rec=ring.shift();ring.push(coarseCur);coarseCur=rec;
       }
-      analogPass(rgbA,rgbB,scene,theta,corr,fx);
-      digitalPass(rgbB,snap,scene,theta,corr,fx);
-      heavyCorruption(rgbB,snap,scene,theta,corr,fx);
-      oblivionPixel(rgbB,snap,scene,theta,corr,fx);
-      valhallaPixel(rgbB,snap,scene,theta,corr,fx);
-      demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
-      sanctityRGB(rgbB, scene, theta, i, grad);
-      seamRip(rgbB, scene, theta, grad);
+      const PROT2=true;
+      if(!PROT2){
+        analogPass(rgbA,rgbB,scene,theta,corr,fx);
+        digitalPass(rgbB,snap,scene,theta,corr,fx);
+        heavyCorruption(rgbB,snap,scene,theta,corr,fx);
+        oblivionPixel(rgbB,snap,scene,theta,corr,fx);
+        valhallaPixel(rgbB,snap,scene,theta,corr,fx);
+        demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
+        sanctityRGB(rgbB, scene, theta, i, grad);
+        seamRip(rgbB, scene, theta, grad);
+      } else {
+        rgbB.set(rgbA);
+        fringePass(rgbB, scene, theta);
+      }
       lumenPass(rgbB, scene, theta, grad);
-    seamRip(rgbB, scene, theta, grad);
-    lumenPass(rgbB, scene, theta, grad);
       quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
                (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-      if(scene.mode!=='MASS') indexPass(indices,pal.length,scene,theta,corr,fx);
+      if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices,pal.length,scene,theta,corr,fx);
       sanctityIdx(indices, scene, i);
       const chunks=[];
       { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,DELAY,MCS[0]); chunks.push(cs.done().slice()); }
@@ -3690,7 +4054,7 @@ async function generate(){
   if(lastURL)URL.revokeObjectURL(lastURL);
   lastBlob=new Blob([bytes],{type:'image/gif'}); lastBytes=bytes;
   lastURL=URL.createObjectURL(lastBlob);
-  lastName='BLACKMASS_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
+  lastName='EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
   $('dna').value=packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
 
   const LIMIT=14900000;
@@ -3702,7 +4066,7 @@ async function generate(){
   const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
   let xInfo='';
   if(xBytes){
-    xName = xDim===W ? lastName : 'BLACKMASS_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
+    xName = xDim===W ? lastName : 'EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
     xInfo = xDim===W ? ' · 𝕏 FULL' : ' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
     $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
   }
@@ -5210,7 +5574,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='21.0';
+const REV_SELF='E4.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -5281,7 +5645,7 @@ $('dice').addEventListener('click',()=>{
       tag='CANON ROLL';
     }
   } else {
-    const MODESALL=['MASS','PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS'];
+    const MODESALL=MODES.slice();
     const ss=Object.keys(SCHEMES);
     applyCard({ seed:(R()*0xFFFFFFFF)>>>0, scheme:ss[(R()*ss.length)|0],
       mode:MODESALL[(R()*MODESALL.length)|0],
@@ -5371,7 +5735,7 @@ function machineRoll(opts){
   if(!tag){
     const canon=R()<(opts.canonP!=null?opts.canonP:0.60);
     if(!PIN.mode) card.mode= canon
-      ? wpick([['MASS',30],['TENDRILS',14],['RINGS',8],['ORBITALS',8],['SCANS',9],['GLYPHS',8],['STRATA',8],['LATTICE',8],['PLASMA',7]])
+      ? wpick([['MASS',18],['IDOL',14],['SEDIMENT',11],['VEINED',10],['LATHE',9],['BROADCAST',9],['MOLTEN',8],['ENGRAVED',8],['GRID',7],['SATELLITE',6]])
       : MODES[(R()*(MODES.length))|0];
     if(card.mode==='RANDOM')card.mode='MASS';
     if(card.mode==='MASS'&&!PIN.seed&&R()<0.60){
