@@ -5609,6 +5609,9 @@ function walletHandoffURL(kind){
   if(kind==='metamask') return 'https://metamask.app.link/dapp/'+here.replace(/^https?:\/\//,'');
   if(kind==='coinbase') return 'https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(here);
   if(kind==='trust')    return 'https://link.trustwallet.com/open_url?coin_id=60&url='+encodeURIComponent(here);
+  if(kind==='phantom')  return 'https://phantom.app/ul/browse/'+encodeURIComponent(here)+'?ref='+encodeURIComponent(location.origin);
+  if(kind==='zerion')   return 'https://link.zerion.io/pt3gdRP0njb';   /* opens the app; the loop link rides the clipboard */
+  if(kind==='rainbow')  return 'https://rainbow.download';             /* same pattern: no public open-url link exists */
   return here;
 }
 function walletModal(){
