@@ -186,11 +186,26 @@ if(b.dataset.copyopen){try{navigator.clipboard.writeText(location.href);}catch(e
 location.href=walletHandoffURL(b.dataset.copyopen);return;}
 if(b.dataset.link){location.href=walletHandoffURL(b.dataset.link);return;}
 wrap.remove();res(inj[+b.dataset.i].provider);});});}
+/* WALLETCONNECT — one door on mobile, every wallet behind it. Lazy ESM import;
+   needs a free project id from dashboard.reown.com. Until WC_PID is set, mobile
+   keeps the handoff modal. */
+const WC_PID=''; /* paste the WalletConnect project id here to arm mobile WalletConnect */
+let _WC=null;
+async function wcConnect(){
+if(_WC){try{if(!_WC.accounts||!_WC.accounts.length)await _WC.enable();}catch(e){}return _WC;}
+const mod=await import('https://esm.sh/@walletconnect/ethereum-provider@2.21.1');
+const EthereumProvider=mod.EthereumProvider||mod.default;
+const p=await EthereumProvider.init({projectId:WC_PID,chains:[1],optionalChains:[1],showQrModal:true,
+qrModalOptions:{themeMode:'dark'},
+metadata:{name:'DITHERVOID // PANDORA',description:'A free glitch loop generator. One seed, one token, one chance.',
+url:location.origin,icons:[location.origin+'/icon.png']}});
+await p.enable();_WC=p;return p;}
 async function pickProvider(){
 if(WPROV)return WPROV;
 const e=window.ethereum;
 if(PUB_MOBILE){
 if(e&&!e.isBraveWallet)return WPROV=e;
+if(WC_PID){try{return WPROV=await wcConnect();}catch(err){toast('WALLETCONNECT: '+String(err&&err.message||err).slice(0,32));}}
 return WPROV=await walletModal();}
 if(W6963.length>1)return WPROV=await walletModal();
 if(W6963.length===1)return WPROV=W6963[0].provider;

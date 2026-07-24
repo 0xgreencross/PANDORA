@@ -6017,13 +6017,35 @@ function walletModal(){
     });
   });
 }
+/* ---- WALLETCONNECT \u2014 one door on mobile, every wallet behind it.
+   Loaded lazily (ESM import) only when a phone actually needs it, so desktop
+   and the engine never pay for it. Needs a free project id from
+   dashboard.reown.com; until WC_PID is set, mobile keeps the handoff modal. */
+const WC_PID=''; /* \u25c0 paste the WalletConnect project id here to arm mobile WalletConnect */
+let _WC=null;
+async function wcConnect(){
+  if(_WC){ try{ if(!_WC.accounts||!_WC.accounts.length) await _WC.enable(); }catch(e){} return _WC; }
+  const mod=await import('https://esm.sh/@walletconnect/ethereum-provider@2.21.1');
+  const EthereumProvider=mod.EthereumProvider||mod.default;
+  const p=await EthereumProvider.init({
+    projectId:WC_PID, chains:[1], optionalChains:[1], showQrModal:true,
+    qrModalOptions:{themeMode:'dark'},
+    metadata:{ name:'DITHERVOID // PANDORA',
+      description:'A free glitch loop generator. One seed, one token, one chance.',
+      url:location.origin, icons:[location.origin+'/icon.png'] }
+  });
+  await p.enable();               /* opens WalletConnect's own wallet list + deep links */
+  _WC=p; return p;
+}
 async function pickProvider(){
   if(WPROV)return WPROV;
   const e=window.ethereum;
   if(PUB_MOBILE){
-    /* inside a wallet's own browser (MetaMask, Coinbase, Trust\u2026) that IS the
-       choice; Brave's built-in is never assumed \u2014 curator's law. */
+    /* already inside a wallet's own browser? use it directly \u2014 instant, no relay.
+       Brave's built-in is never assumed \u2014 curator's law. */
     if(e&&!e.isBraveWallet)return WPROV=e;
+    /* plain mobile browser: one WalletConnect door, every wallet behind it. */
+    if(WC_PID){ try{ return WPROV=await wcConnect(); }catch(err){ pubOsd('WALLETCONNECT: '+String(err&&err.message||err).slice(0,32)); } }
     return WPROV=await walletModal();
   }
   if(W6963.length>1)return WPROV=await walletModal();
