@@ -205,6 +205,7 @@ if(W6963.length>1)return WPROV=await walletModal();
 if(W6963.length===1)return WPROV=W6963[0].provider;
 if(e)return WPROV=e;
 toast('NO WALLET FOUND \u2014 INSTALL METAMASK');throw new Error('no wallet');}
+function resetWallet(){WPROV=null;WALLET=null;}
 async function connect(){
 if(WALLET)return WALLET;
 const P=await pickProvider();
@@ -222,7 +223,7 @@ if(r.ok){LIKES.set(card,(LIKES.get(card)||0)+1);MYLIKES.add(card);
 if(btn){btn.classList.add('on');btn.textContent='\u2665 '+LIKES.get(card);}toast('TASTE SEALED');}
 else if(r.status===409){toast('ALREADY LIKED');if(btn)btn.classList.add('on');}
 else toast('LIKE ERROR '+r.status);
-}catch(e){}}
+}catch(e){resetWallet();}}
 function likeBtn(card){const b=document.createElement('button');b.className='like';
 const n=LIKES.get(card)||0;b.textContent='\u2665 '+(n||'');
 if(MYLIKES.has(card))b.classList.add('on');

@@ -6069,14 +6069,26 @@ async function connectWallet(){
   return WALLET;
 }
 function pubOsd(t){ const o=document.getElementById('osd'); if(o)o.textContent=t; }
+/* half-open wallet sessions strand the button; clear the volatile handles so the
+   next tap re-derives cleanly. The WalletConnect session (_WC) persists itself. */
+function resetWallet(){ WPROV=null; WALLET=null; }
 
-/* ---- garden: signature is the key; no gas, no funds ---- */
+/* ---- garden: the connection is the key; no gas, no funds ----
+   WalletConnect on a phone means every wallet round-trip is an app-switch, and
+   iOS can reload the page on the way back \u2014 so we NEVER ask WalletConnect for a
+   second signature (it was never verified server-side anyway; approving the
+   connection already proves the wallet). Injected wallets sign instantly in
+   place, so they still do, for the ritual. */
 async function gardenAuth(){
   const w=await connectWallet();
   let g=null; try{ g=JSON.parse(localStorage.getItem('PNDR_GDN')||'null'); }catch(e){}
   if(g && g.w===w) return g;
-  const msg='DITHERVOID // PANDORA \u2014 GARDEN KEY\nThis signature only proves this garden is yours.\nNo transaction. No gas. No access to funds.';
-  const sig=await WPROV.request({method:'personal_sign', params:[msg, w]});
+  let sig='wc-session';
+  if(WPROV!==_WC){                          /* injected/desktop: instant, no app-switch */
+    const msg='DITHERVOID // PANDORA \u2014 GARDEN KEY\nThis signature only proves this garden is yours.\nNo transaction. No gas. No access to funds.';
+    let hex='0x'; for(let i=0;i<msg.length;i++)hex+=msg.charCodeAt(i).toString(16).padStart(2,'0');
+    sig=await WPROV.request({method:'personal_sign', params:[hex, w]});
+  }
   g={w:w, sig:sig}; localStorage.setItem('PNDR_GDN', JSON.stringify(g)); return g;
 }
 function pubThumb(){ const c=document.getElementById('view'); const t=document.createElement('canvas'); t.width=t.height=128; t.getContext('2d').drawImage(c,0,0,128,128); return t.toDataURL('image/jpeg',0.72); }
@@ -6089,7 +6101,7 @@ async function saveToGarden(){
       headers:{apikey:SBP.key,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({ts:Date.now(), wallet:g.w.toLowerCase(), card:card, thumb:pubThumb(), rev:'PUBLIC 1.0'})});
     pubOsd(r.ok?'PLANTED IN YOUR GARDEN':(r.status===409?'ALREADY IN YOUR GARDEN':'GARDEN ERROR '+r.status));
-  }catch(e){ if(String(e.message||e).indexOf('wallet')<0) pubOsd('GARDEN: '+(e.message||'cancelled').slice(0,40)); }
+  }catch(e){ resetWallet(); if(String(e.message||e).indexOf('wallet')<0) pubOsd('GARDEN: '+(e.message||'cancelled').slice(0,40)); }
 }
 /* ---- poster: the true frame, captured at mint ---- */
 async function uploadPoster(seed){
@@ -6152,7 +6164,7 @@ async function doMint(){
       }
     }
     mintStat('STILL PENDING \u2014 CHECK EXPLORER');
-  }catch(e){ mintStat((e && (e.message||e.toString()) || 'CANCELLED').slice(0,60)); }
+  }catch(e){ resetWallet(); mintStat((e && (e.message||e.toString()) || 'CANCELLED').slice(0,60)); }
 }
 function showMintedBand(tok){
   const b=document.getElementById('mintedband');
