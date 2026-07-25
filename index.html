@@ -183,6 +183,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
 .iorow button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);
   color:var(--mut);font-size:8px;letter-spacing:.1em;padding:9px 8px;}
 .iorow button:hover{border-color:var(--cyan);color:var(--cyan);}
+#pub-copydna{padding-left:7px;padding-right:7px;}
 
 /* minted band */
 #mintedband{display:none;padding:8px 10px;border:1px solid var(--oxd);color:var(--cyan);
@@ -359,6 +360,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <label>DNA</label>
         <input id="pub-dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PNDR-…">
         <button id="pub-resurrect" title="decodes the pasted card and rebuilds its loop byte-exactly">▶ RESURRECT</button>
+        <button id="pub-copydna" title="copies this loop's DNA card to your clipboard">⧉ COPY</button>
       </div>
     </div>
   </div>
@@ -3556,13 +3558,14 @@ function startPlayer(frames,pal,dim,N,delayMs){
     PLAYER.raf=requestAnimationFrame(tick);
     if(st.prevRaf){const g=now-st.prevRaf; st.rafN++; st.rafSum+=g; if(g>st.rafWorst)st.rafWorst=g;}
     st.prevRaf=now;
-    const fi=(((now-t0)/delayMs)|0)%N;
+    const fi=(((((now-t0)/delayMs)|0)%N)+N)%N;   /* rAF can stamp BEFORE t0: never index backwards */
     if(fi===last)return;
     if(lastAdv){const d=now-lastAdv; st.n++; st.sum+=d; if(d>st.worst)st.worst=d;
       if(d>delayMs*1.6)st.late++;}
     lastAdv=now;
     last=fi;
     const f=frames[fi];
+    if(!f)return;                                /* a missing frame skips a beat, it does not kill the loop */
     const b0=performance.now();
     for(let q=0;q<dim*dim;q++){const c=pal[f[q]],k=q*4;pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
     octx.putImageData(img,0,0);
@@ -3944,6 +3947,22 @@ function killPool(){
   if(POOL.workers){for(const w of POOL.workers)try{w.terminate();}catch(e){} POOL.workers=null;}
 }
 
+/* CUR_ABORT is the running render's escape hatch. Terminating the worker pack
+   is not enough: generate() is parked on a promise that only those workers
+   could have resolved, and it holds #go and #oblivion disabled until its tail
+   runs. Kill the pack alone and the tail never runs — the box is bricked.
+   Everything that hijacks a live render goes through abortRun() instead: it
+   stales the epoch, frees the buttons, and hands the orphan its resolver so it
+   can unwind quietly through its own `run!==RUN` check. */
+let CUR_ABORT=null;
+function abortRun(){
+  RUN++; busy=false; killPool();
+  const a=CUR_ABORT; CUR_ABORT=null;
+  if(a&&a.f){ try{a.f();}catch(e){} }        /* unwind the orphan */
+  try{ $('go').disabled=false; $('oblivion').disabled=false; }catch(e){}
+  try{ $('prog').style.width='0%'; }catch(e){}
+}
+
 async function generate(){
   if(busy)return;
   if(!POOL.ok || !spawnPool()) return generateSeq();
@@ -3999,6 +4018,7 @@ async function generate(){
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
   await new Promise(resolve=>{
+    CUR_ABORT={run:run,f:resolve};   /* a hijack tap can now cut this promise loose */
     let remaining=nw;
     for(let w=0;w<nw;w++){
       const wk=POOL.workers[w];
@@ -4012,7 +4032,7 @@ async function generate(){
           $('prog').style.width=(doneFrames/N*92)+'%';
           pvFrames[m.i]=m.pv;                          // retained for the canvas player
           const pd=pimg.data, pv=m.pv;
-          for(let q=0;q<540*540;q++){const c=pal[pv[q]],k=q*4;
+          for(let q=0;q<540*540;q++){const c=pal[pv[q]]||pal[0]||[0,0,0],k=q*4;
             pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
           pctx.putImageData(pimg,0,0);
           vctx.imageSmoothingEnabled=false;
@@ -4025,6 +4045,7 @@ async function generate(){
       wk.postMessage(jobOf(w));
     }
   });
+  if(CUR_ABORT&&CUR_ABORT.run===run)CUR_ABORT=null;    /* only ever retire our own */
   if(run!==RUN)return;                                 // hijacked: die silently
   if(failed){                                          // worker path broke: honest fallback
     console.warn('HYDRA worker failed, falling back to sequential:', failed);
@@ -5899,7 +5920,7 @@ function pandorize(){
 /* tap the box any time — even mid-render. A running transmission is
    abandoned on the spot and a fresh universe is minted. */
 document.querySelector('.screen-wrap').addEventListener('click',()=>{
-  if(busy){ RUN++; busy=false; killPool(); }           // kill the zombie's claim + its worker pack
+  if(busy)abortRun();                                  // kill the zombie's claim, its pack, AND its grip on the buttons
   pandorize();
 });
 
@@ -6317,7 +6338,7 @@ document.body.appendChild($g('xmodal'));
 
 /* 2 · box tap = pandorize — the engine's own ritual, called directly */
 $g('stage').addEventListener('click',()=>{
-  if(busy){ RUN++; busy=false; killPool(); }   /* same zombie-kill as the engine's own tap */
+  if(busy)abortRun();                          /* same zombie-kill as the engine's own tap */
   pandorize();
 });
 
@@ -6325,7 +6346,11 @@ $g('stage').addEventListener('click',()=>{
        instrument had four pulls — tap, DICE, MUTATE, OBLIVION — and the shell
        had kept only the tap. The buttons live entombed in the studio; the
        shell only pulls their triggers. */
-function pubRitual(id){ if(busy){ RUN++; busy=false; killPool(); } $g(id).click(); }
+function pubRitual(id){
+  if(busy)abortRun();                       /* frees the button we are about to click */
+  const b=$g(id); if(b.disabled)b.disabled=false;
+  b.click();
+}
 $g('pub-dice').addEventListener('click',()=>pubRitual('dice'));
 $g('pub-mutate').addEventListener('click',()=>{ if(busy)return; $g('mutate').click(); });
 $g('pub-oblivion').addEventListener('click',()=>pubRitual('oblivion'));
@@ -6403,6 +6428,24 @@ $g('pub-resurrect').addEventListener('click',()=>{
   $g('dnaload').click();                        /* unpackCard → applyCard → generate, verbatim */
 });
 
+/* ⧉ COPY — the card, in your hand. The async clipboard first (we are standing
+   inside the user gesture it demands); a select-and-execCommand fallback for the
+   older webviews that refuse it; and the button itself reports which happened,
+   because a copy button that lies is worse than none. */
+$g('pub-copydna').addEventListener('click',async()=>{
+  const b=$g('pub-copydna');
+  const v=(($g('dna')||{}).value||($g('pub-dna')||{}).value||'').trim();
+  const rest=()=>setTimeout(()=>{ b.textContent='⧉ COPY'; },1400);
+  if(!v){ b.textContent='⧉ NO DNA YET'; rest(); return; }
+  let ok=false;
+  try{ await navigator.clipboard.writeText(v); ok=true; }catch(e){}
+  if(!ok){ try{ const i=$g('pub-dna'); i.value=v; i.focus();
+    i.setSelectionRange(0,v.length); ok=document.execCommand('copy');
+    i.setSelectionRange(v.length,v.length); }catch(e){} }
+  b.textContent = ok ? '⧉ COPIED' : '⧉ SELECT & COPY';
+  rest();
+});
+
 /* 7 · actions row */
 $g('pub-download').addEventListener('click',()=>{
   if($g('download').hasAttribute('disabled'))return;
@@ -6434,7 +6477,24 @@ function paint(){
   if($g('xsave').hasAttribute('disabled')) $g('pub-xpost').setAttribute('disabled','');
   else $g('pub-xpost').removeAttribute('disabled');
   $g('pub-splice').disabled=busy;
+  keepOpen();
 }
+/* THE CRUMB. This tab remembers the loop it is holding, so a walk to the
+   gardens — or the sealed, or a token page — and back returns you to your own
+   universe instead of a closed box. sessionStorage, deliberately: a first-time
+   visitor in a fresh tab still meets the STANDBY rite. */
+let OPEN_CARD='';
+function keepOpen(){
+  if(busy||!lastBlob)return;
+  const v=($g('dna').value||'').trim();
+  if(!v||v===OPEN_CARD)return;
+  OPEN_CARD=v;
+  try{ sessionStorage.setItem('PNDR_OPEN',v); }catch(e){}
+}
+/* and never trust the pulse to have fired: a tap on GARDENS can leave inside
+   the same heartbeat, so write the crumb on the way out too. */
+addEventListener('pagehide',keepOpen);
+addEventListener('visibilitychange',()=>{ if(document.hidden)keepOpen(); });
 setInterval(paint,250); paint();
 window.__paint=paint;
 
@@ -6525,7 +6585,13 @@ $g('instrmodal').addEventListener('click',e=>{ if(e.target.id==='instrmodal')$g(
    already applies the card AND generates — no second click needed. */
 try{
   const d=new URLSearchParams(location.search).get('dna');
-  if(d){ const di=$g('dna'); if(di){ di.value=d.trim();
+  let card=d?d.trim():'', back=false;
+  /* no deep link? then ask this TAB whether it was already holding a loop when
+     it left for the gardens. sessionStorage, deliberately: a first-time visitor
+     in a fresh tab still meets the closed box and the STANDBY rite. */
+  if(!card){ try{ card=(sessionStorage.getItem('PNDR_OPEN')||'').trim(); back=!!card; }catch(e){} }
+  if(card){ const di=$g('dna'); if(di){ di.value=card;
+    if(back){ const o=$g('osd'); if(o)o.textContent='RESTORING YOUR LOOP\u2026'; }
     setTimeout(()=>{ const rb=$g('dnaload'); if(rb)rb.click(); },700); } }
 }catch(e){}
 
