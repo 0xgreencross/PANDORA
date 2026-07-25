@@ -6017,25 +6017,93 @@ function walletModal(){
     });
   });
 }
-/* ---- WALLETCONNECT \u2014 one door on mobile, every wallet behind it.
-   Loaded lazily (ESM import) only when a phone actually needs it, so desktop
-   and the engine never pay for it. Needs a free project id from
-   dashboard.reown.com; until WC_PID is set, mobile keeps the handoff modal. */
-const WC_PID='9204f8b0f71b2868dece0e6e57a2950a'; /* WalletConnect project id \u2014 dashboard.reown.com */
-let _WC=null;
-async function wcConnect(){
-  if(_WC){ try{ if(!_WC.accounts||!_WC.accounts.length) await _WC.enable(); }catch(e){} return _WC; }
-  const mod=await import('https://esm.sh/@walletconnect/ethereum-provider@2.21.1');
-  const EthereumProvider=mod.EthereumProvider||mod.default;
-  const p=await EthereumProvider.init({
-    projectId:WC_PID, chains:[1], optionalChains:[1], showQrModal:true,
-    qrModalOptions:{themeMode:'dark'},
+/* ---- WALLETCONNECT — one door on mobile, every wallet behind it.
+   The bundle is SELF-HOSTED (wc.js, loaded only when a phone needs it) so no
+   third-party CDN can strand a wallet; two public mirrors stand behind it.
+   WalletConnect's own QR modal is deliberately NOT used: the browser build
+   fetches it from a second package at connect time, and when that fetch fails
+   init throws and everyone silently lands back on the handoff list — that was
+   the bug. The box draws its own sheet from the wc: URI and deep-links
+   straight into the chosen app, remembering it so later signatures reopen it. */
+const WC_PID='9204f8b0f71b2868dece0e6e57a2950a'; /* WalletConnect project id — dashboard.reown.com */
+const WC_SRC=['wc.js',
+  'https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.21.1/dist/index.umd.js',
+  'https://unpkg.com/@walletconnect/ethereum-provider@2.21.1/dist/index.umd.js'];
+const WC_APPS=[['METAMASK','https://metamask.app.link'],
+  ['RAINBOW','https://rnbwapp.com'],
+  ['ZERION','https://link.zerion.io'],
+  ['TRUST WALLET','https://link.trustwallet.com'],
+  ['COINBASE WALLET','https://go.cb-w.com'],
+  ['PHANTOM','https://phantom.app/ul'],
+  ['UNISWAP','https://uniswap.org/app']];
+let _WC=null, _WCNS=null, WC_INTENT=null;
+const _wcGlobal=()=>globalThis['@walletconnect/ethereum-provider'];
+function wcLoad(){
+  if(_WCNS)return Promise.resolve(_WCNS);
+  if(_wcGlobal())return Promise.resolve(_WCNS=_wcGlobal());
+  return new Promise((res,rej)=>{ let i=0;
+    const next=()=>{
+      if(i>=WC_SRC.length){ rej(new Error('script blocked')); return; }
+      const sc=document.createElement('script'); sc.src=WC_SRC[i++]; sc.async=true;
+      sc.onload=()=>{ const n=_wcGlobal(); if(n&&n.EthereumProvider)res(_WCNS=n); else next(); };
+      sc.onerror=next; document.head.appendChild(sc); };
+    next(); });
+}
+/* the box's own wallet sheet — same rite as SUMMON A WALLET, but every button
+   carries the live wc: URI into that wallet's app. */
+function wcSheet(uri){
+  const old=document.getElementById('wmodal'); if(old)old.remove();
+  const wrap=document.createElement('div'); wrap.id='wmodal';
+  let h='<div id="wbox"><div id="wttl">OPEN YOUR WALLET</div>'
+   +'<div id="wsub">PICK THE APP THAT HOLDS YOUR KEYS. IT OPENS, YOU APPROVE THE CONNECTION, YOU COME BACK. NO GAS. NO FUNDS TOUCHED.</div>';
+  WC_APPS.forEach((a,i)=>{ h+='<button class="wopt" data-w="'+i+'">◆ '+a[0]+' ↗</button>'; });
+  h+='<button class="wopt" data-raw="1">◈ OTHER WALLET</button>'
+   +'<button class="wopt" data-copy="1">⧉ COPY CONNECTION LINK</button>'
+   +'<button id="wcancel">CANCEL</button></div>';
+  wrap.innerHTML=h; document.body.appendChild(wrap);
+  let bail=null;
+  wrap.addEventListener('click',e=>{
+    const b=e.target.closest('button');
+    if(!b){ if(e.target===wrap&&bail)bail(); return; }
+    if(b.id==='wcancel'){ if(bail)bail(); return; }
+    if(b.dataset.copy){ try{navigator.clipboard.writeText(uri);}catch(e2){}
+      b.textContent='⧉ COPIED — PASTE IN YOUR WALLET'; return; }
+    /* iOS can reload this page while the wallet has the screen; leave a crumb so
+       the plant finishes itself on return instead of vanishing. */
+    if(WC_INTENT==='garden'){ try{ const card=(document.getElementById('dna')||{}).value||'';
+      if(card)localStorage.setItem('PNDR_WCP',JSON.stringify({card:card,thumb:pubThumb(),ts:Date.now()})); }catch(e2){} }
+    if(b.dataset.raw){ location.href=uri; return; }
+    const a=WC_APPS[+b.dataset.w];
+    /* WalletConnect reads this to reopen the same app for later signatures */
+    try{ localStorage.setItem('WALLETCONNECT_DEEPLINK_CHOICE',JSON.stringify({name:a[0],href:a[1]})); }catch(e2){}
+    location.href=a[1]+'/wc?uri='+encodeURIComponent(uri);
+  });
+  return { close(){ wrap.remove(); }, bail(f){ bail=f; } };
+}
+async function wcInit(){
+  const NS=await wcLoad();
+  const opts={ projectId:WC_PID, chains:[1], optionalChains:[1], showQrModal:false,
     metadata:{ name:'DITHERVOID // PANDORA',
       description:'A free glitch loop generator. One seed, one token, one chance.',
-      url:location.origin, icons:[location.origin+'/icon.png'] }
-  });
-  await p.enable();               /* opens WalletConnect's own wallet list + deep links */
-  _WC=p; return p;
+      url:location.origin, icons:[location.origin+'/icon.png'] } };
+  try{ return await NS.EthereumProvider.init(opts); }
+  catch(e){                 /* a half-dead session poisons init — purge it and try once more */
+    try{ Object.keys(localStorage).filter(k=>/^wc@2:|^WALLETCONNECT/.test(k))
+      .forEach(k=>localStorage.removeItem(k)); }catch(e2){}
+    return await NS.EthereumProvider.init(opts);
+  }
+}
+async function wcConnect(){
+  if(_WC&&_WC.accounts&&_WC.accounts.length)return _WC;
+  const p=_WC||(_WC=await wcInit());
+  if(p.accounts&&p.accounts.length)return p;      /* the session outlived the app-switch */
+  let sheet=null, bail=null;
+  const onUri=u=>{ sheet=wcSheet(u);
+    sheet.bail(()=>{ sheet.close(); sheet=null; if(bail)bail(new Error('user cancelled')); }); };
+  p.on('display_uri',onUri);
+  try{ await Promise.race([p.enable(), new Promise((_,rj)=>{bail=rj;})]); }
+  finally{ try{p.removeListener('display_uri',onUri);}catch(e){} if(sheet)sheet.close(); }
+  return p;
 }
 async function pickProvider(){
   if(WPROV)return WPROV;
@@ -6048,9 +6116,9 @@ async function pickProvider(){
        A user who backs out of the WC sheet is left alone; only a genuine
        load/init failure falls through to the handoff modal. */
     if(WC_PID){ try{ return WPROV=await wcConnect(); }
-      catch(err){ const m=String(err&&err.message||err).toLowerCase();
-        if(/reject|cancel|clos|denied|user/.test(m)) throw err;
-        pubOsd('WALLETCONNECT UNAVAILABLE'); } }
+      catch(err){ const raw=String(err&&err.message||err); window.__WCERR=raw;
+        if(/reject|cancel|clos|denied|user/i.test(raw)) throw err;
+        pubOsd('WALLETCONNECT: '+raw.slice(0,52).toUpperCase()); } }
     return WPROV=await walletModal();
   }
   if(W6963.length>1)return WPROV=await walletModal();
@@ -6095,6 +6163,7 @@ function pubThumb(){ const c=document.getElementById('view'); const t=document.c
 async function saveToGarden(){
   const card=(document.getElementById('dna')||{}).value;
   if(!card){ pubOsd('OPEN THE BOX FIRST'); return; }
+  WC_INTENT='garden';
   try{
     const g=await gardenAuth();
     const r=await fetch(SBP.url+'/rest/v1/garden_items',{method:'POST',
@@ -6102,7 +6171,28 @@ async function saveToGarden(){
       body:JSON.stringify({ts:Date.now(), wallet:g.w.toLowerCase(), card:card, thumb:pubThumb(), rev:'PUBLIC 1.0'})});
     pubOsd(r.ok?'PLANTED IN YOUR GARDEN':(r.status===409?'ALREADY IN YOUR GARDEN':'GARDEN ERROR '+r.status));
   }catch(e){ resetWallet(); if(String(e.message||e).indexOf('wallet')<0) pubOsd('GARDEN: '+(e.message||'cancelled').slice(0,40)); }
+  finally{ WC_INTENT=null; }
 }
+/* ---- THE RETURN — if the phone reloaded this page while the wallet had the
+   screen, the plant never fired. The crumb holds the exact loop and its thumb,
+   so the box finishes the rite by itself the moment it wakes with a session. */
+try{ (function(){
+  if(!PUB_MOBILE)return;
+  let j=null; try{ j=JSON.parse(localStorage.getItem('PNDR_WCP')||'null'); }catch(e){}
+  if(!j||!j.card)return;
+  try{ localStorage.removeItem('PNDR_WCP'); }catch(e){}
+  if(Date.now()-(j.ts||0)>600000)return;
+  setTimeout(async function(){ try{
+    const p=await wcInit();
+    if(!p.accounts||!p.accounts.length)return;       /* never opens a sheet on boot */
+    _WC=p; WPROV=p; WALLET=p.accounts[0];
+    const r=await fetch(SBP.url+'/rest/v1/garden_items',{method:'POST',
+      headers:{apikey:SBP.key,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({ts:Date.now(), wallet:WALLET.toLowerCase(), card:j.card, thumb:j.thumb, rev:'PUBLIC 1.0'})});
+    try{ localStorage.setItem('PNDR_GDN',JSON.stringify({w:WALLET,sig:'wc-session'})); }catch(e){}
+    pubOsd(r.ok?'PLANTED IN YOUR GARDEN':(r.status===409?'ALREADY IN YOUR GARDEN':'GARDEN ERROR '+r.status));
+  }catch(e){} },1500);
+})(); }catch(e){}
 /* ---- poster: the true frame, captured at mint ---- */
 async function uploadPoster(seed){
   try{
