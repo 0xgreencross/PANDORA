@@ -168,6 +168,7 @@ h+='<button class="wopt" data-link="metamask">\u25c6 METAMASK \u2197</button>'
 +'<button class="wopt" data-link="phantom">\u25c6 PHANTOM \u2197</button>'
 +'<button class="wopt" data-copyopen="zerion">\u25c6 ZERION \u29c9</button>'
 +'<button class="wopt" data-copyopen="rainbow">\u25c6 RAINBOW \u29c9</button>';}
+if(window.__WCERR)h+='<div id="wnone">WALLETCONNECT COULD NOT OPEN: '+String(window.__WCERR).slice(0,80).toUpperCase().replace(/[<>]/g,'')+'</div>';
 if(!inj.length&&!PUB_MOBILE)h+='<div id="wnone">NO WALLET ANNOUNCED \u2014 INSTALL METAMASK, THEN RETURN.</div>';
 h+='<button id="wcancel">CANCEL</button></div>';
 wrap.innerHTML=h;document.body.appendChild(wrap);
@@ -203,28 +204,37 @@ const next=()=>{if(i>=WC_SRC.length){rej(new Error('script blocked'));return;}
 const sc=document.createElement('script');sc.src=WC_SRC[i++];sc.async=true;
 sc.onload=()=>{const n=_wcGlobal();if(n&&n.EthereumProvider)res(_WCNS=n);else next();};
 sc.onerror=next;document.head.appendChild(sc);};next();});}
+/* the sheet opens on the TAP, before the relay answers, so a phone is never
+   left staring at a dead button; the wallet rows wake when the URI lands. */
 function wcSheet(uri){
 const old=document.getElementById('wmodal');if(old)old.remove();
 const wrap=document.createElement('div');wrap.id='wmodal';
-let h='<div id="wbox"><div id="wttl">OPEN YOUR WALLET</div>'
-+'<div id="wsub">PICK THE APP THAT HOLDS YOUR KEYS. IT OPENS, YOU APPROVE THE CONNECTION, YOU COME BACK. NO GAS. NO FUNDS TOUCHED.</div>';
+const READY='PICK THE APP THAT HOLDS YOUR KEYS. IT OPENS, YOU APPROVE THE CONNECTION, YOU COME BACK. NO GAS. NO FUNDS TOUCHED.';
+let h='<div id="wbox"><div id="wttl">OPEN YOUR WALLET</div><div id="wsub">'+READY+'</div>';
 WC_APPS.forEach((a,i)=>{h+='<button class="wopt" data-w="'+i+'">◆ '+a[0]+' ↗</button>';});
 h+='<button class="wopt" data-raw="1">◈ OTHER WALLET</button>'
 +'<button class="wopt" data-copy="1">⧉ COPY CONNECTION LINK</button>'
 +'<button id="wcancel">CANCEL</button></div>';
 wrap.innerHTML=h;document.body.appendChild(wrap);
+const sub=wrap.querySelector('#wsub');
+const opts=[].slice.call(wrap.querySelectorAll('.wopt'));
+const sleep=on=>opts.forEach(b=>{b.disabled=on;b.style.opacity=on?'.4':'';});
+if(!uri){sleep(true);sub.textContent='REACHING THE WALLETCONNECT RELAY… ONE MOMENT.';}
 let bail=null;
 wrap.addEventListener('click',e=>{
 const b=e.target.closest('button');
 if(!b){if(e.target===wrap&&bail)bail();return;}
 if(b.id==='wcancel'){if(bail)bail();return;}
+if(!uri)return;
 if(b.dataset.copy){try{navigator.clipboard.writeText(uri);}catch(e2){}
 b.textContent='⧉ COPIED — PASTE IN YOUR WALLET';return;}
 if(b.dataset.raw){location.href=uri;return;}
 const a=WC_APPS[+b.dataset.w];
 try{localStorage.setItem('WALLETCONNECT_DEEPLINK_CHOICE',JSON.stringify({name:a[0],href:a[1]}));}catch(e2){}
 location.href=a[1]+'/wc?uri='+encodeURIComponent(uri);});
-return {close(){wrap.remove();},bail(f){bail=f;}};}
+return {close(){wrap.remove();},bail(f){bail=f;},
+arm(u){uri=u;sleep(false);sub.textContent=READY;},
+say(t){sub.textContent=t;}};}
 async function wcInit(){
 const NS=await wcLoad();
 const opts={projectId:WC_PID,chains:[1],optionalChains:[1],showQrModal:false,
@@ -234,22 +244,38 @@ try{return await NS.EthereumProvider.init(opts);}
 catch(e){try{Object.keys(localStorage).filter(k=>/^wc@2:|^WALLETCONNECT/.test(k))
 .forEach(k=>localStorage.removeItem(k));}catch(e2){}
 return await NS.EthereumProvider.init(opts);}}
+/* never silent, never endless: sheet first, hard deadline, loud failure. */
 async function wcConnect(){
 if(_WC&&_WC.accounts&&_WC.accounts.length)return _WC;
-const p=_WC||(_WC=await wcInit());
+const sheet=wcSheet(null);
+let bail=null,armed=false,dead=null,p=null;
+const guard=new Promise((_,rj)=>{bail=rj;});
+sheet.bail(()=>{if(bail)bail(new Error('user cancelled'));});
+const onUri=u=>{armed=true;if(dead){clearTimeout(dead);dead=null;}sheet.arm(u);};
+try{
+dead=setTimeout(()=>{if(!armed){sheet.say('THE RELAY DID NOT ANSWER. THIS BROWSER MAY BE BLOCKING IT.');
+if(bail)bail(new Error('RELAY BLOCKED — TRY SAFARI OR LOWER SHIELDS'));}},20000);
+p=_WC||(_WC=await Promise.race([wcInit(),guard]));
 if(p.accounts&&p.accounts.length)return p;
-let sheet=null,bail=null;
-const onUri=u=>{sheet=wcSheet(u);
-sheet.bail(()=>{sheet.close();sheet=null;if(bail)bail(new Error('user cancelled'));});};
 p.on('display_uri',onUri);
-try{await Promise.race([p.enable(),new Promise((_,rj)=>{bail=rj;})]);}
-finally{try{p.removeListener('display_uri',onUri);}catch(e){}if(sheet)sheet.close();}
-return p;}
+await Promise.race([p.enable(),guard]);
+return p;
+}finally{if(dead)clearTimeout(dead);
+try{if(p)p.removeListener('display_uri',onUri);}catch(e){}
+sheet.close();}}
+/* a wallet's OWN in-app browser may be used without asking. A browser that
+   merely ships a wallet (Brave and its kin) may not. */
+const WC_INAPP=/MetaMaskMobile|Trust\/|TrustWallet|CoinbaseWallet|CoinbaseBrowser|Rainbow|Zerion|Phantom|imToken|OKApp|BitKeep|TokenPocket|SafePal|Ledger Live/i;
+function wcInApp(e){
+if(!e||e.isBraveWallet)return false;
+if(WC_INAPP.test(navigator.userAgent))return true;
+try{if(navigator.brave)return false;}catch(e2){}
+return !!(e.isMetaMask||e.isCoinbaseWallet||e.isTrust||e.isTrustWallet||e.isZerion||e.isRainbow||e.isPhantom);}
 async function pickProvider(){
 if(WPROV)return WPROV;
 const e=window.ethereum;
 if(PUB_MOBILE){
-if(e&&!e.isBraveWallet)return WPROV=e;
+if(wcInApp(e))return WPROV=e;
 if(WC_PID){try{return WPROV=await wcConnect();}catch(err){const raw=String(err&&err.message||err);window.__WCERR=raw;
 if(/reject|cancel|clos|denied|user/i.test(raw))throw err;toast('WALLETCONNECT: '+raw.slice(0,52).toUpperCase());}}
 return WPROV=await walletModal();}

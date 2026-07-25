@@ -5999,6 +5999,7 @@ function walletModal(){
        +'<button class="wopt" data-copyopen="zerion">\u25c6 ZERION \u29c9</button>'
        +'<button class="wopt" data-copyopen="rainbow">\u25c6 RAINBOW \u29c9</button>';
     }
+    if(window.__WCERR)h+='<div id="wnone">WALLETCONNECT COULD NOT OPEN: '+String(window.__WCERR).slice(0,80).toUpperCase().replace(/[<>]/g,'')+'</div>';
     if(!inj.length&&!PUB_MOBILE)
       h+='<div id="wnone">NO WALLET ANNOUNCED \u2014 INSTALL METAMASK, THEN RETURN.</div>';
     h+='<button id="wcancel">CANCEL</button></div>';
@@ -6050,22 +6051,30 @@ function wcLoad(){
     next(); });
 }
 /* the box's own wallet sheet — same rite as SUMMON A WALLET, but every button
-   carries the live wc: URI into that wallet's app. */
+   carries the live wc: URI into that wallet's app. It opens on the TAP, before
+   the relay has answered, so a phone is never left staring at a dead button;
+   the wallet buttons wake the moment the URI lands. */
 function wcSheet(uri){
   const old=document.getElementById('wmodal'); if(old)old.remove();
   const wrap=document.createElement('div'); wrap.id='wmodal';
+  const READY='PICK THE APP THAT HOLDS YOUR KEYS. IT OPENS, YOU APPROVE THE CONNECTION, YOU COME BACK. NO GAS. NO FUNDS TOUCHED.';
   let h='<div id="wbox"><div id="wttl">OPEN YOUR WALLET</div>'
-   +'<div id="wsub">PICK THE APP THAT HOLDS YOUR KEYS. IT OPENS, YOU APPROVE THE CONNECTION, YOU COME BACK. NO GAS. NO FUNDS TOUCHED.</div>';
+   +'<div id="wsub">'+READY+'</div>';
   WC_APPS.forEach((a,i)=>{ h+='<button class="wopt" data-w="'+i+'">◆ '+a[0]+' ↗</button>'; });
   h+='<button class="wopt" data-raw="1">◈ OTHER WALLET</button>'
    +'<button class="wopt" data-copy="1">⧉ COPY CONNECTION LINK</button>'
    +'<button id="wcancel">CANCEL</button></div>';
   wrap.innerHTML=h; document.body.appendChild(wrap);
+  const sub=wrap.querySelector('#wsub');
+  const opts=[].slice.call(wrap.querySelectorAll('.wopt'));
+  const sleep=on=>opts.forEach(b=>{ b.disabled=on; b.style.opacity=on?'.4':''; });
+  if(!uri){ sleep(true); sub.textContent='REACHING THE WALLETCONNECT RELAY… ONE MOMENT.'; }
   let bail=null;
   wrap.addEventListener('click',e=>{
     const b=e.target.closest('button');
     if(!b){ if(e.target===wrap&&bail)bail(); return; }
     if(b.id==='wcancel'){ if(bail)bail(); return; }
+    if(!uri)return;                         /* still asleep — the relay has not answered */
     if(b.dataset.copy){ try{navigator.clipboard.writeText(uri);}catch(e2){}
       b.textContent='⧉ COPIED — PASTE IN YOUR WALLET'; return; }
     /* iOS can reload this page while the wallet has the screen; leave a crumb so
@@ -6078,7 +6087,9 @@ function wcSheet(uri){
     try{ localStorage.setItem('WALLETCONNECT_DEEPLINK_CHOICE',JSON.stringify({name:a[0],href:a[1]})); }catch(e2){}
     location.href=a[1]+'/wc?uri='+encodeURIComponent(uri);
   });
-  return { close(){ wrap.remove(); }, bail(f){ bail=f; } };
+  return { close(){ wrap.remove(); }, bail(f){ bail=f; },
+    arm(u){ uri=u; sleep(false); sub.textContent=READY; },
+    say(t){ sub.textContent=t; } };
 }
 async function wcInit(){
   const NS=await wcLoad();
@@ -6093,17 +6104,40 @@ async function wcInit(){
     return await NS.EthereumProvider.init(opts);
   }
 }
+/* A phone that taps GARDEN must see something within the same heartbeat, and
+   must never wait forever. The sheet opens first; the relay is given a hard
+   deadline; whatever fails, it fails OUT LOUD. */
 async function wcConnect(){
   if(_WC&&_WC.accounts&&_WC.accounts.length)return _WC;
-  const p=_WC||(_WC=await wcInit());
-  if(p.accounts&&p.accounts.length)return p;      /* the session outlived the app-switch */
-  let sheet=null, bail=null;
-  const onUri=u=>{ sheet=wcSheet(u);
-    sheet.bail(()=>{ sheet.close(); sheet=null; if(bail)bail(new Error('user cancelled')); }); };
-  p.on('display_uri',onUri);
-  try{ await Promise.race([p.enable(), new Promise((_,rj)=>{bail=rj;})]); }
-  finally{ try{p.removeListener('display_uri',onUri);}catch(e){} if(sheet)sheet.close(); }
-  return p;
+  const sheet=wcSheet(null);
+  let bail=null, armed=false, dead=null, p=null;
+  const guard=new Promise((_,rj)=>{bail=rj;});
+  sheet.bail(()=>{ if(bail)bail(new Error('user cancelled')); });
+  const onUri=u=>{ armed=true; if(dead){clearTimeout(dead);dead=null;} sheet.arm(u); };
+  try{
+    dead=setTimeout(()=>{ if(!armed){
+      sheet.say('THE RELAY DID NOT ANSWER. THIS BROWSER MAY BE BLOCKING IT.');
+      if(bail)bail(new Error('RELAY BLOCKED — TRY SAFARI OR LOWER SHIELDS')); } },20000);
+    p=_WC||(_WC=await Promise.race([wcInit(),guard]));
+    if(p.accounts&&p.accounts.length)return p;   /* the session outlived the app-switch */
+    p.on('display_uri',onUri);
+    await Promise.race([p.enable(),guard]);
+    return p;
+  }finally{
+    if(dead)clearTimeout(dead);
+    try{ if(p)p.removeListener('display_uri',onUri); }catch(e){}
+    sheet.close();
+  }
+}
+/* is this injected provider a wallet's OWN in-app browser, or merely a browser
+   that happens to ship a wallet? Only the first may be used without asking —
+   Brave taught us that, and it is not the only one. */
+const WC_INAPP=/MetaMaskMobile|Trust\/|TrustWallet|CoinbaseWallet|CoinbaseBrowser|Rainbow|Zerion|Phantom|imToken|OKApp|BitKeep|TokenPocket|SafePal|Ledger Live/i;
+function wcInApp(e){
+  if(!e||e.isBraveWallet)return false;
+  if(WC_INAPP.test(navigator.userAgent))return true;
+  try{ if(navigator.brave)return false; }catch(e2){}
+  return !!(e.isMetaMask||e.isCoinbaseWallet||e.isTrust||e.isTrustWallet||e.isZerion||e.isRainbow||e.isPhantom);
 }
 async function pickProvider(){
   if(WPROV)return WPROV;
@@ -6111,7 +6145,7 @@ async function pickProvider(){
   if(PUB_MOBILE){
     /* already inside a wallet's own browser? use it directly \u2014 instant, no relay.
        Brave's built-in is never assumed \u2014 curator's law. */
-    if(e&&!e.isBraveWallet)return WPROV=e;
+    if(wcInApp(e))return WPROV=e;
     /* plain mobile browser: one WalletConnect door, every wallet behind it.
        A user who backs out of the WC sheet is left alone; only a genuine
        load/init failure falls through to the handoff modal. */
@@ -6164,6 +6198,7 @@ async function saveToGarden(){
   const card=(document.getElementById('dna')||{}).value;
   if(!card){ pubOsd('OPEN THE BOX FIRST'); return; }
   WC_INTENT='garden';
+  pubOsd('CALLING YOUR WALLET\u2026');
   try{
     const g=await gardenAuth();
     const r=await fetch(SBP.url+'/rest/v1/garden_items',{method:'POST',
