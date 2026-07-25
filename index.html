@@ -6021,7 +6021,7 @@ function walletModal(){
    Loaded lazily (ESM import) only when a phone actually needs it, so desktop
    and the engine never pay for it. Needs a free project id from
    dashboard.reown.com; until WC_PID is set, mobile keeps the handoff modal. */
-const WC_PID=''; /* \u25c0 paste the WalletConnect project id here to arm mobile WalletConnect */
+const WC_PID='9204f8b0f71b2868dece0e6e57a2950a'; /* WalletConnect project id \u2014 dashboard.reown.com */
 let _WC=null;
 async function wcConnect(){
   if(_WC){ try{ if(!_WC.accounts||!_WC.accounts.length) await _WC.enable(); }catch(e){} return _WC; }
@@ -6044,8 +6044,13 @@ async function pickProvider(){
     /* already inside a wallet's own browser? use it directly \u2014 instant, no relay.
        Brave's built-in is never assumed \u2014 curator's law. */
     if(e&&!e.isBraveWallet)return WPROV=e;
-    /* plain mobile browser: one WalletConnect door, every wallet behind it. */
-    if(WC_PID){ try{ return WPROV=await wcConnect(); }catch(err){ pubOsd('WALLETCONNECT: '+String(err&&err.message||err).slice(0,32)); } }
+    /* plain mobile browser: one WalletConnect door, every wallet behind it.
+       A user who backs out of the WC sheet is left alone; only a genuine
+       load/init failure falls through to the handoff modal. */
+    if(WC_PID){ try{ return WPROV=await wcConnect(); }
+      catch(err){ const m=String(err&&err.message||err).toLowerCase();
+        if(/reject|cancel|clos|denied|user/.test(m)) throw err;
+        pubOsd('WALLETCONNECT UNAVAILABLE'); } }
     return WPROV=await walletModal();
   }
   if(W6963.length>1)return WPROV=await walletModal();

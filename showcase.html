@@ -189,7 +189,7 @@ wrap.remove();res(inj[+b.dataset.i].provider);});});}
 /* WALLETCONNECT — one door on mobile, every wallet behind it. Lazy ESM import;
    needs a free project id from dashboard.reown.com. Until WC_PID is set, mobile
    keeps the handoff modal. */
-const WC_PID=''; /* paste the WalletConnect project id here to arm mobile WalletConnect */
+const WC_PID='9204f8b0f71b2868dece0e6e57a2950a'; /* WalletConnect project id */
 let _WC=null;
 async function wcConnect(){
 if(_WC){try{if(!_WC.accounts||!_WC.accounts.length)await _WC.enable();}catch(e){}return _WC;}
@@ -205,7 +205,8 @@ if(WPROV)return WPROV;
 const e=window.ethereum;
 if(PUB_MOBILE){
 if(e&&!e.isBraveWallet)return WPROV=e;
-if(WC_PID){try{return WPROV=await wcConnect();}catch(err){toast('WALLETCONNECT: '+String(err&&err.message||err).slice(0,32));}}
+if(WC_PID){try{return WPROV=await wcConnect();}catch(err){const m=String(err&&err.message||err).toLowerCase();
+if(/reject|cancel|clos|denied|user/.test(m))throw err;toast('WALLETCONNECT UNAVAILABLE');}}
 return WPROV=await walletModal();}
 if(W6963.length>1)return WPROV=await walletModal();
 if(W6963.length===1)return WPROV=W6963[0].provider;
