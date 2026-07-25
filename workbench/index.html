@@ -84,6 +84,86 @@ body{padding-bottom:64px;}
   border-radius:8px;padding:16px;display:none;overflow:auto;color:#cde;font:11px/1.6 ui-monospace,monospace;white-space:pre-wrap;}
 #wbdigest .x{position:sticky;top:0;float:right;cursor:pointer;color:#ff6f7f;font-size:16px;padding:4px 10px}
 @media (max-width:700px){ #wbverdict button{padding:8px 10px} }
+/* ============ THE INSTRUMENT, DRESSED (legacy markup ships headless) ======= */
+html,body{position:static !important;overflow:auto !important;height:auto !important;}
+#mast,#cockpit,#dock,#colA{display:none !important;}
+#legacy-root #app{display:grid;grid-template-columns:minmax(380px,1fr) 400px;gap:16px;
+  max-width:1240px;margin:0 auto;padding:14px;align-items:start;}
+#legacy-root #app>header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid var(--line);padding-bottom:8px;}
+#legacy-root .brand{font-size:15px;letter-spacing:.06em}
+#legacy-root .brand b{color:var(--mag)} #legacy-root .brand i{color:var(--cyan);font-style:normal}
+#legacy-root .brand span{color:var(--faint);font-size:10px}
+#legacy-root .ver{font-size:8px;color:var(--faint);text-align:right;line-height:1.5}
+#legacy-root .colL{position:sticky;top:36px;}
+#legacy-root .monitor{border:1px solid var(--line2);background:#000;}
+#legacy-root .screen-wrap{position:relative;width:100%;aspect-ratio:1/1;cursor:pointer;}
+#legacy-root #view{width:100%;height:100%;display:block;image-rendering:pixelated;}
+#legacy-root #result{display:none;position:absolute;inset:0;width:100%;height:100%;}
+#legacy-root .reg{display:none}
+#legacy-root .osd{position:absolute;left:8px;top:8px;font-size:9px;color:var(--cyan);
+  background:#000a;padding:3px 7px;border-radius:3px;letter-spacing:.1em;max-width:92%;}
+#legacy-root .osd .rec{color:var(--mag);animation:wbblink 1.2s steps(2) infinite}
+@keyframes wbblink{50%{opacity:.15}}
+#legacy-root .placeholder{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;
+  align-items:center;justify-content:center;color:var(--mut);font-size:10px;letter-spacing:.2em;}
+#legacy-root .ph-block{width:34px;height:34px;border:2px solid var(--mag);animation:wbblink 2s steps(2) infinite}
+#legacy-root .telem{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:9px;color:var(--mut);
+  padding:8px 2px;} #legacy-root .telem b{color:var(--txt)}
+#legacy-root .bar{height:3px;background:#14141f;margin-top:2px}
+#legacy-root #prog{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mag),var(--cyan));transition:width .2s}
+#legacy-root .tabs{display:flex;gap:4px;margin-bottom:10px;}
+#legacy-root .tab{flex:1;padding:10px 4px;border:1px solid var(--line);border-radius:4px;
+  font-size:9px;color:var(--mut);letter-spacing:.1em;background:#10101c;}
+#legacy-root .tab[aria-selected="true"]{border-color:var(--mag);color:#fff;background:#1c0f22;}
+#legacy-root #infobtn{flex:0 0 34px;border:1px solid var(--line);border-radius:4px;color:var(--cyan)}
+#legacy-root .panel{display:none} #legacy-root .panel.on{display:block}
+#legacy-root .field{margin:12px 0}
+#legacy-root .field>label{display:flex;gap:8px;justify-content:space-between;align-items:baseline;
+  font-size:9px;color:var(--mut);letter-spacing:.14em;margin-bottom:6px;}
+#legacy-root .field .v{color:var(--cyan);margin-left:auto}
+#legacy-root input[type=range]{width:100%;accent-color:var(--mag);height:26px;}
+#legacy-root .seg{display:flex;flex-wrap:wrap;gap:4px}
+#legacy-root .seg button{padding:8px 9px;border:1px solid var(--line);border-radius:4px;
+  font-size:9px;color:var(--mut);background:#10101c;letter-spacing:.06em;}
+#legacy-root .seg button[aria-pressed="true"]{border-color:var(--cyan);color:#fff;background:#0f1c22;}
+#legacy-root .toggles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#legacy-root .tg{display:flex;justify-content:space-between;align-items:center;gap:4px;
+  border:1px solid var(--line);border-radius:4px;padding:9px 7px;font-size:8.5px;color:var(--mut);
+  cursor:pointer;user-select:none;letter-spacing:.04em;}
+#legacy-root .tg .dot{width:6px;height:6px;border-radius:50%;background:#2a2a3e;flex:0 0 auto}
+#legacy-root .tg[data-on="1"]{border-color:var(--cyan);color:#e8ffff;background:#0d1a20;}
+#legacy-root .tg[data-on="1"] .dot{background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
+#legacy-root .tg.gb[data-on="1"]{border-color:var(--mag)} #legacy-root .tg.gb[data-on="1"] .dot{background:var(--mag);box-shadow:0 0 7px var(--mag)}
+#legacy-root .tg.gd[data-on="1"]{border-color:var(--sulph)} #legacy-root .tg.gd[data-on="1"] .dot{background:var(--sulph);box-shadow:0 0 7px var(--sulph)}
+#legacy-root .duo{display:flex;gap:8px;margin:8px 0} #legacy-root .duo .field{flex:1;margin:0}
+#legacy-root .duo button,#legacy-root .vio{flex:1;padding:11px 8px;border:1px solid #5a3bb0;border-radius:4px;
+  color:#c9b3ff;font-size:9px;letter-spacing:.1em;background:#140f22;}
+#legacy-root .seedrow{display:flex;gap:6px;align-items:center}
+#legacy-root .seedrow label{flex:0 0 42px;margin:0}
+#legacy-root .seedrow input{flex:1;min-width:0;background:#10101c;border:1px solid var(--line);
+  border-radius:4px;padding:10px;font-size:10px;color:var(--txt);}
+#legacy-root .dice{flex:0 0 40px;padding:10px 0;border:1px solid var(--line);border-radius:4px;
+  font-size:13px;color:var(--cyan);background:#10101c;}
+#legacy-root .voidscroll{max-height:220px;overflow:auto;margin-top:8px}
+#legacy-root .labnote{font-size:8px;color:var(--faint);line-height:1.7;margin-top:8px;letter-spacing:.06em}
+#legacy-root .actions{display:flex;gap:8px;margin-top:14px}
+#legacy-root .actions button{flex:1;padding:13px 6px;border:1px solid var(--line);border-radius:4px;
+  font-size:10px;letter-spacing:.1em;color:var(--mut);background:#10101c;}
+#legacy-root .actions #go{flex:2.2;border-color:var(--mag);color:#fff;
+  background:linear-gradient(90deg,#2a0f22,#0f2226);font-size:12px;}
+#legacy-root .actions button.ready{border-color:var(--cyan);color:var(--cyan)}
+#legacy-root .actions button:disabled{opacity:.35}
+#legacy-root #arclabel{display:none}
+#legacy-root #p-wb h4{margin:14px 0 6px}
+@media (max-width:860px){
+  #legacy-root #app{display:flex;flex-direction:column;gap:10px;padding:10px;}
+  #legacy-root .colL{position:static;order:1}
+  #legacy-root .colR{order:2}
+  #legacy-root .toggles{grid-template-columns:repeat(3,minmax(0,1fr));}
+  body{padding-bottom:120px;}
+}
+/* =========================================================================== */
 /* ============================================================= */
 
 /* ---- app frame: header / deck · one viewport · zero page scroll ---- */
@@ -634,9 +714,9 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <label>LIVE PREVIEW <span class="v" id="wb-fps"></span></label>
         <div class="duo">
           <button id="wb-live" class="vio">&#9679; GO LIVE</button>
-          <button id="wb-render" class="vio">&#9635; RENDER GIF</button>
+          <button id="wb-render" class="vio">&#9635; RE-RENDER</button>
         </div>
-        <p class="labnote">LIVE renders frames continuously on this device with the CURRENT parameters &mdash; every dial and sigil takes effect on the next frame. RENDER GIF freezes what you see into the real loop.</p>
+        <p class="labnote">LIVE = 100% fidelity. Touch any control and the REAL loop re-renders through the REAL pipeline, then plays at the exact GIF cadence (25fps). The only wait is the render ripple (a few seconds &mdash; keep FRAMES low while exploring). RE-RENDER repeats the current genome.</p>
       </div>
       <div class="field">
         <label>CORRUPTION LADDER <span class="v" id="wb-ladlab">OFF</span></label>
@@ -3693,6 +3773,7 @@ async function generateSeq(){
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
   reflectTune(scene);
+  if(window.wbTune)wbTune(scene);   /* workbench: gains + body override */
   const {grad,pal,near}=buildPalette(scheme, scene.vibe);
   const N=state.frames, corr=state.corr, dAmt=(14+corr*0.20)*scene.vibe.ditherMul, fx=state.fx;
 
@@ -3909,6 +3990,9 @@ self.onmessage=function(e){
     scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
     scene.epoch=J.epoch|0;
     applyOverridesPure(scene,J.seed,J.ov);
+    if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim;
+      if(J.wb.gain)for(var wbk in scene.vibe.g){var wbm=J.wb.gain[wbk];
+        if(wbm!=null&&wbm!==100)scene.vibe.g[wbk]=scene.vibe.g[wbk]*wbm/100;} }
     const {grad,pal,near}=buildPalette(J.scheme,scene.vibe);
     const N=J.N, corr=J.corr, fx=J.fx, DELAY=J.DELAY;
     const dAmt=(14+corr*0.20)*scene.vibe.ditherMul;
@@ -4061,6 +4145,7 @@ async function generate(){
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
   reflectTune(scene);
+  if(window.wbTune)wbTune(scene);   /* workbench: gains + body override */
   const {pal}=buildPalette(scheme, scene.vibe);
   const N=state.frames, corr=state.corr, fx=state.fx;
 
@@ -4091,6 +4176,7 @@ async function generate(){
 
   const jobOf=w=>({seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0, chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
+    wb:(window.WB?{fam:WB.fam,prim:WB.prim,gain:WB.gain}:null),
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
   await new Promise(resolve=>{
@@ -6510,7 +6596,7 @@ const $g=id=>document.getElementById(id);
        transmission modal (curator's order 2026-07-22: port f3's X share
        identically — the modal, its glitch-tongue composer, reroll, save,
        compose are all engine code; moving the node preserves its bindings) */
-$g('artframe').appendChild($g('view'));
+/* WORKBENCH: the canvas stays in the instrument's own monitor */
 document.body.appendChild($g('xmodal'));
 
 /* 2 · box tap = pandorize — the engine's own ritual, called directly */
@@ -6690,8 +6776,7 @@ setInterval(paint,250); paint();
    DIGEST   — keep-rates by mode/sigil/corr/void + gentle taste suppression:
               sigils the curator reliably kills get culled from fresh rolls.
    ========================================================================== */
-const WB=window.WB={live:false, timer:0, i:0, fam:null, prim:null, gain:{}, ladder:false,
-  ctx:null, key:'', idx:new Uint8Array(W*H), ring2:null, coarse2:null, lastMs:0};
+const WB=window.WB={live:false, deb:0, pending:false, fam:null, prim:null, gain:{}, ladder:false};
 function wbHasOverrides(){ if(WB.fam!=null||WB.prim!=null)return true;
   for(const k in WB.gain)if(WB.gain[k]!==100)return true; return false; }
 function wbTune(scene){
@@ -6700,98 +6785,58 @@ function wbTune(scene){
   for(const k in scene.__gBase){ const m=WB.gain[k];
     scene.vibe.g[k]=scene.__gBase[k]*((m==null?100:m)/100); }
 }
-/* ---- scene context for the live loop (mirrors generateSeq's prelude) ---- */
-function wbKey(){ return JSON.stringify([$('seed').value,state.mode,state.scheme,
-  state.voidamt,state.locality,state.chromacap,EPOCH,OV,WB.fam,WB.prim,state.frames]); }
-function wbBuild(){
-  const seed=(parseInt($('seed').value,10)>>>0)||1;
-  let schemeKey=state.scheme;
-  if(schemeKey==='RANDOM'){
-    const rr=mulberry32((seed^0x77aa11)>>>0)();
-    schemeKey= rr<0.4?'GENESIS':(rr<0.6?'TISGEN':SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0]);
-  }
-  const scheme= schemeKey==='GENESIS'?genesisScheme(seed)
-    : schemeKey==='TISGEN'?tisScheme(seed):SCHEMES[schemeKey];
-  const scene=buildScene(seed, state.mode);
-  scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
-  scene.epoch=EPOCH;
-  applyOverrides(scene, seed); reflectTune(scene); wbTune(scene);
-  const {grad,pal,near}=buildPalette(scheme, scene.vibe);
-  const MV={...scene.rev4.motion, quant:0, strobes:[]};
-  const tEff=th=>{ let t=th; if(MV.tw)t=t+MV.tw*Math.sin(t*MV.twk+MV.twph); return t; };
-  const gradR=scene.rev4.palMode===2?new Uint8Array(768):null;
-  const gradFor=th=>{ if(!gradR)return grad;
-    const shift=Math.round(256*scene.rev4.palCycles*th/TAU)%256;
-    for(let i2=0;i2<256;i2++){const j=((i2+shift)&255)*3,k=i2*3;
-      gradR[k]=grad[j];gradR[k+1]=grad[j+1];gradR[k+2]=grad[j+2];}
-    return gradR; };
-  WB.ring2=null; WB.coarse2=null;
-  return {seed, schemeKey, scene, grad, pal, near, tEff, gradFor};
-}
-function wbTick(){
+/* ============================================================================
+   LIVE v2 — 100% fidelity, true cadence. No approximation layer: LIVE watches
+   every control, and any change re-renders the REAL loop through the REAL
+   pipeline (worker pool included — jobs now carry the workbench overrides),
+   then plays the exact GIF frames at the exact GIF cadence (25fps). The wait
+   is the render ripple, a few seconds; what you see is always what mints.
+   ========================================================================== */
+function wbSchedule(){
   if(!WB.live)return;
-  if(busy){ WB.timer=setTimeout(wbTick,300); return; }   // a GIF render owns the stage
-  const t0=performance.now();
-  try{
-    const k=wbKey();
-    if(!WB.ctx||WB.key!==k){ WB.ctx=wbBuild(); WB.key=k; WB.i=0; }
-    const C=WB.ctx, scene=C.scene, N=state.frames, fx=state.fx, corr=state.corr;
-    scene._corr=corr;
-    wbTune(scene);                                        // gains land every frame
-    const i=WB.i=(WB.i+1)%N, raw=i/N*TAU, theta=C.tEff(raw);
-    const dAmt=(14+corr*0.20)*scene.vibe.ditherMul;
-    renderSource(rgbA, rgbC, scene, i, theta, C.gradFor(raw), fx, corr);
-    if(fx.tunnel){
-      const T=scene.demi.tunnel;
-      if(!WB.ring2){ WB.ring2=[]; for(let j=0;j<T.taps;j++)WB.ring2.push(new Uint8Array(FW*FW*3));
-        WB.coarse2=new Uint8Array(FW*FW*3); }
-      downsampleCoarse(rgbA, WB.coarse2);
-      compositeTunnel(rgbA, WB.ring2, T, Math.min(150,corr*scene.vibe.g.tunnel));
-      const rec=WB.ring2.shift(); WB.ring2.push(WB.coarse2); WB.coarse2=rec;
-    } else WB.ring2=null;
-    rgbB.set(rgbA);
-    fringePass(rgbB, scene, theta);
-    lumenPass(rgbB, scene, theta, C.grad);
-    quantize(rgbB, WB.idx, C.near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
-             (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-    if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(WB.idx, C.pal.length, scene, theta, corr, fx);
-    sanctityIdx(WB.idx, scene, i);
-    const pd=preview.data, pal2=C.pal;
-    for(let q=0;q<W*H;q++){const c2=pal2[WB.idx[q]]||[0,0,0];const o=q*4;
-      pd[o]=c2[0];pd[o+1]=c2[1];pd[o+2]=c2[2];pd[o+3]=255;}
-    vctx.putImageData(preview,0,0);
-    $('t-frame').textContent=(i+1)+'/'+N;
-  }catch(e){ console.error('WB LIVE',e); wbLiveStop(); $('osd').textContent='LIVE FAILED: '+String(e).slice(0,60); return; }
-  WB.lastMs=performance.now()-t0;
-  const fps=(1000/Math.max(WB.lastMs,1)).toFixed(1);
-  $('wb-fps').textContent=WB.lastMs.toFixed(0)+'ms · '+fps+'fps';
-  $('osd').textContent='LIVE · '+fps+'fps';
-  $('wb-livestat').innerHTML='<span class="dotlive">&#9679; LIVE '+fps+'fps</span>';
-  WB.timer=setTimeout(wbTick, Math.max(0, 40-WB.lastMs));
+  clearTimeout(WB.deb);
+  WB.deb=setTimeout(()=>{ WB.pending=true; wbPump(); },550);
 }
+function wbPump(){
+  if(!WB.live||!WB.pending)return;
+  if(busy)abortRun();                      /* stale ripple dies; the new truth renders */
+  WB.pending=false;
+  generate();
+}
+document.addEventListener('input',e=>{
+  const t=e.target; if(!t||!t.matches||!t.matches('input'))return;
+  if(t.id==='dna')return;
+  if(t.closest('#p-signal,#p-tune,#p-wb')||t.id==='seed')wbSchedule();
+},true);
+document.addEventListener('click',e=>{
+  const t=e.target&&e.target.closest&&e.target.closest(
+    '#p-signal .seg button,#p-tune .seg button,.tg,#wb-fam button,#wb-prim button,#wb-ladder');
+  if(t)wbSchedule();
+},true);
 function wbLiveStart(){
-  if(WB.live)return; WB.live=true; WB.key='';
-  stopPlayer(); $('result').style.display='none'; $('ph').style.display='none';
+  if(WB.live)return; WB.live=true;
   $('wb-live').textContent='■ STOP LIVE';
-  wbTick();
+  if(!lastBlob&&!busy){ WB.pending=true; wbPump(); }   /* nothing on the monitor yet: conjure */
 }
 function wbLiveStop(){
-  WB.live=false; if(WB.timer){clearTimeout(WB.timer);WB.timer=0;}
+  WB.live=false; clearTimeout(WB.deb); WB.pending=false;
   $('wb-live').textContent='● GO LIVE';
-  $('wb-livestat').textContent=''; $('osd').textContent='STANDBY';
+  $('wb-livestat').textContent='';
 }
+setInterval(()=>{
+  if(!WB.live){$('wb-fps').textContent='';return;}
+  const st=busy?'◌ RIPPLING…'
+    :(WB.pending?'◌ QUEUED…':'● LOOP LIVE · 25fps');
+  $('wb-livestat').innerHTML='<span class="'+(busy||WB.pending?'':'dotlive')+'">'+st+'</span>';
+  $('wb-fps').textContent=busy?'rendering':'25fps · exact GIF frames';
+},350);
 $('wb-live').addEventListener('click',()=>{ WB.live?wbLiveStop():wbLiveStart(); });
-$('wb-render').addEventListener('click',()=>{ const was=WB.live; wbLiveStop();
-  (wbHasOverrides()?generateSeq():generate()).then?.(()=>{}); });
+$('wb-render').addEventListener('click',()=>{ if(busy)abortRun(); generate(); });
 $('wb-ladder').addEventListener('click',()=>{ WB.ladder=!WB.ladder;
   $('wb-ladlab').textContent=WB.ladder?'ON':'OFF';
   $('wb-ladder').textContent=WB.ladder
     ?'LADDER: ON (dial recruits sigils, public-box behavior)'
     :'LADDER: OFF (dial = amplitude only, sigils are yours)'; });
-
-/* overrides force the sequential renderer: workers never see WB state */
-const _wbGen=generate;
-generate=async function(){ if(wbHasOverrides())return generateSeq(); return _wbGen(); };
 
 /* ---- BODY overrides ---- */
 (function(){
@@ -6834,10 +6879,11 @@ generate=async function(){ if(wbHasOverrides())return generateSeq(); return _wbG
 const WBV={tag:null, table:'workbench_verdicts'};
 function wbSnapshot(){
   const seed=(parseInt($('seed').value,10)>>>0)||1;
-  let schemeKey=state.scheme;
-  if(schemeKey==='RANDOM'&&WB.ctx)schemeKey=WB.ctx.schemeKey;
-  return { card:'WB1-'+packCard(seed, schemeKey==='RANDOM'?'GENESIS':schemeKey, state.mode==='RANDOM'?(WB.ctx?WB.ctx.scene.mode:'MASS'):state.mode, state.corr, state.frames, state.fx, 'FLOW'),
-    st:{seed, mode:(WB.ctx?WB.ctx.scene.mode:state.mode), scheme:schemeKey, corr:state.corr, frames:state.frames,
+  let schemeKey=state.scheme, modeKey=state.mode;
+  if(schemeKey==='RANDOM'){ const t=$('t-sig').textContent; if(t&&t!=='—')schemeKey=t; }
+  if(modeKey==='RANDOM'){ const t=$('t-mode').textContent; if(t&&t!=='—')modeKey=t; }
+  return { card:'WB1-'+packCard(seed, schemeKey==='RANDOM'?'GENESIS':schemeKey, modeKey==='RANDOM'?'MASS':modeKey, state.corr, state.frames, state.fx, 'FLOW'),
+    st:{seed, mode:modeKey, scheme:schemeKey, corr:state.corr, frames:state.frames,
         voidamt:state.voidamt, locality:state.locality, chromacap:state.chromacap,
         fx:Object.keys(state.fx).filter(k2=>state.fx[k2]),
         gains:Object.fromEntries(Object.entries(WB.gain).filter(([k2,v2])=>v2!==100)),
