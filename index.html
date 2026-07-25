@@ -4260,6 +4260,85 @@ buildSeg($('mode'), [
   {v:'MASS',label:'MASS'},
 ],'mode');
 
+/* ============================================================================
+   THE CORRUPTION LADDER
+   ---------------------------------------------------------------------------
+   The dial used to be pure amplitude: it scaled sigils that were already lit
+   and could not light one. Thirty of the thirty-seven ship dark, so the whole
+   sweep 0->100 moved four and a half units of one pixel. It looked broken
+   because it was. The dial now decides EXISTENCE as well as amplitude — it is
+   a recruitment ladder, a rank of sigils ordered from a whisper of grain down
+   to annihilation, and the dial says how deep we are allowed to go.
+
+   Two laws it must obey:
+     · MONOTONE — every notch to the right seats a strict SUPERSET of the notch
+       to its left. There is no position on this dial where dragging right
+       makes the loop calmer.
+     · DEFERENT — a rolled or resurrected loop has a genome of its own, and the
+       ladder honours it: inside the budget the dial grants, the sigils the card
+       itself asked for are seated FIRST, in ladder order, before the rank is
+       used to fill. You steer the violence. You do not overwrite the soul.
+
+   Engine math is untouched: every pass still reads state.fx for existence and
+   state.corr for amplitude, and applyCard still writes fx straight off the
+   card. Every DNA ever minted resurrects byte-exact.
+   ========================================================================== */
+const CORR_LADDER=(function(){
+  /* The rank, gentlest first. Measured, not guessed: CHRONO, FLAY and SPLICE
+     each rewrite the whole frame at once, so wherever they sit the curve has a
+     step in it. They are seated high on purpose — the step then lands around 79,
+     inside RUINOUS, which is exactly where a dial marked "beyond recognition at
+     the right" is supposed to fall off the table. Everything below them climbs
+     smoothly. */
+  const rank=['grain','scanlines','chroma','tracking','echo','blocks','pixelsort',
+    'bleed','ghost','dropout','vroll','slice','wave','melt','crush','mosh',
+    'autoph','weave','moire','braid','panes','lungs','mirror',
+    'hilb','tect','entropy','invert','meta','tunnel','kaleido',
+    'chrono','flay','splice','bloom','embers','runes','chimera'];
+  const seen=new Set(rank);
+  /* defensive tail: a sigil added to the engine later still gets a rung, at the
+     bottom, rather than being silently unreachable from the dial. */
+  for(const k of Object.keys(state.fx)) if(!seen.has(k)){ rank.push(k); seen.add(k); }
+  return rank.filter(k=>k in state.fx);
+})();
+let FX_PREF=null;      /* the genome's own wishes, kept clear of the dial's output */
+let CORR_SILENT=false; /* applyCard is speaking: the ladder holds its tongue */
+function setFxPref(){ const o={}; for(const k of CORR_LADDER)o[k]=!!state.fx[k]; FX_PREF=o; }
+function corrSeat(v){
+  v=Math.max(0,Math.min(100,v|0));
+  const L=CORR_LADDER, n=L.length;
+  /* recruitment is front-loaded on purpose. Many sigils are inert on any given
+     scene — the vibe's own gain table zeroes their channel, so they cost nothing
+     and do nothing there. Seating them earlier means the middle of the dial has
+     a real chance of holding sigils this particular universe can actually feel,
+     instead of a rank of ghosts. Still monotone: the exponent only ever moves
+     the boundary right. */
+  const K = v<=0 ? 0 : Math.max(1, Math.ceil(n*Math.pow(v/100,0.75)));  /* 0 -> silence, 100 -> the whole rank */
+  const pref=FX_PREF||{}, on=new Set();
+  for(const k of L){ if(on.size>=K)break; if(pref[k])on.add(k); }   /* the card's own, in rank order */
+  for(const k of L){ if(on.size>=K)break; on.add(k); }              /* then down the rank */
+  return on;
+}
+function applyCorrFx(v){
+  if(CORR_SILENT)return;
+  const on=corrSeat(v);
+  for(const k of CORR_LADDER) state.fx[k]=on.has(k);
+  document.querySelectorAll('.tg').forEach(tg=>{ const f=tg.dataset.fx;
+    if(f&&(f in state.fx)) tg.dataset.on=on.has(f)?1:0; });
+}
+setFxPref();   /* the seven shipped sigils are the box's own opening wish */
+function corrWord(v){
+  return v<=0?'INACTIVE':v<=12?'LIGHT':v<=30?'ACTIVE':v<=55?'HEAVY'
+    :v<=78?'SEVERE':v<=93?'RUINOUS':'TOTAL';
+}
+/* the dial only rewrites the loop when the finger LETS GO — dragging repaints
+   the label at 60fps, it does not launch sixty renders. */
+function recorrupt(){
+  if(busy||!lastBlob)return;
+  try{ $('osd').textContent='CORRUPTION '+state.corr+' \u00b7 '+corrWord(state.corr); }catch(e){}
+  generate();
+}
+
 function bindSlider(id,labId,key,fmt){
   const el=$(id); const out=$(labId);
   const upd=()=>{ state[key]=+el.value; out.textContent=fmt?fmt(el.value):el.value; };
@@ -4269,7 +4348,11 @@ bindSlider('corr','v-corr','corr');
 bindSlider('frames','v-frames','frames');
 const updDur=()=>{ $('lab-dur').textContent=(+$('frames').value/FPS).toFixed(2)+'s @ '+FPS+'fps'; };
 $('frames').addEventListener('input',updDur); updDur();
-$('corr').addEventListener('input',()=>{$('lab-corr').textContent=state.corr>75?'SEVERE':state.corr>40?'ACTIVE':state.corr>10?'LIGHT':'CLEAN';});
+$('corr').addEventListener('input',()=>{
+  applyCorrFx(state.corr);                       /* existence, not just amplitude */
+  $('lab-corr').textContent=corrWord(state.corr);
+});
+$('corr').addEventListener('change',recorrupt);  /* let go of the dial, see the damage */
 $('voidamt').addEventListener('input',()=>{state.voidamt=+$('voidamt').value; $('v-voidamt').textContent=state.voidamt;
   $('lab-voidamt').textContent=state.voidamt>60?'DEVOURING':state.voidamt>30?'BREATHING':state.voidamt>0?'PRESENT':'DENIED';});
 $('voidamt').dispatchEvent(new Event('input'));
@@ -4280,7 +4363,8 @@ $('chromaseg').addEventListener('click',()=>setTimeout(()=>{state.chromacap=+(st
 $('corr').dispatchEvent(new Event('input'));
 
 document.querySelectorAll('.tg').forEach(tg=>{
-  tg.addEventListener('click',()=>{ const on=tg.dataset.on==='1'?0:1; tg.dataset.on=on; state.fx[tg.dataset.fx]=!!on; });
+  tg.addEventListener('click',()=>{ const on=tg.dataset.on==='1'?0:1; tg.dataset.on=on; state.fx[tg.dataset.fx]=!!on;
+    setFxPref();   /* a hand on a sigil IS the genome speaking — the dial will defer to it */ });
 });
 
 function randSeed(){ $('seed').value = (Math.random()*4294967295>>>0); }
@@ -4400,7 +4484,9 @@ function applyCard(c){
   $('seed').value=c.seed;
   setSeg('scheme','scheme',c.scheme);
   setSeg('mode','mode',c.mode);
+  CORR_SILENT=true;                       /* the card dictates fx; the ladder must not answer */
   $('corr').value=c.corr; $('corr').dispatchEvent(new Event('input'));
+  CORR_SILENT=false;
   state.voidamt=c.voidamt|0; $('voidamt').value=state.voidamt; $('voidamt').dispatchEvent(new Event('input'));
   state.locality=c.locality|0; $('locality').value=state.locality; $('locality').dispatchEvent(new Event('input'));
   state.chromacap=c.chromacap?1:0; setSeg('chromaseg','_chromaseg',String(state.chromacap));
@@ -4409,6 +4495,7 @@ function applyCard(c){
     const f=tg.dataset.fx; if(!(f in c.fx))return;
     const on=c.fx[f]?1:0; tg.dataset.on=on; state.fx[f]=!!on;
   });
+  setFxPref();   /* this card's sigils are now the wishes the dial defers to */
 }
 $('dnacopy').addEventListener('click',async()=>{
   const t=$('dna').value; if(!t)return;
@@ -5384,7 +5471,7 @@ const TIP_ID={
   locality:'WOUND LOCALITY \u2014 how much the damage knows the image. High: glitches grip the coastline of the form. Zero: blind violence, anywhere.',
   chromaseg:'CHROMA \u2014 FULL SPECTRUM keeps the whole palette. CAPPED quantizes to a few flat fields: pop discipline, color as punctuation.',
   mass:'MASS \u2014 grown forms, not drawn shapes. Continents, ridge branches, central massifs. The legible victim the corruption attacks.',
-  corr:'CORRUPTION — global violence dial. Low = clean signal, high = the void bites back.',
+  corr:'CORRUPTION — the violence dial, and it decides existence as well as amplitude. Hard left the loop runs clean; every notch right recruits another sigil down the rank and drives them all harder; hard right is annihilation. Let go of it and the loop re-renders on the same seed.',
   frames:'FRAMES — loop length. More frames, longer loop, bigger file.',
   epochseg:'ERA — SIGNAL is the current physics (index-space corruption, quake, clash). CLASSIC resurrects the pre-glitch era byte-exactly. Flick it and the same seed re-renders in the other era.',
   'xm-save':'SAVE GIF — saves the X-safe loop shown above.',
@@ -5684,14 +5771,24 @@ $('dice').addEventListener('click',()=>{
   $('osd').textContent=tag+' \u00b7 VOID '+state.voidamt+' \u00b7 LOC '+state.locality+(state.chromacap?' \u00b7 CAPPED':'');
   generate();
 });
+/* One flip in thirty-seven is a coin toss you cannot see, and a corruption
+   drift of ten is inside the noise floor. Mutation has to LOOK like mutation:
+   three to six sigils change hands — biased toward LIGHTING them, because a
+   genome left alone drifts dark — the corruption lurches instead of nudging,
+   and the void and the locality get a shove too. The seed never moves. That is
+   what keeps it the same soul wearing new scars rather than a stranger. */
 function mutateCard(c,rng){
   const m=JSON.parse(JSON.stringify(c));
   const chs=CARD_CH.slice();
-  const flip=chs[(rng()*chs.length)|0];
-  m.fx[flip]=!m.fx[flip];                                   // one sigil flips
-  m.corr=Math.max(0,Math.min(100,m.corr+((rng()*21|0)-10)));// corruption drifts
-  if(rng()<0.2)m.motion=CARD_MOTION[(rng()*CARD_MOTION.length)|0];
-  if(rng()<0.15)m.scheme=CARD_SCHEMES[(rng()*(CARD_SCHEMES.length-1))|0];
+  const n=3+((rng()*4)|0);                                   // 3..6 sigils change hands
+  const picked=new Set();
+  for(let i=0;i<n*4&&picked.size<n;i++) picked.add(chs[(rng()*chs.length)|0]);
+  for(const k of picked) m.fx[k] = m.fx[k] ? (rng()<0.32) : (rng()<0.82);
+  m.corr=Math.max(0,Math.min(100,(m.corr|0)+((rng()*45|0)-18)));  // corruption LURCHES
+  if(rng()<0.45)m.motion=CARD_MOTION[(rng()*CARD_MOTION.length)|0];
+  if(rng()<0.22)m.scheme=CARD_SCHEMES[(rng()*(CARD_SCHEMES.length-1))|0];
+  if(rng()<0.40)m.voidamt=Math.max(0,Math.min(100,(m.voidamt|0)+((rng()*33|0)-16)));
+  if(rng()<0.40)m.locality=Math.max(0,Math.min(100,(m.locality|0)+((rng()*41|0)-20)));
   return m;                                                  // seed holds: same soul, new scars
 }
 $('mutate').addEventListener('click',()=>{
@@ -5703,6 +5800,7 @@ $('mutate').addEventListener('click',()=>{
 });
 $('resetall').addEventListener('click',()=>{
   document.querySelectorAll('.tg').forEach(tg=>{ tg.dataset.on=0; state.fx[tg.dataset.fx]=false; });
+  setFxPref();
   clearOV();
 });
 randSeed();
@@ -6384,6 +6482,9 @@ function wireSlider(mine,eng){
   m.addEventListener('input',()=>{ e.value=m.value; e.dispatchEvent(new Event('input')); });
 }
 wireSlider('pub-corr','corr');
+/* the shell's own dial forwards `input` only, so the engine's `change` never
+   fires from out here — hang the re-render on this one directly. */
+$g('pub-corr').addEventListener('change',recorrupt);
 wireSlider('pub-void','voidamt');
 
 /* 4 · chroma + palette grids mirror the engine's own seg buttons (SCHEMES keys).
@@ -6540,7 +6641,7 @@ $g('mseal').addEventListener('click', doMint);
   T('pub-void',TIP_ID.voidamt);
   T('pub-splice','SPLICE — renders the loop from the current dials. Same seed + same dials = the exact same loop, forever.');
   T('pub-dice','DICE — THE PERFECT MACHINE: 60% of rolls serve the proven canon, 40% hunt the frontier it makes plausible. Every pin returns to fate.');
-  T('pub-mutate','MUTATE — one sigil flips, corruption drifts, the seed holds. Same soul, new scars. Hunt around a loop you almost love.');
+  T('pub-mutate','MUTATE — three to six sigils change hands, corruption lurches, the void and locality shift, and the seed holds. Same soul, new scars. Hunt around a loop you almost love.');
   T('pub-oblivion','OBLIVION — the max-hunger ritual: corruption 68–96, canon-leaning. Total abandon; the dense chaos lives here.');
   T('pub-download',TIP_ID.download);
   T('pub-xpost',TIP_ID.xsave);
