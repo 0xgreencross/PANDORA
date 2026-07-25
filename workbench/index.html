@@ -711,12 +711,11 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
     </section>
     <section id="p-wb" class="panel">
       <div class="field">
-        <label>LIVE PREVIEW <span class="v" id="wb-fps"></span></label>
+        <label>HANDS-ON ENGINE <span class="v" id="wb-fps"></span></label>
         <div class="duo">
-          <button id="wb-live" class="vio">&#9679; GO LIVE</button>
-          <button id="wb-render" class="vio">&#9635; RE-RENDER</button>
+          <button id="wb-render" class="vio">&#9635; RE-RENDER LOOP</button>
         </div>
-        <p class="labnote">LIVE = 100% fidelity. Touch any control and the REAL loop re-renders through the REAL pipeline, then plays at the exact GIF cadence (25fps). The only wait is the render ripple (a few seconds &mdash; keep FRAMES low while exploring). RE-RENDER repeats the current genome.</p>
+        <p class="labnote">Always on. While your finger is on a control the CURRENT FRAME re-renders instantly &mdash; you are manipulating the image live. The moment you let go, the full loop re-renders through the exact pipeline and playback resumes at 25fps. RENDER and every save use only the full loop, never the scrub.</p>
       </div>
       <div class="field">
         <label>CORRUPTION LADDER <span class="v" id="wb-ladlab">OFF</span></label>
@@ -737,7 +736,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
 
   <div class="actions">
     <button id="resetall" title="deactivate every sigil + clear all TUNE overrides">⟲</button>
-    <button id="go">▶ TRANSMIT</button>
+    <button id="go">▶ RENDER</button>
     <button id="oblivion" title="total oblivion">☠</button>
     <button id="download" disabled>⤓ SAVE</button>
     <button id="xsave" disabled title="X-safe version, guaranteed under the 15MB GIF cap">𝕏</button>
@@ -3719,7 +3718,7 @@ function startPlayer(frames,pal,dim,N,delayMs){
     if(lastAdv){const d=now-lastAdv; st.n++; st.sum+=d; if(d>st.worst)st.worst=d;
       if(d>delayMs*1.6)st.late++;}
     lastAdv=now;
-    last=fi;
+    last=fi; PLAYER.cur=fi;               /* the scrubber freezes THIS frame */
     const f=frames[fi];
     if(!f)return;                                /* a missing frame skips a beat, it does not kill the loop */
     const b0=performance.now();
@@ -4497,7 +4496,7 @@ function corrWord(v){
 /* the dial only rewrites the loop when the finger LETS GO — dragging repaints
    the label at 60fps, it does not launch sixty renders. */
 function recorrupt(){
-  if(window.WB&&window.WB.live)return;   /* LIVE already shows the damage */
+  if(window.WB)return;   /* workbench: the two-speed engine owns the dial */
   if(busy||!lastBlob)return;
   try{ $('osd').textContent='CORRUPTION '+state.corr+' \u00b7 '+corrWord(state.corr); }catch(e){}
   generate();
@@ -6046,8 +6045,10 @@ function machineRoll(opts){
   return tag+' \u00b7 V'+state.voidamt+' L'+state.locality+(state.chromacap?' CAP':'');
 }
 $('go').addEventListener('click',()=>{
-  const rolled=machineRoll();
-  $('osd').textContent=rolled;
+  /* WORKBENCH LAW: the parameters on the panel ARE the genome. TRANSMIT
+     renders exactly them. Fate lives in the DICE and the box tap only. */
+  if(busy)abortRun();
+  $('osd').textContent='RENDERING · CURRENT GENOME';
   generate();
 });
 document.querySelectorAll('.tab').forEach(t=>{
@@ -6776,7 +6777,7 @@ setInterval(paint,250); paint();
    DIGEST   — keep-rates by mode/sigil/corr/void + gentle taste suppression:
               sigils the curator reliably kills get culled from fresh rolls.
    ========================================================================== */
-const WB=window.WB={live:false, deb:0, pending:false, fam:null, prim:null, gain:{}, ladder:false};
+const WB=window.WB={fam:null, prim:null, gain:{}, ladder:false, lastTouch:0};
 function wbHasOverrides(){ if(WB.fam!=null||WB.prim!=null)return true;
   for(const k in WB.gain)if(WB.gain[k]!==100)return true; return false; }
 function wbTune(scene){
@@ -6786,51 +6787,104 @@ function wbTune(scene){
     scene.vibe.g[k]=scene.__gBase[k]*((m==null?100:m)/100); }
 }
 /* ============================================================================
-   LIVE v2 — 100% fidelity, true cadence. No approximation layer: LIVE watches
-   every control, and any change re-renders the REAL loop through the REAL
-   pipeline (worker pool included — jobs now carry the workbench overrides),
-   then plays the exact GIF frames at the exact GIF cadence (25fps). The wait
-   is the render ripple, a few seconds; what you see is always what mints.
+   THE TWO-SPEED ENGINE — hands-on, then truth.
+   ---------------------------------------------------------------------------
+   FAST: while a control is being touched, the CURRENT frame re-renders on the
+   main thread through the same passes the loop uses (renderSource, fringe,
+   lumen, quantize, index corruption, sanctity) at the frozen playhead — the
+   image answers the hand in ~100ms, continuously. The only passes the scrub
+   omits are the loop-history organs (tunnel feedback ring), which have no
+   meaning on a single frame.
+   SLOW: 700ms after the last touch, the full loop re-renders through the real
+   pipeline (worker pool, byte-exact, workbench hand included) and playback
+   resumes at the exact GIF cadence. Everything savable comes from SLOW only.
    ========================================================================== */
-function wbSchedule(){
-  if(!WB.live)return;
-  clearTimeout(WB.deb);
-  WB.deb=setTimeout(()=>{ WB.pending=true; wbPump(); },550);
+const WBS={key:'',ctx:null,busy:false,queued:false,frozen:-1,settle:0,idx:new Uint8Array(W*H)};
+function wbKey(){ return JSON.stringify([$('seed').value,state.mode,state.scheme,
+  state.voidamt,state.locality,state.chromacap,EPOCH,OV,WB.fam,WB.prim,state.frames]); }
+function wbCtx(){
+  const seed=(parseInt($('seed').value,10)>>>0)||1;
+  let schemeKey=state.scheme;
+  if(schemeKey==='RANDOM'){
+    const rr=mulberry32((seed^0x77aa11)>>>0)();
+    schemeKey= rr<0.4?'GENESIS':(rr<0.6?'TISGEN':SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0]);
+  }
+  const scheme= schemeKey==='GENESIS'?genesisScheme(seed)
+    : schemeKey==='TISGEN'?tisScheme(seed):SCHEMES[schemeKey];
+  const scene=buildScene(seed, state.mode);
+  scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
+  scene.epoch=EPOCH;
+  applyOverrides(scene, seed); reflectTune(scene); wbTune(scene);
+  const {grad,pal,near}=buildPalette(scheme, scene.vibe);
+  const MV={...scene.rev4.motion, quant:0, strobes:[]};
+  const tEff=th=>{ let t=th; if(MV.tw)t=t+MV.tw*Math.sin(t*MV.twk+MV.twph); return t; };
+  const gradR=scene.rev4.palMode===2?new Uint8Array(768):null;
+  const gradFor=th=>{ if(!gradR)return grad;
+    const shift=Math.round(256*scene.rev4.palCycles*th/TAU)%256;
+    for(let i2=0;i2<256;i2++){const j=((i2+shift)&255)*3,k=i2*3;
+      gradR[k]=grad[j];gradR[k+1]=grad[j+1];gradR[k+2]=grad[j+2];}
+    return gradR; };
+  return {scene, grad, pal, near, tEff, gradFor, schemeKey};
 }
-function wbPump(){
-  if(!WB.live||!WB.pending)return;
-  if(busy)abortRun();                      /* stale ripple dies; the new truth renders */
-  WB.pending=false;
-  generate();
+function wbScrub(){
+  if(WBS.busy){ WBS.queued=true; return; }
+  WBS.busy=true;
+  requestAnimationFrame(()=>{
+    try{
+      const k=wbKey();
+      if(!WBS.ctx||WBS.key!==k){ WBS.ctx=wbCtx(); WBS.key=k; }
+      const C=WBS.ctx, scene=C.scene, N=state.frames, fx=state.fx, corr=state.corr;
+      scene._corr=corr; wbTune(scene);
+      if(WBS.frozen<0)WBS.frozen=(PLAYER.cur||0)%N;
+      const i=WBS.frozen%N, raw=i/N*TAU, theta=C.tEff(raw);
+      const dAmt=(14+corr*0.20)*scene.vibe.ditherMul;
+      renderSource(rgbA, rgbC, scene, i, theta, C.gradFor(raw), fx, corr);
+      rgbB.set(rgbA);
+      fringePass(rgbB, scene, theta);
+      lumenPass(rgbB, scene, theta, C.grad);
+      quantize(rgbB, WBS.idx, C.near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
+               (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
+      if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(WBS.idx, C.pal.length, scene, theta, corr, fx);
+      sanctityIdx(WBS.idx, scene, i);
+      const pd=preview.data, pal2=C.pal;
+      for(let q=0;q<W*H;q++){const c2=pal2[WBS.idx[q]]||[0,0,0];const o=q*4;
+        pd[o]=c2[0];pd[o+1]=c2[1];pd[o+2]=c2[2];pd[o+3]=255;}
+      vctx.putImageData(preview,0,0);
+      $('osd').textContent='HANDS ON · frame '+(i+1)+'/'+N;
+    }catch(e){ console.error('WB SCRUB',e); }
+    WBS.busy=false;
+    if(WBS.queued){ WBS.queued=false; wbScrub(); }
+  });
+}
+function wbTouch(){
+  WB.lastTouch=performance.now();
+  stopPlayer();                                    /* freeze the playhead */
+  wbScrub();                                       /* the hand sees itself NOW */
+  clearTimeout(WBS.settle);
+  WBS.settle=setTimeout(()=>{                      /* let go -> the truth renders */
+    WBS.frozen=-1;
+    if(busy)abortRun();
+    generate();
+  },700);
 }
 document.addEventListener('input',e=>{
   const t=e.target; if(!t||!t.matches||!t.matches('input'))return;
   if(t.id==='dna')return;
-  if(t.closest('#p-signal,#p-tune,#p-wb')||t.id==='seed')wbSchedule();
+  if(t.closest('#p-signal,#p-tune,#p-wb')||t.id==='seed')wbTouch();
 },true);
 document.addEventListener('click',e=>{
   const t=e.target&&e.target.closest&&e.target.closest(
     '#p-signal .seg button,#p-tune .seg button,.tg,#wb-fam button,#wb-prim button,#wb-ladder');
-  if(t)wbSchedule();
+  if(t)wbTouch();
 },true);
-function wbLiveStart(){
-  if(WB.live)return; WB.live=true;
-  $('wb-live').textContent='■ STOP LIVE';
-  if(!lastBlob&&!busy){ WB.pending=true; wbPump(); }   /* nothing on the monitor yet: conjure */
-}
-function wbLiveStop(){
-  WB.live=false; clearTimeout(WB.deb); WB.pending=false;
-  $('wb-live').textContent='● GO LIVE';
-  $('wb-livestat').textContent='';
-}
 setInterval(()=>{
-  if(!WB.live){$('wb-fps').textContent='';return;}
-  const st=busy?'◌ RIPPLING…'
-    :(WB.pending?'◌ QUEUED…':'● LOOP LIVE · 25fps');
-  $('wb-livestat').innerHTML='<span class="'+(busy||WB.pending?'':'dotlive')+'">'+st+'</span>';
-  $('wb-fps').textContent=busy?'rendering':'25fps · exact GIF frames';
-},350);
-$('wb-live').addEventListener('click',()=>{ WB.live?wbLiveStop():wbLiveStart(); });
+  const touching=performance.now()-WB.lastTouch<900;
+  const st= busy?'◌ RENDERING LOOP…'
+    : touching?'✋ HANDS ON — instant frame'
+    : (PLAYER.raf?'● LOOP · 25fps exact':'—');
+  $('wb-livestat').innerHTML='<span class="'+(busy||touching?'':'dotlive')+'">'+st+'</span>';
+  $('wb-fps').textContent= busy?'rendering':(touching?'scrubbing':'25fps');
+},300);
 $('wb-render').addEventListener('click',()=>{ if(busy)abortRun(); generate(); });
 $('wb-ladder').addEventListener('click',()=>{ WB.ladder=!WB.ladder;
   $('wb-ladlab').textContent=WB.ladder?'ON':'OFF';
@@ -6887,7 +6941,7 @@ function wbSnapshot(){
         voidamt:state.voidamt, locality:state.locality, chromacap:state.chromacap,
         fx:Object.keys(state.fx).filter(k2=>state.fx[k2]),
         gains:Object.fromEntries(Object.entries(WB.gain).filter(([k2,v2])=>v2!==100)),
-        fam:WB.fam, prim:WB.prim, ladder:WB.ladder, live:WB.live} };
+        fam:WB.fam, prim:WB.prim, ladder:WB.ladder, live:true} };
 }
 function wbLocal(){ try{return JSON.parse(localStorage.getItem('wb_verdicts')||'[]');}catch(e){return[];} }
 function wbLocalSave(a){ try{localStorage.setItem('wb_verdicts',JSON.stringify(a));}catch(e){} }
@@ -6919,7 +6973,7 @@ async function wbVerdict(v){
   const row={verdict:v, tag:WBV.tag, card:snap.card, snapshot:snap.st, ua:navigator.userAgent.slice(0,80)};
   const ok=await wbSend(row);
   WBV.tag=null; document.querySelectorAll('.wbtag').forEach(b=>b.dataset.sel=0);
-  if(!WB.live)$('osd').textContent=v+(row.tag?' · '+row.tag:'')+(ok?' · SENT':' · QUEUED (offline)');
+  $('osd').textContent=v+(row.tag?' · '+row.tag:'')+(ok?' · SENT':' · QUEUED (offline)');
   const btn=$(v==='KEEP'?'wb-keep':'wb-kill'), t0=btn.textContent;
   btn.textContent=ok?'✓ SENT':'⏳ QUEUED';
   setTimeout(()=>{btn.textContent=t0;},900);
