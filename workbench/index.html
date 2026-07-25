@@ -711,11 +711,11 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
     </section>
     <section id="p-wb" class="panel">
       <div class="field">
-        <label>HANDS-ON ENGINE <span class="v" id="wb-fps"></span></label>
+        <label>LIVING ENGINE <span class="v" id="wb-fps"></span></label>
         <div class="duo">
-          <button id="wb-render" class="vio">&#9635; RE-RENDER LOOP</button>
+          <button id="wb-render" class="vio">&#9635; RENDER GIF NOW</button>
         </div>
-        <p class="labnote">Always on. While your finger is on a control the CURRENT FRAME re-renders instantly &mdash; you are manipulating the image live. The moment you let go, the full loop re-renders through the exact pipeline and playback resumes at 25fps. RENDER and every save use only the full loop, never the scrub.</p>
+        <p class="labnote">The engine runs LIVE, always: the loop animates continuously in a dedicated preview core and every control &mdash; dials, sigils, gains, bodies, dice, mutate, resurrect &mdash; lands within a frame. The preview runs the REAL algorithms at a resolution your device sustains (auto-adapts; the badge shows it). RENDER produces the exact 1080&sup2; GIF; saves come only from that.</p>
       </div>
       <div class="field">
         <label>CORRUPTION LADDER <span class="v" id="wb-ladlab">OFF</span></label>
@@ -4086,8 +4086,12 @@ self.onmessage=function(e){
 
 let POOL={workers:null,ok:('Worker' in window)};
 function getWorkerSrc(){
-  const sc=document.querySelector('script:not([src])').textContent;
-  const M=(n)=>'/*CORE'+n+'*/';                         // built by concat: the only
+  const M=(n)=>'/*CORE'+n+'*/';
+  /* the first inline script is the PANDORA_PUBLIC stub — FIND the engine
+     instead of trusting DOM order (this silently killed the pool: dead
+     workers on birth, silent single-thread fallback on every render) */
+  const sc=[...document.querySelectorAll('script:not([src])')]
+    .map(el=>el.textContent).find(t=>t.includes(M('-BEGIN')))||'';                         // built by concat: the only
   const core=sc.slice(sc.indexOf(M('-BEGIN')), sc.indexOf(M('-END')));      // verbatim
   const core2=sc.slice(sc.indexOf(M('2-BEGIN')), sc.indexOf(M('2-END')));   // markers are the real ones
   return '"use strict";const W=1080,H=1080,FW=360;const TAU=6.283185307179586;\n'
@@ -6045,10 +6049,11 @@ function machineRoll(opts){
   return tag+' \u00b7 V'+state.voidamt+' L'+state.locality+(state.chromacap?' CAP':'');
 }
 $('go').addEventListener('click',()=>{
-  /* WORKBENCH LAW: the parameters on the panel ARE the genome. TRANSMIT
+  /* WORKBENCH LAW: the parameters on the panel ARE the genome. RENDER
      renders exactly them. Fate lives in the DICE and the box tap only. */
   if(busy)abortRun();
   $('osd').textContent='RENDERING · CURRENT GENOME';
+  window.WB_RENDER=true;   /* the one door to the full pipeline */
   generate();
 });
 document.querySelectorAll('.tab').forEach(t=>{
@@ -6780,29 +6785,131 @@ setInterval(paint,250); paint();
 const WB=window.WB={fam:null, prim:null, gain:{}, ladder:false, lastTouch:0};
 function wbHasOverrides(){ if(WB.fam!=null||WB.prim!=null)return true;
   for(const k in WB.gain)if(WB.gain[k]!==100)return true; return false; }
-function wbTune(scene){
+const wbTune=window.wbTune=function(scene){
   scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim;
   if(!scene.__gBase)scene.__gBase=Object.assign({},scene.vibe.g);
   for(const k in scene.__gBase){ const m=WB.gain[k];
     scene.vibe.g[k]=scene.__gBase[k]*((m==null?100:m)/100); }
-}
+};
 /* ============================================================================
-   THE TWO-SPEED ENGINE — hands-on, then truth.
+   THE LIVING ENGINE — real-time by construction.
    ---------------------------------------------------------------------------
-   FAST: while a control is being touched, the CURRENT frame re-renders on the
-   main thread through the same passes the loop uses (renderSource, fringe,
-   lumen, quantize, index corruption, sanctity) at the frozen playhead — the
-   image answers the hand in ~100ms, continuously. The only passes the scrub
-   omits are the loop-history organs (tunnel feedback ring), which have no
-   meaning on a single frame.
-   SLOW: 700ms after the last touch, the full loop re-renders through the real
-   pipeline (worker pool, byte-exact, workbench hand included) and playback
-   resumes at the exact GIF cadence. Everything savable comes from SLOW only.
+   The engine core is dimension-parameterized (the pool already proves it:
+   every worker declares its own W/H/FW before the core source). So the
+   workbench keeps ONE persistent preview worker running the REAL core at a
+   smaller W — 540² desktop, 360² phone, FW held at the full 360 so every
+   field, mask, void coastline and wound anchor is IDENTICAL to production —
+   animating continuously on the GIF's own 40ms timeline. Controls post the
+   current genome; the worker reads the latest before each frame: latency is
+   one frame. If a scene runs heavy the worker degrades resolution one step
+   and reports it; the badge never lies about what you're seeing.
+   The full 1080² pipeline is untouched and runs ONLY behind RENDER.
    ========================================================================== */
-const WBS={key:'',ctx:null,busy:false,queued:false,frozen:-1,settle:0,idx:new Uint8Array(W*H)};
-function wbKey(){ return JSON.stringify([$('seed').value,state.mode,state.scheme,
-  state.voidamt,state.locality,state.chromacap,EPOCH,OV,WB.fam,WB.prim,state.frames]); }
-function wbCtx(){
+const WB_PV_DRIVER=`
+let CUR=null, SC=null, sceneKey='', running=false, t0=0, slowN=0;
+const rgbA=new Uint8Array(W*H*3), rgbB=new Uint8Array(W*H*3), rgbC=new Uint8Array(W*H*3);
+const idx=new Uint8Array(W*H);
+function skey(J){ return JSON.stringify([J.seed,J.mode,J.voidamt,J.locality,J.chromacap,
+  J.epoch,J.ov,J.scheme,J.wb&&J.wb.fam,J.wb&&J.wb.prim]); }
+function buildSC(J){
+  const scene=buildScene(J.seed,J.mode);
+  scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
+  scene.epoch=J.epoch|0;
+  applyOverridesPure(scene,J.seed,J.ov);
+  if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; }
+  const pack=buildPalette(J.scheme,scene.vibe);
+  const gBase=Object.assign({},scene.vibe.g);
+  const MV=Object.assign({},scene.rev4.motion,{quant:0,strobes:[]});
+  const tEff=function(th){let t=th; if(MV.tw)t=t+MV.tw*Math.sin(t*MV.twk+MV.twph); return t;};
+  const gradR=scene.rev4.palMode===2?new Uint8Array(768):null;
+  const gradFor=function(th){ if(!gradR)return pack.grad;
+    const shift=Math.round(256*scene.rev4.palCycles*th/TAU)%256;
+    for(let i=0;i<256;i++){const j=((i+shift)&255)*3,k=i*3;
+      gradR[k]=pack.grad[j];gradR[k+1]=pack.grad[j+1];gradR[k+2]=pack.grad[j+2];}
+    return gradR; };
+  let ring2=null, coarse2=null;
+  self.postMessage({t:'meta', pal:pack.pal, mode:scene.mode});
+  return {scene, grad:pack.grad, pal:pack.pal, near:pack.near, gBase, tEff, gradFor,
+    get ring2(){return ring2;}, set ring2(v){ring2=v;},
+    get coarse2(){return coarse2;}, set coarse2(v){coarse2=v;}};
+}
+function loop(){
+  if(!running)return;
+  const J=CUR, start=Date.now();
+  try{
+    const k=skey(J);
+    if(!SC||sceneKey!==k){ SC=buildSC(J); sceneKey=k; t0=Date.now(); }
+    const scene=SC.scene;
+    for(const g in SC.gBase){ const m=J.wb&&J.wb.gain?J.wb.gain[g]:null;
+      scene.vibe.g[g]=SC.gBase[g]*((m==null?100:m)/100); }
+    scene._corr=J.corr;
+    const N=J.N, i=((((Date.now()-t0)/40)|0)%N+N)%N;   /* the GIF's own clock */
+    const raw=i/N*TAU, theta=SC.tEff(raw);
+    renderSource(rgbA,rgbC,scene,i,theta,SC.gradFor(raw),J.fx,J.corr);
+    if(J.fx.tunnel){ const T=scene.demi.tunnel;
+      if(!SC.ring2){ SC.ring2=[]; for(let q=0;q<T.taps;q++)SC.ring2.push(new Uint8Array(FW*FW*3));
+        SC.coarse2=new Uint8Array(FW*FW*3); }
+      downsampleCoarse(rgbA,SC.coarse2);
+      compositeTunnel(rgbA,SC.ring2,T,Math.min(150,J.corr*scene.vibe.g.tunnel));
+      const rec=SC.ring2.shift(); SC.ring2.push(SC.coarse2); SC.coarse2=rec;
+    } else SC.ring2=null;
+    rgbB.set(rgbA);
+    fringePass(rgbB,scene,theta);
+    lumenPass(rgbB,scene,theta,SC.grad);
+    quantize(rgbB,idx,SC.near,(14+J.corr*0.20)*scene.vibe.ditherMul,
+      J.fx.tect?buildTect(scene,theta,J.corr):null,
+      (J.fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,J.corr):null);
+    if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(idx,SC.pal.length,scene,theta,J.corr,J.fx);
+    sanctityIdx(idx,scene,i);
+    const out=idx.slice();
+    const ms=Date.now()-start;
+    self.postMessage({t:'pv', i:i, N:N, ms:ms, buf:out},[out.buffer]);
+    if(ms>62){ if(++slowN>=24){ slowN=0; self.postMessage({t:'slow',ms:ms}); } } else slowN=0;
+    setTimeout(loop, Math.max(0, 40-ms));
+  }catch(err){ running=false; self.postMessage({t:'err', msg:String(err&&err.stack||err).slice(0,300)}); }
+}
+self.onmessage=function(e){ const m=e.data;
+  if(m.t==='job'){ CUR=m.job; if(!running){ running=true; loop(); } }
+  else if(m.t==='pause'){ running=false; }
+};`;
+const WBPV=window.WBPV={w:null,res:0,pal:null,meta:null,off:null,octx:null,img:null,ms:0,fmsg:0,alive:false};
+const WBPV_LADDER=[540,432,360,270];
+function wbPvSrc(res){
+  const M=n=>'/*CORE'+n+'*/';
+  const sc=[...document.querySelectorAll('script:not([src])')]
+    .map(el=>el.textContent).find(t=>t.includes(M('-BEGIN')))||'';
+  const core=sc.slice(sc.indexOf(M('-BEGIN')), sc.indexOf(M('-END')));
+  const core2=sc.slice(sc.indexOf(M('2-BEGIN')), sc.indexOf(M('2-END')));
+  return '"use strict";const W='+res+',H='+res+',FW=360;const TAU=6.283185307179586;\n'
+    +core+'\n'+core2+'\n'+WB_PV_DRIVER;
+}
+function wbPvSpawn(res){
+  if(WBPV.w){ try{WBPV.w.terminate();}catch(e){} WBPV.w=null; }
+  WBPV.res=res;
+  WBPV.off=document.createElement('canvas'); WBPV.off.width=res; WBPV.off.height=res;
+  WBPV.octx=WBPV.off.getContext('2d'); WBPV.img=WBPV.octx.createImageData(res,res);
+  const url=URL.createObjectURL(new Blob([wbPvSrc(res)],{type:'text/javascript'}));
+  const w=WBPV.w=new Worker(url);
+  w.onmessage=e=>{ const m=e.data;
+    if(m.t==='meta'){ WBPV.pal=m.pal; WBPV.meta={mode:m.mode}; return; }
+    if(m.t==='slow'){ const at=WBPV_LADDER.indexOf(WBPV.res);
+      if(at>=0&&at<WBPV_LADDER.length-1){ wbPvSpawn(WBPV_LADDER[at+1]); wbPush(); } return; }
+    if(m.t==='err'){ console.error('WB PV',m.msg); $('osd').textContent='PREVIEW FAILED · '+m.msg.slice(0,50); return; }
+    if(m.t!=='pv'||!WBPV.pal)return;
+    if(busy)return;                       /* the full render owns the monitor */
+    WBPV.ms=m.ms; WBPV.fmsg=performance.now();
+    const d=WBPV.img.data, pal=WBPV.pal, b=m.buf, n=WBPV.res*WBPV.res;
+    for(let q=0;q<n;q++){ const c=pal[b[q]]||[0,0,0], o=q*4;
+      d[o]=c[0];d[o+1]=c[1];d[o+2]=c[2];d[o+3]=255; }
+    WBPV.octx.putImageData(WBPV.img,0,0);
+    vctx.imageSmoothingEnabled=false;
+    vctx.drawImage(WBPV.off,0,0,W,H);
+    $('t-frame').textContent=(m.i+1)+'/'+m.N;
+    if((m.i&7)===0)$('osd').textContent='LIVE '+WBPV.res+'\u00b2 \u00b7 '+(1000/Math.max(m.ms,40)).toFixed(0)+'fps';
+  };
+  WBPV.alive=true;
+}
+function wbPvJob(){
   const seed=(parseInt($('seed').value,10)>>>0)||1;
   let schemeKey=state.scheme;
   if(schemeKey==='RANDOM'){
@@ -6811,81 +6918,52 @@ function wbCtx(){
   }
   const scheme= schemeKey==='GENESIS'?genesisScheme(seed)
     : schemeKey==='TISGEN'?tisScheme(seed):SCHEMES[schemeKey];
-  const scene=buildScene(seed, state.mode);
-  scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
-  scene.epoch=EPOCH;
-  applyOverrides(scene, seed); reflectTune(scene); wbTune(scene);
-  const {grad,pal,near}=buildPalette(scheme, scene.vibe);
-  const MV={...scene.rev4.motion, quant:0, strobes:[]};
-  const tEff=th=>{ let t=th; if(MV.tw)t=t+MV.tw*Math.sin(t*MV.twk+MV.twph); return t; };
-  const gradR=scene.rev4.palMode===2?new Uint8Array(768):null;
-  const gradFor=th=>{ if(!gradR)return grad;
-    const shift=Math.round(256*scene.rev4.palCycles*th/TAU)%256;
-    for(let i2=0;i2<256;i2++){const j=((i2+shift)&255)*3,k=i2*3;
-      gradR[k]=grad[j];gradR[k+1]=grad[j+1];gradR[k+2]=grad[j+2];}
-    return gradR; };
-  return {scene, grad, pal, near, tEff, gradFor, schemeKey};
+  return { seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0,
+    chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
+    corr:state.corr, N:state.frames, fx:{...state.fx}, ov:{...OV}, epoch:EPOCH,
+    wb:{fam:WB.fam,prim:WB.prim,gain:{...WB.gain}} };
 }
-function wbScrub(){
-  if(WBS.busy){ WBS.queued=true; return; }
-  WBS.busy=true;
-  requestAnimationFrame(()=>{
-    try{
-      const k=wbKey();
-      if(!WBS.ctx||WBS.key!==k){ WBS.ctx=wbCtx(); WBS.key=k; }
-      const C=WBS.ctx, scene=C.scene, N=state.frames, fx=state.fx, corr=state.corr;
-      scene._corr=corr; wbTune(scene);
-      if(WBS.frozen<0)WBS.frozen=(PLAYER.cur||0)%N;
-      const i=WBS.frozen%N, raw=i/N*TAU, theta=C.tEff(raw);
-      const dAmt=(14+corr*0.20)*scene.vibe.ditherMul;
-      renderSource(rgbA, rgbC, scene, i, theta, C.gradFor(raw), fx, corr);
-      rgbB.set(rgbA);
-      fringePass(rgbB, scene, theta);
-      lumenPass(rgbB, scene, theta, C.grad);
-      quantize(rgbB, WBS.idx, C.near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
-               (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-      if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(WBS.idx, C.pal.length, scene, theta, corr, fx);
-      sanctityIdx(WBS.idx, scene, i);
-      const pd=preview.data, pal2=C.pal;
-      for(let q=0;q<W*H;q++){const c2=pal2[WBS.idx[q]]||[0,0,0];const o=q*4;
-        pd[o]=c2[0];pd[o+1]=c2[1];pd[o+2]=c2[2];pd[o+3]=255;}
-      vctx.putImageData(preview,0,0);
-      $('osd').textContent='HANDS ON · frame '+(i+1)+'/'+N;
-    }catch(e){ console.error('WB SCRUB',e); }
-    WBS.busy=false;
-    if(WBS.queued){ WBS.queued=false; wbScrub(); }
-  });
-}
-function wbTouch(){
-  WB.lastTouch=performance.now();
-  stopPlayer();                                    /* freeze the playhead */
-  wbScrub();                                       /* the hand sees itself NOW */
-  clearTimeout(WBS.settle);
-  WBS.settle=setTimeout(()=>{                      /* let go -> the truth renders */
-    WBS.frozen=-1;
-    if(busy)abortRun();
-    generate();
-  },700);
-}
+const wbPush=window.wbPush=function(){
+  if(!WBPV.alive)wbPvSpawn(WBPV_LADDER[/iP(hone|ad|od)|Android/i.test(navigator.userAgent)?2:0]);
+  if(busy)abortRun();                    /* touching anything reclaims the stage */
+  stopPlayer();
+  $('ph').style.display='none';
+  WBPV.w.postMessage({t:'job', job:wbPvJob()});
+};
+function wbPvPause(){ if(WBPV.w)WBPV.w.postMessage({t:'pause'}); }
+/* the one door to the full pipeline: everything else becomes a preview push */
+const _wbGenFull=generate;
+generate=async function(){
+  if(!window.WB_RENDER){ wbPush(); return; }
+  window.WB_RENDER=false;
+  wbPvPause();
+  return _wbGenFull();
+};
+/* every genome-loading ritual now lands in the living preview */
+const _wbAC2=applyCard;
+applyCard=function(c){ _wbAC2(c); };
 document.addEventListener('input',e=>{
   const t=e.target; if(!t||!t.matches||!t.matches('input'))return;
   if(t.id==='dna')return;
-  if(t.closest('#p-signal,#p-tune,#p-wb')||t.id==='seed')wbTouch();
+  if(t.closest('#p-signal,#p-tune,#p-wb')||t.id==='seed')wbPush();
 },true);
 document.addEventListener('click',e=>{
   const t=e.target&&e.target.closest&&e.target.closest(
     '#p-signal .seg button,#p-tune .seg button,.tg,#wb-fam button,#wb-prim button,#wb-ladder');
-  if(t)wbTouch();
+  if(t)wbPush();
 },true);
 setInterval(()=>{
-  const touching=performance.now()-WB.lastTouch<900;
-  const st= busy?'◌ RENDERING LOOP…'
-    : touching?'✋ HANDS ON — instant frame'
-    : (PLAYER.raf?'● LOOP · 25fps exact':'—');
-  $('wb-livestat').innerHTML='<span class="'+(busy||touching?'':'dotlive')+'">'+st+'</span>';
-  $('wb-fps').textContent= busy?'rendering':(touching?'scrubbing':'25fps');
-},300);
-$('wb-render').addEventListener('click',()=>{ if(busy)abortRun(); generate(); });
+  const fresh=performance.now()-WBPV.fmsg<1500;
+  const st= busy?'\u25cc RENDERING GIF\u2026'
+    : fresh?'\u25cf LIVE '+WBPV.res+'\u00b2 \u00b7 '+(1000/Math.max(WBPV.ms,40)).toFixed(0)+'fps'
+    : (PLAYER.raf?'\u25a3 EXACT LOOP \u00b7 25fps':'\u2014');
+  $('wb-livestat').innerHTML='<span class="'+(busy?'':'dotlive')+'">'+st+'</span>';
+  $('wb-fps').textContent= busy?'rendering':(fresh?WBPV.res+'\u00b2 live':'exact loop');
+},400);
+$('wb-render').addEventListener('click',()=>{ if(busy)abortRun();
+  window.WB_RENDER=true; generate(); });
+/* wake the living engine on boot */
+setTimeout(()=>{ try{ wbPush(); }catch(e){ console.error('PV boot',e); } },600);
 $('wb-ladder').addEventListener('click',()=>{ WB.ladder=!WB.ladder;
   $('wb-ladlab').textContent=WB.ladder?'ON':'OFF';
   $('wb-ladder').textContent=WB.ladder
