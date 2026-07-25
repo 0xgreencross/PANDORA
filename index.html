@@ -3927,8 +3927,14 @@ self.onmessage=function(e){
 
 let POOL={workers:null,ok:('Worker' in window)};
 function getWorkerSrc(){
-  const sc=document.querySelector('script:not([src])').textContent;
-  const M=(n)=>'/*CORE'+n+'*/';                         // built by concat: the only
+  const M=(n)=>'/*CORE'+n+'*/';
+  /* CRITICAL FIX: the first inline script became the 27-char PANDORA_PUBLIC
+     stub, so this selector fed workers an empty core — they died on birth and
+     every render silently fell back to single-thread. FIND the engine script
+     instead of trusting DOM order. Output was always byte-identical; this
+     returns only the speed. */
+  const sc=[...document.querySelectorAll('script:not([src])')]
+    .map(el=>el.textContent).find(t=>t.includes(M('-BEGIN')))||'';                         // built by concat: the only
   const core=sc.slice(sc.indexOf(M('-BEGIN')), sc.indexOf(M('-END')));      // verbatim
   const core2=sc.slice(sc.indexOf(M('2-BEGIN')), sc.indexOf(M('2-END')));   // markers are the real ones
   return '"use strict";const W=1080,H=1080,FW=360;const TAU=6.283185307179586;\n'
