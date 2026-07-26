@@ -718,6 +718,11 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <p class="labnote">The engine runs LIVE, always: the loop animates continuously in a dedicated preview core and every control &mdash; dials, sigils, gains, bodies, dice, mutate, resurrect &mdash; lands within a frame. The preview runs the REAL algorithms at a resolution your device sustains (auto-adapts; the badge shows it). RENDER produces the exact 1080&sup2; GIF; saves come only from that.</p>
       </div>
       <div class="field">
+        <label>PREVIEW RESOLUTION <span class="v" id="wb-reslab">AUTO</span></label>
+        <div class="seg" id="wb-res"></div>
+        <p class="labnote">The preview runs the REAL engine at a smaller canvas &mdash; every field, mask, void coastline and wound anchor is computed at full production scale (FW 360); only the final raster is smaller. AUTO picks a rung your device sustains at 25fps and steps down within a quarter-second if a scene turns heavy. Pin it higher for detail, lower for speed. RENDER is always the full 1080&sup2;.</p>
+      </div>
+      <div class="field">
         <label>CORRUPTION LADDER <span class="v" id="wb-ladlab">OFF</span></label>
         <button id="wb-ladder" class="vio">LADDER: OFF (dial = amplitude only, sigils are yours)</button>
       </div>
@@ -1410,7 +1415,7 @@ function famMat(scene){
   };
   return scene._fmat=Object.assign(base, D[m]||{});
 }
-const SW=448, FLY=1.06;
+const SW=(typeof PVSW!=='undefined'?PVSW:448), FLY=1.06;   /* preview may shrink the shading field; production is always 448 */
 function sceneView(scene, theta){
   /* THE STAGE: body + mirror floor + void, marched per frame at VG,
      reflections and contact shadow included. */
@@ -1419,7 +1424,7 @@ function sceneView(scene, theta){
   mf.tearAmp=((scene._corr!=null?scene._corr:60)/100)*0.045;
   if(mf._svt===theta)return mf._sv;
   mf._svt=theta;
-  const VG=88, S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
+  const VG=(typeof PVVG!=='undefined'?PVVG:88), S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
   const M=VG*VG;
   const sv=mf._sv||(mf._sv={kind:new Uint8Array(M),nx:new Float32Array(M),ny:new Float32Array(M),
     nz:new Float32Array(M),px:new Float32Array(M),py:new Float32Array(M),pz:new Float32Array(M),
@@ -1573,11 +1578,22 @@ function renderScene(rgb, scene, theta, corr, grad){
     }
   }
 }
-function renderBase(rgb, scene, t, theta, grad){
+/* THE CORRUPTION LATCH — fixed.
+   renderBase used to read the corruption from scene._corr, which renderScene
+   itself writes on entry. On a freshly built scene that field is undefined, so
+   the first frame fell back to the hardcoded 60 and then LATCHED it: every
+   later frame read back the 60 renderScene had just written. The slider never
+   reached the base render at all — which is why corruption "did nothing" to a
+   rendered loop, and why the living preview (which sets _corr itself before
+   every frame) and the GIF were two different pictures. Corruption is now an
+   argument, passed down from renderSource, so every caller — preview worker,
+   render worker, sequential path — is the same image by construction. */
+function renderBase(rgb, scene, t, theta, grad, corr){
   const m=scene.mode;
+  const CORR=(corr!=null?corr:(scene._corr!=null?scene._corr:60));
   if(m==='IDOL'){
     const field=renderBase._fi||(renderBase._fi=new Float32Array(FW*FW));
-    scene._corr=(scene._corr!=null?scene._corr:60);
+    scene._corr=CORR;
     renderIdol(field, scene, theta);
     for(let y=0;y<H;y++){
       const sy=y*FW/H, y0=Math.min(FW-1,sy|0), y1=Math.min(FW-1,y0+1), ty=sy-y0;
@@ -1593,7 +1609,7 @@ function renderBase(rgb, scene, t, theta, grad){
     }
     return;
   }
-  renderScene(rgb, scene, theta, (scene._corr!=null?scene._corr:60), grad);
+  renderScene(rgb, scene, theta, CORR, grad);
 }
 
 function analogPass(src,dst,scene,theta,corr,fx){
@@ -1965,7 +1981,7 @@ function massView(scene, mf, theta){
      loop. Marched fresh per frame at coarse grid; the film layer absorbs it. */
   if(mf._vt===theta)return;
   mf._vt=theta;
-  const VG=88, S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
+  const VG=(typeof PVVG!=='undefined'?PVVG:88), S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
   const hitG=new Uint8Array(VG*VG), nxG=new Float32Array(VG*VG), nyG=new Float32Array(VG*VG),
         nzG=new Float32Array(VG*VG), dpG=new Float32Array(VG*VG),
         pxG=new Float32Array(VG*VG), pyG=new Float32Array(VG*VG), pzG=new Float32Array(VG*VG);
@@ -3541,12 +3557,12 @@ function fxMaskComp(buf,scene,theta){
 }
 
 function renderSource(rgbA,rgbC,scene,i,theta,grad,fx,corr){
-  renderBase(rgbA,scene,i,theta,grad);
-  if(fx.flay){   renderBase(rgbC,scene,i,theta+TAU/8,grad); combineFlay(rgbA,rgbC,scene,theta,corr); }
+  renderBase(rgbA,scene,i,theta,grad,corr);
+  if(fx.flay){   renderBase(rgbC,scene,i,theta+TAU/8,grad,corr); combineFlay(rgbA,rgbC,scene,theta,corr); }
   if(fx.braid){
     const rgbD=renderSource._d||(renderSource._d=new Uint8Array(W*H*3));
-    renderBase(rgbC,scene,i,theta+TAU/3,grad);
-    renderBase(rgbD,scene,i,theta-TAU/3,grad);
+    renderBase(rgbC,scene,i,theta+TAU/3,grad,corr);
+    renderBase(rgbD,scene,i,theta-TAU/3,grad,corr);
     combineBraid(rgbA,rgbC,rgbD,scene,theta,Math.min(150,corr*scene.vibe.g.braid));
   }
   if(fx.chrono)  fxChrono(rgbA,scene,theta,Math.min(150,corr*scene.vibe.g.chrono),grad);
@@ -6782,7 +6798,7 @@ setInterval(paint,250); paint();
    DIGEST   — keep-rates by mode/sigil/corr/void + gentle taste suppression:
               sigils the curator reliably kills get culled from fresh rolls.
    ========================================================================== */
-const WB=window.WB={fam:null, prim:null, gain:{}, ladder:false, lastTouch:0};
+const WB=window.WB={fam:null, prim:null, gain:{}, ladder:false, lastTouch:0, res:'AUTO'};
 function wbHasOverrides(){ if(WB.fam!=null||WB.prim!=null)return true;
   for(const k in WB.gain)if(WB.gain[k]!==100)return true; return false; }
 const wbTune=window.wbTune=function(scene){
@@ -6806,7 +6822,12 @@ const wbTune=window.wbTune=function(scene){
    The full 1080² pipeline is untouched and runs ONLY behind RENDER.
    ========================================================================== */
 const WB_PV_DRIVER=`
-let CUR=null, SC=null, sceneKey='', running=false, t0=0, slowN=0;
+let CUR=null, SC=null, sceneKey='', running=false, t0=0, lastStart=0;
+let gate=true, tok=0, armed=false;
+const FREE=[];
+function take(){ return FREE.pop()||new Uint8Array(W*H); }
+function schedule(ms){ if(armed)return; armed=true; setTimeout(function(){ armed=false; loop(); }, ms|0); }
+function release(){ if(gate)return; gate=true; schedule(Math.max(0, 40-(Date.now()-lastStart))); }
 const rgbA=new Uint8Array(W*H*3), rgbB=new Uint8Array(W*H*3), rgbC=new Uint8Array(W*H*3);
 const idx=new Uint8Array(W*H);
 function skey(J){ return JSON.stringify([J.seed,J.mode,J.voidamt,J.locality,J.chromacap,
@@ -6834,8 +6855,8 @@ function buildSC(J){
     get coarse2(){return coarse2;}, set coarse2(v){coarse2=v;}};
 }
 function loop(){
-  if(!running)return;
-  const J=CUR, start=Date.now();
+  if(!running||!gate)return;
+  const J=CUR, start=Date.now(); lastStart=start;
   try{
     const k=skey(J);
     if(!SC||sceneKey!==k){ SC=buildSC(J); sceneKey=k; t0=Date.now(); }
@@ -6861,55 +6882,120 @@ function loop(){
       (J.fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,J.corr):null);
     if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(idx,SC.pal.length,scene,theta,J.corr,J.fx);
     sanctityIdx(idx,scene,i);
-    const out=idx.slice();
+    /* BACKPRESSURE. The worker used to free-run: it posted a frame every
+       max(40ms, render) regardless of whether the main thread had drawn the
+       last one. On a slow device that queues frames the compositor never
+       shows and the picture falls further behind reality every second — the
+       eye reads it as a stall, not as a slow render. Now it posts ONE frame
+       and waits for the ack, which hands the buffer straight back for reuse
+       (zero per-frame allocation, zero GC sawtooth). A watchdog opens the
+       gate if an ack is ever lost. The playhead stays wall-clock derived, so
+       a slow device DROPS frames and keeps the GIF's true 25fps timing. */
+    const out=take(); out.set(idx);
     const ms=Date.now()-start;
+    gate=false; const my=++tok;
     self.postMessage({t:'pv', i:i, N:N, ms:ms, buf:out},[out.buffer]);
-    if(ms>62){ if(++slowN>=24){ slowN=0; self.postMessage({t:'slow',ms:ms}); } } else slowN=0;
-    setTimeout(loop, Math.max(0, 40-ms));
+    setTimeout(function(){ if(!gate&&tok===my)release(); },500);
   }catch(err){ running=false; self.postMessage({t:'err', msg:String(err&&err.stack||err).slice(0,300)}); }
 }
 self.onmessage=function(e){ const m=e.data;
-  if(m.t==='job'){ CUR=m.job; if(!running){ running=true; loop(); } }
+  if(m.t==='job'){ CUR=m.job; if(!running){ running=true; gate=true; schedule(0); } }
+  else if(m.t==='ack'){ if(m.buf&&m.buf.byteLength===W*H)FREE.push(new Uint8Array(m.buf)); release(); }
   else if(m.t==='pause'){ running=false; }
 };`;
-const WBPV=window.WBPV={w:null,res:0,pal:null,meta:null,off:null,octx:null,img:null,ms:0,fmsg:0,alive:false};
-const WBPV_LADDER=[540,432,360,270];
+const WBPV=window.WBPV={w:null,res:0,pal:null,meta:null,off:null,octx:null,img:null,u32:null,
+  lut:new Uint32Array(256), ms:0, fmsg:0, alive:false,
+  dt:40, tPrev:0, slow:0, fast:0, settle:0, top:0};
+const WBPV_LADDER=window.WBPV_LADDER=[648,540,432,360,300,240,192];
+const WBPV_LE=(function(){const b=new ArrayBuffer(4);new Uint32Array(b)[0]=1;return new Uint8Array(b)[0]===1;})();
+/* THE RUNG. iPadOS Safari reports a MacIntel DESKTOP user-agent, so the old
+   /iP(hone|ad|od)|Android/ test spawned every iPad at the desktop rung — 540²,
+   ~4x the pixels the machine could sustain — and the only way down was 24
+   CONSECUTIVE slow frames per step, which at 6fps is sixteen seconds a step.
+   That is the whole 6fps story. Pick the rung from what the device actually
+   is, and let the governor judge by the interval the eye sees. */
+const wbPvAuto=window.wbPvAuto=function(){
+  const ua=navigator.userAgent;
+  const ipad=(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||/iPad/.test(ua);
+  const phone=/iPhone|iPod/.test(ua)||(/Android/i.test(ua)&&/Mobile/i.test(ua));
+  const tablet=ipad||/Android/i.test(ua);
+  const cores=navigator.hardwareConcurrency||2;
+  if(phone)return 300;
+  if(tablet)return 360;
+  return cores>=8?540:(cores>=4?432:360);
+};
+/* AUTO's pick is a floor to start from, not a cap: a device that holds 25fps
+   for five straight seconds may earn ONE rung back. Never more — that is what
+   keeps the ladder from oscillating. */
+function wbPvCeil(r){ const i=WBPV_LADDER.indexOf(r); return WBPV_LADDER[Math.max(0,(i<0?0:i)-1)]; }
+/* THE GOVERNOR. Judges the painted frame interval, not worker time — worker
+   time never sees the palette pass, the putImageData or the upscale. Six bad
+   frames step down (a quarter second, not sixteen); a long clean run may
+   climb back, but never above the rung AUTO chose for this device. */
+function wbPvGovern(){
+  if(WB.res!=='AUTO')return;
+  if(WBPV.settle>0){ WBPV.settle--; return; }
+  const at=WBPV_LADDER.indexOf(WBPV.res); if(at<0)return;
+  if(WBPV.dt>58){ WBPV.fast=0;
+    if(++WBPV.slow>=6&&at<WBPV_LADDER.length-1){ wbPvSpawn(WBPV_LADDER[at+1]); wbPush(); return; } }
+  else WBPV.slow=0;
+  if(WBPV.dt<30){
+    if(++WBPV.fast>=120&&at>0&&WBPV_LADDER[at-1]<=WBPV.top){ wbPvSpawn(WBPV_LADDER[at-1]); wbPush(); } }
+  else WBPV.fast=0;
+}
 function wbPvSrc(res){
   const M=n=>'/*CORE'+n+'*/';
   const sc=[...document.querySelectorAll('script:not([src])')]
     .map(el=>el.textContent).find(t=>t.includes(M('-BEGIN')))||'';
   const core=sc.slice(sc.indexOf(M('-BEGIN')), sc.indexOf(M('-END')));
   const core2=sc.slice(sc.indexOf(M('2-BEGIN')), sc.indexOf(M('2-END')));
-  return '"use strict";const W='+res+',H='+res+',FW=360;const TAU=6.283185307179586;\n'
+  /* the shading field and the march grid ride the rung down with the canvas:
+     shading a 448² field to paint a 240² preview was pure waste, and it was
+     the reason the ladder stopped helping below ~432. */
+  const sw=Math.max(160,Math.min(448,res));
+  const vg=Math.max(56,Math.min(88,Math.round(88*Math.min(1,res/448))));
+  return '"use strict";const W='+res+',H='+res+',FW=360,PVSW='+sw+',PVVG='+vg
+    +';const TAU=6.283185307179586;\n'
     +core+'\n'+core2+'\n'+WB_PV_DRIVER;
 }
-function wbPvSpawn(res){
+const wbPvSpawn=window.wbPvSpawn=function(res){
   if(WBPV.w){ try{WBPV.w.terminate();}catch(e){} WBPV.w=null; }
   WBPV.res=res;
   WBPV.off=document.createElement('canvas'); WBPV.off.width=res; WBPV.off.height=res;
   WBPV.octx=WBPV.off.getContext('2d'); WBPV.img=WBPV.octx.createImageData(res,res);
+  WBPV.u32=new Uint32Array(WBPV.img.data.buffer);
+  WBPV.tPrev=0; WBPV.dt=40; WBPV.slow=0; WBPV.fast=0; WBPV.settle=10;
   const url=URL.createObjectURL(new Blob([wbPvSrc(res)],{type:'text/javascript'}));
   const w=WBPV.w=new Worker(url);
   w.onmessage=e=>{ const m=e.data;
-    if(m.t==='meta'){ WBPV.pal=m.pal; WBPV.meta={mode:m.mode}; return; }
-    if(m.t==='slow'){ const at=WBPV_LADDER.indexOf(WBPV.res);
-      if(at>=0&&at<WBPV_LADDER.length-1){ wbPvSpawn(WBPV_LADDER[at+1]); wbPush(); } return; }
+    if(w!==WBPV.w)return;                 /* a rung we already stepped off */
+    if(m.t==='meta'){ WBPV.pal=m.pal; WBPV.meta={mode:m.mode};
+      const L=WBPV.lut;                   /* palette as one 32-bit word per index */
+      for(let q=0;q<256;q++){ const c=m.pal[q]||[0,0,0];
+        L[q]= WBPV_LE ? (((255<<24)|(c[2]<<16)|(c[1]<<8)|c[0])>>>0)
+                      : (((c[0]<<24)|(c[1]<<16)|(c[2]<<8)|255)>>>0); }
+      return; }
     if(m.t==='err'){ console.error('WB PV',m.msg); $('osd').textContent='PREVIEW FAILED · '+m.msg.slice(0,50); return; }
-    if(m.t!=='pv'||!WBPV.pal)return;
-    if(busy)return;                       /* the full render owns the monitor */
-    WBPV.ms=m.ms; WBPV.fmsg=performance.now();
-    const d=WBPV.img.data, pal=WBPV.pal, b=m.buf, n=WBPV.res*WBPV.res;
-    for(let q=0;q<n;q++){ const c=pal[b[q]]||[0,0,0], o=q*4;
-      d[o]=c[0];d[o+1]=c[1];d[o+2]=c[2];d[o+3]=255; }
+    if(m.t!=='pv')return;
+    const back=m.buf.buffer;
+    const ack=()=>{ try{ w.postMessage({t:'ack',buf:back},[back]); }catch(e){} };
+    if(busy||!WBPV.pal){ ack(); return; } /* the full render owns the monitor */
+    const now=performance.now();
+    if(WBPV.tPrev)WBPV.dt=WBPV.dt*0.8+(now-WBPV.tPrev)*0.2;
+    WBPV.tPrev=now; WBPV.ms=m.ms; WBPV.fmsg=now;
+    const u=WBPV.u32, L=WBPV.lut, b=m.buf, n=WBPV.res*WBPV.res;
+    for(let q=0;q<n;q++)u[q]=L[b[q]];     /* one write per pixel, not four */
     WBPV.octx.putImageData(WBPV.img,0,0);
+    ack();                                /* hand the buffer back immediately */
     vctx.imageSmoothingEnabled=false;
     vctx.drawImage(WBPV.off,0,0,W,H);
     $('t-frame').textContent=(m.i+1)+'/'+m.N;
-    if((m.i&7)===0)$('osd').textContent='LIVE '+WBPV.res+'\u00b2 \u00b7 '+(1000/Math.max(m.ms,40)).toFixed(0)+'fps';
+    if((m.i&7)===0)$('osd').textContent='LIVE '+WBPV.res+'\u00b2 \u00b7 '+(1000/Math.max(WBPV.dt,40)).toFixed(0)+'fps';
+    wbPvGovern();
   };
   WBPV.alive=true;
-}
-function wbPvJob(){
+};
+const wbPvJob=window.wbPvJob=function(){
   const seed=(parseInt($('seed').value,10)>>>0)||1;
   let schemeKey=state.scheme;
   if(schemeKey==='RANDOM'){
@@ -6922,9 +7008,10 @@ function wbPvJob(){
     chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr:state.corr, N:state.frames, fx:{...state.fx}, ov:{...OV}, epoch:EPOCH,
     wb:{fam:WB.fam,prim:WB.prim,gain:{...WB.gain}} };
-}
+};
 const wbPush=window.wbPush=function(){
-  if(!WBPV.alive)wbPvSpawn(WBPV_LADDER[/iP(hone|ad|od)|Android/i.test(navigator.userAgent)?2:0]);
+  if(!WBPV.alive){ const r=(WB.res==='AUTO'?wbPvAuto():WB.res);
+    WBPV.top=Math.max(WBPV.top,wbPvCeil(r)); wbPvSpawn(r); }
   if(busy)abortRun();                    /* touching anything reclaims the stage */
   stopPlayer();
   $('ph').style.display='none';
@@ -6955,7 +7042,7 @@ document.addEventListener('click',e=>{
 setInterval(()=>{
   const fresh=performance.now()-WBPV.fmsg<1500;
   const st= busy?'\u25cc RENDERING GIF\u2026'
-    : fresh?'\u25cf LIVE '+WBPV.res+'\u00b2 \u00b7 '+(1000/Math.max(WBPV.ms,40)).toFixed(0)+'fps'
+    : fresh?'\u25cf LIVE '+WBPV.res+'\u00b2 \u00b7 '+(1000/Math.max(WBPV.dt,40)).toFixed(0)+'fps'
     : (PLAYER.raf?'\u25a3 EXACT LOOP \u00b7 25fps':'\u2014');
   $('wb-livestat').innerHTML='<span class="'+(busy?'':'dotlive')+'">'+st+'</span>';
   $('wb-fps').textContent= busy?'rendering':(fresh?WBPV.res+'\u00b2 live':'exact loop');
@@ -6964,6 +7051,21 @@ $('wb-render').addEventListener('click',()=>{ if(busy)abortRun();
   window.WB_RENDER=true; generate(); });
 /* wake the living engine on boot */
 setTimeout(()=>{ try{ wbPush(); }catch(e){ console.error('PV boot',e); } },600);
+(function(){                              /* the curator's own hand on the rung */
+  const el=$('wb-res');
+  const OPT=['AUTO',648,540,432,360,300,240,192];
+  OPT.forEach(v=>{ const b=document.createElement('button');
+    b.textContent=String(v); b.setAttribute('aria-pressed',String(v==='AUTO'));
+    b.addEventListener('click',()=>{
+      el.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+      WB.res=v; $('wb-reslab').textContent=String(v);
+      const r=(v==='AUTO'?wbPvAuto():v);
+      WBPV.top=Math.max(WBPV.top,wbPvCeil(r));
+      wbPvSpawn(r); wbPush();
+    });
+    el.appendChild(b); });
+})();
 $('wb-ladder').addEventListener('click',()=>{ WB.ladder=!WB.ladder;
   $('wb-ladlab').textContent=WB.ladder?'ON':'OFF';
   $('wb-ladder').textContent=WB.ladder
