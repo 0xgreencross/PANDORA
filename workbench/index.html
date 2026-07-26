@@ -7024,18 +7024,21 @@ function wbSnapshot(){
 function wbLocal(){ try{return JSON.parse(localStorage.getItem('wb_verdicts')||'[]');}catch(e){return[];} }
 function wbLocalSave(a){ try{localStorage.setItem('wb_verdicts',JSON.stringify(a));}catch(e){} }
 function wbCount(){ const n=wbLocal().length;
-  $('wb-count').textContent=(WBV.sent||0)+' sent'+(n?' · '+n+' queued':''); }
+  $('wb-count').textContent= WBV.noTable
+    ? 'TABLE MISSING — run SUPABASE_WORKBENCH.sql ('+n+' safe in queue)'
+    : (WBV.sent||0)+' sent'+(n?' · '+n+' queued':''); }
 async function wbSend(row){
   try{
     const r=await fetch(SB.url+'/rest/v1/'+WBV.table,{method:'POST',
       headers:{apikey:SB.key, Authorization:'Bearer '+SB.key,
         'Content-Type':'application/json', Prefer:'return=minimal'},
       body:JSON.stringify(row)});
+    if(r.status===404){ WBV.noTable=true; throw new Error('404'); }
     if(!r.ok)throw new Error('HTTP '+r.status);
-    WBV.sent=(WBV.sent||0)+1; return true;
+    WBV.noTable=false; WBV.sent=(WBV.sent||0)+1; return true;
   }catch(e){ const q=wbLocal(); q.push(row); wbLocalSave(q); return false; }
 }
-async function wbFlush(){
+const wbFlush=window.wbFlush=async function(){
   const q=wbLocal(); if(!q.length)return;
   const keep=[];
   for(const row of q){
@@ -7045,16 +7048,21 @@ async function wbFlush(){
     catch(e){ keep.push(row); }
   }
   wbLocalSave(keep); wbCount();
-}
+};
 async function wbVerdict(v){
   const snap=wbSnapshot();
   const row={verdict:v, tag:WBV.tag, card:snap.card, snapshot:snap.st, ua:navigator.userAgent.slice(0,80)};
   const ok=await wbSend(row);
   WBV.tag=null; document.querySelectorAll('.wbtag').forEach(b=>b.dataset.sel=0);
-  $('osd').textContent=v+(row.tag?' · '+row.tag:'')+(ok?' · SENT':' · QUEUED (offline)');
-  const btn=$(v==='KEEP'?'wb-keep':'wb-kill'), t0=btn.textContent;
-  btn.textContent=ok?'✓ SENT':'⏳ QUEUED';
-  setTimeout(()=>{btn.textContent=t0;},900);
+  $('osd').textContent=v+(row.tag?' · '+row.tag:'')
+    +(ok?' · SENT':(WBV.noTable?' · SAVED LOCALLY (supabase table missing)':' · QUEUED (offline)'));
+  /* fixed labels — the old code captured the CURRENT text, so two clicks
+     inside a second captured each other's flash and the label stuck */
+  const KEEPL='\u2713 KEEP', KILLL='\u2717 KILL';
+  const btn=$(v==='KEEP'?'wb-keep':'wb-kill');
+  btn.textContent=ok?'\u2713 SENT':'\u23f3 SAVED';
+  clearTimeout(btn._flash);
+  btn._flash=setTimeout(()=>{ $('wb-keep').textContent=KEEPL; $('wb-kill').textContent=KILLL; },900);
   wbCount();
 }
 $('wb-keep').addEventListener('click',()=>wbVerdict('KEEP'));
@@ -7070,6 +7078,7 @@ $('wb-export').addEventListener('click',()=>{
   a.download='workbench_verdicts_queue.json'; a.click();
 });
 wbCount(); setTimeout(wbFlush, 4000);
+setInterval(wbFlush, 30000);   /* the queue drains itself the moment the table exists */
 
 /* ============================================================================
    DIGEST — read every verdict, show the taste, derive gentle suppression.
