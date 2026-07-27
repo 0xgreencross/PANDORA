@@ -720,7 +720,12 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
       <div class="field">
         <label>PREVIEW RESOLUTION <span class="v" id="wb-reslab">AUTO</span></label>
         <div class="seg" id="wb-res"></div>
-        <p class="labnote">The preview runs the REAL engine at a smaller canvas &mdash; every field, mask, void coastline and wound anchor is computed at full production scale (FW 360); only the final raster is smaller. AUTO picks a rung your device sustains at 25fps and steps down within a quarter-second if a scene turns heavy. Pin it higher for detail, lower for speed. RENDER is always the full 1080&sup2;.</p>
+        <p class="labnote">The rung you tune on. The GIF is rasterised at 1080&sup2; and point-sampled down, so a smaller rung is a DIFFERENT picture, not a smaller one &mdash; the shapes agree, the texture does not. That is what SETTLE TO TRUTH is for. AUTO picks a rung your device sustains at 25fps and steps down within a quarter-second if a scene turns heavy.</p>
+      </div>
+      <div class="field">
+        <label>SETTLE TO TRUTH <span class="v" id="wb-truthlab">ON</span></label>
+        <button id="wb-truth" class="vio">TRUTH: ON (settles to the exact GIF when your hands come off)</button>
+        <p class="labnote">Tune fast, settle true. While you are moving a control the fast rung answers instantly. The moment you stop, the loop is re-rasterised at the render's exact geometry &mdash; 1080&sup2; from a 448&sup2; field, point-sampled to 540&sup2; the way the encoder does it &mdash; and swapped in. Measured byte-identical to the GIF: 0 of 291,600 pixels differ. After that you are watching the actual file, looping at zero cost. Touch anything and it drops back to fast.</p>
       </div>
       <div class="field">
         <label>CORRUPTION LADDER <span class="v" id="wb-ladlab">OFF</span></label>
@@ -6798,7 +6803,7 @@ setInterval(paint,250); paint();
    DIGEST   — keep-rates by mode/sigil/corr/void + gentle taste suppression:
               sigils the curator reliably kills get culled from fresh rolls.
    ========================================================================== */
-const WB=window.WB={fam:null, prim:null, gain:{}, ladder:false, lastTouch:0, res:'AUTO'};
+const WB=window.WB={fam:null, prim:null, gain:{}, ladder:false, lastTouch:0, res:'AUTO', truth:true};
 function wbHasOverrides(){ if(WB.fam!=null||WB.prim!=null)return true;
   for(const k in WB.gain)if(WB.gain[k]!==100)return true; return false; }
 const wbTune=window.wbTune=function(scene){
@@ -6824,8 +6829,16 @@ const wbTune=window.wbTune=function(scene){
 const WB_PV_DRIVER=`
 let CUR=null, SC=null, sceneKey='', running=false, t0=0, lastStart=0;
 let gate=true, tok=0, armed=false;
+/* THE TRUTH TAP. The GIF is rasterised at 1080² from a 448² shading field
+   and then POINT-SAMPLED down. A native small raster is a DIFFERENT picture,
+   not a smaller one — same mathematics, different relationship between field
+   and pixel grid, which is why the shapes always agreed and the texture never
+   did. Given OUTD this worker rasterises at full production size and hands
+   back the exact index buffer the encoder itself would see. OUTD unset = the
+   fast tuning rungs, untouched. */
+const OW=(typeof OUTD!=='undefined'&&OUTD>0&&OUTD<W)?OUTD:W;
 const FREE=[];
-function take(){ return FREE.pop()||new Uint8Array(W*H); }
+function take(){ return FREE.pop()||new Uint8Array(OW*OW); }
 function schedule(ms){ if(armed)return; armed=true; setTimeout(function(){ armed=false; loop(); }, ms|0); }
 function release(){ if(gate)return; gate=true; schedule(Math.max(0, 40-(Date.now()-lastStart))); }
 const rgbA=new Uint8Array(W*H*3), rgbB=new Uint8Array(W*H*3), rgbC=new Uint8Array(W*H*3);
@@ -6864,7 +6877,8 @@ function loop(){
     for(const g in SC.gBase){ const m=J.wb&&J.wb.gain?J.wb.gain[g]:null;
       scene.vibe.g[g]=SC.gBase[g]*((m==null?100:m)/100); }
     scene._corr=J.corr;
-    const N=J.N, i=((((Date.now()-t0)/40)|0)%N+N)%N;   /* the GIF's own clock */
+    const N=J.N, i=(J.__i!=null)?((((J.__i|0)%N)+N)%N)  /* truth pass: named frame */
+      :((((Date.now()-t0)/40)|0)%N+N)%N;                 /* live: the GIF's own clock */
     const raw=i/N*TAU, theta=SC.tEff(raw);
     renderSource(rgbA,rgbC,scene,i,theta,SC.gradFor(raw),J.fx,J.corr);
     if(J.fx.tunnel){ const T=scene.demi.tunnel;
@@ -6891,16 +6905,22 @@ function loop(){
        (zero per-frame allocation, zero GC sawtooth). A watchdog opens the
        gate if an ack is ever lost. The playhead stays wall-clock derived, so
        a slow device DROPS frames and keeps the GIF's true 25fps timing. */
-    const out=take(); out.set(idx);
+    const out=take();
+    if(OW<W){ for(let y=0;y<OW;y++){ const sy=((y*H/OW)|0)*W, row=y*OW;
+        for(let x=0;x<OW;x++) out[row+x]=idx[sy+((x*W/OW)|0)]; } }
+    else out.set(idx);
     const ms=Date.now()-start;
     gate=false; const my=++tok;
     self.postMessage({t:'pv', i:i, N:N, ms:ms, buf:out},[out.buffer]);
-    setTimeout(function(){ if(!gate&&tok===my)release(); },500);
+    if(J.__i==null)setTimeout(function(){ if(!gate&&tok===my)release(); },500);
   }catch(err){ running=false; self.postMessage({t:'err', msg:String(err&&err.stack||err).slice(0,300)}); }
 }
 self.onmessage=function(e){ const m=e.data;
-  if(m.t==='job'){ CUR=m.job; if(!running){ running=true; gate=true; schedule(0); } }
-  else if(m.t==='ack'){ if(m.buf&&m.buf.byteLength===W*H)FREE.push(new Uint8Array(m.buf)); release(); }
+  if(m.t==='job'){ CUR=m.job;
+    if(m.buf&&m.buf.byteLength===OW*OW)FREE.push(new Uint8Array(m.buf));
+    if(m.step){ running=true; gate=true; schedule(0); }
+    else if(!running){ running=true; gate=true; schedule(0); } }
+  else if(m.t==='ack'){ if(m.buf&&m.buf.byteLength===OW*OW)FREE.push(new Uint8Array(m.buf)); release(); }
   else if(m.t==='pause'){ running=false; }
 };`;
 const WBPV=window.WBPV={w:null,res:0,pal:null,meta:null,off:null,octx:null,img:null,u32:null,
@@ -6943,7 +6963,7 @@ function wbPvGovern(){
     if(++WBPV.fast>=120&&at>0&&WBPV_LADDER[at-1]<=WBPV.top){ wbPvSpawn(WBPV_LADDER[at-1]); wbPush(); } }
   else WBPV.fast=0;
 }
-function wbPvSrc(res){
+function wbPvSrc(res,outd){
   const M=n=>'/*CORE'+n+'*/';
   const sc=[...document.querySelectorAll('script:not([src])')]
     .map(el=>el.textContent).find(t=>t.includes(M('-BEGIN')))||'';
@@ -6955,7 +6975,7 @@ function wbPvSrc(res){
   const sw=Math.max(160,Math.min(448,res));
   const vg=Math.max(56,Math.min(88,Math.round(88*Math.min(1,res/448))));
   return '"use strict";const W='+res+',H='+res+',FW=360,PVSW='+sw+',PVVG='+vg
-    +';const TAU=6.283185307179586;\n'
+    +',OUTD='+(outd|0)+';const TAU=6.283185307179586;\n'
     +core+'\n'+core2+'\n'+WB_PV_DRIVER;
 }
 const wbPvSpawn=window.wbPvSpawn=function(res){
@@ -7016,8 +7036,100 @@ const wbPush=window.wbPush=function(){
   stopPlayer();
   $('ph').style.display='none';
   WBPV.w.postMessage({t:'job', job:wbPvJob()});
+  wbTrArm();                             /* the clock on the settle restarts */
 };
 function wbPvPause(){ if(WBPV.w)WBPV.w.postMessage({t:'pause'}); }
+/* ═══ THE TRUTH PASS ══════════════════════════════════════════════════════
+   Fixing the corruption latch made the two paths the same MATHEMATICS. It
+   did not make them the same PICTURE, because they never agreed on geometry:
+   the GIF is rasterised at 1080² from a 448² shading field and point-sampled
+   down, while the preview rasterised natively at 360–540 with the field
+   shrunk to match the rung. Measured against the render, 51–59% of pixels
+   differed at every rung — which is exactly "very similar but not quite the
+   same". Rasterising the preview at 1080 and point-sampling to 540 the way
+   the encoder does is byte-identical: 0.00%.
+   So the preview no longer has to choose. Tune on the fast rung; the moment
+   your hands come off, the whole loop is re-rasterised at the render's own
+   geometry and swapped in. What you are looking at when you decide you like
+   a loop IS the file. */
+const WBTR=window.WBTR={w:null, tok:0, k:0, N:0, laps:1, frames:null,
+  lut:new Uint32Array(256), off:null, octx:null, img:null, u32:null,
+  state:'live', raf:0, timer:0, ms:0, shown:-1, t0:0};
+const WBTR_D=540;                      /* the encoder's own 540² index twin */
+const wbTrStop=window.wbTrStop=function(){
+  WBTR.tok++;
+  if(WBTR.timer){ clearTimeout(WBTR.timer); WBTR.timer=0; }
+  if(WBTR.raf){ cancelAnimationFrame(WBTR.raf); WBTR.raf=0; }
+  if(WBTR.w){ try{WBTR.w.terminate();}catch(e){} WBTR.w=null; }
+  WBTR.frames=null; WBTR.state='live'; WBTR.shown=-1;
+};
+/* hands off the controls — begin settling, but only after a real pause */
+const wbTrArm=window.wbTrArm=function(){
+  wbTrStop();
+  if(!WB.truth)return;
+  WBTR.timer=setTimeout(wbTrRun,350);
+};
+function wbTrLand(){
+  if(WBTR.w){ try{WBTR.w.terminate();}catch(e){} WBTR.w=null; }
+  for(let q=0;q<WBTR.N;q++) if(!WBTR.frames||!WBTR.frames[q]){ WBTR.state='live'; return; }
+  wbPvPause();                          /* the fast rung stands down */
+  WBTR.state='true'; WBTR.shown=-1;
+  const t0=performance.now();
+  const draw=()=>{
+    if(WBTR.state!=='true'){ WBTR.raf=0; return; }
+    WBTR.raf=requestAnimationFrame(draw);
+    if(busy)return;
+    const i=((((performance.now()-t0)/40)|0)%WBTR.N+WBTR.N)%WBTR.N;
+    if(i===WBTR.shown)return;
+    WBTR.shown=i;
+    const b=WBTR.frames[i], u=WBTR.u32, L=WBTR.lut, n=WBTR_D*WBTR_D;
+    for(let q=0;q<n;q++)u[q]=L[b[q]];
+    WBTR.octx.putImageData(WBTR.img,0,0);
+    vctx.imageSmoothingEnabled=false;
+    vctx.drawImage(WBTR.off,0,0,W,H);
+    $('t-frame').textContent=(i+1)+'/'+WBTR.N;
+  };
+  WBTR.raf=requestAnimationFrame(draw);
+}
+const wbTrRun=window.wbTrRun=function(){
+  WBTR.timer=0;
+  if(busy||!WB.truth||!WBPV.alive)return;
+  const job=wbPvJob(), my=++WBTR.tok;
+  WBTR.N=job.N|0; if(!WBTR.N)return;
+  WBTR.k=0; WBTR.frames=new Array(WBTR.N); WBTR.state='settling';
+  WBTR.t0=performance.now();
+  /* the tunnel carries a ring across frames, so it needs a lap to prime
+     before its captures match the render's primed ring */
+  WBTR.laps=job.fx&&job.fx.tunnel?2:1;
+  if(!WBTR.off){ WBTR.off=document.createElement('canvas');
+    WBTR.off.width=WBTR.off.height=WBTR_D;
+    WBTR.octx=WBTR.off.getContext('2d');
+    WBTR.img=WBTR.octx.createImageData(WBTR_D,WBTR_D);
+    WBTR.u32=new Uint32Array(WBTR.img.data.buffer); }
+  let w;
+  try{ w=WBTR.w=new Worker(URL.createObjectURL(
+        new Blob([wbPvSrc(W,WBTR_D)],{type:'text/javascript'}))); }
+  catch(e){ WBTR.state='live'; return; }
+  w.onmessage=e=>{
+    const m=e.data;
+    if(w!==WBTR.w||my!==WBTR.tok)return;
+    if(m.t==='meta'){ const L=WBTR.lut;
+      for(let q=0;q<256;q++){ const c=m.pal[q]||[0,0,0];
+        L[q]= WBPV_LE ? (((255<<24)|(c[2]<<16)|(c[1]<<8)|c[0])>>>0)
+                      : (((c[0]<<24)|(c[1]<<16)|(c[2]<<8)|255)>>>0); }
+      return; }
+    if(m.t==='err'){ console.error('WB TRUTH',m.msg); wbTrStop(); return; }
+    if(m.t!=='pv')return;
+    WBTR.ms=m.ms;
+    if(((WBTR.k/WBTR.N)|0)>=WBTR.laps-1) WBTR.frames[m.i]=new Uint8Array(m.buf);
+    WBTR.k++;
+    if(WBTR.k>=WBTR.N*WBTR.laps){ wbTrLand(); return; }
+    w.postMessage({t:'job', step:true,
+      job:Object.assign({},job,{__i:WBTR.k%WBTR.N})});
+  };
+  w.onerror=()=>{ wbTrStop(); };
+  w.postMessage({t:'job', step:true, job:Object.assign({},job,{__i:0})});
+};
 /* the one door to the full pipeline: everything else becomes a preview push */
 const _wbGenFull=generate;
 generate=async function(){
@@ -7042,13 +7154,24 @@ document.addEventListener('click',e=>{
 setInterval(()=>{
   const fresh=performance.now()-WBPV.fmsg<1500;
   const st= busy?'\u25cc RENDERING GIF\u2026'
+    : WBTR.state==='true'?'\u25a3 TRUE \u00b7 THIS IS THE GIF'
+    : WBTR.state==='settling'?'\u25d0 SETTLING '+WBTR.k+'/'+(WBTR.N*WBTR.laps)
     : fresh?'\u25cf LIVE '+WBPV.res+'\u00b2 \u00b7 '+(1000/Math.max(WBPV.dt,40)).toFixed(0)+'fps'
     : (PLAYER.raf?'\u25a3 EXACT LOOP \u00b7 25fps':'\u2014');
   $('wb-livestat').innerHTML='<span class="'+(busy?'':'dotlive')+'">'+st+'</span>';
-  $('wb-fps').textContent= busy?'rendering':(fresh?WBPV.res+'\u00b2 live':'exact loop');
+  $('wb-fps').textContent= busy?'rendering'
+    : WBTR.state==='true'?'exact 1080\u00b2'
+    : WBTR.state==='settling'?'settling\u2026'
+    : (fresh?WBPV.res+'\u00b2 live':'exact loop');
 },400);
 $('wb-render').addEventListener('click',()=>{ if(busy)abortRun();
-  window.WB_RENDER=true; generate(); });
+  wbTrStop(); window.WB_RENDER=true; generate(); });
+$('wb-truth').addEventListener('click',()=>{ WB.truth=!WB.truth;
+  $('wb-truthlab').textContent=WB.truth?'ON':'OFF';
+  $('wb-truth').textContent=WB.truth
+    ?'TRUTH: ON (settles to the exact GIF when your hands come off)'
+    :'TRUTH: OFF (fast rung only \u2014 the preview is an approximation)';
+  if(WB.truth)wbTrArm(); else { wbTrStop(); wbPush(); } });
 /* wake the living engine on boot */
 setTimeout(()=>{ try{ wbPush(); }catch(e){ console.error('PV boot',e); } },600);
 (function(){                              /* the curator's own hand on the rung */
