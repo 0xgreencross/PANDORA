@@ -4012,7 +4012,7 @@ async function generateSeq(){
    Frames split into contiguous blocks; each worker reconstructs the exact
    feedback-ring state the sequential engine would have at its block start,
    so parallel output is byte-identical to sequential. Workers render AND
-   LZW-encode all four streams; main thread concatenates chunks in order.
+   LZW-encode every stream in ODIMS; main thread concatenates chunks in order.
    ========================================================================== */
 function detectPlatform(){
   const ua=navigator.userAgent, cores=navigator.hardwareConcurrency||4;
@@ -4071,7 +4071,7 @@ self.onmessage=function(e){
     const rgbA=new Uint8Array(W*H*3),rgbB=new Uint8Array(W*H*3),
           rgbC=new Uint8Array(W*H*3),snap=new Uint8Array(W*H*3);
     const indices=new Uint8Array(W*H);
-    const DIMS=[1080,720,540,405];
+    const DIMS=ODIMS;                    /* raster-derived: every d is k*W */
     const MCS=DIMS.map(function(d){const t=new Sink(1024);return gifBegin(t,d,d,pal,0);});
     /* one scratch per stream that is NOT already the native raster; the
        resample below is generic nearest, so it upscales as readily as it
@@ -4137,7 +4137,7 @@ self.onmessage=function(e){
       if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices,pal.length,scene,theta,corr,fx);
       sanctityIdx(indices, scene, i);
       const chunks=[];
-      for(let k2=0;k2<4;k2++){ const d=DIMS[k2]; let src;
+      for(let k2=0;k2<DIMS.length;k2++){ const d=DIMS[k2]; let src;
         if(d===W) src=indices;                        // native: no resample at all
         else { const xi=xidx[k2];
           for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W,row=y*d;
@@ -4148,7 +4148,7 @@ self.onmessage=function(e){
       }
       const pv=indices.slice();                       // THE RASTER ITSELF: what the player shows is what was drawn
       self.postMessage({t:'frame',i:i,c:chunks,pv:pv},
-        [chunks[0].buffer,chunks[1].buffer,chunks[2].buffer,chunks[3].buffer,pv.buffer]);
+        chunks.map(function(c){return c.buffer;}).concat([pv.buffer]));
     }
     self.postMessage({t:'done',i0:J.i0});
   }catch(err){ self.postMessage({t:'err',msg:String(err&&err.stack||err)}); }
@@ -4172,6 +4172,29 @@ function rasterField(r){
     : {sw:448, vg:88};
 }
 function rasterOf(){ return Math.max(64,Math.min(1080,RCFG.raster|0)); }
+/* ═ EVERY EXPORTED STREAM IS AN INTEGER MULTIPLE OF THE RASTER ═════════════
+   The look that was approved is a grid of raster² honest square pixels. A
+   stream whose size is NOT an integer multiple of R cannot carry that grid.
+   Measured at R=360 with the old hardcoded [1080,720,540,405]:
+       1080  3.000×  block widths {3:360}          EXACT
+        720  2.000×  block widths {2:360}          EXACT
+        540  1.500×  block widths {2:180, 1:180}   BROKEN — a 50/50 mix
+        405  1.125×  block widths {2: 45, 1:315}   BROKEN — 315 vs 45
+   And 540/405 are exactly what ships to 𝕏 when the master exceeds LIMIT, so
+   the posted artwork could differ materially from the previewed one. Derive
+   the fallback sizes from the raster instead: snap each legacy target to the
+   nearest k·R. 1080 is always kept — it is the master every gate decodes.
+   At FULL raster there is no block grid to protect, so the old list stands.
+      R=360 → [1080,720,360]  (3×,2×,1×)      R=300 → [1080,600,300]
+      R=270 → [1080,810,540]                  R=192 → [1080,768,576,384] */
+function outDims(R){
+  if(R>=1080) return [1080,720,540,405];
+  const out=[1080];
+  [720,540,405].forEach(t=>{ const k=Math.max(1,Math.round(t/R)), d=k*R;
+    if(d<=1080 && out.indexOf(d)<0) out.push(d); });
+  return out.sort((a,b)=>b-a);
+}
+window.outDims=outDims;
 let POOL={workers:null,ok:('Worker' in window)};
 function getWorkerSrc(){
   const M=(n)=>'/*CORE'+n+'*/';
@@ -4184,6 +4207,7 @@ function getWorkerSrc(){
   const core2=sc.slice(sc.indexOf(M('2-BEGIN')), sc.indexOf(M('2-END')));   // markers are the real ones
   const R=rasterOf(), F=rasterField(R);
   return '"use strict";const W='+R+',H='+R+',FW=360,PVSW='+F.sw+',PVVG='+F.vg
+    +',ODIMS=['+outDims(R).join(',')+']'
     +';const TAU=6.283185307179586;\n'
     +core+'\n'+core2+'\n'+WORKER_DRIVER;
 }
@@ -4316,7 +4340,8 @@ async function generate(){
   await sleep(0);
   if(run!==RUN)return;
 
-  const DIMS=[1080,720,540,405];
+  const DIMS=outDims(RW);   /* MUST match the worker's ODIMS: RW is the raster
+                               the pool was compiled at, so it does */
   const streams=DIMS.map((d,s)=>{
     const t=new Sink(2048); gifBegin(t,d,d,pal,0);
     const head=t.done();
@@ -4329,6 +4354,11 @@ async function generate(){
     return out;
   });
   const bytes=streams[0];
+  /* THE INSTRUMENT'S OWN WINDOW ONTO WHAT IT JUST SHIPPED. Every exported
+     stream, not merely the master, must carry the raster grid the screen
+     showed — so every exported stream has to be inspectable from outside. */
+  window.WBOUT={raster:RW, dims:DIMS.slice(), sizes:streams.map(b=>b.length),
+                get:i=>streams[i]};
   $('prog').style.width='100%';
 
   if(lastURL)URL.revokeObjectURL(lastURL);
@@ -4339,7 +4369,7 @@ async function generate(){
 
   const LIMIT=14900000;
   if(bytes.length<=LIMIT){ xBytes=bytes; xDim=W; }        // master fits: X ships FULL RES
-  for(let s2=1;s2<4;s2++){
+  for(let s2=1;s2<DIMS.length;s2++){
     if(!xBytes && streams[s2].length<=LIMIT){ xBytes=streams[s2]; xDim=DIMS[s2]; }
   }
   const kb=(bytes.length/1024), dur=(N/FPS).toFixed(2);
