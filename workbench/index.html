@@ -104,6 +104,34 @@ html,body{position:static !important;overflow:auto !important;height:auto !impor
 #legacy-root .osd{position:absolute;left:8px;top:8px;font-size:9px;color:var(--cyan);
   background:#000a;padding:3px 7px;border-radius:3px;letter-spacing:.1em;max-width:92%;}
 #legacy-root .osd .rec{color:var(--mag);animation:wbblink 1.2s steps(2) infinite}
+/* THE READOUT. Whatever else is on screen, this states the resolution of the
+   image you are actually looking at RIGHT NOW — which is not always the
+   preview rung, because a completed settle pass shows the raster instead.
+   Sized to be legible on a phone held at arm's length. */
+#legacy-root .pxbadge{position:absolute;right:8px;bottom:8px;text-align:right;
+  background:#000c;padding:6px 9px;border-radius:4px;max-width:70%;
+  border:1px solid #ffffff1f;pointer-events:auto;}
+#legacy-root .pxbadge .big{font-size:19px;line-height:1.05;font-weight:700;
+  letter-spacing:.02em;color:var(--cyan);font-variant-numeric:tabular-nums;}
+#legacy-root .pxbadge .sub{font-size:9px;letter-spacing:.09em;color:var(--mut);margin-top:2px;}
+#legacy-root .pxbadge button{margin-top:6px;font:inherit;font-size:8px;letter-spacing:.09em;
+  padding:5px 7px;min-height:30px;background:#ffffff10;color:var(--cyan);cursor:pointer;
+  border:1px solid #ffffff2e;border-radius:3px;display:none;}
+#legacy-root .pxbadge button:active{background:#ffffff26;}
+#legacy-root .pxbadge.armed button{display:inline-block;}
+/* it recedes when it has nothing new to say — you are judging ART through this
+   window, and a badge that sits at full opacity over 20% of a phone screen is
+   competing with the thing it is describing. Any change, hover or touch
+   brings it straight back. */
+#legacy-root .pxbadge{transition:opacity .5s ease;}
+#legacy-root .pxbadge.dim{opacity:.2;}
+#legacy-root .pxbadge:hover,#legacy-root .pxbadge:active,
+#legacy-root .pxbadge:focus-within{opacity:1;}
+#legacy-root .pxbadge.onraster .big{color:var(--mag);}
+@media(max-width:760px){
+  #legacy-root .pxbadge .big{font-size:16px;}
+  #legacy-root .pxbadge button{font-size:9px;min-height:34px;}
+}
 @keyframes wbblink{50%{opacity:.15}}
 #legacy-root .placeholder{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;
   align-items:center;justify-content:center;color:var(--mut);font-size:10px;letter-spacing:.2em;}
@@ -537,6 +565,11 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
       <img id="result" alt="generated glitch loop">
       <div class="reg tl"></div><div class="reg tr"></div><div class="reg bl"></div><div class="reg br"></div>
       <div class="osd"><span class="rec">●</span> <span id="osd">STANDBY</span></div>
+      <div class="pxbadge" id="wb-pxbadge">
+        <div class="big" id="wb-px-now">&mdash;</div>
+        <div class="sub" id="wb-px-sub">waking</div>
+        <button type="button" id="wb-px-lock">LOCK THIS AS THE RENDER RASTER</button>
+      </div>
       <div class="placeholder" id="ph">
         <div class="ph-block"></div>
         <span>PANDORA SEALED — TAP TO OPEN</span>
@@ -4130,7 +4163,7 @@ self.onmessage=function(e){
    still 1080², but it is made of raster² honest square pixels, not a 1080²
    raster point-sampled down. FULL (1080) restores the old behaviour byte for
    byte. The pool bakes W into its source, so any change here must kill it. */
-const RASTERS=[1080,540,432,360,300,270,240,216,192,135];
+const RASTERS=[1080,648,540,432,360,300,270,240,216,192,135];
 const RCFG=window.RCFG={raster:360, field:true};
 function rasterField(r){
   return RCFG.field
@@ -7222,7 +7255,65 @@ setInterval(()=>{
     : WBTR.state==='true'?'exact '+WBTR_D+'\u00b2 \u2192 1080\u00b2'
     : WBTR.state==='settling'?'settling\u2026'
     : (fresh?WBPV.res+'\u00b2 live':'exact loop');
+  wbPxBadge(fresh);
 },400);
+/* THE READOUT.
+   "What resolution am I looking at" has FOUR different answers depending on
+   what is on screen, and the honest one is not always the preview rung:
+     live / settling  -> the preview rung is on screen (WBPV.res)
+     true             -> the settle pass replaced it, so it is the raster
+     exact            -> both, because they are the same number
+     player           -> the rendered GIF itself, so PLAYER.args[2]
+   Anything that reports one number for all four is lying in three of them. */
+function wbPxWhat(fresh){
+  if(busy) return {px:rasterOf(), what:'rendering the GIF at this raster', src:'render'};
+  if(WBTR.state==='exact')
+    return {px:WBPV.res, what:'LIVE \u2014 and this is exactly the GIF', src:'exact'};
+  if(WBTR.state==='true')
+    return {px:WBTR_D, what:'SETTLED \u2014 the exact GIF, not the preview', src:'true'};
+  if(WBTR.state==='settling')
+    return {px:WBPV.res, what:'live preview (settling in the background\u2026)', src:'live'};
+  if(fresh) return {px:WBPV.res, what:'LIVE preview'+(WB.res==='AUTO'?' \u00b7 AUTO picked this':''), src:'live'};
+  if(PLAYER.raf&&PLAYER.args)
+    return {px:PLAYER.args[2], what:'the rendered GIF, playing', src:'player'};
+  return {px:WBPV.res||0, what:'idle', src:'idle'};
+}
+function wbBlk(px){ return (1080%px===0)?(1080/px)+'\u00d7'
+  :(1080/px).toFixed(2).replace(/0$/,'')+'\u00d7'; }
+function wbPxBadge(fresh){
+  const b=$('wb-pxbadge'); if(!b)return;
+  const R=rasterOf(), o=wbPxWhat(fresh), on=(o.px===R);
+  $('wb-px-now').textContent=o.px?(o.px+'\u00b2 \u2192 1080\u00b2  '+wbBlk(o.px)):'\u2014';
+  /* The live rung is the number that vanishes: the moment your hands come off,
+     the settle pass replaces it with the raster. State it PERMANENTLY when it
+     differs, so the chunky thing you saw while dragging is still reportable
+     — and still lockable — seconds later. */
+  const live=WBPV.res, showLive=!!live&&live!==o.px;
+  $('wb-px-sub').textContent=o.what
+    +(on?'  \u00b7 = the render raster':'  \u00b7 raster is '+R+'\u00b2')
+    +(showLive?'  \u00b7 while you drag: '+live+'\u00b2':'');
+  b.classList.toggle('onraster',on);
+  /* the lock always targets the LIVE rung — that is the one you cannot reach
+     any other way, and the one "the preview I liked" means */
+  const can=!!live&&live!==R&&!busy;
+  if(can)$('wb-px-lock').textContent='LOCK '+live+'\u00b2 AS THE RASTER';
+  b.classList.toggle('armed',can);
+  const sig=o.px+'|'+o.what+'|'+live+'|'+R;
+  if(sig!==WBPX.sig){ WBPX.sig=sig; WBPX.t=performance.now(); }
+  b.classList.toggle('dim', performance.now()-WBPX.t>3000);
+}
+const WBPX={sig:'',t:0};
+/* the badge lives INSIDE .screen-wrap, and a tap on .screen-wrap rolls a new
+   genome — so a tap meant for LOCK would destroy the very loop being locked.
+   Swallow every pointer event the badge sees, at both phases. */
+['click','pointerdown','mousedown','touchstart'].forEach(t=>
+  $('wb-pxbadge').addEventListener(t,e=>e.stopPropagation()));
+$('wb-px-lock').addEventListener('click',e=>{
+  e.stopPropagation(); e.preventDefault();
+  const live=WBPV.res;
+  if(!live||live===rasterOf()||busy)return;
+  RCFG.raster=live; wbRasterChanged();
+});
 $('wb-render').addEventListener('click',()=>{ if(busy)abortRun();
   wbTrStop(); window.WB_RENDER=true; generate(); });
 $('wb-truth').addEventListener('click',()=>{ WB.truth=!WB.truth;
@@ -7288,9 +7379,13 @@ window.wbRasterChanged=wbRasterChanged;
 window.wbResSync=wbResSync;
 (function(){
   const el=$('wb-raster');
-  const EX={1080:'',540:'2\u00d7',360:'3\u00d7',270:'4\u00d7',216:'5\u00d7',135:'8\u00d7'};
+  /* every button states its own block size, computed — an integer multiplier
+     means a perfectly uniform grid, a fraction means the blocks alternate
+     (300 -> 3 and 4 px in a repeating 5-block cycle). Both are exact; only
+     the regularity differs, and below 4px it is not visible. */
+  const EX=v=>v===1080?'':(1080%v===0?(1080/v)+'\u00d7':(1080/v).toFixed(2).replace(/0$/,'')+'\u00d7');
   RASTERS.forEach(v=>{ const b=document.createElement('button');
-    b.textContent=(v===1080?'FULL':String(v))+(EX[v]?' '+EX[v]:'');
+    b.textContent=(v===1080?'FULL':String(v))+(EX(v)?' '+EX(v):'');
     b.setAttribute('aria-pressed',String(v===RCFG.raster));
     b.addEventListener('click',()=>{
       el.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed','false'));
