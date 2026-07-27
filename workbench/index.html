@@ -748,12 +748,13 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <div class="duo">
           <button id="wb-render" class="vio">&#9635; RENDER GIF NOW</button>
         </div>
-        <p class="labnote">The engine runs LIVE, always: the loop animates continuously in a dedicated preview core and every control &mdash; dials, sigils, gains, bodies, dice, mutate, resurrect &mdash; lands within a frame. The preview runs the REAL algorithms at a resolution your device sustains (auto-adapts; the badge shows it). RENDER produces the exact 1080&sup2; GIF; saves come only from that.</p>
+        <p class="labnote">The engine runs LIVE, always: the loop animates continuously in a dedicated preview core and every control &mdash; dials, sigils, gains, bodies, dice, mutate, resurrect &mdash; lands within a frame. The preview runs the REAL algorithms at a resolution your device sustains (auto-adapts; the badge shows it). RENDER produces the exact master GIF at the size the raster implies; saves come only from that.</p>
       </div>
       <div class="field">
         <label>RENDER RASTER <span class="v" id="wb-rastlab">360</span></label>
         <div class="seg" id="wb-raster"></div>
-        <p class="labnote">The size the loop is actually DRAWN at. The delivered GIF is still 1080&sup2; &mdash; but it is built from this many real pixels, nearest-neighbour upscaled, so 360 gives 3&times;3 honest square blocks rather than a smoothed photograph of a smaller image. Sizes marked with a multiplier divide 1080 exactly; the others give uneven blocks. FULL is the old 1080&sup2; behaviour. Changing this rebuilds the render pool and respawns the preview, and the preview is never allowed finer than the raster.</p>
+        <p class="labnote" id="wb-outlad">&mdash;</p>
+        <p class="labnote">The size the loop is actually DRAWN at &mdash; and now the size everything else is derived FROM. The master GIF is no longer fixed at 1080&sup2;: it is the multiple of this raster nearest 1080, so every block in it is a square of exactly the same size (192 &rarr; 1152&sup2;, 300 &rarr; 1200&sup2;, 360 &rarr; 1080&sup2;). The &#120143; rungs are the multiples that fit under &#120143;&rsquo;s 1080px ceiling. The multiplier on each button is that button&rsquo;s block size, and it is always a whole number now &mdash; there is no &ldquo;uneven&rdquo; raster any more. FULL is the old 1080&sup2; behaviour. Changing this rebuilds the render pool and respawns the preview, and the preview is never allowed finer than the raster.</p>
       </div>
       <div class="field">
         <label>FIELD RIDES DOWN <span class="v" id="wb-fieldlab">ON</span></label>
@@ -3749,6 +3750,9 @@ const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36, voidamt:34
       tunnel:false,kaleido:false,bloom:false,embers:false,runes:false,chimera:false} };
 let EPOCH=0;   // 0 = DEATH SIGNAL era · 1 = CLASSIC era (pre index-space corruption)
 let busy=false, RUN=0, lastURL=null, lastBlob=null, lastBytes=null, lastName='', lastDataURL='';
+/* the size of the master that was actually delivered. Derived from the raster,
+   so it is 1080 only when the raster divides 1080 — never assume it. */
+let lastMaster=1080;
 let xBytes=null, xDim=0, xName='', xBlob=null, xURL=null, xDataURL='';
 /* CANVAS LOOP PLAYER — the monitor no longer relies on the browser's GIF
    decoder (which delays frames when high-entropy decodes miss its budget).
@@ -3972,6 +3976,7 @@ async function generateSeq(){
   if(lastURL)URL.revokeObjectURL(lastURL);
   lastBlob=new Blob([bytes],{type:'image/gif'}); lastBytes=bytes;
   lastURL=URL.createObjectURL(lastBlob);
+  lastMaster=W;   /* the no-Worker path is hard-bound to the main thread's W */
   lastName='EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
   $('dna').value='WB1-'+packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
 
@@ -4183,18 +4188,41 @@ function rasterOf(){ return Math.max(64,Math.min(1080,RCFG.raster|0)); }
    And 540/405 are exactly what ships to 𝕏 when the master exceeds LIMIT, so
    the posted artwork could differ materially from the previewed one. Derive
    the fallback sizes from the raster instead: snap each legacy target to the
-   nearest k·R. 1080 is always kept — it is the master every gate decodes.
-   At FULL raster there is no block grid to protect, so the old list stands.
-      R=360 → [1080,720,360]  (3×,2×,1×)      R=300 → [1080,600,300]
-      R=270 → [1080,810,540]                  R=192 → [1080,768,576,384] */
+   nearest k·R.  At FULL raster there is no block grid to protect, so the old
+   hardcoded list stands.
+
+   AND THE MASTER IS NO LONGER 1080 EITHER. 1080 was an arbitrary constant,
+   and at any raster that does not divide it the MASTER carried mixed block
+   widths — the one stream nothing downstream could repair. So the master is
+   derived too: the multiple of R nearest 1080, never below it. Nothing is
+   special-cased; the numbers simply fall out of the raster.
+      R=360 → 1080 (3×)   R=300 → 1200 (4×)   R=192 → 1152 (6×)
+      R=270 → 1080 (4×)   R=240 → 1200 (5×)   R=216 → 1080 (5×)
+
+   𝕏 WILL NOT ACCEPT A GIF TALLER THAN 1080 (max 1280×1080, 350 frames, 15MB
+   desktop / 5MB mobile — verified 2026-07). So the master can no longer double
+   as the 𝕏 upload once it exceeds that ceiling: the 𝕏 rungs are the multiples
+   of R at or below XCAP, biggest first.
+      R=360 → master 1080 · 𝕏 1080, 720, 360
+      R=300 → master 1200 · 𝕏  900, 600, 300
+      R=192 → master 1152 · 𝕏  960, 768, 576, 384                          */
+const XCAP=1080;                 /* 𝕏's hard ceiling on GIF height */
+function masterOf(R){
+  R=Math.max(1,R|0);
+  if(R>=1080) return 1080;
+  const k=Math.max(1,Math.round(1080/R));
+  return k*R>=1080 ? k*R : (k+1)*R;   /* never shrink the master below 1080 */
+}
 function outDims(R){
   if(R>=1080) return [1080,720,540,405];
-  const out=[1080];
-  [720,540,405].forEach(t=>{ const k=Math.max(1,Math.round(t/R)), d=k*R;
-    if(d<=1080 && out.indexOf(d)<0) out.push(d); });
+  const out=[masterOf(R)];
+  const top=Math.max(R,Math.floor(XCAP/R)*R);   /* biggest k·R 𝕏 will accept */
+  [top,720,540,405].forEach(t=>{
+    const d=Math.min(top,Math.max(1,Math.round(t/R))*R);
+    if(out.indexOf(d)<0) out.push(d); });
   return out.sort((a,b)=>b-a);
 }
-window.outDims=outDims;
+window.masterOf=masterOf; window.outDims=outDims; window.XCAP=XCAP;
 let POOL={workers:null,ok:('Worker' in window)};
 function getWorkerSrc(){
   const M=(n)=>'/*CORE'+n+'*/';
@@ -4331,7 +4359,8 @@ async function generate(){
     console.warn('HYDRA worker failed, falling back to sequential:', failed);
     if(rasterOf()!==1080) console.warn('SEQUENTIAL PATH IS FULL-RASTER: the '
       +'no-Worker fallback is bound to the main thread\'s 1080² constants, so '
-      +'this GIF will NOT carry the '+rasterOf()+'² look.');
+      +'this GIF will NOT carry the '+rasterOf()+'² look, and its master will '
+      +'be 1080² rather than the derived '+masterOf(rasterOf())+'².');
     killPool(); POOL.ok=false; busy=false;
     return generateSeq();
   }
@@ -4353,12 +4382,13 @@ async function generate(){
     out[o]=0x3B;
     return out;
   });
-  const bytes=streams[0];
+  const bytes=streams[0], MASTER=DIMS[0];   /* the master is DERIVED, not 1080 */
+  lastMaster=MASTER;
   /* THE INSTRUMENT'S OWN WINDOW ONTO WHAT IT JUST SHIPPED. Every exported
      stream, not merely the master, must carry the raster grid the screen
      showed — so every exported stream has to be inspectable from outside. */
-  window.WBOUT={raster:RW, dims:DIMS.slice(), sizes:streams.map(b=>b.length),
-                get:i=>streams[i]};
+  window.WBOUT={raster:RW, master:MASTER, dims:DIMS.slice(),
+                sizes:streams.map(b=>b.length), get:i=>streams[i]};
   $('prog').style.width='100%';
 
   if(lastURL)URL.revokeObjectURL(lastURL);
@@ -4367,20 +4397,24 @@ async function generate(){
   lastName='EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
   $('dna').value='WB1-'+packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
 
+  /* 𝕏 has TWO ceilings and the dimension one is not negotiable: it rejects a
+     GIF taller than 1080 outright, so a 1152² or 1200² master cannot be the
+     upload no matter how few bytes it is. Byte limit AND pixel limit. */
   const LIMIT=14900000;
-  if(bytes.length<=LIMIT){ xBytes=bytes; xDim=W; }        // master fits: X ships FULL RES
+  if(MASTER<=XCAP && bytes.length<=LIMIT){ xBytes=bytes; xDim=MASTER; }
   for(let s2=1;s2<DIMS.length;s2++){
-    if(!xBytes && streams[s2].length<=LIMIT){ xBytes=streams[s2]; xDim=DIMS[s2]; }
+    if(!xBytes && DIMS[s2]<=XCAP && streams[s2].length<=LIMIT){
+      xBytes=streams[s2]; xDim=DIMS[s2]; }
   }
   const kb=(bytes.length/1024), dur=(N/FPS).toFixed(2);
   const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
   let xInfo='';
   if(xBytes){
-    xName = xDim===W ? lastName : 'EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
-    xInfo = xDim===W ? ' · 𝕏 FULL' : ' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
+    xName = xDim===MASTER ? lastName : 'EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
+    xInfo = xDim===MASTER ? ' · 𝕏 FULL' : ' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
     $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
   }
-  $('t-size').textContent=W+'² '+mainSz+xInfo+' · '+dur+'s';
+  $('t-size').textContent=MASTER+'² '+mainSz+xInfo+' · '+dur+'s';
   $('osd').textContent='LOOP · '+mainSz;
 
   lastDataURL=bytesToDataURL(bytes);
@@ -4476,7 +4510,9 @@ function openXModal(){
   if(!xBytes)return;
   if(!xBlob){ xBlob=new Blob([xBytes],{type:'image/gif'}); xURL=URL.createObjectURL(xBlob); }
   $('xm-img').src=xURL;
-  $('xm-size').textContent = xDim===W ? '· FULL 1080²' : '· '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
+  $('xm-size').textContent = (xDim===lastMaster ? '· FULL '+lastMaster+'² '
+      : '· '+xDim+'² ')+(xBytes.length/1048576).toFixed(1)+'MB'
+    + (xDim===lastMaster?'':'  · master is '+lastMaster+'², over 𝕏’s '+XCAP+'px ceiling');
   XM_TXT=glitchTweet((+$('seed').value||0)>>>0, $('dna').value.trim());
   $('xm-tweet').textContent=XM_TXT;
   $('xmodal').style.display='flex';
@@ -5746,7 +5782,7 @@ if(SB.url){vCloudRefresh(); gRefresh();} else vRender();
 const TIP_ID={
   transmit:'TRANSMIT — renders the loop from the current dials. Same seed + same dials = the exact same loop, forever.',
   oblivion:'OBLIVION ☠ — maximum corruption strike: arms a violent random sigil set and transmits.',
-  download:'DOWNLOAD — saves the full 1080\u00b2 master GIF. On the phone it opens the share sheet (Save to Photos).',
+  download:'DOWNLOAD — saves the full-size master GIF. Its side is DERIVED from the render raster (the nearest multiple of it to 1080), so every block on it is square and identical. On the phone it opens the share sheet (Save to Photos).',
   xsave:'\ud835\udd4f — opens the transmission modal: an X-safe version of the loop, a save button, and a procedurally corrupted post no one will ever get twice.',
   resetall:'\u27f2 RESET — returns every dial to factory. The loop on screen is untouched until you transmit.',
   seed:'SEED — the genome number. Every loop grows from it deterministically.',
@@ -7280,9 +7316,10 @@ setInterval(()=>{
     : (PLAYER.raf?'\u25a3 EXACT LOOP \u00b7 25fps':'\u2014');
   $('wb-livestat').innerHTML='<span class="'+(busy?'':'dotlive')+'">'+st+'</span>';
   wbResLabel();
+  const MSTR=masterOf(rasterOf());   /* the master is derived, never 1080 flat */
   $('wb-fps').textContent= busy?'rendering'
-    : WBTR.state==='exact'?'exact '+WBPV.res+'\u00b2 \u2192 1080\u00b2'
-    : WBTR.state==='true'?'exact '+WBTR_D+'\u00b2 \u2192 1080\u00b2'
+    : WBTR.state==='exact'?'exact '+WBPV.res+'\u00b2 \u2192 '+MSTR+'\u00b2'
+    : WBTR.state==='true'?'exact '+WBTR_D+'\u00b2 \u2192 '+MSTR+'\u00b2'
     : WBTR.state==='settling'?'settling\u2026'
     : (fresh?WBPV.res+'\u00b2 live':'exact loop');
   wbPxBadge(fresh);
@@ -7308,12 +7345,12 @@ function wbPxWhat(fresh){
     return {px:PLAYER.args[2], what:'the rendered GIF, playing', src:'player'};
   return {px:WBPV.res||0, what:'idle', src:'idle'};
 }
-function wbBlk(px){ return (1080%px===0)?(1080/px)+'\u00d7'
-  :(1080/px).toFixed(2).replace(/0$/,'')+'\u00d7'; }
+function wbBlk(px,M){ return (M%px===0)?(M/px)+'\u00d7'
+  :(M/px).toFixed(2).replace(/0$/,'')+'\u00d7'; }
 function wbPxBadge(fresh){
   const b=$('wb-pxbadge'); if(!b)return;
-  const R=rasterOf(), o=wbPxWhat(fresh), on=(o.px===R);
-  $('wb-px-now').textContent=o.px?(o.px+'\u00b2 \u2192 1080\u00b2  '+wbBlk(o.px)):'\u2014';
+  const R=rasterOf(), M=masterOf(R), o=wbPxWhat(fresh), on=(o.px===R);
+  $('wb-px-now').textContent=o.px?(o.px+'\u00b2 \u2192 '+M+'\u00b2  '+wbBlk(o.px,M)):'\u2014';
   /* The live rung is the number that vanishes: the moment your hands come off,
      the settle pass replaces it with the raster. State it PERMANENTLY when it
      differs, so the chunky thing you saw while dragging is still reportable
@@ -7404,6 +7441,18 @@ function wbRastSync(){
   el.querySelectorAll('button').forEach(b=>
     b.setAttribute('aria-pressed', String(b.textContent.split(' ')[0]===lab)));
   const f=$('wb-fieldlab'); if(f)f.textContent=RCFG.field?'ON':'OFF';
+  /* SAY WHAT WILL ACTUALLY BE DELIVERED. The whole 1080-vs-1200-vs-1152
+     confusion existed only because the export sizes were invisible until
+     after a render. Print the entire ladder for the raster on screen. */
+  const o=$('wb-outlad');
+  if(o){
+    const D=outDims(R), M=D[0], X=D.slice(1).filter(d=>d<=XCAP);
+    o.textContent = R>=1080
+      ? 'FULL raster \u00b7 master 1080\u00b2 \u00b7 \ud835\udd4f 1080 / 720 / 540 / 405 \u2014 no block grid to protect'
+      : 'raster '+R+'\u00b2  \u2192  master '+M+'\u00b2 ('+(M/R)+'\u00d7)'
+        +'  \u00b7  \ud835\udd4f '+X.map(d=>d+' ('+(d/R)+'\u00d7)').join(' / ')
+        +(M>XCAP?'  \u00b7  the master is over \ud835\udd4f\u2019s '+XCAP+'px ceiling, so \ud835\udd4f gets '+X[0]+'\u00b2':'');
+  }
 }
 window.wbRasterChanged=wbRasterChanged;
 window.wbResSync=wbResSync;
@@ -7413,7 +7462,7 @@ window.wbResSync=wbResSync;
      means a perfectly uniform grid, a fraction means the blocks alternate
      (300 -> 3 and 4 px in a repeating 5-block cycle). Both are exact; only
      the regularity differs, and below 4px it is not visible. */
-  const EX=v=>v===1080?'':(1080%v===0?(1080/v)+'\u00d7':(1080/v).toFixed(2).replace(/0$/,'')+'\u00d7');
+  const EX=v=>v>=1080?'':(masterOf(v)/v)+'\u00d7';
   RASTERS.forEach(v=>{ const b=document.createElement('button');
     b.textContent=(v===1080?'FULL':String(v))+(EX(v)?' '+EX(v):'');
     b.setAttribute('aria-pressed',String(v===RCFG.raster));
