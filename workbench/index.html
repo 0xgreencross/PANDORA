@@ -718,14 +718,24 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <p class="labnote">The engine runs LIVE, always: the loop animates continuously in a dedicated preview core and every control &mdash; dials, sigils, gains, bodies, dice, mutate, resurrect &mdash; lands within a frame. The preview runs the REAL algorithms at a resolution your device sustains (auto-adapts; the badge shows it). RENDER produces the exact 1080&sup2; GIF; saves come only from that.</p>
       </div>
       <div class="field">
+        <label>RENDER RASTER <span class="v" id="wb-rastlab">360</span></label>
+        <div class="seg" id="wb-raster"></div>
+        <p class="labnote">The size the loop is actually DRAWN at. The delivered GIF is still 1080&sup2; &mdash; but it is built from this many real pixels, nearest-neighbour upscaled, so 360 gives 3&times;3 honest square blocks rather than a smoothed photograph of a smaller image. Sizes marked with a multiplier divide 1080 exactly; the others give uneven blocks. FULL is the old 1080&sup2; behaviour. Changing this rebuilds the render pool and respawns the preview, and the preview is never allowed finer than the raster.</p>
+      </div>
+      <div class="field">
+        <label>FIELD RIDES DOWN <span class="v" id="wb-fieldlab">ON</span></label>
+        <button id="wb-field" class="vio">FIELD: ON (shading field scales with the raster)</button>
+        <p class="labnote">ON shrinks the shading field and march grid with the raster &mdash; this is the geometry the live preview always used, and the look you said you preferred. OFF marches the full 448&sup2; field into the small raster: finer structure, harsher aliasing, slower.</p>
+      </div>
+      <div class="field">
         <label>PREVIEW RESOLUTION <span class="v" id="wb-reslab">AUTO</span></label>
         <div class="seg" id="wb-res"></div>
-        <p class="labnote">The rung you tune on. The GIF is rasterised at 1080&sup2; and point-sampled down, so a smaller rung is a DIFFERENT picture, not a smaller one &mdash; the shapes agree, the texture does not. That is what SETTLE TO TRUTH is for. AUTO picks a rung your device sustains at 25fps and steps down within a quarter-second if a scene turns heavy.</p>
+        <p class="labnote">The rung you tune on, capped at the render raster. When it SITS at the raster the preview is not an approximation of the GIF &mdash; it is the GIF, live, with nothing to settle. Below the raster it is still a different picture and SETTLE TO TRUTH covers the gap. AUTO picks a rung your device sustains at 25fps and steps down within a quarter-second if a scene turns heavy.</p>
       </div>
       <div class="field">
         <label>SETTLE TO TRUTH <span class="v" id="wb-truthlab">ON</span></label>
         <button id="wb-truth" class="vio">TRUTH: ON (settles to the exact GIF when your hands come off)</button>
-        <p class="labnote">Tune fast, settle true. While you are moving a control the fast rung answers instantly. The moment you stop, the loop is re-rasterised at the render's exact geometry &mdash; 1080&sup2; from a 448&sup2; field, point-sampled to 540&sup2; the way the encoder does it &mdash; and swapped in. Measured byte-identical to the GIF: 0 of 291,600 pixels differ. After that you are watching the actual file, looping at zero cost. Touch anything and it drops back to fast.</p>
+        <p class="labnote">Tune fast, settle true. While you are moving a control the fast rung answers instantly; the moment you stop, the loop is re-rasterised at the render's exact geometry and swapped in, byte for byte. If the preview is already sitting at the render raster there is nothing to settle and the badge reads EXACT instead. Touch anything and it drops back to fast.</p>
       </div>
       <div class="field">
         <label>CORRUPTION LADDER <span class="v" id="wb-ladlab">OFF</span></label>
@@ -4030,7 +4040,10 @@ self.onmessage=function(e){
     const indices=new Uint8Array(W*H);
     const DIMS=[1080,720,540,405];
     const MCS=DIMS.map(function(d){const t=new Sink(1024);return gifBegin(t,d,d,pal,0);});
-    const xidx=[new Uint8Array(720*720),new Uint8Array(540*540),new Uint8Array(405*405)];
+    /* one scratch per stream that is NOT already the native raster; the
+       resample below is generic nearest, so it upscales as readily as it
+       downsamples and every stream is built from the same index buffer */
+    const xidx=DIMS.map(function(d){return d===W?null:new Uint8Array(d*d);});
     /* --- exact ring-state reconstruction at block start --- */
     function cleanCoarse(p,out){const q=((p%N)+N)%N,pth=q/N*TAU;
       renderSource(rgbA,rgbC,scene,q,tEff(pth),gradFor(pth),fx,corr);
@@ -4091,13 +4104,16 @@ self.onmessage=function(e){
       if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices,pal.length,scene,theta,corr,fx);
       sanctityIdx(indices, scene, i);
       const chunks=[];
-      { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,DELAY,MCS[0]); chunks.push(cs.done().slice()); }
-      for(let k2=0;k2<3;k2++){const d=DIMS[k2+1],xi=xidx[k2];
-        for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W,row=y*d;
-          for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
-        const cs=new Sink(1<<14); gifFrame(cs,d,d,xi,DELAY,MCS[k2+1]); chunks.push(cs.done().slice());
+      for(let k2=0;k2<4;k2++){ const d=DIMS[k2]; let src;
+        if(d===W) src=indices;                        // native: no resample at all
+        else { const xi=xidx[k2];
+          for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W,row=y*d;
+            for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
+          src=xi; }
+        const cs=new Sink(k2===0?(1<<16):(1<<14));
+        gifFrame(cs,d,d,src,DELAY,MCS[k2]); chunks.push(cs.done().slice());
       }
-      const pv=xidx[1].slice();                       // 540-idx twin: live preview + retained playback
+      const pv=indices.slice();                       // THE RASTER ITSELF: what the player shows is what was drawn
       self.postMessage({t:'frame',i:i,c:chunks,pv:pv},
         [chunks[0].buffer,chunks[1].buffer,chunks[2].buffer,chunks[3].buffer,pv.buffer]);
     }
@@ -4105,6 +4121,24 @@ self.onmessage=function(e){
   }catch(err){ self.postMessage({t:'err',msg:String(err&&err.stack||err)}); }
 };`;
 
+/* ═══ THE RASTER ══════════════════════════════════════════════════════════
+   The preview was preferred over the render, so the render comes DOWN to the
+   preview instead of the preview going up to the render. The loop is drawn
+   NATIVELY at RCFG.raster with the shading field ridden down to match — the
+   exact geometry the live preview uses — and the INDEX buffer is then
+   nearest-neighbour upscaled into every GIF stream. The delivered master is
+   still 1080², but it is made of raster² honest square pixels, not a 1080²
+   raster point-sampled down. FULL (1080) restores the old behaviour byte for
+   byte. The pool bakes W into its source, so any change here must kill it. */
+const RASTERS=[1080,540,432,360,300,270,240,216,192,135];
+const RCFG=window.RCFG={raster:360, field:true};
+function rasterField(r){
+  return RCFG.field
+    ? {sw:Math.max(160,Math.min(448,r)),
+       vg:Math.max(56,Math.min(88,Math.round(88*Math.min(1,r/448))))}
+    : {sw:448, vg:88};
+}
+function rasterOf(){ return Math.max(64,Math.min(1080,RCFG.raster|0)); }
 let POOL={workers:null,ok:('Worker' in window)};
 function getWorkerSrc(){
   const M=(n)=>'/*CORE'+n+'*/';
@@ -4115,7 +4149,9 @@ function getWorkerSrc(){
     .map(el=>el.textContent).find(t=>t.includes(M('-BEGIN')))||'';                         // built by concat: the only
   const core=sc.slice(sc.indexOf(M('-BEGIN')), sc.indexOf(M('-END')));      // verbatim
   const core2=sc.slice(sc.indexOf(M('2-BEGIN')), sc.indexOf(M('2-END')));   // markers are the real ones
-  return '"use strict";const W=1080,H=1080,FW=360;const TAU=6.283185307179586;\n'
+  const R=rasterOf(), F=rasterField(R);
+  return '"use strict";const W='+R+',H='+R+',FW=360,PVSW='+F.sw+',PVVG='+F.vg
+    +';const TAU=6.283185307179586;\n'
     +core+'\n'+core2+'\n'+WORKER_DRIVER;
 }
 function spawnPool(){
@@ -4193,10 +4229,11 @@ async function generate(){
   const chunks=new Array(N);
   const pvFrames=new Array(N);
   let doneFrames=0, failed=null;
+  const RW=rasterOf();                 /* the pool was compiled at this size */
   const pcv=generate._pcv||(generate._pcv=document.createElement('canvas'));
-  pcv.width=540;pcv.height=540;
+  pcv.width=RW;pcv.height=RW;
   const pctx=pcv.getContext('2d');
-  const pimg=pctx.createImageData(540,540);
+  const pimg=pctx.createImageData(RW,RW);
 
   const jobOf=w=>({seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0, chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
@@ -4218,7 +4255,7 @@ async function generate(){
           $('prog').style.width=(doneFrames/N*92)+'%';
           pvFrames[m.i]=m.pv;                          // retained for the canvas player
           const pd=pimg.data, pv=m.pv;
-          for(let q=0;q<540*540;q++){const c=pal[pv[q]]||pal[0]||[0,0,0],k=q*4;
+          for(let q=0;q<RW*RW;q++){const c=pal[pv[q]]||pal[0]||[0,0,0],k=q*4;
             pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
           pctx.putImageData(pimg,0,0);
           vctx.imageSmoothingEnabled=false;
@@ -4235,6 +4272,9 @@ async function generate(){
   if(run!==RUN)return;                                 // hijacked: die silently
   if(failed){                                          // worker path broke: honest fallback
     console.warn('HYDRA worker failed, falling back to sequential:', failed);
+    if(rasterOf()!==1080) console.warn('SEQUENTIAL PATH IS FULL-RASTER: the '
+      +'no-Worker fallback is bound to the main thread\'s 1080² constants, so '
+      +'this GIF will NOT carry the '+rasterOf()+'² look.');
     killPool(); POOL.ok=false; busy=false;
     return generateSeq();
   }
@@ -4281,7 +4321,7 @@ async function generate(){
   $('osd').textContent='LOOP · '+mainSz;
 
   lastDataURL=bytesToDataURL(bytes);
-  startPlayer(pvFrames, pal, 540, N, DELAY*10);
+  startPlayer(pvFrames, pal, RW, N, DELAY*10);
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
   $('download').classList.add('ready');   // saving is deliberate on every platform
@@ -6836,7 +6876,7 @@ let gate=true, tok=0, armed=false;
    did. Given OUTD this worker rasterises at full production size and hands
    back the exact index buffer the encoder itself would see. OUTD unset = the
    fast tuning rungs, untouched. */
-const OW=(typeof OUTD!=='undefined'&&OUTD>0&&OUTD<W)?OUTD:W;
+const OW=(typeof OUTD!=='undefined'&&OUTD>0)?OUTD:W;
 const FREE=[];
 function take(){ return FREE.pop()||new Uint8Array(OW*OW); }
 function schedule(ms){ if(armed)return; armed=true; setTimeout(function(){ armed=false; loop(); }, ms|0); }
@@ -6906,7 +6946,7 @@ function loop(){
        gate if an ack is ever lost. The playhead stays wall-clock derived, so
        a slow device DROPS frames and keeps the GIF's true 25fps timing. */
     const out=take();
-    if(OW<W){ for(let y=0;y<OW;y++){ const sy=((y*H/OW)|0)*W, row=y*OW;
+    if(OW!==W){ for(let y=0;y<OW;y++){ const sy=((y*H/OW)|0)*W, row=y*OW;
         for(let x=0;x<OW;x++) out[row+x]=idx[sy+((x*W/OW)|0)]; } }
     else out.set(idx);
     const ms=Date.now()-start;
@@ -6953,6 +6993,7 @@ function wbPvCeil(r){ const i=WBPV_LADDER.indexOf(r); return WBPV_LADDER[Math.ma
    frames step down (a quarter second, not sixteen); a long clean run may
    climb back, but never above the rung AUTO chose for this device. */
 function wbPvGovern(){
+  if(WBPV.res===rasterOf())return;     /* sitting ON the raster: it IS the GIF */
   if(WB.res!=='AUTO')return;
   if(WBPV.settle>0){ WBPV.settle--; return; }
   const at=WBPV_LADDER.indexOf(WBPV.res); if(at<0)return;
@@ -6960,7 +7001,8 @@ function wbPvGovern(){
     if(++WBPV.slow>=6&&at<WBPV_LADDER.length-1){ wbPvSpawn(WBPV_LADDER[at+1]); wbPush(); return; } }
   else WBPV.slow=0;
   if(WBPV.dt<30){
-    if(++WBPV.fast>=120&&at>0&&WBPV_LADDER[at-1]<=WBPV.top){ wbPvSpawn(WBPV_LADDER[at-1]); wbPush(); } }
+    if(++WBPV.fast>=120&&at>0&&WBPV_LADDER[at-1]<=WBPV.top
+       &&WBPV_LADDER[at-1]<=rasterOf()){ wbPvSpawn(WBPV_LADDER[at-1]); wbPush(); } }
   else WBPV.fast=0;
 }
 function wbPvSrc(res,outd){
@@ -6972,12 +7014,21 @@ function wbPvSrc(res,outd){
   /* the shading field and the march grid ride the rung down with the canvas:
      shading a 448² field to paint a 240² preview was pure waste, and it was
      the reason the ladder stopped helping below ~432. */
-  const sw=Math.max(160,Math.min(448,res));
-  const vg=Math.max(56,Math.min(88,Math.round(88*Math.min(1,res/448))));
+  /* AT the render raster the field must be the RENDER's field, whatever the
+     FIELD toggle says — that is what makes the fast rung byte-exact the
+     moment it sits at the raster. Below it, ride down as before. */
+  const F=(res===rasterOf())?rasterField(res)
+    : {sw:Math.max(160,Math.min(448,res)),
+       vg:Math.max(56,Math.min(88,Math.round(88*Math.min(1,res/448))))};
+  const sw=F.sw, vg=F.vg;
   return '"use strict";const W='+res+',H='+res+',FW=360,PVSW='+sw+',PVVG='+vg
     +',OUTD='+(outd|0)+';const TAU=6.283185307179586;\n'
     +core+'\n'+core2+'\n'+WB_PV_DRIVER;
 }
+window.wbPvSrc=wbPvSrc;                /* gates compile the very same source */
+/* never above the raster: a rung finer than the render would be a picture
+   the GIF cannot contain, which is the whole bug we just walked out of */
+function wbPvPick(){ return Math.min(rasterOf(), (WB.res==='AUTO'?wbPvAuto():WB.res)); }
 const wbPvSpawn=window.wbPvSpawn=function(res){
   if(WBPV.w){ try{WBPV.w.terminate();}catch(e){} WBPV.w=null; }
   WBPV.res=res;
@@ -7030,7 +7081,7 @@ const wbPvJob=window.wbPvJob=function(){
     wb:{fam:WB.fam,prim:WB.prim,gain:{...WB.gain}} };
 };
 const wbPush=window.wbPush=function(){
-  if(!WBPV.alive){ const r=(WB.res==='AUTO'?wbPvAuto():WB.res);
+  if(!WBPV.alive){ const r=wbPvPick();
     WBPV.top=Math.max(WBPV.top,wbPvCeil(r)); wbPvSpawn(r); }
   if(busy)abortRun();                    /* touching anything reclaims the stage */
   stopPlayer();
@@ -7055,7 +7106,7 @@ function wbPvPause(){ if(WBPV.w)WBPV.w.postMessage({t:'pause'}); }
 const WBTR=window.WBTR={w:null, tok:0, k:0, N:0, laps:1, frames:null,
   lut:new Uint32Array(256), off:null, octx:null, img:null, u32:null,
   state:'live', raf:0, timer:0, ms:0, shown:-1, t0:0};
-const WBTR_D=540;                      /* the encoder's own 540² index twin */
+let WBTR_D=540;                        /* set to the render raster per run */
 const wbTrStop=window.wbTrStop=function(){
   WBTR.tok++;
   if(WBTR.timer){ clearTimeout(WBTR.timer); WBTR.timer=0; }
@@ -7067,6 +7118,10 @@ const wbTrStop=window.wbTrStop=function(){
 const wbTrArm=window.wbTrArm=function(){
   wbTrStop();
   if(!WB.truth)return;
+  /* THE PRIZE: when the fast rung already sits at the render raster with the
+     render's field, the live preview IS the GIF. Nothing to settle — say so
+     and spend nothing. */
+  if(WBPV.alive&&WBPV.res===rasterOf()){ WBTR.state='exact'; return; }
   WBTR.timer=setTimeout(wbTrRun,350);
 };
 function wbTrLand(){
@@ -7101,14 +7156,15 @@ const wbTrRun=window.wbTrRun=function(){
   /* the tunnel carries a ring across frames, so it needs a lap to prime
      before its captures match the render's primed ring */
   WBTR.laps=job.fx&&job.fx.tunnel?2:1;
-  if(!WBTR.off){ WBTR.off=document.createElement('canvas');
+  WBTR_D=rasterOf();                   /* the truth IS the raster now */
+  if(!WBTR.off||WBTR.off.width!==WBTR_D){ WBTR.off=document.createElement('canvas');
     WBTR.off.width=WBTR.off.height=WBTR_D;
     WBTR.octx=WBTR.off.getContext('2d');
     WBTR.img=WBTR.octx.createImageData(WBTR_D,WBTR_D);
     WBTR.u32=new Uint32Array(WBTR.img.data.buffer); }
   let w;
   try{ w=WBTR.w=new Worker(URL.createObjectURL(
-        new Blob([wbPvSrc(W,WBTR_D)],{type:'text/javascript'}))); }
+        new Blob([wbPvSrc(WBTR_D,0)],{type:'text/javascript'}))); }
   catch(e){ WBTR.state='live'; return; }
   w.onmessage=e=>{
     const m=e.data;
@@ -7154,13 +7210,16 @@ document.addEventListener('click',e=>{
 setInterval(()=>{
   const fresh=performance.now()-WBPV.fmsg<1500;
   const st= busy?'\u25cc RENDERING GIF\u2026'
+    : WBTR.state==='exact'?'\u25a3 EXACT \u00b7 LIVE AND THIS IS THE GIF'
     : WBTR.state==='true'?'\u25a3 TRUE \u00b7 THIS IS THE GIF'
     : WBTR.state==='settling'?'\u25d0 SETTLING '+WBTR.k+'/'+(WBTR.N*WBTR.laps)
     : fresh?'\u25cf LIVE '+WBPV.res+'\u00b2 \u00b7 '+(1000/Math.max(WBPV.dt,40)).toFixed(0)+'fps'
     : (PLAYER.raf?'\u25a3 EXACT LOOP \u00b7 25fps':'\u2014');
   $('wb-livestat').innerHTML='<span class="'+(busy?'':'dotlive')+'">'+st+'</span>';
+  wbResLabel();
   $('wb-fps').textContent= busy?'rendering'
-    : WBTR.state==='true'?'exact 1080\u00b2'
+    : WBTR.state==='exact'?'exact '+WBPV.res+'\u00b2 \u2192 1080\u00b2'
+    : WBTR.state==='true'?'exact '+WBTR_D+'\u00b2 \u2192 1080\u00b2'
     : WBTR.state==='settling'?'settling\u2026'
     : (fresh?WBPV.res+'\u00b2 live':'exact loop');
 },400);
@@ -7182,13 +7241,70 @@ setTimeout(()=>{ try{ wbPush(); }catch(e){ console.error('PV boot',e); } },600);
     b.addEventListener('click',()=>{
       el.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed','false'));
       b.setAttribute('aria-pressed','true');
-      WB.res=v; $('wb-reslab').textContent=String(v);
-      const r=(v==='AUTO'?wbPvAuto():v);
+      WB.res=v;
+      const r=wbPvPick();
       WBPV.top=Math.max(WBPV.top,wbPvCeil(r));
-      wbPvSpawn(r); wbPush();
+      wbPvSpawn(r); wbPush(); wbResSync();
     });
     el.appendChild(b); });
+  wbResSync();
 })();
+/* a rung finer than the raster is a picture the GIF cannot contain, so the
+   control stops offering it — and the label always states the rung actually
+   running, not the one that was asked for */
+function wbResSync(){
+  const el=$('wb-res'); if(!el)return;
+  const R=rasterOf();
+  el.querySelectorAll('button').forEach(b=>{
+    const t=b.textContent, over=(t!=='AUTO'&&(+t)>R);
+    b.disabled=over; b.style.opacity=over?'0.32':'';
+    b.title=over?('above the render raster ('+R+'\u00b2)'):'';
+  });
+}
+function wbResLabel(){
+  const el=$('wb-reslab'); if(!el)return;
+  el.textContent = (WB.res==='AUTO') ? ('AUTO \u00b7 '+WBPV.res)
+    : (WBPV.res===WB.res ? String(WB.res) : (WB.res+' \u2192 '+WBPV.res));
+}
+/* raster + field: both bake into the pool source, so both must kill it */
+function wbRasterChanged(){
+  killPool();                          /* the pool bakes the raster into its source */
+  wbTrStop();
+  wbRastSync();
+  const r=wbPvPick();
+  WBPV.top=Math.max(WBPV.top,wbPvCeil(r));
+  wbPvSpawn(r); wbPush(); wbResSync();
+}
+/* keep the raster seg honest even when something sets RCFG directly */
+function wbRastSync(){
+  const el=$('wb-raster'); if(!el)return;
+  const R=rasterOf(), lab=(R===1080?'FULL':String(R));
+  $('wb-rastlab').textContent=lab;
+  el.querySelectorAll('button').forEach(b=>
+    b.setAttribute('aria-pressed', String(b.textContent.split(' ')[0]===lab)));
+  const f=$('wb-fieldlab'); if(f)f.textContent=RCFG.field?'ON':'OFF';
+}
+window.wbRasterChanged=wbRasterChanged;
+window.wbResSync=wbResSync;
+(function(){
+  const el=$('wb-raster');
+  const EX={1080:'',540:'2\u00d7',360:'3\u00d7',270:'4\u00d7',216:'5\u00d7',135:'8\u00d7'};
+  RASTERS.forEach(v=>{ const b=document.createElement('button');
+    b.textContent=(v===1080?'FULL':String(v))+(EX[v]?' '+EX[v]:'');
+    b.setAttribute('aria-pressed',String(v===RCFG.raster));
+    b.addEventListener('click',()=>{
+      el.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+      RCFG.raster=v; wbRasterChanged();
+    });
+    el.appendChild(b); });
+  wbRastSync();
+})();
+$('wb-field').addEventListener('click',()=>{ RCFG.field=!RCFG.field;
+  $('wb-field').textContent=RCFG.field
+    ?'FIELD: ON (shading field scales with the raster)'
+    :'FIELD: OFF (full 448\u00b2 field marched into the small raster)';
+  wbRasterChanged(); });
 $('wb-ladder').addEventListener('click',()=>{ WB.ladder=!WB.ladder;
   $('wb-ladlab').textContent=WB.ladder?'ON':'OFF';
   $('wb-ladder').textContent=WB.ladder
