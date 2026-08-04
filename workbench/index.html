@@ -793,6 +793,52 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <div class="seg" id="wb-cam"></div>
         <p class="labnote" id="wb-camnote">Every render used to be the same move: one revolution, always the same way round, from the same height, at the same distance. This is the move itself. AUTO lets the seed choose; each gesture returns exactly to its start, so the loop always closes.</p>
       </div>
+      <h4>THE GRAFT &mdash; your own graphic, entered into the transmission</h4>
+      <div class="field">
+        <label>SOURCE <span class="v" id="gr-name">NONE</span></label>
+        <div id="gr-drop" style="border:1px dashed #4a3a5c;border-radius:8px;padding:18px 10px;text-align:center;font-size:11px;letter-spacing:.14em;color:#8b7ba0;cursor:pointer;user-select:none">DROP AN IMAGE HERE &middot; OR TAP TO CHOOSE</div>
+        <input type="file" id="gr-file" accept="image/*" style="display:none">
+        <div id="gr-thumbwrap" style="display:none;align-items:center;gap:10px;margin-top:8px">
+          <canvas id="gr-thumb" width="72" height="72" style="image-rendering:pixelated;border:1px solid #3a2d48;border-radius:4px;background:#0a080e"></canvas>
+          <div style="flex:1"><p class="labnote" id="gr-dims" style="margin:0">&mdash;</p></div>
+          <button id="gr-clear" class="vio">CLEAR</button>
+        </div>
+        <p class="labnote">The image never leaves your device &mdash; it is decoded in the page, capped at 512px on its longest side, and handed to the render workers as raw bytes. It is also hashed at ingest, and that hash is written into every verdict, so a loop made with a graft can always be traced back to the exact graphic that made it. Note the fork: the engine can rebuild any loop from its seed alone, but it cannot rebuild YOUR graphic from a seed. Grafted loops are workbench work for now, not mint-safe DNA.</p>
+      </div>
+      <div class="field">
+        <label>GRAFT <span class="v" id="gr-onlab">OFF</span></label>
+        <button id="gr-on" class="vio">GRAFT: OFF</button>
+      </div>
+      <div class="field">
+        <label>ROLES &mdash; what the graphic DOES (any number at once)</label>
+        <div class="seg" id="gr-roles"></div>
+        <p class="labnote"><b>OVER</b> is the layer &mdash; but placed inside the signal, not on top of it. <b>UNDER</b> lays it into the empty space behind the mass, drawn in the artwork&rsquo;s own tone ramp, so the body occludes it and the void eats it. <b>FLOOR</b> lies it flat on the mirror plane &mdash; it perspective-projects and slides as the camera orbits, and the fog swallows its far edge. <b>GOBO</b> puts it in front of the LIGHT: the body is lit <i>through</i> your picture, so the image appears as shadow cast across the geometry. <b>STENCIL</b> cuts the whole transmission away wherever the graphic is dark, and the cut level breathes once per revolution. <b>SLICE</b> sends a scan head down the frame exactly once per loop, carrying the graphic in the band behind it. <b>WARP</b> turns its luminance gradient into a displacement field and drags the finished frame through it. <b>GRAIN</b> never draws the image at all &mdash; it replaces the ordered-dither threshold, so the picture exists only as a bias in the halftone. <b>PALETTE</b> steals the graphic&rsquo;s own colours and rebuilds the artwork&rsquo;s ramp from them (the house NO-WHITE cap still applies, so stolen palettes come back darker than the source).</p>
+        <p class="labnote">Two of these depend on what the seed actually grew. <b>FLOOR</b> needs a mirror plane and roughly half of all seeds do not have one; on those seeds FLOOR is silently a no-op &mdash; reroll or pick a seed with visible reflection under the mass. <b>UNDER</b> needs empty space in frame; a seed whose body fills the raster leaves it nothing to lie in. Everything else works on every seed.</p>
+      </div>
+      <div class="field">
+        <label>BLEND <span class="v" id="gr-blendlab">NORMAL</span></label>
+        <div class="seg" id="gr-blend"></div>
+        <p class="labnote">Blending happens in RGB, before quantisation &mdash; so the result is dithered into the artwork&rsquo;s 64 colours by the same pass that dithers the artwork. Affects OVER.</p>
+      </div>
+      <div class="field">
+        <label>DEPTH <span class="v" id="gr-depthlab">WITHIN</span></label>
+        <div class="seg" id="gr-depth"></div>
+        <p class="labnote">WITHIN puts the graft into the chain BEFORE the void carves, the chroma caps and the DCT ghosts &mdash; the transmission damages your graphic exactly as it damages its own body. ABOVE puts it after all of them, clean. WITHIN is the interesting one.</p>
+      </div>
+      <div class="field">
+        <label>FIT <span class="v" id="gr-fitlab">COVER</span></label>
+        <div class="seg" id="gr-fit"></div>
+      </div>
+      <div class="field">
+        <label>SAMPLING <span class="v" id="gr-blocklab">SMOOTH</span></label>
+        <button id="gr-block" class="vio">SAMPLING: SMOOTH</button>
+        <p class="labnote">BLOCK is nearest-neighbour: at low raster it turns any graphic into hard pixel blocks that agree with the dither grid instead of fighting it.</p>
+      </div>
+      <div class="field">
+        <label>INVERT <span class="v" id="gr-invlab">OFF</span></label>
+        <button id="gr-invert" class="vio">INVERT: OFF</button>
+      </div>
+      <div id="gr-sliders"></div>
       <h4>SIGIL GAINS &mdash; per-effect amplitude, 0&ndash;300% (100 = engine default; double-tap a name to reset)</h4>
       <div id="wb-gains"></div>
     </section>
@@ -1558,6 +1604,244 @@ function sceneView(scene, theta){
   return sv;
 }
 const BAYER4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+/* ============================================================================
+   THE GRAFT — an uploaded graphic ENTERED INTO the transmission.
+
+   The whole trick is where it happens. renderScene emits RGB, not palette
+   indices; quantize() comes later and dithers the finished frame into the
+   artwork's own 64-colour palette. So anything grafted in BEFORE that pass is
+   dithered by the same pass that dithers the art — it is not a layer sitting
+   on top of the picture, it is inside the picture's own colour physics, and
+   the void carves it, the corruption chews it, the chroma cap crushes it.
+
+   Nothing in this organ touches the distance field, so no role here can
+   punch a hole in the march. Geometry roles are a separate, later organ.
+   ========================================================================== */
+const GBLENDN=['NORMAL','MULTIPLY','SCREEN','OVERLAY','DIFFERENCE','ADD',
+               'SUBTRACT','DARKEN','LIGHTEN','XOR','HARDLIGHT','SOFTLIGHT'];
+function gblend(m,a,b){
+  switch(m){
+    case 1:  return (a*b)/255;
+    case 2:  return 255-(255-a)*(255-b)/255;
+    case 3:  return a<128 ? (2*a*b)/255 : 255-2*(255-a)*(255-b)/255;
+    case 4:  return a>b?a-b:b-a;
+    case 5:  { const v=a+b; return v>255?255:v; }
+    case 6:  { const v=a-b; return v<0?0:v; }
+    case 7:  return a<b?a:b;
+    case 8:  return a>b?a:b;
+    case 9:  return ((a|0)^(b|0));
+    case 10: return b<128 ? (2*a*b)/255 : 255-2*(255-a)*(255-b)/255;
+    case 11: { const A=a/255, B=b/255;
+               const D=A<=0.25?((16*A-12)*A+4)*A:Math.sqrt(A);
+               const O=B<=0.5?A-(1-2*B)*A*(1-A):A+(2*B-1)*(D-A);
+               return O*255; }
+    default: return b;
+  }
+}
+function buildGraft(im,c){
+  const rad=(c.rot||0)*Math.PI/180, ca=Math.cos(rad), sa=Math.sin(rad);
+  const sc=Math.max(0.05,(c.scale==null?100:c.scale)/100);
+  const ar=(im.w/im.h)||1;
+  let dx=1, dy=1;
+  if(c.fit===0){ dx=ar>=1?ar:1;   dy=ar>=1?1:1/ar; }      /* COVER   */
+  else if(c.fit===1){ dx=ar>=1?1:ar; dy=ar>=1?1/ar:1; }   /* CONTAIN */
+  /* 2 STRETCH and 3 TILE keep 1,1 */
+  const roles=c.roles||{};
+  return {im:im, c:c, ca:ca, sa:sa, sc:sc, dx:dx, dy:dy, tile:(c.fit===3),
+    ox:(c.offx||0)/100, oy:(c.offy||0)/100,
+    op:(c.opacity==null?100:c.opacity)/100,
+    amt:(c.amt==null?100:c.amt)/100,
+    blend:c.blend|0, depth:c.depth|0, block:!!c.block, inv:!!c.invert,
+    gam:Math.max(0.05,(c.gamma==null?100:c.gamma)/100),
+    thr:(c.thresh|0)/100, roles:roles,
+    _grain:null,_grainW:0,_grainH:0,_grainO:null,_wf:null};
+}
+const GUV=[0,0];
+function graftUV(g,u,v){
+  const x=u-0.5-g.ox, y=v-0.5-g.oy;
+  const rx=(x*g.ca+y*g.sa)/g.sc, ry=(-x*g.sa+y*g.ca)/g.sc;
+  let iu=rx/g.dx+0.5, iv=ry/g.dy+0.5;
+  if(g.tile){ iu-=Math.floor(iu); iv-=Math.floor(iv); }
+  else if(iu<0||iu>=1||iv<0||iv>=1) return 0;
+  GUV[0]=iu; GUV[1]=iv; return 1;
+}
+function graftTone(g,t){
+  let o=Math.pow(t<0?0:(t>1?1:t), g.gam);
+  if(g.thr>0) o = o<g.thr?0:1;
+  return g.inv?1-o:o;
+}
+function graftLum(g,u,v){
+  if(!graftUV(g,u,v))return -1;
+  const im=g.im, w=im.w, h=im.h; let t;
+  if(g.block){
+    let ix=(GUV[0]*w)|0, iy=(GUV[1]*h)|0;
+    if(ix<0)ix=0; else if(ix>=w)ix=w-1;
+    if(iy<0)iy=0; else if(iy>=h)iy=h-1;
+    t=im.lum[iy*w+ix]/255;
+  }else{
+    const fx=GUV[0]*w-0.5, fy=GUV[1]*h-0.5;
+    let x0=Math.floor(fx), y0=Math.floor(fy);
+    const tx=fx-x0, ty=fy-y0;
+    let x1=x0+1, y1=y0+1;
+    if(x0<0)x0=0; if(y0<0)y0=0; if(x1<0)x1=0; if(y1<0)y1=0;
+    if(x0>=w)x0=w-1; if(y0>=h)y0=h-1; if(x1>=w)x1=w-1; if(y1>=h)y1=h-1;
+    const a=im.lum[y0*w+x0], b=im.lum[y0*w+x1], c2=im.lum[y1*w+x0], d=im.lum[y1*w+x1];
+    const top=a+(b-a)*tx, bot=c2+(d-c2)*tx;
+    t=(top+(bot-top)*ty)/255;
+  }
+  return graftTone(g,t);
+}
+const GRGB=[0,0,0];
+function graftRGB(g,u,v){
+  if(!graftUV(g,u,v))return 0;
+  const im=g.im, w=im.w, h=im.h;
+  if(g.block){
+    let ix=(GUV[0]*w)|0, iy=(GUV[1]*h)|0;
+    if(ix<0)ix=0; else if(ix>=w)ix=w-1;
+    if(iy<0)iy=0; else if(iy>=h)iy=h-1;
+    const o=(iy*w+ix)*3;
+    GRGB[0]=graftTone(g,im.rgb[o]/255)*255;
+    GRGB[1]=graftTone(g,im.rgb[o+1]/255)*255;
+    GRGB[2]=graftTone(g,im.rgb[o+2]/255)*255;
+  }else{
+    const fx=GUV[0]*w-0.5, fy=GUV[1]*h-0.5;
+    let x0=Math.floor(fx), y0=Math.floor(fy);
+    const tx=fx-x0, ty=fy-y0;
+    let x1=x0+1, y1=y0+1;
+    if(x0<0)x0=0; if(y0<0)y0=0; if(x1<0)x1=0; if(y1<0)y1=0;
+    if(x0>=w)x0=w-1; if(y0>=h)y0=h-1; if(x1>=w)x1=w-1; if(y1>=h)y1=h-1;
+    const oA=(y0*w+x0)*3, oB=(y0*w+x1)*3, oC=(y1*w+x0)*3, oD=(y1*w+x1)*3;
+    for(let q=0;q<3;q++){
+      const a=im.rgb[oA+q], b=im.rgb[oB+q], c2=im.rgb[oC+q], d=im.rgb[oD+q];
+      const top=a+(b-a)*tx, bot=c2+(d-c2)*tx;
+      GRGB[q]=graftTone(g,(top+(bot-top)*ty)/255)*255;
+    }
+  }
+  return 1;
+}
+/* the built graft is cached on the scene and keyed by the config revision,
+   because the config crosses a postMessage boundary and arrives as a fresh
+   object every frame — identity comparison would rebuild the grain and warp
+   fields 25 times a second. */
+function graftOf(scene){
+  const G=scene&&scene.__graft;
+  if(!G||!G.img||!G.cfg||!G.cfg.on)return null;
+  const sig=G.cfg.rev|0;
+  if(scene._gr&&scene._grSig===sig&&scene._grImg===G.img)return scene._gr;
+  scene._grImg=G.img; scene._grSig=sig;
+  return (scene._gr=buildGraft(G.img,G.cfg));
+}
+/* GRAIN — the graphic becomes the dither threshold itself. It is not drawn;
+   it decides WHERE the ordered dither tips one way or the other, so the
+   picture appears only in the texture of the halftone. */
+function graftGrain(g){
+  if(g._grainO&&g._grainW===W&&g._grainH===H)return g._grainO;
+  const gr=new Int8Array(W*H);
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){
+      const L=graftLum(g,(x+0.5)/W,v);
+      let s=(L<0)?0:Math.round((L-0.5)*96);
+      if(s>120)s=120; else if(s<-120)s=-120;
+      gr[y*W+x]=s; } }
+  g._grain=gr; g._grainW=W; g._grainH=H;
+  return (g._grainO={g:gr, a:g.amt});
+}
+/* WARP — the graphic's luminance gradient becomes a displacement field over
+   the finished frame. Frame-invariant, so it is built once at 128x128. */
+const GWD=128;
+function graftWarpField(g){
+  if(g._wf)return g._wf;
+  const L=new Float32Array(GWD*GWD), gx=new Float32Array(GWD*GWD), gy=new Float32Array(GWD*GWD);
+  for(let y=0;y<GWD;y++)for(let x=0;x<GWD;x++){
+    const l=graftLum(g,(x+0.5)/GWD,(y+0.5)/GWD);
+    L[y*GWD+x]=(l<0)?0.5:l; }
+  for(let y=0;y<GWD;y++)for(let x=0;x<GWD;x++){
+    const xm=x>0?x-1:x, xp=x<GWD-1?x+1:x, ym=y>0?y-1:y, yp=y<GWD-1?y+1:y;
+    gx[y*GWD+x]=L[y*GWD+xp]-L[y*GWD+xm];
+    gy[y*GWD+x]=L[yp*GWD+x]-L[ym*GWD+x]; }
+  return (g._wf={gx:gx, gy:gy});
+}
+function graftWarpPass(buf,g,theta){
+  const amp=g.amt*0.085*(0.5+0.5*Math.cos(theta));   /* TAU-periodic */
+  if(amp<=0.0002)return;
+  const wf=graftWarpField(g);
+  let tmp=graftWarpPass._t;
+  if(!tmp||tmp.length!==W*H*3) tmp=graftWarpPass._t=new Uint8Array(W*H*3);
+  tmp.set(buf);
+  const AX=amp*W, AY=amp*H;
+  for(let y=0;y<H;y++){
+    const gyi=Math.min(GWD-1,(y*GWD/H)|0);
+    for(let x=0;x<W;x++){
+      const gi=gyi*GWD+Math.min(GWD-1,(x*GWD/W)|0);
+      let sx=(x+wf.gx[gi]*AX)|0, sy=(y+wf.gy[gi]*AY)|0;
+      if(sx<0)sx=0; else if(sx>=W)sx=W-1;
+      if(sy<0)sy=0; else if(sy>=H)sy=H-1;
+      const o=(y*W+x)*3, s=(sy*W+sx)*3;
+      buf[o]=tmp[s]; buf[o+1]=tmp[s+1]; buf[o+2]=tmp[s+2];
+    }
+  }
+}
+/* OVER — the classic layer, but placed inside the signal chain. */
+function graftOverPass(buf,g){
+  const op=g.op*g.amt; if(op<=0)return;
+  const bm=g.blend|0;
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){
+      if(!graftRGB(g,(x+0.5)/W,v))continue;
+      const o=(y*W+x)*3;
+      for(let q=0;q<3;q++){
+        const a=buf[o+q];
+        let r=a+(gblend(bm,a,GRGB[q])-a)*op;
+        buf[o+q]= r<0?0:(r>255?255:r|0);
+      }
+    }
+  }
+}
+/* STENCIL — the graphic is a hole cut through the whole transmission, and
+   the hole BREATHES: the cut level swings once per revolution and closes
+   exactly where it opened. */
+function graftStencilPass(buf,g,theta,grad){
+  const cut=g.amt*(0.5+0.5*Math.sin(theta));
+  if(cut<=0)return;
+  const b0=grad[0], b1=grad[1], b2=grad[2];
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){
+      const L=graftLum(g,(x+0.5)/W,v);
+      if(((L<0)?0:L)<cut){ const o=(y*W+x)*3; buf[o]=b0; buf[o+1]=b1; buf[o+2]=b2; }
+    }
+  }
+}
+/* SLICE — a scan head travels the frame exactly once per loop, and only the
+   band behind it carries the graphic. The picture arrives as a transmission,
+   line by line, and is gone by the time the head comes round again. */
+function graftSlicePass(buf,g,theta,grad){
+  let p=(theta/TAU)%1; if(p<0)p+=1;
+  const bh=Math.max(0.06,g.amt*0.5);
+  const h0=grad[765], h1=grad[766], h2=grad[767];
+  for(let y=0;y<H;y++){
+    const fy=(y+0.5)/H;
+    let d=fy-p; d-=Math.floor(d);
+    if(d>bh)continue;
+    const k=(1-d/bh)*g.op;
+    for(let x=0;x<W;x++){
+      if(!graftRGB(g,(x+0.5)/W,fy))continue;
+      const o=(y*W+x)*3;
+      buf[o]  =(buf[o]  +(GRGB[0]-buf[o]  )*k)|0;
+      buf[o+1]=(buf[o+1]+(GRGB[1]-buf[o+1])*k)|0;
+      buf[o+2]=(buf[o+2]+(GRGB[2]-buf[o+2])*k)|0;
+      if(d<0.007){ buf[o]=h0; buf[o+1]=h1; buf[o+2]=h2; }
+    }
+  }
+}
+function graftApply(buf,scene,theta,grad,phase){
+  const g=graftOf(scene); if(!g)return;
+  if((g.depth|0)!==(phase|0))return;
+  const R=g.roles;
+  if(R.warp)    graftWarpPass(buf,g,theta);
+  if(R.over)    graftOverPass(buf,g);
+  if(R.stencil) graftStencilPass(buf,g,theta,grad);
+  if(R.slice)   graftSlicePass(buf,g,theta,grad);
+}
 function renderScene(rgb, scene, theta, corr, grad){
   scene._corr=corr;
   const mf=massField(scene);
@@ -1570,13 +1854,35 @@ function renderScene(rgb, scene, theta, corr, grad){
     return ((((h^(h>>16))>>>0)&1023)/1023)-0.5; };
   const crawlPh=Math.sin(theta)*F.crawl;
   const roll=(theta/TAU)%1;
+  /* THE GRAFT, field side. UNDER lays the graphic into the empty space
+     BEHIND the mass, so the body occludes it for free and it is rendered in
+     the artwork's own tone ramp. FLOOR lies it flat on the mirror plane, so
+     it perspective-projects and slides as the camera orbits. GOBO puts it in
+     front of the LIGHT — the body is lit THROUGH the picture. */
+  const GRs=graftOf(scene);
+  const GRU=(GRs&&GRs.roles.under)?GRs:null;
+  const GRF=(GRs&&GRs.roles.floor)?GRs:null;
+  const GRG=(GRs&&GRs.roles.gobo)?GRs:null;
+  const GSCL=(GRF||GRG)?2.4*Math.max(1,mf.S):1;
+  let gux=1,guy=0,guz=0,gwx=0,gwy=1,gwz=0;
+  if(GRG){
+    let ax=-sv.ly, ay=sv.lx, az=0;
+    let al=Math.sqrt(ax*ax+ay*ay+az*az);
+    if(al<1e-4){ ax=1; ay=0; az=0; al=1; }
+    gux=ax/al; guy=ay/al; guz=az/al;
+    gwx=sv.ly*guz-sv.lz*guy; gwy=sv.lz*gux-sv.lx*guz; gwz=sv.lx*guy-sv.ly*gux;
+    const wl=Math.sqrt(gwx*gwx+gwy*gwy+gwz*gwz)||1; gwx/=wl; gwy/=wl; gwz/=wl;
+  }
   for(let y=0;y<SW;y++){
     const gyf=y*VG/SW, gy=Math.min(VG-1,gyf|0), fy=y/SW;
     for(let x=0;x<SW;x++){
       const gxf=x*VG/SW, gx=Math.min(VG-1,gxf|0);
       const gi=gy*VG+gx, k=sv.kind[gi], i=y*SW+x;
       if(k===0){
-        fld[i]=0.016+0.020*(1-fy)+gh(x>>2,y>>2)*0.010;
+        let bg0=0.016+0.020*(1-fy)+gh(x>>2,y>>2)*0.010;
+        if(GRU){ const L=graftLum(GRU,(x+0.5)/SW,(y+0.5)/SW);
+          if(L>=0) bg0+=((L*0.62+0.015)-bg0)*GRU.amt; }
+        fld[i]=bg0;
         continue;
       }
       const px=sv.px[gi], py=sv.py[gi], pz=sv.pz[gi];
@@ -1585,10 +1891,19 @@ function renderScene(rgb, scene, theta, corr, grad){
         v*=Math.max(0.12, 1-Math.max(0,sv.dp[gi])*F.fogA*1.4);
         const bandF2=Math.sin(px*8+pz*8+crawlPh*0.5);
         if(bandF2>0.75)v+=0.015;
+        if(GRF){ const L=graftLum(GRF, px/GSCL+0.5, pz/GSCL+0.5);
+          if(L>=0){ const fade=Math.max(0.15,1-Math.max(0,sv.dp[gi])*F.fogA*1.2);
+            v+=((L*0.42+0.02)-v)*GRF.amt*fade; } }
+        if(GRG){ const L=graftLum(GRG,(px*gux+py*guy+pz*guz)/GSCL+0.5,
+                                       (px*gwx+py*gwy+pz*gwz)/GSCL+0.5);
+          if(L>=0) v*=(1-GRG.amt)+GRG.amt*(0.25+1.35*L); }
         fld[i]=Math.max(0.02,Math.min(0.55,v))+gh(x,y)*0.028;
         continue;
       }
-      const dif=Math.max(0, sv.nx[gi]*sv.lx+sv.ny[gi]*sv.ly+sv.nz[gi]*sv.lz);
+      let dif=Math.max(0, sv.nx[gi]*sv.lx+sv.ny[gi]*sv.ly+sv.nz[gi]*sv.lz);
+      if(GRG){ const L=graftLum(GRG,(px*gux+py*guy+pz*guz)/GSCL+0.5,
+                                     (px*gwx+py*gwy+pz*gwz)/GSCL+0.5);
+        if(L>=0) dif*=(1-GRG.amt)+GRG.amt*(0.18+1.5*L); }
       const rimV=Math.pow(Math.max(0, 1 - Math.abs(sv.nx[gi]*(-Math.sin(sv.az)) + sv.nz[gi]*(-Math.cos(sv.az)))),3)*0.24;
       let v=0.07+dif*0.60*sv.ao[gi]+rimV;
       /* the material dialect */
@@ -1618,6 +1933,7 @@ function renderScene(rgb, scene, theta, corr, grad){
       fld[i]=Math.max(0.02,Math.min(0.97,v));
     }
   }
+  const GRN=(GRs&&GRs.roles.grain)?graftGrain(GRs):null;
   /* fine bilinear upscale + ordered dither: the new surface signature */
   let UX=renderScene._ux;
   if(!UX){ UX=renderScene._ux={x0:new Int32Array(W),x1:new Int32Array(W),tx:new Float32Array(W)};
@@ -1630,7 +1946,9 @@ function renderScene(rgb, scene, theta, corr, grad){
       const x0=UX.x0[x], x1=UX.x1[x], tx=UX.tx[x];
       const a2=fld[rowA+x0], b2=fld[rowA+x1], c2=fld[rowB+x0], d2=fld[rowB+x1];
       const v=a2+(b2-a2)*tx + ((c2+(d2-c2)*tx)-(a2+(b2-a2)*tx))*ty;
-      let gi2=(v*255 + (BAYER4[by+(x&3)]-7.5)*1.7)|0;
+      let dth=(BAYER4[by+(x&3)]-7.5)*1.7;
+      if(GRN) dth=dth*(1-GRN.a)+GRN.g[y*W+x]*GRN.a;
+      let gi2=(v*255 + dth)|0;
       if(gi2<0)gi2=0; else if(gi2>255)gi2=255;
       const o=(y*W+x)*3;
       rgb[o]=grad[gi2*3]; rgb[o+1]=grad[gi2*3+1]; rgb[o+2]=grad[gi2*3+2];
@@ -1653,6 +1971,8 @@ function renderBase(rgb, scene, t, theta, grad, corr){
   if(m==='IDOL'){
     const field=renderBase._fi||(renderBase._fi=new Float32Array(FW*FW));
     scene._corr=CORR;
+    const GRi=graftOf(scene);
+    const GRNi=(GRi&&GRi.roles.grain)?graftGrain(GRi):null;
     renderIdol(field, scene, theta);
     for(let y=0;y<H;y++){
       const sy=y*FW/H, y0=Math.min(FW-1,sy|0), y1=Math.min(FW-1,y0+1), ty=sy-y0;
@@ -1660,7 +1980,9 @@ function renderBase(rgb, scene, t, theta, grad, corr){
         const sx=x*FW/W, x0=Math.min(FW-1,sx|0), x1=Math.min(FW-1,x0+1), tx=sx-x0;
         const v=field[y0*FW+x0]*(1-tx)*(1-ty)+field[y0*FW+x1]*tx*(1-ty)
                +field[y1*FW+x0]*(1-tx)*ty+field[y1*FW+x1]*tx*ty;
-        let gi2=(v*255 + (BAYER4[(y&3)*4+(x&3)]-7.5)*1.7)|0;
+        let dthi=(BAYER4[(y&3)*4+(x&3)]-7.5)*1.7;
+        if(GRNi) dthi=dthi*(1-GRNi.a)+GRNi.g[y*W+x]*GRNi.a;
+        let gi2=(v*255 + dthi)|0;
         if(gi2<0)gi2=0; else if(gi2>255)gi2=255;
         const o=(y*W+x)*3;
         rgb[o]=grad[gi2*3]; rgb[o+1]=grad[gi2*3+1]; rgb[o+2]=grad[gi2*3+2];
@@ -3823,9 +4145,11 @@ function renderSource(rgbA,rgbC,scene,i,theta,grad,fx,corr){
     const scr=renderSource._k||(renderSource._k=new Uint8Array(W*H*3));
     fxKaleido(rgbA,scr,scene,theta,Math.min(150,corr*scene.vibe.g.kaleido));
   }
+  graftApply(rgbA, scene, theta, grad, 0);   /* WITHIN — before the void bites */
   voidCarve(rgbA, scene, grad);
   chromaCap(rgbA, scene, grad);
   dctGhost(rgbA, scene, theta, corr);
+  graftApply(rgbA, scene, theta, grad, 1);   /* ABOVE — after everything */
 }
 
 /* ============================================================================
@@ -4036,13 +4360,15 @@ async function generateSeq(){
     const rr=mulberry32((seed^0x77aa11)>>>0)();
     schemeKey = rr<0.4 ? 'GENESIS' : (rr<0.6 ? 'TISGEN' : SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0]);
   }
-  const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
+  let scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
+  if(window.graftScheme) scheme=window.graftScheme(scheme);
   const scene=buildScene(seed, state.mode);
   /* the body/camera overrides must be seated BEFORE seatWounds, which builds
      and CACHES the mass field. Set them after and the field is already frozen —
      which is exactly why forcing a gesture rendered identical pixels. */
   if(window.WB){ scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam; scene.__wbMod=WB.mod; }
+  if(window.wbGraftScene)window.wbGraftScene(scene);
   scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
@@ -4258,12 +4584,18 @@ function detectPlatform(){
 const PLAT=detectPlatform();
 
 const WORKER_DRIVER=`
+let GRAFTIMG=null;
 self.onmessage=function(e){
   const J=e.data;
+  /* the graphic itself is heavy and changes only on upload, so it is posted
+     once per worker and held here; the per-frame job carries only the light
+     config plus the image's hash, and the two must agree before it is used. */
+  if(J&&J.t==='graft'){ GRAFTIMG=J.g; return; }
   try{
     const scene=buildScene(J.seed,J.mode);
     /* seated BEFORE seatWounds — it builds and caches the mass field */
     if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; scene.__wbMod=J.wb.mod; }
+    scene.__graft=(J.gr&&J.gr.on&&GRAFTIMG&&GRAFTIMG.id===J.gr.id)?{img:GRAFTIMG,cfg:J.gr}:null;
     scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
     scene.epoch=J.epoch|0;
     applyOverridesPure(scene,J.seed,J.ov);
@@ -4452,7 +4784,9 @@ function spawnPool(){
   try{
     const url=URL.createObjectURL(new Blob([getWorkerSrc()],{type:'text/javascript'}));
     POOL.workers=[];
-    for(let i=0;i<PLAT.workers;i++)POOL.workers.push(new Worker(url));
+    for(let i=0;i<PLAT.workers;i++){ const wk=new Worker(url);
+      if(window.wbGraftPost)window.wbGraftPost(wk);
+      POOL.workers.push(wk); }
     return true;
   }catch(e){ POOL.ok=false; POOL.workers=null; return false; }
 }
@@ -4491,13 +4825,15 @@ async function generate(){
     const rr=mulberry32((seed^0x77aa11)>>>0)();
     schemeKey = rr<0.4 ? 'GENESIS' : (rr<0.6 ? 'TISGEN' : SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0]);
   }
-  const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
+  let scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
+  if(window.graftScheme) scheme=window.graftScheme(scheme);
   const scene=buildScene(seed, state.mode);
   /* the body/camera overrides must be seated BEFORE seatWounds, which builds
      and CACHES the mass field. Set them after and the field is already frozen —
      which is exactly why forcing a gesture rendered identical pixels. */
   if(window.WB){ scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam; scene.__wbMod=WB.mod; }
+  if(window.wbGraftScene)window.wbGraftScene(scene);
   scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
@@ -4535,6 +4871,7 @@ async function generate(){
   const jobOf=w=>({seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0, chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
     wb:(window.WB?{fam:WB.fam,prim:WB.prim,cam:WB.cam,mod:WB.mod,gain:WB.gain}:null),
+    gr:(window.wbGraftCfg?window.wbGraftCfg():null),
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
   await new Promise(resolve=>{
@@ -7178,6 +7515,7 @@ const wbTune=window.wbTune=function(scene){
    The full 1080² pipeline is untouched and runs ONLY behind RENDER.
    ========================================================================== */
 const WB_PV_DRIVER=`
+let GRAFTIMG=null;
 let CUR=null, SC=null, sceneKey='', running=false, t0=0, lastStart=0;
 let gate=true, tok=0, armed=false;
 /* THE TRUTH TAP. The GIF is rasterised at 1080² from a 448² shading field
@@ -7200,6 +7538,7 @@ function buildSC(J){
   const scene=buildScene(J.seed,J.mode);
   /* seated BEFORE seatWounds — it builds and caches the mass field */
   if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; scene.__wbMod=J.wb.mod; }
+  scene.__graft=(J.gr&&J.gr.on&&GRAFTIMG&&GRAFTIMG.id===J.gr.id)?{img:GRAFTIMG,cfg:J.gr}:null;
   scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
   scene.epoch=J.epoch|0;
   applyOverridesPure(scene,J.seed,J.ov);
@@ -7226,6 +7565,9 @@ function loop(){
     const k=skey(J);
     if(!SC||sceneKey!==k){ SC=buildSC(J); sceneKey=k; t0=Date.now(); }
     const scene=SC.scene;
+    /* re-seated every frame: a graft config change must land instantly,
+       without rebuilding the scene (that is what the rev counter is for) */
+    scene.__graft=(J.gr&&J.gr.on&&GRAFTIMG&&GRAFTIMG.id===J.gr.id)?{img:GRAFTIMG,cfg:J.gr}:null;
     for(const g in SC.gBase){ const m=J.wb&&J.wb.gain?J.wb.gain[g]:null;
       scene.vibe.g[g]=SC.gBase[g]*((m==null?100:m)/100); }
     scene._corr=J.corr;
@@ -7268,6 +7610,7 @@ function loop(){
   }catch(err){ running=false; self.postMessage({t:'err', msg:String(err&&err.stack||err).slice(0,300)}); }
 }
 self.onmessage=function(e){ const m=e.data;
+  if(m.t==='graft'){ GRAFTIMG=m.g; return; }
   if(m.t==='job'){ CUR=m.job;
     if(m.buf&&m.buf.byteLength===OW*OW)FREE.push(new Uint8Array(m.buf));
     if(m.step){ running=true; gate=true; schedule(0); }
@@ -7350,6 +7693,7 @@ const wbPvSpawn=window.wbPvSpawn=function(res){
   WBPV.tPrev=0; WBPV.dt=40; WBPV.slow=0; WBPV.fast=0; WBPV.settle=10;
   const url=URL.createObjectURL(new Blob([wbPvSrc(res)],{type:'text/javascript'}));
   const w=WBPV.w=new Worker(url);
+  if(window.wbGraftPost)window.wbGraftPost(w);
   w.onmessage=e=>{ const m=e.data;
     if(w!==WBPV.w)return;                 /* a rung we already stepped off */
     if(m.t==='meta'){ WBPV.pal=m.pal; WBPV.meta={mode:m.mode};
@@ -7385,12 +7729,14 @@ const wbPvJob=window.wbPvJob=function(){
     const rr=mulberry32((seed^0x77aa11)>>>0)();
     schemeKey= rr<0.4?'GENESIS':(rr<0.6?'TISGEN':SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0]);
   }
-  const scheme= schemeKey==='GENESIS'?genesisScheme(seed)
+  let scheme= schemeKey==='GENESIS'?genesisScheme(seed)
     : schemeKey==='TISGEN'?tisScheme(seed):SCHEMES[schemeKey];
+  if(window.graftScheme) scheme=window.graftScheme(scheme);
   return { seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0,
     chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr:state.corr, N:state.frames, fx:{...state.fx}, ov:{...OV}, epoch:EPOCH,
-    wb:{fam:WB.fam,prim:WB.prim,cam:WB.cam,mod:WB.mod,gain:{...WB.gain}} };
+    wb:{fam:WB.fam,prim:WB.prim,cam:WB.cam,mod:WB.mod,gain:{...WB.gain}},
+    gr:(window.wbGraftCfg?window.wbGraftCfg():null) };
 };
 const wbPush=window.wbPush=function(){
   if(!WBPV.alive){ const r=wbPvPick();
@@ -7478,6 +7824,7 @@ const wbTrRun=window.wbTrRun=function(){
   try{ w=WBTR.w=new Worker(URL.createObjectURL(
         new Blob([wbPvSrc(WBTR_D,0)],{type:'text/javascript'}))); }
   catch(e){ WBTR.state='live'; return; }
+  if(window.wbGraftPost)window.wbGraftPost(w);
   w.onmessage=e=>{
     const m=e.data;
     if(w!==WBTR.w||my!==WBTR.tok)return;
@@ -7728,6 +8075,216 @@ $('wb-ladder').addEventListener('click',()=>{ WB.ladder=!WB.ladder;
   CAMN.forEach((n,i2)=>mkC(n,i2));
 })();
 
+/* ============================================================================
+   THE GRAFT — ingest, transport and control.
+   ========================================================================== */
+const GRAFT=window.GRAFT={
+  img:null,
+  cfg:{ on:false, rev:1, id:0,
+    roles:{over:true,under:false,floor:false,gobo:false,stencil:false,
+           slice:false,warp:false,grain:false,palette:false},
+    blend:0, depth:0, fit:0, block:false, invert:false,
+    opacity:100, amt:100, scale:100, offx:0, offy:0, rot:0, gamma:100, thresh:0 }
+};
+window.wbGraftCfg=function(){
+  if(!GRAFT.img||!GRAFT.cfg.on)return null;
+  const c=GRAFT.cfg;
+  return { on:true, rev:c.rev|0, id:GRAFT.img.id,
+    roles:Object.assign({},c.roles), blend:c.blend|0, depth:c.depth|0,
+    fit:c.fit|0, block:!!c.block, invert:!!c.invert,
+    opacity:c.opacity, amt:c.amt, scale:c.scale, offx:c.offx, offy:c.offy,
+    rot:c.rot, gamma:c.gamma, thresh:c.thresh };
+};
+window.wbGraftScene=function(scene){
+  const c=window.wbGraftCfg();
+  scene.__graft=(c&&GRAFT.img)?{img:GRAFT.img,cfg:c}:null;
+};
+window.wbGraftPost=function(w){
+  try{ if(GRAFT.img&&w)w.postMessage({t:'graft', g:GRAFT.img}); }catch(e){}
+};
+function grBroadcast(){
+  if(WBPV.w)window.wbGraftPost(WBPV.w);
+  if(window.WBTR&&WBTR.w)window.wbGraftPost(WBTR.w);
+  /* POOL is a top-level `let` in the engine block — a global LEXICAL binding,
+     never a window property. Reach it by name or it is never reached at all. */
+  try{ if(POOL&&POOL.workers)for(const w of POOL.workers)window.wbGraftPost(w); }catch(e){}
+}
+window.graftScheme=function(s){
+  if(!GRAFT.img||!GRAFT.cfg.on||!GRAFT.cfg.roles.palette)return s;
+  const p=GRAFT.img.pal;
+  if(!p||p.length<2)return s;
+  return { stops:p.slice(),
+    glitch:(GRAFT.img.glitch&&GRAFT.img.glitch.length?GRAFT.img.glitch.slice():s.glitch) };
+};
+/* every change bumps the revision — that number is the cache key on the other
+   side of the postMessage boundary, and the only thing that makes a config
+   change land on the next frame instead of the next scene rebuild. */
+function grTouch(){ GRAFT.cfg.rev=(GRAFT.cfg.rev+1)|0; WB.key=''; wbPush(); }
+
+function grPaletteOf(rgb,n){
+  const bins=new Map();
+  for(let i=0;i<n;i++){
+    const r=rgb[i*3], g=rgb[i*3+1], b=rgb[i*3+2];
+    const k=((r>>4)<<8)|((g>>4)<<4)|(b>>4);
+    const e=bins.get(k);
+    if(e){ e[0]+=r; e[1]+=g; e[2]+=b; e[3]++; } else bins.set(k,[r,g,b,1]);
+  }
+  let all=[...bins.values()];
+  if(!all.length)return {pal:['#050507','#ffffff'], glitch:[]};
+  all.sort((a,b)=>b[3]-a[3]);
+  all=all.slice(0,48).map(e=>[e[0]/e[3],e[1]/e[3],e[2]/e[3],e[3]]);
+  const hx=c=>'#'+[c[0],c[1],c[2]].map(v=>('0'+(Math.max(0,Math.min(255,v|0))).toString(16)).slice(-2)).join('');
+  const L=c=>(c[0]*77+c[1]*151+c[2]*28)/256;
+  const byL=all.slice().sort((a,b)=>L(a)-L(b));
+  const NS=7, pal=[];
+  for(let i=0;i<NS;i++){
+    const j=Math.round(i*(byL.length-1)/(NS-1));
+    pal.push(hx(byL[Math.min(byL.length-1,Math.max(0,j))]));
+  }
+  const sat=c=>{ const mx=Math.max(c[0],c[1],c[2]), mn=Math.min(c[0],c[1],c[2]);
+    return (mx-mn)*(mx/255); };
+  const glitch=all.slice().sort((a,b)=>sat(b)-sat(a)).slice(0,5).map(hx);
+  return {pal:pal, glitch:glitch};
+}
+function grAdopt(im,name){
+  const CAP=512;
+  let w=im.naturalWidth||im.width, h=im.naturalHeight||im.height;
+  if(!w||!h){ $('gr-name').textContent='EMPTY IMAGE'; return; }
+  const s=Math.min(1,CAP/Math.max(w,h));
+  w=Math.max(1,Math.round(w*s)); h=Math.max(1,Math.round(h*s));
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  const cx=cv.getContext('2d',{willReadFrequently:true});
+  cx.imageSmoothingEnabled=true; cx.drawImage(im,0,0,w,h);
+  let d;
+  try{ d=cx.getImageData(0,0,w,h).data; }
+  catch(e){ $('gr-name').textContent='BLOCKED BY CANVAS SECURITY'; return; }
+  const rgb=new Uint8Array(w*h*3), lum=new Uint8Array(w*h);
+  let hsh=2166136261;
+  for(let i=0;i<w*h;i++){
+    const o=i*4, a=d[o+3];
+    /* transparency reads as the void's own black, so a cut-out graphic
+       behaves like a mask everywhere without a separate alpha path */
+    const r=(d[o]*a/255)|0, g=(d[o+1]*a/255)|0, b=(d[o+2]*a/255)|0;
+    rgb[i*3]=r; rgb[i*3+1]=g; rgb[i*3+2]=b;
+    lum[i]=(r*77+g*151+b*28)>>8;
+    hsh=Math.imul(hsh^r,16777619); hsh=Math.imul(hsh^g,16777619); hsh=Math.imul(hsh^b,16777619);
+  }
+  const pk=grPaletteOf(rgb,w*h);
+  GRAFT.img={ id:hsh>>>0, name:String(name||'image').slice(0,64),
+    w:w, h:h, rgb:rgb, lum:lum, pal:pk.pal, glitch:pk.glitch };
+  const tc=$('gr-thumb'), tx=tc.getContext('2d');
+  tx.fillStyle='#0a080e'; tx.fillRect(0,0,72,72);
+  const ts=Math.min(72/w,72/h);
+  tx.imageSmoothingEnabled=false;
+  tx.drawImage(cv,(72-w*ts)/2,(72-h*ts)/2,w*ts,h*ts);
+  $('gr-thumbwrap').style.display='flex';
+  $('gr-name').textContent=GRAFT.img.name.toUpperCase();
+  $('gr-dims').textContent=w+'×'+h+' · hash '+GRAFT.img.id.toString(16).toUpperCase()
+    +' · palette '+GRAFT.img.pal.join(' ');
+  if(!GRAFT.cfg.on){ GRAFT.cfg.on=true; grOnSync(); }
+  grBroadcast(); grTouch();
+}
+function grIngest(file){
+  if(!file||!/^image\//.test(file.type||'')){ $('gr-name').textContent='NOT AN IMAGE'; return; }
+  const fr=new FileReader();
+  fr.onload=()=>{ const im=new Image();
+    im.onload=()=>grAdopt(im,file.name);
+    im.onerror=()=>{ $('gr-name').textContent='COULD NOT DECODE'; };
+    im.src=fr.result; };
+  fr.onerror=()=>{ $('gr-name').textContent='COULD NOT READ'; };
+  fr.readAsDataURL(file);
+}
+function grOnSync(){
+  $('gr-onlab').textContent=GRAFT.cfg.on?'ON':'OFF';
+  $('gr-on').textContent=GRAFT.cfg.on
+    ?'GRAFT: ON (your graphic is in the signal)'
+    :'GRAFT: OFF';
+}
+(function(){
+  const drop=$('gr-drop'), file=$('gr-file');
+  drop.addEventListener('click',()=>file.click());
+  file.addEventListener('change',()=>{ if(file.files&&file.files[0])grIngest(file.files[0]); file.value=''; });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{
+    e.preventDefault(); e.stopPropagation(); drop.style.borderColor='#ff8fd0'; }));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{
+    e.preventDefault(); e.stopPropagation(); drop.style.borderColor='#4a3a5c'; }));
+  drop.addEventListener('drop',e=>{
+    const dt=e.dataTransfer; if(dt&&dt.files&&dt.files[0])grIngest(dt.files[0]); });
+  $('gr-clear').addEventListener('click',()=>{
+    GRAFT.img=null; GRAFT.cfg.on=false; grOnSync();
+    $('gr-thumbwrap').style.display='none';
+    $('gr-name').textContent='NONE';
+    grTouch(); });
+  $('gr-on').addEventListener('click',()=>{
+    if(!GRAFT.img){ $('gr-name').textContent='CHOOSE A GRAPHIC FIRST'; return; }
+    GRAFT.cfg.on=!GRAFT.cfg.on; grOnSync(); grTouch(); });
+  $('gr-block').addEventListener('click',()=>{
+    GRAFT.cfg.block=!GRAFT.cfg.block;
+    $('gr-blocklab').textContent=GRAFT.cfg.block?'BLOCK':'SMOOTH';
+    $('gr-block').textContent='SAMPLING: '+(GRAFT.cfg.block?'BLOCK (nearest neighbour)':'SMOOTH');
+    grTouch(); });
+  $('gr-invert').addEventListener('click',()=>{
+    GRAFT.cfg.invert=!GRAFT.cfg.invert;
+    $('gr-invlab').textContent=GRAFT.cfg.invert?'ON':'OFF';
+    $('gr-invert').textContent='INVERT: '+(GRAFT.cfg.invert?'ON':'OFF');
+    grTouch(); });
+
+  /* roles are a multi-select: any number of them at once */
+  const ROLES=[['over','OVER'],['under','UNDER'],['floor','FLOOR'],['gobo','GOBO'],
+    ['stencil','STENCIL'],['slice','SLICE'],['warp','WARP'],['grain','GRAIN'],
+    ['palette','PALETTE']];
+  const rh=$('gr-roles');
+  ROLES.forEach(([k,lab])=>{
+    const b=document.createElement('button');
+    b.textContent=lab; b.setAttribute('data-role',k);
+    b.setAttribute('aria-pressed',String(!!GRAFT.cfg.roles[k]));
+    b.addEventListener('click',()=>{ GRAFT.cfg.roles[k]=!GRAFT.cfg.roles[k];
+      b.setAttribute('aria-pressed',String(!!GRAFT.cfg.roles[k])); grTouch(); });
+    rh.appendChild(b);
+  });
+  /* single-choice segments */
+  const one=(host,labels,get,set,lab)=>{
+    const el=$(host);
+    labels.forEach((n,i)=>{
+      const b=document.createElement('button');
+      b.textContent=n; b.setAttribute('aria-pressed',String(get()===i));
+      b.addEventListener('click',()=>{ set(i);
+        el.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed','false'));
+        b.setAttribute('aria-pressed','true');
+        if(lab)$(lab).textContent=n; grTouch(); });
+      el.appendChild(b);
+    });
+  };
+  one('gr-blend',['NORMAL','MULTIPLY','SCREEN','OVERLAY','DIFFERENCE','ADD',
+    'SUBTRACT','DARKEN','LIGHTEN','XOR','HARDLIGHT','SOFTLIGHT'],
+    ()=>GRAFT.cfg.blend, v=>{GRAFT.cfg.blend=v;}, 'gr-blendlab');
+  one('gr-depth',['WITHIN','ABOVE'],()=>GRAFT.cfg.depth, v=>{GRAFT.cfg.depth=v;}, 'gr-depthlab');
+  one('gr-fit',['COVER','CONTAIN','STRETCH','TILE'],()=>GRAFT.cfg.fit, v=>{GRAFT.cfg.fit=v;}, 'gr-fitlab');
+
+  const SL=[['opacity','OPACITY',0,100,'%'],['amt','AMOUNT',0,100,'%'],
+    ['scale','SCALE',5,400,'%'],['offx','OFFSET X',-100,100,'%'],
+    ['offy','OFFSET Y',-100,100,'%'],['rot','ROTATION',-180,180,'°'],
+    ['gamma','GAMMA',10,400,'%'],['thresh','THRESHOLD',0,100,'%']];
+  const host=$('gr-sliders');
+  for(const [k,lab,lo,hi,suf] of SL){
+    const row=document.createElement('div'); row.className='wbrow';
+    row.innerHTML='<label>'+lab+'</label><input type="range" min="'+lo+'" max="'+hi
+      +'" value="'+GRAFT.cfg[k]+'"><span class="v">'+GRAFT.cfg[k]+suf+'</span>';
+    const r=row.querySelector('input'), v=row.querySelector('.v'), l=row.querySelector('label');
+    const dflt=GRAFT.cfg[k];
+    r.addEventListener('input',()=>{ GRAFT.cfg[k]=+r.value; v.textContent=r.value+suf;
+      v.style.color=(+r.value===dflt)?'#7c8':'#ff8fd0'; grTouch(); });
+    l.addEventListener('dblclick',()=>{ r.value=dflt; GRAFT.cfg[k]=dflt;
+      v.textContent=dflt+suf; v.style.color='#7c8'; grTouch(); });
+    host.appendChild(row);
+  }
+  grOnSync();
+})();
+/* the instrument's own hand on the graft — the shell block is wrapped in an
+   IIFE, so these have to be handed out explicitly for gates and the console. */
+window.grAdopt=grAdopt; window.grIngest=grIngest; window.grTouch=grTouch;
+window.grBroadcast=grBroadcast; window.grOnSync=grOnSync; window.grPaletteOf=grPaletteOf;
+
 /* ---- SIGIL GAINS ---- */
 (function(){
   const host=$('wb-gains');
@@ -7757,7 +8314,15 @@ function wbSnapshot(){
         voidamt:state.voidamt, locality:state.locality, chromacap:state.chromacap,
         fx:Object.keys(state.fx).filter(k2=>state.fx[k2]),
         gains:Object.fromEntries(Object.entries(WB.gain).filter(([k2,v2])=>v2!==100)),
-        fam:WB.fam, prim:WB.prim, cam:WB.cam, mod:WB.mod, ladder:WB.ladder, live:true} };
+        fam:WB.fam, prim:WB.prim, cam:WB.cam, mod:WB.mod, ladder:WB.ladder, live:true,
+        graft:(window.GRAFT&&GRAFT.img&&GRAFT.cfg.on)?{
+          id:GRAFT.img.id, name:GRAFT.img.name, w:GRAFT.img.w, h:GRAFT.img.h,
+          roles:Object.keys(GRAFT.cfg.roles).filter(k3=>GRAFT.cfg.roles[k3]),
+          blend:GBLENDN[GRAFT.cfg.blend|0], depth:GRAFT.cfg.depth?'ABOVE':'WITHIN',
+          fit:GRAFT.cfg.fit, block:GRAFT.cfg.block, invert:GRAFT.cfg.invert,
+          opacity:GRAFT.cfg.opacity, amt:GRAFT.cfg.amt, scale:GRAFT.cfg.scale,
+          offx:GRAFT.cfg.offx, offy:GRAFT.cfg.offy, rot:GRAFT.cfg.rot,
+          gamma:GRAFT.cfg.gamma, thresh:GRAFT.cfg.thresh}:null} };
 }
 function wbLocal(){ try{return JSON.parse(localStorage.getItem('wb_verdicts')||'[]');}catch(e){return[];} }
 function wbLocalSave(a){ try{localStorage.setItem('wb_verdicts',JSON.stringify(a));}catch(e){} }
