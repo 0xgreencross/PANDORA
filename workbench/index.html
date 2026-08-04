@@ -783,6 +783,11 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <label>VOID BODY &middot; PRIMITIVE</label>
         <div class="seg" id="wb-prim"></div>
       </div>
+      <div class="field">
+        <label>CAMERA &middot; GESTURE</label>
+        <div class="seg" id="wb-cam"></div>
+        <p class="labnote" id="wb-camnote">Every render used to be the same move: one revolution, always the same way round, from the same height, at the same distance. This is the move itself. AUTO lets the seed choose; each gesture returns exactly to its start, so the loop always closes.</p>
+      </div>
       <h4>SIGIL GAINS &mdash; per-effect amplitude, 0&ndash;300% (100 = engine default; double-tap a name to reset)</h4>
       <div id="wb-gains"></div>
     </section>
@@ -1478,8 +1483,8 @@ function sceneView(scene, theta){
   const sv=mf._sv||(mf._sv={kind:new Uint8Array(M),nx:new Float32Array(M),ny:new Float32Array(M),
     nz:new Float32Array(M),px:new Float32Array(M),py:new Float32Array(M),pz:new Float32Array(M),
     dp:new Float32Array(M),ao:new Float32Array(M),rf:new Float32Array(M),VG});
-  const hasFloor=(mulberry32((scene.seed^0xF700)>>>0)())<0.65;
-  const laz=theta*0+mf.lightBase+0.6;
+  const hasFloor=mf.hasFloor;   /* decided in massField now — the camera has to respect it */
+  const laz=mf.cam.lightSpin*theta+mf.lightBase+0.6;   /* lightSpin!==0 only for the LOCKED camera, where the light is what moves */
   const lx=Math.cos(0.6)*Math.cos(laz), ly=-Math.sin(0.6), lz=Math.cos(0.6)*Math.sin(laz);
   const t0=C.dist-0.95*Math.max(1,S), t1=C.dist+1.6*Math.max(1,S);
   for(let gy=0;gy<VG;gy++){
@@ -1544,7 +1549,7 @@ function sceneView(scene, theta){
       }
     }
   }
-  sv.lx=lx; sv.ly=ly; sv.lz=lz; sv.hasFloor=hasFloor;
+  sv.lx=lx; sv.ly=ly; sv.lz=lz; sv.hasFloor=hasFloor; sv.az=C.az;
   return sv;
 }
 const BAYER4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
@@ -1579,7 +1584,7 @@ function renderScene(rgb, scene, theta, corr, grad){
         continue;
       }
       const dif=Math.max(0, sv.nx[gi]*sv.lx+sv.ny[gi]*sv.ly+sv.nz[gi]*sv.lz);
-      const rimV=Math.pow(Math.max(0, 1 - Math.abs(sv.nx[gi]*(-Math.sin(theta+mf.lightBase*0.7)) + sv.nz[gi]*(-Math.cos(theta+mf.lightBase*0.7)))),3)*0.24;
+      const rimV=Math.pow(Math.max(0, 1 - Math.abs(sv.nx[gi]*(-Math.sin(sv.az)) + sv.nz[gi]*(-Math.cos(sv.az)))),3)*0.24;
       let v=0.07+dif*0.60*sv.ao[gi]+rimV;
       /* the material dialect */
       let bc;
@@ -1964,26 +1969,56 @@ function massField(scene){
     }
   }
   const lightBase=rng()*TAU, grainPh=rng()*50;
-  /* frame the body: probe perspective coverage at theta=0, tune the lens */
+
+  /* ═══ THE CAMERA — AN ORGAN, NOT A CONSTANT ═══════════════════════════════
+     Until now every render in the engine used the SAME camera move:
+        az = theta + lightBase*0.7
+     so the body turned exactly ONE revolution, always the same direction,
+     always at the same rate, from an elevation pinned inside an 8-degree band
+     (0.20..0.344 rad — the only variance being fam%9), at a fixed distance,
+     with the rim light welded to the camera's own azimuth. Sixty-four bodies,
+     ONE gesture. THAT — not the body vocabulary — is why so much of the output
+     reads as "another 3D thing spinning to the right." It was never a
+     tendency. It was the only move the engine had.
+     The camera now carries its own seeded DNA: gesture, handedness, rate,
+     elevation, distance, roll. See camAt() for the loop-closure contract. */
+  const hasFloor=(mulberry32((scene.seed^0xF700)>>>0)())<0.65;
+  const crng=mulberry32((scene.seed^0x0CA3E4)>>>0);
+  const _lspin=crng()<0.5?1:-1;              /* drawn unconditionally: keeps the stream stable */
+  const CAM={
+    motion:(crng()*8)|0,
+    spin:  crng()<0.5?1:-1,        /* ← the handedness that never existed before */
+    a0:    crng()*TAU,
+    swing: 0.55+crng()*1.20,
+    elAmp: 0.08+crng()*0.30,
+    distK: 0.95+crng()*0.58,
+    distAmp:0.06+crng()*0.15,
+    roll:  crng()<0.25?(crng()*0.44-0.22):0,
+    /* elevation was 0.20..0.344 for EVERY seed that ever rendered. Now a real
+       range — worm's-eye through high overhead — floored by the mirror. */
+    el:    hasFloor?(0.06+crng()*0.80):(-0.26+crng()*1.12),
+    lightSpin:0 };
+  if(scene.__wbCam!=null) CAM.motion=scene.__wbCam&7;   /* workbench: gesture by hand */
+  if(CAM.motion===5) CAM.lightSpin=_lspin;   /* LOCKED camera => the LIGHT orbits instead */
+
+  /* frame the body: probe coverage at theta=0 through the REAL camera, so the
+     lens is tuned for the gesture the seed will actually perform, not for a
+     turntable it may never do. */
   let fovK=0.34*Math.max(1,S);
-  { const dist=1.25*Math.max(1,S), el=0.20+(fam%9)*0.018, az=lightBase*0.7;
-    const ex=dist*Math.cos(el)*Math.sin(az), ey=0.5-dist*Math.sin(el), ez=dist*Math.cos(el)*Math.cos(az);
-    let fx3=-ex, fy3=0.5-ey, fz3=-ez; const fl=Math.hypot(fx3,fy3,fz3); fx3/=fl;fy3/=fl;fz3/=fl;
-    let rx=fz3, rz=-fx3; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
-    const ux=-rz*fy3, uy=rz*fx3-rx*fz3, uz=rx*fy3;
+  { const stub={cam:CAM,S:S,hasFloor:hasFloor}, A=camAt(stub,0),
+          B=camBasis(A.az,A.el,A.dist,A.roll), ex=B.ex, ey=B.ey, ez=B.ez;
     for(let it=0;it<2;it++){
       let hits2=0, tot=0;
       for(let gy=0;gy<60;gy+=3)for(let gx=0;gx<60;gx+=3){ tot++;
         const sxc=(gx/60-0.5)*2*fovK, syc=(gy/60-0.5)*2*fovK;
-        let dx=fx3+rx*sxc+ux*syc, dy=fy3+syc*uy, dz=fz3+rz*sxc+uz*syc;
-        dy=fy3+ux*0; dy=fy3+uy*syc;
+        let dx=B.fx+B.rx*sxc+B.ux*syc, dy=B.fy+B.ry*sxc+B.uy*syc, dz=B.fz+B.rz*sxc+B.uz*syc;
         const dl=Math.hypot(dx,dy,dz); dx/=dl;dy/=dl;dz/=dl;
-        let t=dist-0.95*Math.max(1,S);
+        let t=A.dist-0.95*Math.max(1,S);
         for(let st=0;st<22;st++){
           const d2=sdf(ex+dx*t, ey+dy*t, ez+dz*t, S, 0);
           if(d2<0.012){hits2++;break;}
           t+=Math.max(d2,0.016);
-          if(t>dist+0.95*Math.max(1,S))break;
+          if(t>A.dist+0.95*Math.max(1,S))break;
         }
       }
       const cov=hits2/tot;
@@ -1991,7 +2026,7 @@ function massField(scene){
       fovK=Math.max(0.14,Math.min(1.3,fovK));
     }
   }
-  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,PX:new Float32Array(FW*FW),PY:new Float32Array(FW*FW),PZ:new Float32Array(FW*FW),AO:new Float32Array(FW*FW),lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK};
+  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,PX:new Float32Array(FW*FW),PY:new Float32Array(FW*FW),PZ:new Float32Array(FW*FW),AO:new Float32Array(FW*FW),lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK,cam:CAM,hasFloor:hasFloor};
   return scene._mf;
 }
 function matOf(scene){
@@ -2014,14 +2049,50 @@ function surfTear(px,py,pz,theta,M,amp){
   const d3=Math.sin((px+pz)*9+py*M.tearF2*0.6-sn*1.3);
   return (d1*d2+d3*0.5)*amp;
 }
-function eCam(mf, theta){
-  const S=mf.S, az=theta+mf.lightBase*0.7, el=0.20+(mf.fam%9)*0.018;
-  const dist=1.25*Math.max(1,S);
+/* ═══ WHERE THE CAMERA IS AT A GIVEN PHASE ════════════════════════════════
+   EVERY branch below is exactly TAU-periodic — built only from theta itself
+   (whole revolutions) or from sin/cos of integer multiples of theta. That is
+   what keeps the GIF loop seamless: at theta=TAU the camera is back where it
+   started, exactly. Do not add a term here that does not close. */
+function camAt(mf, theta){
+  const K=mf.cam; let az=K.a0, el=K.el, dk=K.distK, roll=0;
+  switch(K.motion){
+    case 1: az+=K.swing*Math.sin(theta)*K.spin; break;                  /* PENDULUM — rocks, never completes */
+    case 2: az+=theta*2*K.spin; break;                                  /* DOUBLE   — two revolutions per loop */
+    case 3: az+=K.swing*Math.sin(theta)*K.spin;                         /* CRANE    — rocks while it descends */
+            el+=K.elAmp*Math.cos(theta)-K.elAmp; break;
+    case 4: dk*=1+K.distAmp*Math.cos(theta); break;                     /* DOLLY    — locked heading, breathes in */
+    case 5: break;                                                      /* LOCKED   — camera still; the LIGHT orbits */
+    case 6: az+=theta*K.spin; el+=K.elAmp*Math.sin(theta*2); break;     /* SPIRAL   — orbit with a vertical wobble */
+    case 7: az+=K.swing*Math.sin(theta)*K.spin;                         /* SWAY     — handheld drift */
+            dk*=1+K.distAmp*Math.cos(theta*2); break;
+    default: az+=theta*K.spin;                                          /* TURNTABLE — the old one, now handed */
+  }
+  if(K.roll) roll=K.roll*Math.sin(theta);
+  const dist=dk*1.25*Math.max(1,mf.S);
+  /* the camera may never sink below the mirror floor, or the stage inverts */
+  if(mf.hasFloor){ const lim=(0.5-(FLY-0.16))/dist;
+    if(Math.sin(el)<lim) el=Math.asin(Math.max(-1,Math.min(1,lim))); }
+  el=Math.max(-0.34,Math.min(1.05,el));
+  return {az,el,dist,roll};
+}
+/* orthonormal camera basis. Identical math to the old inline block when
+   roll===0, so a zero-roll camera stays directly comparable with the old one. */
+function camBasis(az, el, dist, roll){
   const ex=dist*Math.cos(el)*Math.sin(az), ey=0.5-dist*Math.sin(el), ez=dist*Math.cos(el)*Math.cos(az);
-  let fx=-ex, fy=0.5-ey, fz=-ez; const fl=Math.hypot(fx,fy,fz); fx/=fl;fy/=fl;fz/=fl;
-  let rx=fz, rz=-fx; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
-  const ux=-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy;
-  return {ex,ey,ez,fx,fy,fz,rx,ry:0,rz,ux,uy,uz,dist,fov:(mf.fovK||0.34*Math.max(1,S))};
+  let fx=-ex, fy=0.5-ey, fz=-ez; const fl=Math.hypot(fx,fy,fz)||1; fx/=fl;fy/=fl;fz/=fl;
+  let rx=fz, ry=0, rz=-fx; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
+  let ux=-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy;
+  if(roll){ const c=Math.cos(roll), s=Math.sin(roll);
+    const ax=rx*c+ux*s, ay=ry*c+uy*s, az2=rz*c+uz*s;
+    const bx=ux*c-rx*s, by=uy*c-ry*s, bz=uz*c-rz*s;
+    rx=ax; ry=ay; rz=az2; ux=bx; uy=by; uz=bz; }
+  return {ex,ey,ez,fx,fy,fz,rx,ry,rz,ux,uy,uz,dist};
+}
+function eCam(mf, theta){
+  const A=camAt(mf,theta), B=camBasis(A.az,A.el,A.dist,A.roll);
+  B.fov=(mf.fovK||0.34*Math.max(1,mf.S)); B.az=A.az; B.el=A.el;
+  return B;
 }
 function massView(scene, mf, theta){
   mf.mat=mf.mat||matOf(scene);
@@ -3836,6 +3907,10 @@ async function generateSeq(){
   const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
   const scene=buildScene(seed, state.mode);
+  /* the body/camera overrides must be seated BEFORE seatWounds, which builds
+     and CACHES the mass field. Set them after and the field is already frozen —
+     which is exactly why forcing a gesture rendered identical pixels. */
+  if(window.WB){ scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam; }
   scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
@@ -4055,11 +4130,12 @@ self.onmessage=function(e){
   const J=e.data;
   try{
     const scene=buildScene(J.seed,J.mode);
+    /* seated BEFORE seatWounds — it builds and caches the mass field */
+    if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; }
     scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
     scene.epoch=J.epoch|0;
     applyOverridesPure(scene,J.seed,J.ov);
-    if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim;
-      if(J.wb.gain)for(var wbk in scene.vibe.g){var wbm=J.wb.gain[wbk];
+    if(J.wb && J.wb.gain){ for(var wbk in scene.vibe.g){var wbm=J.wb.gain[wbk];
         if(wbm!=null&&wbm!==100)scene.vibe.g[wbk]=scene.vibe.g[wbk]*wbm/100;} }
     const {grad,pal,near}=buildPalette(J.scheme,scene.vibe);
     const N=J.N, corr=J.corr, fx=J.fx, DELAY=J.DELAY;
@@ -4286,6 +4362,10 @@ async function generate(){
   const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
   const scene=buildScene(seed, state.mode);
+  /* the body/camera overrides must be seated BEFORE seatWounds, which builds
+     and CACHES the mass field. Set them after and the field is already frozen —
+     which is exactly why forcing a gesture rendered identical pixels. */
+  if(window.WB){ scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam; }
   scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
@@ -4322,7 +4402,7 @@ async function generate(){
 
   const jobOf=w=>({seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0, chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
-    wb:(window.WB?{fam:WB.fam,prim:WB.prim,gain:WB.gain}:null),
+    wb:(window.WB?{fam:WB.fam,prim:WB.prim,cam:WB.cam,gain:WB.gain}:null),
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
   await new Promise(resolve=>{
@@ -6942,11 +7022,11 @@ setInterval(paint,250); paint();
    DIGEST   — keep-rates by mode/sigil/corr/void + gentle taste suppression:
               sigils the curator reliably kills get culled from fresh rolls.
    ========================================================================== */
-const WB=window.WB={fam:null, prim:null, gain:{}, ladder:false, lastTouch:0, res:'AUTO', truth:true};
-function wbHasOverrides(){ if(WB.fam!=null||WB.prim!=null)return true;
+const WB=window.WB={fam:null, prim:null, cam:null, gain:{}, ladder:false, lastTouch:0, res:'AUTO', truth:true};
+function wbHasOverrides(){ if(WB.fam!=null||WB.prim!=null||WB.cam!=null)return true;
   for(const k in WB.gain)if(WB.gain[k]!==100)return true; return false; }
 const wbTune=window.wbTune=function(scene){
-  scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim;
+  scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam;
   if(!scene.__gBase)scene.__gBase=Object.assign({},scene.vibe.g);
   for(const k in scene.__gBase){ const m=WB.gain[k];
     scene.vibe.g[k]=scene.__gBase[k]*((m==null?100:m)/100); }
@@ -6983,13 +7063,14 @@ function release(){ if(gate)return; gate=true; schedule(Math.max(0, 40-(Date.now
 const rgbA=new Uint8Array(W*H*3), rgbB=new Uint8Array(W*H*3), rgbC=new Uint8Array(W*H*3);
 const idx=new Uint8Array(W*H);
 function skey(J){ return JSON.stringify([J.seed,J.mode,J.voidamt,J.locality,J.chromacap,
-  J.epoch,J.ov,J.scheme,J.wb&&J.wb.fam,J.wb&&J.wb.prim]); }
+  J.epoch,J.ov,J.scheme,J.wb&&J.wb.fam,J.wb&&J.wb.prim,J.wb&&J.wb.cam]); }
 function buildSC(J){
   const scene=buildScene(J.seed,J.mode);
+  /* seated BEFORE seatWounds — it builds and caches the mass field */
+  if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; }
   scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
   scene.epoch=J.epoch|0;
   applyOverridesPure(scene,J.seed,J.ov);
-  if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; }
   const pack=buildPalette(J.scheme,scene.vibe);
   const gBase=Object.assign({},scene.vibe.g);
   const MV=Object.assign({},scene.rev4.motion,{quant:0,strobes:[]});
@@ -7177,7 +7258,7 @@ const wbPvJob=window.wbPvJob=function(){
   return { seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0,
     chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr:state.corr, N:state.frames, fx:{...state.fx}, ov:{...OV}, epoch:EPOCH,
-    wb:{fam:WB.fam,prim:WB.prim,gain:{...WB.gain}} };
+    wb:{fam:WB.fam,prim:WB.prim,cam:WB.cam,gain:{...WB.gain}} };
 };
 const wbPush=window.wbPush=function(){
   if(!WBPV.alive){ const r=wbPvPick();
@@ -7503,6 +7584,10 @@ $('wb-ladder').addEventListener('click',()=>{ WB.ladder=!WB.ladder;
   const PRIMN=['ELLIP','BOX','TORUS','CAPS','CONE','HTOR','SLAB','ELL2'];
   const mkP=seg('wb-prim',null,v=>{WB.prim=v;});
   PRIMN.forEach((n,i2)=>mkP(n,i2));
+  /* the camera is an organ now — index order must match camAt()'s switch */
+  const CAMN=['TURNTBL','PENDULUM','DOUBLE','CRANE','DOLLY','LOCKED','SPIRAL','SWAY'];
+  const mkC=seg('wb-cam',null,v=>{WB.cam=v;});
+  CAMN.forEach((n,i2)=>mkC(n,i2));
 })();
 
 /* ---- SIGIL GAINS ---- */
@@ -7534,7 +7619,7 @@ function wbSnapshot(){
         voidamt:state.voidamt, locality:state.locality, chromacap:state.chromacap,
         fx:Object.keys(state.fx).filter(k2=>state.fx[k2]),
         gains:Object.fromEntries(Object.entries(WB.gain).filter(([k2,v2])=>v2!==100)),
-        fam:WB.fam, prim:WB.prim, ladder:WB.ladder, live:true} };
+        fam:WB.fam, prim:WB.prim, cam:WB.cam, ladder:WB.ladder, live:true} };
 }
 function wbLocal(){ try{return JSON.parse(localStorage.getItem('wb_verdicts')||'[]');}catch(e){return[];} }
 function wbLocalSave(a){ try{localStorage.setItem('wb_verdicts',JSON.stringify(a));}catch(e){} }
