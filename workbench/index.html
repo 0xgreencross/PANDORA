@@ -784,6 +784,11 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <div class="seg" id="wb-prim"></div>
       </div>
       <div class="field">
+        <label>VOID BODY &middot; MODIFIER</label>
+        <div class="seg" id="wb-mod"></div>
+        <p class="labnote">The modifier bends the space the body is measured in, so one skeleton and one primitive can come out twisted, tapered, terraced, hollowed or split in two. It multiplies the vocabulary rather than adding to it.</p>
+      </div>
+      <div class="field">
         <label>CAMERA &middot; GESTURE</label>
         <div class="seg" id="wb-cam"></div>
         <p class="labnote" id="wb-camnote">Every render used to be the same move: one revolution, always the same way round, from the same height, at the same distance. This is the move itself. AUTO lets the seed choose; each gesture returns exactly to its start, so the loop always closes.</p>
@@ -1802,16 +1807,17 @@ function faultOf(scene){
 function massField(scene){
   if(scene._mf) return scene._mf;
   const rng=mulberry32((scene.seed^0x14CE55)>>>0);
-  let fam=(rng()*64)|0;             // the sixty-four bodies
-  if(scene.__wbFam!=null)fam=((scene.__wbFam&7)<<3)|(fam&7);   // workbench: skeleton by hand
-  if(scene.__wbPrim!=null)fam=(fam&56)|(scene.__wbPrim&7);     // workbench: vocabulary by hand
+  let fam=(rng()*256)|0;            // 16 skeletons x 16 vocabularies = 256 bodies
+  if(scene.__wbFam!=null)fam=((scene.__wbFam&15)<<4)|(fam&15);  // workbench: skeleton by hand
+  if(scene.__wbPrim!=null)fam=(fam&240)|(scene.__wbPrim&15);    // workbench: vocabulary by hand
   let vf=(scene.voidamt|0)/100;
   if(scene.mode==='MASS'&&vf<=0)vf=0.45;
   vf=Math.max(0.12,Math.min(0.88,vf));
   const target=1-vf;
   const no=scene.noise;
-  const arr=fam>>3, prim=fam&7;          // 8 skeletons x 8 vocabularies = 64 bodies
-  const mirror=(arr===1)||((arr===3||arr===2)&&rng()<0.4);
+  const arr=fam>>4, prim=fam&15;         // 16 skeletons x 16 vocabularies = 256 bodies
+  const mirror=(arr===1)||((arr===3||arr===2)&&rng()<0.4)
+    ||((arr===9||arr===13||arr===15)&&rng()<0.35);
   const ph=rng()*90;
   const fbmA=0.02+rng()*0.035, fbmF=4+rng()*5;
   /* ---- primitive vocabulary ---- */
@@ -1819,8 +1825,10 @@ function massField(scene){
   const P=[];    // parts: [type, x,y,z, a,b,c, k(blend), rot]
   const C=[];    // carvings: spheres [x,y,z,r] subtracted
   const F=[];    // fracture planes [nx,ny,off,halfwidth]
-  const pick=(base)=>{ const r=rng(); return r<0.62?base:( (base+1+((r*6)|0))&7 ); };
-  const addPart=(t,x,y,z,a,b,c,k)=>{ P.push([t,x,y,z,a,b,c,k, rng()*0.9-0.45]); };
+  const pick=(base)=>{ const r=rng(); return r<0.58?base:( (base+1+((r*14)|0))&15 ); };
+  /* rot may now be given explicitly — a truss bar has to point AT its node.
+     Omit it and the old behaviour (a random tilt) is preserved exactly. */
+  const addPart=(t,x,y,z,a,b,c,k,rot)=>{ P.push([t,x,y,z,a,b,c,k, rot==null?(rng()*0.9-0.45):rot]); };
   let hasDrape=false;
   if(arr===0){        // STACK — vertical accumulation
     let cy=0.24+rng()*0.08; const n2=3+((rng()*4)|0);
@@ -1853,21 +1861,86 @@ function massField(scene){
       0.16+rng()*0.13, 0.028+rng()*0.03, 0.07, 0.02+rng()*0.02); cy+=0.075+rng()*0.05; }
   } else if(arr===6){ // MONO — one mass, wounded
     addPart(pick(prim), 0, 0.48+rng()*0.06, 0, 0.19+rng()*0.10, 0.24+rng()*0.12, 0.10, 0.03);
-  } else {            // FIELD — drapery with buried parts
+  } else if(arr===7){ // FIELD — drapery with buried parts
     hasDrape=true;
     const n2=1+((rng()*2)|0);
     for(let i=0;i<n2;i++) addPart(pick(prim), (rng()-0.5)*0.4, 0.3+rng()*0.4, -0.02,
       0.07+rng()*0.08, 0.06+rng()*0.07, 0.05, 0.10);
   }
+  /* ─── the eight new skeletons. The first eight are the engine's whole
+         history; these are the postures it never had. ─────────────────── */
+  else if(arr===8){   // HELIX — a rising spiral
+    const n2=5+((rng()*5)|0), R=0.13+rng()*0.12, turns=0.8+rng()*1.7, a0=rng()*TAU,
+          y0=0.22+rng()*0.06, rise=0.30+rng()*0.24;
+    for(let i=0;i<n2;i++){ const t=i/(n2-1||1), an=a0+t*TAU*turns;
+      addPart(pick(prim), Math.cos(an)*R, y0+t*rise, Math.sin(an)*R*0.6,
+        0.045+rng()*0.055, 0.045+rng()*0.05, 0.04, 0.06+rng()*0.05); }
+  } else if(arr===9){ // FAN — blades thrown out of a hub
+    addPart(pick(prim), 0, 0.5, 0, 0.06+rng()*0.05, 0.06+rng()*0.05, 0.055, 0.05);
+    const n2=3+((rng()*5)|0), a0=rng()*TAU, L=0.15+rng()*0.15;
+    for(let i=0;i<n2;i++){ const an=a0+i*TAU/n2;
+      addPart(pick(prim), Math.cos(an)*L*0.72, 0.5+Math.sin(an)*L*0.72, (rng()-0.5)*0.05,
+        0.028+rng()*0.045, 0.09+rng()*0.09, 0.03, 0.04+rng()*0.05, Math.PI/2-an); }
+  } else if(arr===10){ // TRUSS — nodes joined by bars that actually point at them
+    const n2=3+((rng()*3)|0), nodes=[];
+    for(let i=0;i<n2;i++) nodes.push([(rng()-0.5)*0.34, 0.26+rng()*0.44, (rng()-0.5)*0.16]);
+    for(const nd of nodes) addPart(pick(prim), nd[0],nd[1],nd[2],
+      0.035+rng()*0.04, 0.035+rng()*0.04, 0.035, 0.03);
+    for(let i=0;i<nodes.length;i++){ const A2=nodes[i], B2=nodes[(i+1)%nodes.length];
+      const dx=B2[0]-A2[0], dy=B2[1]-A2[1];
+      addPart(3, (A2[0]+B2[0])/2, (A2[1]+B2[1])/2, (A2[2]+B2[2])/2,
+        0.013+rng()*0.013, Math.hypot(dx,dy)*0.5, 0, 0.02, Math.atan2(dx,dy)); }
+  } else if(arr===11){ // SHARDS — slabs at every angle, no two alike
+    const n2=4+((rng()*5)|0);
+    for(let i=0;i<n2;i++) addPart(rng()<0.5?1:6, (rng()-0.5)*0.36, 0.24+rng()*0.48, (rng()-0.5)*0.2,
+      0.05+rng()*0.13, 0.02+rng()*0.05, 0.03+rng()*0.05, 0.015+rng()*0.02, rng()*TAU);
+  } else if(arr===12){ // TOWER — telescoping tiers, each smaller than the last
+    let cy=0.20+rng()*0.06, w=0.19+rng()*0.09; const n2=4+((rng()*4)|0);
+    for(let i=0;i<n2;i++){ addPart(pick(prim), 0, cy, 0, w, 0.045+rng()*0.05, w*0.82, 0.03+rng()*0.03);
+      cy+=0.09+rng()*0.06; w*=0.62+rng()*0.24; }
+  } else if(arr===13){ // ARCH — a vault carried on an arc
+    const n2=5+((rng()*4)|0), R=0.22+rng()*0.12, span=1.2+rng()*1.5, a0=Math.PI/2-span/2,
+          y0=0.32+rng()*0.08;
+    for(let i=0;i<n2;i++){ const an=a0+span*i/(n2-1||1);
+      addPart(pick(prim), Math.cos(an)*R, y0+Math.sin(an)*R, (rng()-0.5)*0.05,
+        0.045+rng()*0.05, 0.045+rng()*0.04, 0.045, 0.05+rng()*0.05, Math.PI/2-an); }
+  } else if(arr===14){ // CLUSTER — an accreted mass, wounded twice over
+    const n2=6+((rng()*6)|0);
+    for(let i=0;i<n2;i++){ const an=rng()*TAU, rr=rng()*0.16;
+      addPart(pick(prim), Math.cos(an)*rr, 0.46+(rng()-0.5)*0.30, Math.sin(an)*rr,
+        0.055+rng()*0.09, 0.055+rng()*0.09, 0.06, 0.10+rng()*0.08); }
+  } else {             // BEAM — a long span with weight hanging off it
+    const L=0.24+rng()*0.13, hy=0.52+rng()*0.16;
+    addPart(1, 0, hy, 0, L, 0.028+rng()*0.03, 0.05, 0.02);
+    const n2=2+((rng()*4)|0);
+    for(let i=0;i<n2;i++){ const t=(i+0.5)/n2;
+      addPart(pick(prim), (t-0.5)*2*L*0.85, hy-0.07-rng()*0.22, (rng()-0.5)*0.06,
+        0.028+rng()*0.05, 0.05+rng()*0.09, 0.03, 0.04+rng()*0.04); }
+  }
   const PB=[];
   for(const p of P){ rotc.push(Math.cos(p[8])); rots.push(Math.sin(p[8]));
     PB.push(Math.max(p[4],p[5],p[6]||0)+p[7]+0.02); }
   /* wounds in the anatomy */
-  const sockets=(arr===6?2:((rng()*3)|0));
+  const sockets=(arr===6?2:(arr===14?3:((rng()*3)|0)));
   for(let i=0;i<sockets;i++) C.push([(rng()-0.5)*0.24, 0.3+rng()*0.35, 0.02+rng()*0.06, 0.04+rng()*0.05]);
-  const fracN=(arr===6||arr===5)?2+((rng()*2)|0):((rng()*2)|0);
+  const fracN=(arr===6||arr===5||arr===12)?2+((rng()*2)|0):((rng()*2)|0);
   for(let i=0;i<fracN;i++){ const a=rng()*TAU;
     F.push([Math.cos(a), Math.sin(a), (rng()-0.5)*0.4, 0.004+rng()*0.006]); }
+  /* ═══ THE MODIFIER — the body's second organ ═══════════════════════════
+     256 bodies is still 256 silhouettes. A domain modifier bends the space the
+     body is measured in, so the SAME skeleton and the SAME vocabulary come out
+     twisted, tapered, terraced, hollowed or doubled. It multiplies the
+     vocabulary instead of adding to it. Distorting the domain also distorts
+     the distance metric, so each modifier carries a Lipschitz factor MODK and
+     the march takes more steps whenever one is active — otherwise the ray
+     overshoots the surface and punches holes in the body. */
+  const modrng=mulberry32((scene.seed^0x30D1F1)>>>0);
+  const MK0=modrng()<0.30?0:1+((modrng()*7)|0);
+  const MOD={kind:MK0, amt:0.45+modrng()*1.05, freq:2+modrng()*5, ph:modrng()*TAU};
+  if(scene.__wbMod!=null)MOD.kind=scene.__wbMod&7;
+  const MK=MOD.kind, MA=MOD.amt, MF=MOD.freq, MP=MOD.ph;
+  const MODK=(MK===1||MK===4)?0.55:(MK===2?0.62:(MK===3?0.58:(MK===5?0.72:1)));
+  const MCLIP=MK?1.05:0.85, MSTEP=MK?34:22;
   const sm=(a,b,k)=>{const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25;};
   const foldAt=(x,y,S)=>{
     let px=x/S, py=(y-0.5)/S+0.5;
@@ -1889,13 +1962,71 @@ function massField(scene){
       case 6:{ const qx=Math.abs(px)-a, qy=Math.abs(py)-b, qz=Math.abs(pz)-0.02;
         return Math.sqrt(Math.max(qx,0)**2+Math.max(qy,0)**2+Math.max(qz,0)**2)
           +Math.min(Math.max(qx,Math.max(qy,qz)),0); }
-      default:{ const l=Math.sqrt((px*px)/(a*a)+(py*py)/(b*b)+(pz*pz)/(a*a)); return (l-1)*Math.min(a,b); }
+      /* ─── the eight new vocabularies. Every one stays inside the same
+             a/b/c envelope the first eight used, so the part bounding radius
+             PB is still valid and the march cannot overshoot. ─────────── */
+      case 8:{  /* PRISM6 — hexagonal column */
+        const h=a*0.86; let qx=Math.abs(px), qz=Math.abs(pz);
+        const kx=-0.8660254, ky=0.5, kz=0.57735;
+        const dt=Math.min(kx*qx+ky*qz,0)*2; qx-=dt*kx; qz-=dt*ky;
+        const cl=Math.max(-kz*h,Math.min(kz*h,qx));
+        const d1=Math.hypot(qx-cl, qz-h)*Math.sign(qz-h), d2=Math.abs(py)-b;
+        return Math.min(Math.max(d1,d2),0)+Math.hypot(Math.max(d1,0),Math.max(d2,0)); }
+      case 9:{  /* SPOKE — radial blades */
+        const NB=5, th=Math.max(0.012,(c||0.05)*0.42), d2=Math.abs(py)-b;
+        let best=1e9;
+        for(let i=0;i<NB;i++){ const an=i*Math.PI/NB, ca=Math.cos(an), sa=Math.sin(an);
+          const rx=px*ca+pz*sa, rz=-px*sa+pz*ca;
+          const qx=Math.abs(rx)-a, qz=Math.abs(rz)-th;
+          const dd=Math.min(Math.max(qx,qz),0)+Math.hypot(Math.max(qx,0),Math.max(qz,0));
+          if(dd<best)best=dd; }
+        return Math.min(Math.max(best,d2),0)+Math.hypot(Math.max(best,0),Math.max(d2,0)); }
+      case 10:{ /* CROSS — three bars through one another */
+        const t=Math.max(0.018,Math.min(a,b)*0.40);
+        const bx=(qa,qb,qc)=>{ const x=Math.abs(px)-qa, y=Math.abs(py)-qb, z=Math.abs(pz)-qc;
+          return Math.min(Math.max(x,Math.max(y,z)),0)
+               +Math.hypot(Math.max(x,0),Math.max(y,0),Math.max(z,0)); };
+        return Math.min(bx(a,t,t), Math.min(bx(t,b,t), bx(t,t,a))); }
+      case 11:{ /* WEDGE — a box cut on the diagonal */
+        const cz=c||0.07, qx=Math.abs(px)-a, qy=Math.abs(py)-b, qz=Math.abs(pz)-cz;
+        let d=Math.min(Math.max(qx,Math.max(qy,qz)),0)
+             +Math.hypot(Math.max(qx,0),Math.max(qy,0),Math.max(qz,0));
+        const L=Math.hypot(a,b)||1;
+        return Math.max(d, (px*(b/L)+py*(a/L))); }
+      case 12:{ /* LENS — two spheres meeting, exactly a wide and b tall */
+        const bb=Math.max(0.02,b), R=(a*a+bb*bb)/(2*bb), off=R-bb;
+        return Math.max(Math.hypot(px,py-off,pz)-R, Math.hypot(px,py+off,pz)-R); }
+      case 13:{ /* TUBE — an open cylinder */
+        const w=Math.max(0.014,Math.min(a*0.45,(c||0.03)));
+        const r=Math.abs(Math.hypot(px,pz)-(a-w))-w, d2=Math.abs(py)-b;
+        return Math.min(Math.max(r,d2),0)+Math.hypot(Math.max(r,0),Math.max(d2,0)); }
+      case 14:{ /* PYRA — a square pyramid standing on its base */
+        const H=2*b, L=Math.hypot(H,a)||1, nx=H/L, ny=a/L;
+        const ax=Math.abs(px), az=Math.abs(pz), yb=py+b;
+        let d=Math.max(ax*nx+yb*ny-a*nx, az*nx+yb*ny-a*nx);
+        return Math.max(d, -yb); }
+      case 15:{ /* OCTA — an octahedron, squashed to fit b */
+        const sy=a/Math.max(0.03,b);
+        return (Math.abs(px)+Math.abs(py)*sy+Math.abs(pz)-a)*0.57735/Math.max(1,sy); }
+      case 7: default:{ const l=Math.sqrt((px*px)/(a*a)+(py*py)/(b*b)+(pz*pz)/(a*a)); return (l-1)*Math.min(a,b); }
     }
   };
   const sdf=(x,y,z,S,fold)=>{
     let px=x/S, py=(y-0.5)/S+0.5, pz=z/S;
-    if(px>0.85||px<-0.85||py<-0.2||py>1.25) return 0.3;
+    if(px>MCLIP||px<-MCLIP||py<-0.2-(MK?0.2:0)||py>1.25+(MK?0.2:0)) return 0.3;
     if(mirror)px=Math.abs(px);
+    if(MK){                                  /* bend the space, not the body */
+      const yy=py-0.5;
+      if(MK===1){ const an=MA*1.7*yy, ca=Math.cos(an), sa=Math.sin(an);   /* TWIST */
+        const tx=px*ca-pz*sa; pz=px*sa+pz*ca; px=tx; }
+      else if(MK===2){ const k2=Math.max(0.28,1+MA*0.85*yy);              /* TAPER */
+        px/=k2; pz/=k2; }
+      else if(MK===3){ px+=MA*0.55*yy*yy-MA*0.055; }                      /* BEND  */
+      else if(MK===4){ const r=Math.hypot(px,pz)||1e-6,                   /* RIPPLE*/
+        w=Math.sin(py*MF*3+MP)*MA*0.032; px+=px/r*w; pz+=pz/r*w; }
+      else if(MK===5){ px+=MA*0.38*yy; }                                  /* SHEAR */
+      else if(MK===7){ px=Math.abs(px)-MA*0.055; }                        /* SPLIT */
+    }
     let d=1e9;
     if(hasDrape){ d=pz+0.06-fold;
       const rimB=Math.max(Math.abs(px)-0.32, Math.abs(py-0.5)-0.42);
@@ -1912,7 +2043,8 @@ function massField(scene){
       d=Math.max(d, -(Math.sqrt(dx*dx+dy*dy+dz*dz)-c2[3])); }
     for(const f2 of F){ const pd=Math.abs(px*f2[0]+py*f2[1]+f2[2])-f2[3];
       d=Math.max(d,-pd); }
-    return d;
+    if(MK===6) d=Math.abs(d)-(0.010+MA*0.016);          /* SHELL — hollow it out */
+    return d*MODK;
   };
   /* --- march at half grid, area-law scale iteration --- */
   const FH=96;
@@ -1920,7 +2052,7 @@ function massField(scene){
   const march=(px,py,S,cheap)=>{  // returns [hit, z, nx,ny,nz] via ortho ray
     let z=-0.5;
     const fold=hasDrape?foldAt(px,py,S):0;
-    for(let st=0;st<22;st++){
+    for(let st=0;st<MSTEP;st++){
       const d=sdf(px,py,z,S,fold);
       if(d<0.008){
         if(cheap)return [1,z,0,0,0];
@@ -2026,7 +2158,7 @@ function massField(scene){
       fovK=Math.max(0.14,Math.min(1.3,fovK));
     }
   }
-  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,PX:new Float32Array(FW*FW),PY:new Float32Array(FW*FW),PZ:new Float32Array(FW*FW),AO:new Float32Array(FW*FW),lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK,cam:CAM,hasFloor:hasFloor};
+  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,PX:new Float32Array(FW*FW),PY:new Float32Array(FW*FW),PZ:new Float32Array(FW*FW),AO:new Float32Array(FW*FW),lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK,cam:CAM,hasFloor:hasFloor,mod:MOD};
   return scene._mf;
 }
 function matOf(scene){
@@ -3910,7 +4042,7 @@ async function generateSeq(){
   /* the body/camera overrides must be seated BEFORE seatWounds, which builds
      and CACHES the mass field. Set them after and the field is already frozen —
      which is exactly why forcing a gesture rendered identical pixels. */
-  if(window.WB){ scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam; }
+  if(window.WB){ scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam; scene.__wbMod=WB.mod; }
   scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
@@ -4131,7 +4263,7 @@ self.onmessage=function(e){
   try{
     const scene=buildScene(J.seed,J.mode);
     /* seated BEFORE seatWounds — it builds and caches the mass field */
-    if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; }
+    if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; scene.__wbMod=J.wb.mod; }
     scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
     scene.epoch=J.epoch|0;
     applyOverridesPure(scene,J.seed,J.ov);
@@ -4365,7 +4497,7 @@ async function generate(){
   /* the body/camera overrides must be seated BEFORE seatWounds, which builds
      and CACHES the mass field. Set them after and the field is already frozen —
      which is exactly why forcing a gesture rendered identical pixels. */
-  if(window.WB){ scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam; }
+  if(window.WB){ scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam; scene.__wbMod=WB.mod; }
   scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
@@ -4402,7 +4534,7 @@ async function generate(){
 
   const jobOf=w=>({seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0, chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
-    wb:(window.WB?{fam:WB.fam,prim:WB.prim,cam:WB.cam,gain:WB.gain}:null),
+    wb:(window.WB?{fam:WB.fam,prim:WB.prim,cam:WB.cam,mod:WB.mod,gain:WB.gain}:null),
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
   await new Promise(resolve=>{
@@ -7022,11 +7154,11 @@ setInterval(paint,250); paint();
    DIGEST   — keep-rates by mode/sigil/corr/void + gentle taste suppression:
               sigils the curator reliably kills get culled from fresh rolls.
    ========================================================================== */
-const WB=window.WB={fam:null, prim:null, cam:null, gain:{}, ladder:false, lastTouch:0, res:'AUTO', truth:true};
-function wbHasOverrides(){ if(WB.fam!=null||WB.prim!=null||WB.cam!=null)return true;
+const WB=window.WB={fam:null, prim:null, cam:null, mod:null, gain:{}, ladder:false, lastTouch:0, res:'AUTO', truth:true};
+function wbHasOverrides(){ if(WB.fam!=null||WB.prim!=null||WB.cam!=null||WB.mod!=null)return true;
   for(const k in WB.gain)if(WB.gain[k]!==100)return true; return false; }
 const wbTune=window.wbTune=function(scene){
-  scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam;
+  scene.__wbFam=WB.fam; scene.__wbPrim=WB.prim; scene.__wbCam=WB.cam; scene.__wbMod=WB.mod;
   if(!scene.__gBase)scene.__gBase=Object.assign({},scene.vibe.g);
   for(const k in scene.__gBase){ const m=WB.gain[k];
     scene.vibe.g[k]=scene.__gBase[k]*((m==null?100:m)/100); }
@@ -7063,11 +7195,11 @@ function release(){ if(gate)return; gate=true; schedule(Math.max(0, 40-(Date.now
 const rgbA=new Uint8Array(W*H*3), rgbB=new Uint8Array(W*H*3), rgbC=new Uint8Array(W*H*3);
 const idx=new Uint8Array(W*H);
 function skey(J){ return JSON.stringify([J.seed,J.mode,J.voidamt,J.locality,J.chromacap,
-  J.epoch,J.ov,J.scheme,J.wb&&J.wb.fam,J.wb&&J.wb.prim,J.wb&&J.wb.cam]); }
+  J.epoch,J.ov,J.scheme,J.wb&&J.wb.fam,J.wb&&J.wb.prim,J.wb&&J.wb.cam,J.wb&&J.wb.mod]); }
 function buildSC(J){
   const scene=buildScene(J.seed,J.mode);
   /* seated BEFORE seatWounds — it builds and caches the mass field */
-  if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; }
+  if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; scene.__wbMod=J.wb.mod; }
   scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
   scene.epoch=J.epoch|0;
   applyOverridesPure(scene,J.seed,J.ov);
@@ -7258,7 +7390,7 @@ const wbPvJob=window.wbPvJob=function(){
   return { seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0,
     chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr:state.corr, N:state.frames, fx:{...state.fx}, ov:{...OV}, epoch:EPOCH,
-    wb:{fam:WB.fam,prim:WB.prim,cam:WB.cam,gain:{...WB.gain}} };
+    wb:{fam:WB.fam,prim:WB.prim,cam:WB.cam,mod:WB.mod,gain:{...WB.gain}} };
 };
 const wbPush=window.wbPush=function(){
   if(!WBPV.alive){ const r=wbPvPick();
@@ -7384,7 +7516,7 @@ document.addEventListener('input',e=>{
 },true);
 document.addEventListener('click',e=>{
   const t=e.target&&e.target.closest&&e.target.closest(
-    '#p-signal .seg button,#p-tune .seg button,.tg,#wb-fam button,#wb-prim button,#wb-ladder');
+    '#p-signal .seg button,#p-tune .seg button,.tg,#wb-fam button,#wb-prim button,#wb-mod button,#wb-ladder');
   if(t)wbPush();
 },true);
 setInterval(()=>{
@@ -7578,12 +7710,18 @@ $('wb-ladder').addEventListener('click',()=>{ WB.ladder=!WB.ladder;
     mk('AUTO',null);
     return mk;
   };
-  const FAMN=['STACK','MIRROR','ORBIT','SPINE','GATE','STRATA','MONO','DRAPE'];
+  const FAMN=['STACK','MIRROR','ORBIT','SPINE','GATE','STRATA','MONO','DRAPE',
+              'HELIX','FAN','TRUSS','SHARDS','TOWER','ARCH','CLUSTER','BEAM'];
   const mkF=seg('wb-fam',null,v=>{WB.fam=v;});
   FAMN.forEach((n,i2)=>mkF(n,i2));
-  const PRIMN=['ELLIP','BOX','TORUS','CAPS','CONE','HTOR','SLAB','ELL2'];
+  const PRIMN=['ELLIP','BOX','TORUS','CAPS','CONE','HTOR','SLAB','ELL2',
+               'PRISM6','SPOKE','CROSS','WEDGE','LENS','TUBE','PYRA','OCTA'];
   const mkP=seg('wb-prim',null,v=>{WB.prim=v;});
   PRIMN.forEach((n,i2)=>mkP(n,i2));
+  /* index order must match the MK switch inside sdf() */
+  const MODN=['NONE','TWIST','TAPER','BEND','RIPPLE','SHEAR','SHELL','SPLIT'];
+  const mkM=seg('wb-mod',null,v=>{WB.mod=v;});
+  MODN.forEach((n,i2)=>mkM(n,i2));
   /* the camera is an organ now — index order must match camAt()'s switch */
   const CAMN=['TURNTBL','PENDULUM','DOUBLE','CRANE','DOLLY','LOCKED','SPIRAL','SWAY'];
   const mkC=seg('wb-cam',null,v=>{WB.cam=v;});
@@ -7619,7 +7757,7 @@ function wbSnapshot(){
         voidamt:state.voidamt, locality:state.locality, chromacap:state.chromacap,
         fx:Object.keys(state.fx).filter(k2=>state.fx[k2]),
         gains:Object.fromEntries(Object.entries(WB.gain).filter(([k2,v2])=>v2!==100)),
-        fam:WB.fam, prim:WB.prim, cam:WB.cam, ladder:WB.ladder, live:true} };
+        fam:WB.fam, prim:WB.prim, cam:WB.cam, mod:WB.mod, ladder:WB.ladder, live:true} };
 }
 function wbLocal(){ try{return JSON.parse(localStorage.getItem('wb_verdicts')||'[]');}catch(e){return[];} }
 function wbLocalSave(a){ try{localStorage.setItem('wb_verdicts',JSON.stringify(a));}catch(e){} }
