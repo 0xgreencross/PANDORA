@@ -7741,6 +7741,15 @@ function buildSC(J){
         if(kk===0)c0++; else if(kk===1)c1++; else c2++; }
       if(c2<40)AV.floor=0; if(c0<40)AV.under=0; if(c1<40)AV.gobo=0;
     }catch(e){} }
+  /* THE PROBE MUST LEAVE NO TRACE. sceneView memoises its march on
+     mf._svt/mf._sv, and the probe above ran BEFORE loop() sets scene._corr
+     and applies the gain multipliers — so it just cached a frame built from
+     a corruption of 60 and unscaled gains. On the seeds whose twist term is
+     zero, tEff(0) is exactly 0 and frame 0 would serve that stale march
+     instead of marching itself: the render and the preview then disagree on
+     frame 0 and on nothing else. NaN never equals a theta, so this forces
+     the next sceneView to be honest. */
+  try{ const _mfp=massField(scene); if(_mfp)_mfp._svt=NaN; }catch(e){}
   self.postMessage({t:'meta', pal:pack.pal, mode:scene.mode, avail:AV});
   return {scene, grad:pack.grad, pal:pack.pal, near:pack.near, gBase, tEff, gradFor,
     get ring2(){return ring2;}, set ring2(v){ring2=v;},
