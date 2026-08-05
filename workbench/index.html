@@ -8568,6 +8568,8 @@ function wbSnapshot(){
 function wbLocal(){ try{return JSON.parse(localStorage.getItem('wb_verdicts')||'[]');}catch(e){return[];} }
 function wbLocalSave(a){ try{localStorage.setItem('wb_verdicts',JSON.stringify(a));}catch(e){} }
 function wbCount(){ const n=wbLocal().length;
+  /* a confirmation is holding this line — don't step on it */
+  if($('wb-count')&&$('wb-count').dataset.say==='1')return;
   $('wb-count').textContent= WBV.noTable
     ? 'TABLE MISSING — run SUPABASE_WORKBENCH.sql ('+n+' safe in queue)'
     : (WBV.sent||0)+' sent'+(n?' · '+n+' queued':''); }
@@ -8593,21 +8595,55 @@ const wbFlush=window.wbFlush=async function(){
   }
   wbLocalSave(keep); wbCount();
 };
+/* THE CONFIRMATION HAS TO SURVIVE.
+   #osd is the live status line and the preview ticker repaints it within a
+   frame or two, so a verdict written only there is gone before it is read —
+   which is exactly why the confirmation never seemed to arrive. wbSay puts
+   the same words in the verdict bar's own counter, which nothing else
+   touches, and restores the count when the moment has passed. */
+function wbSay(msg, ms){
+  try{ $('osd').textContent=msg; }catch(e){}
+  const c=$('wb-count'); if(!c)return;
+  c.textContent=msg;
+  c.dataset.say='1';
+  clearTimeout(wbSay._t);
+  wbSay._t=setTimeout(()=>{ c.dataset.say='0'; wbCount(); }, ms||2200);
+}
 async function wbVerdict(v){
+  /* ONE VERDICT, ONE ROW.
+     The curation pipeline weights a card by how many rows carry it, so a
+     double-tap on KEEP silently counts that card five times and poisons the
+     signal it is supposed to teach. Two guards: an in-flight lock so a fast
+     second tap cannot re-enter mid-await, and a session ledger so the exact
+     same (card, verdict, tag) is never written twice. Changing your mind —
+     KEEP then KILL, or adding a tag — is new information and still sends. */
+  if(WBV.busy)return;
   const snap=wbSnapshot();
+  const key=snap.card+'|'+v+'|'+(WBV.tag||'');
+  WBV.seen=WBV.seen||{};
+  const KEEPL0='✓ KEEP', KILLL0='✗ KILL';
+  if(WBV.seen[key]){
+    const b0=$(v==='KEEP'?'wb-keep':'wb-kill');
+    wbSay(v+' · ALREADY RECORDED (this exact verdict is already in)');
+    b0.textContent='● ALREADY';
+    clearTimeout(b0._flash);
+    b0._flash=setTimeout(()=>{ $('wb-keep').textContent=KEEPL0; $('wb-kill').textContent=KILLL0; },1400);
+    return;
+  }
+  WBV.busy=true;
   const row={verdict:v, tag:WBV.tag, card:snap.card, snapshot:snap.st, ua:navigator.userAgent.slice(0,80)};
   const ok=await wbSend(row);
+  WBV.seen[key]=1; WBV.busy=false;
   WBV.tag=null; document.querySelectorAll('.wbtag').forEach(b=>b.dataset.sel=0);
-  $('osd').textContent=v+(row.tag?' · '+row.tag:'')
-    +(ok?' · SENT':(WBV.noTable?' · SAVED LOCALLY (supabase table missing)':' · QUEUED (offline)'));
+  wbSay(v+(row.tag?' · '+row.tag:'')
+    +(ok?' · SENT':(WBV.noTable?' · SAVED LOCALLY (supabase table missing)':' · QUEUED (offline)')));
   /* fixed labels — the old code captured the CURRENT text, so two clicks
      inside a second captured each other's flash and the label stuck */
   const KEEPL='\u2713 KEEP', KILLL='\u2717 KILL';
   const btn=$(v==='KEEP'?'wb-keep':'wb-kill');
   btn.textContent=ok?'\u2713 SENT':'\u23f3 SAVED';
   clearTimeout(btn._flash);
-  btn._flash=setTimeout(()=>{ $('wb-keep').textContent=KEEPL; $('wb-kill').textContent=KILLL; },900);
-  wbCount();
+  btn._flash=setTimeout(()=>{ $('wb-keep').textContent=KEEPL; $('wb-kill').textContent=KILLL; },1400);
 }
 $('wb-keep').addEventListener('click',()=>wbVerdict('KEEP'));
 $('wb-kill').addEventListener('click',()=>wbVerdict('KILL'));
