@@ -155,6 +155,13 @@ html,body{position:static !important;overflow:auto !important;height:auto !impor
 #legacy-root .seg button{padding:8px 9px;border:1px solid var(--line);border-radius:4px;
   font-size:9px;color:var(--mut);background:#10101c;letter-spacing:.06em;}
 #legacy-root .seg button[aria-pressed="true"]{border-color:var(--cyan);color:#fff;background:#0f1c22;}
+/* A ROLE THAT CANNOT LAND. Not disabled — the artist may still arm it, and it will
+   work the moment they reroll into a seed that has the surface. It is struck through
+   so the eye reads "nothing to land on here", never "this control is broken". */
+#legacy-root .seg button[data-avail="0"]{opacity:.42;text-decoration:line-through;
+  text-decoration-color:var(--hot,#ff2fa0);border-style:dashed;}
+#legacy-root .seg button[data-avail="0"][aria-pressed="true"]{border-color:var(--hot,#ff2fa0);
+  color:#ffb9de;background:#1c0f16;}
 #legacy-root .toggles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 #legacy-root .tg{display:flex;justify-content:space-between;align-items:center;gap:4px;
   border:1px solid var(--line);border-radius:4px;padding:9px 7px;font-size:8.5px;color:var(--mut);
@@ -813,7 +820,8 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <label>ROLES &mdash; what the graphic DOES (any number at once)</label>
         <div class="seg" id="gr-roles"></div>
         <p class="labnote"><b>OVER</b> is the layer &mdash; but placed inside the signal, not on top of it. <b>UNDER</b> lays it into the empty space behind the mass, drawn in the artwork&rsquo;s own tone ramp, so the body occludes it and the void eats it. <b>FLOOR</b> lies it flat on the mirror plane &mdash; it perspective-projects and slides as the camera orbits, and the fog swallows its far edge. <b>GOBO</b> puts it in front of the LIGHT: the body is lit <i>through</i> your picture, so the image appears as shadow cast across the geometry. <b>STENCIL</b> cuts the whole transmission away wherever the graphic is dark, and the cut level breathes once per revolution. <b>SLICE</b> sends a scan head down the frame exactly once per loop, carrying the graphic in the band behind it. <b>WARP</b> turns its luminance gradient into a displacement field and drags the finished frame through it. <b>GRAIN</b> never draws the image at all &mdash; it replaces the ordered-dither threshold, so the picture exists only as a bias in the halftone. <b>PALETTE</b> steals the graphic&rsquo;s own colours and rebuilds the artwork&rsquo;s ramp from them (the house NO-WHITE cap still applies, so stolen palettes come back darker than the source).</p>
-        <p class="labnote">Two of these depend on what the seed actually grew. <b>FLOOR</b> needs a mirror plane and roughly half of all seeds do not have one; on those seeds FLOOR is silently a no-op &mdash; reroll or pick a seed with visible reflection under the mass. <b>UNDER</b> needs empty space in frame; a seed whose body fills the raster leaves it nothing to lie in. Everything else works on every seed.</p>
+        <p class="labnote" id="gr-avail">THIS SEED &mdash; reading the surfaces&hellip;</p>
+        <p class="labnote">Three roles depend on what the seed actually grew, so the row above marks them live. <b>FLOOR</b> needs a mirror plane and roughly half of all seeds do not have one &mdash; an IDOL never does. <b>UNDER</b> needs empty space in frame; a body that fills the raster leaves it nothing to lie in. <b>GOBO</b> needs a body to be lit. A struck-through role is not broken: arm it anyway and it comes alive the moment you reroll into a seed that has the surface.</p>
       </div>
       <div class="field">
         <label>BLEND <span class="v" id="gr-blendlab">NORMAL</span></label>
@@ -2717,7 +2725,24 @@ function renderIdol(field, scene, theta){
   const mf=massField(scene), M=idolMesh(scene), C=eCam(mf,theta);
   const corr=(scene._corr!=null?scene._corr:60);
   const M2=matOf(scene);
-  field.fill(0.022);
+  /* THE GEL IN THE GATE. IDOL never went through renderScene, so UNDER and GOBO
+     — the two roles that live in the lighting — simply did not exist for one seed
+     in ten. They do now. FLOOR still cannot: an idol has no mirror plane to catch
+     a reflection, and faking one would be a lie the rest of the frame contradicts.
+     The UI availability readout is what tells you so, rather than a dead slider. */
+  const GRs=graftOf(scene);
+  const GRU=(GRs&&GRs.roles.under)?GRs:null;
+  const GRG=(GRs&&GRs.roles.gobo)?GRs:null;
+  if(GRU){
+    for(let gy=0;gy<FW;gy++){ const fy=(gy+0.5)/FW;
+      for(let gx=0;gx<FW;gx++){
+        let b=0.022;
+        const L=graftLum(GRU,(gx+0.5)/FW,fy);
+        if(L>=0){ b+=((L*0.78+0.010)-b)*GRU.amt;
+          if(b<0)b=0; else if(b>0.92)b=0.92; }
+        field[gy*FW+gx]=b;
+      } }
+  } else field.fill(0.022);
   const n=M.V.length/3;
   const sx=new Float32Array(n), sy=new Float32Array(n), sz=new Float32Array(n);
   const wx=new Float32Array(n), wy=new Float32Array(n), wz=new Float32Array(n);
@@ -2740,6 +2765,26 @@ function renderIdol(field, scene, theta){
   order.sort((a,b)=>b[0]-a[0]);
   const laz=theta+mf.lightBase*0.7+0.8;
   const lx=Math.cos(0.5)*Math.sin(laz), ly=-Math.sin(0.5), lz=Math.cos(0.5)*Math.cos(laz);
+  /* GOBO basis. The scale is measured, not guessed — the footprint bug cost me a
+     whole role by guessing once already. Across 53 idols x 8 thetas the ratio of
+     (what the light-space projection actually spans) to (the mesh's own max vertex
+     radius) sits in 1.71-1.94, p50 1.83; 1.90 covers all of them. mf.S is NOT the
+     unit here: the idol mesh is built in its own normalized space and the measured
+     ratio has no correlation with S whatsoever. laz is theta plus a constant, so
+     every axis below is exactly TAU-periodic and the loop still closes. */
+  let gux=0,guy=0,guz=0,gwx=0,gwy=0,gwz=0,GSG=1;
+  if(GRG){
+    let mrad=0.001;
+    for(let j=0;j<M.V.length;j+=3){
+      const rr=Math.sqrt(M.V[j]*M.V[j]+M.V[j+1]*M.V[j+1]+M.V[j+2]*M.V[j+2]);
+      if(rr>mrad)mrad=rr; }
+    GSG=1.90*mrad;
+    let ax=-ly, ay=lx, az=0;
+    let al=Math.sqrt(ax*ax+ay*ay+az*az); if(al<1e-4){ax=1;ay=0;az=0;al=1;}
+    gux=ax/al; guy=ay/al; guz=az/al;
+    gwx=ly*guz-lz*guy; gwy=lz*gux-lx*guz; gwz=lx*guy-ly*gux;
+    const wl=Math.sqrt(gwx*gwx+gwy*gwy+gwz*gwz)||1; gwx/=wl; gwy/=wl; gwz/=wl;
+  }
   const edge=(x0,y0,x1,y1,v)=>{
     const steps=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))|0;
     for(let k=0;k<=steps;k++){ const x=(x0+(x1-x0)*k/Math.max(1,steps))|0, y=(y0+(y1-y0)*k/Math.max(1,steps))|0;
@@ -2754,8 +2799,19 @@ function renderIdol(field, scene, theta){
     const facing=nx*C.fx+ny*C.fy+nz*C.fz;
     if(facing>0){nx=-nx;ny=-ny;nz=-nz;}
     const diff=Math.max(0,nx*lx+ny*ly+nz*lz);
-    let v=0.10+diff*0.60+Math.pow(Math.max(0,1+(nx*C.fx+ny*C.fy+nz*C.fz)),2.2)*0.20;
     const cx3=(wx[a]+wx[b]+wx[c])/3, cy3=(wy[a]+wy[b]+wy[c])/3, cz3=(wz[a]+wz[b]+wz[c])/3;
+    /* Parity with renderScene, not merely an effect: the gel attenuates the DIFFUSE
+       term only and adds its own throw. Scaling the whole of v would eat the 0.10
+       ambient floor too, and the idol would drop to black wherever the graphic is
+       dark — which no other mode does. A role has to be ONE role in ten modes.
+       Edges inherit v further down, so wireframe idols get gelled for free. */
+    let dif2=diff, goE=0;
+    if(GRG){ const L=graftLum(GRG,(cx3*gux+cy3*guy+cz3*guz)/GSG+0.5,
+                                  (cx3*gwx+cy3*gwy+cz3*gwz)/GSG+0.5);
+      if(L>=0){ dif2*=(1-GRG.amt)+GRG.amt*(0.10+1.75*L); if(dif2<0)dif2=0;
+        goE=GRG.amt*0.26*(L-0.42); } }
+    let v=0.10+dif2*0.60+Math.pow(Math.max(0,1+(nx*C.fx+ny*C.fy+nz*C.fz)),2.2)*0.20+goE;
+    if(v<0)v=0;
     const bandV=Math.sin(cy3*M2.bandF+cx3*2.2+Math.sin(theta)*M2.crawl);
     if(bandV>M2.bandTh)v+=M2.bandA*0.8;
     const ci2=(((cx3*M2.cellF)|0)*7+((cy3*M2.cellF)|0)*13+((cz3*M2.cellF)|0)*29)|0;
@@ -7575,7 +7631,18 @@ function buildSC(J){
       gradR[k]=pack.grad[j];gradR[k+1]=pack.grad[j+1];gradR[k+2]=pack.grad[j+2];}
     return gradR; };
   let ring2=null, coarse2=null;
-  self.postMessage({t:'meta', pal:pack.pal, mode:scene.mode});
+  /* WHICH ROLES CAN ACTUALLY LAND ON THIS SEED? Measured here, on the same seated
+     scene that is about to be rendered, because a slider that silently does nothing
+     gets blamed on the app rather than on the seed. IDOL has no mirror plane at all;
+     roughly half of the other seeds have no floor either. */
+  const AV={over:1,under:1,floor:1,gobo:1,stencil:1,slice:1,warp:1,grain:1,palette:1};
+  if(scene.mode==='IDOL'){ AV.floor=0; }
+  else { try{ const sv0=sceneView(scene,0); let c0=0,c1=0,c2=0;
+      for(let q=0;q<sv0.kind.length;q++){ const kk=sv0.kind[q];
+        if(kk===0)c0++; else if(kk===1)c1++; else c2++; }
+      if(c2<40)AV.floor=0; if(c0<40)AV.under=0; if(c1<40)AV.gobo=0;
+    }catch(e){} }
+  self.postMessage({t:'meta', pal:pack.pal, mode:scene.mode, avail:AV});
   return {scene, grad:pack.grad, pal:pack.pal, near:pack.near, gBase, tEff, gradFor,
     get ring2(){return ring2;}, set ring2(v){ring2=v;},
     get coarse2(){return coarse2;}, set coarse2(v){coarse2=v;}};
@@ -7719,6 +7786,7 @@ const wbPvSpawn=window.wbPvSpawn=function(res){
   w.onmessage=e=>{ const m=e.data;
     if(w!==WBPV.w)return;                 /* a rung we already stepped off */
     if(m.t==='meta'){ WBPV.pal=m.pal; WBPV.meta={mode:m.mode};
+      if(m.avail&&window.grAvailUI)window.grAvailUI(m.avail,m.mode);
       const L=WBPV.lut;                   /* palette as one 32-bit word per index */
       for(let q=0;q<256;q++){ const c=m.pal[q]||[0,0,0];
         L[q]= WBPV_LE ? (((255<<24)|(c[2]<<16)|(c[1]<<8)|c[0])>>>0)
@@ -8264,6 +8332,25 @@ function grOnSync(){
       b.setAttribute('aria-pressed',String(!!GRAFT.cfg.roles[k])); grTouch(); });
     rh.appendChild(b);
   });
+  /* THE AVAILABILITY READOUT. The seed decides which surfaces exist; the UI has to
+     say so out loud. Driven by the preview worker's meta, which measures the same
+     seated scene it is about to render — so this can never disagree with the pixels. */
+  window.grAvailUI=function(av,mode){
+    const NAME={over:'OVER',under:'UNDER',floor:'FLOOR',gobo:'GOBO'};
+    const dead=[];
+    rh.querySelectorAll('button[data-role]').forEach(b2=>{
+      const k2=b2.getAttribute('data-role'), ok=(av[k2]==null)?1:av[k2];
+      b2.setAttribute('data-avail', ok?'1':'0');
+      if(!ok)dead.push(NAME[k2]||k2.toUpperCase());
+    });
+    const el=$('gr-avail'); if(!el)return;
+    if(!dead.length){ el.innerHTML='THIS SEED ('+(mode||'?')+') &mdash; all nine roles have a surface to land on.'; return; }
+    el.innerHTML='THIS SEED ('+(mode||'?')+') &mdash; <b>'+dead.join(' / ')+'</b> '+
+      (dead.length>1?'have':'has')+' nothing to land on here'+
+      (mode==='IDOL'&&dead.indexOf('FLOOR')>=0?' (an idol has no mirror plane)':'')+
+      '. Arm '+(dead.length>1?'them':'it')+' anyway and '+(dead.length>1?'they':'it')+
+      ' will come alive on a seed that does.';
+  };
   /* single-choice segments */
   const one=(host,labels,get,set,lab)=>{
     const el=$(host);
