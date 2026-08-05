@@ -439,6 +439,96 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   #rail{flex-basis:420px;}
   body{font-size:12px;}
 }
+
+/* ============ THE INSTRUMENT, RE-HUNG =====================================
+   ONE VIEWPORT. ZERO PAGE SCROLL. ART IS KING.
+   The page is a fixed column: banner / instrument / verdict. Only the control
+   rail's #panels scrolls, and it scrolls inside itself. Everything else is
+   sized from the viewport so the artwork takes every pixel that is left. */
+html,body{position:fixed !important;inset:0 !important;width:100% !important;
+  height:100% !important;overflow:hidden !important;padding:0 !important;
+  overscroll-behavior:none;}
+body{display:flex;flex-direction:column;}
+#wbbanner{position:static !important;flex:0 0 auto;display:flex;align-items:center;
+  gap:10px;padding:5px 10px;padding-top:calc(5px + var(--sat));
+  font:600 9.5px/1.35 ui-monospace,monospace;letter-spacing:.1em;}
+#wbbanner .wbb-id{flex:0 0 auto;white-space:nowrap;}
+#wbbanner #wb-livestat{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;color:#9c9cb6;}
+#wbbanner .wbb-nav{display:flex;gap:9px;align-items:center;margin-left:auto;flex:0 0 auto;}
+#wbbanner .wbb-nav a{font-size:8.5px;letter-spacing:.12em;color:#9c9cb6;
+  text-decoration:none;white-space:nowrap;}
+#wbbanner .wbb-nav a:hover{color:#19f0ff;}
+#wb-artmax{flex:0 0 auto;font:600 8.5px ui-monospace,monospace;letter-spacing:.12em;
+  color:#19f0ff;border:1px solid #19f0ff55;border-radius:3px;padding:5px 8px;
+  background:#0a1a1e;white-space:nowrap;min-height:26px;}
+#legacy-root{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+#legacy-root #wbverdict{position:static !important;flex:0 0 auto;
+  padding:6px 8px calc(6px + var(--sab));gap:5px;}
+#legacy-root #wbverdict button{padding:7px 12px;min-height:34px;font-size:11px;}
+#legacy-root #wbverdict .wbtag,#legacy-root #wbverdict .wbmini{padding:6px 8px;font-size:9px;}
+#legacy-root #galmodal,#legacy-root #revbar,#legacy-root #mintbar,
+#legacy-root #sellmodal,#legacy-root #xmodal,#legacy-root #tipbar,
+#legacy-root #saveview{position:fixed;z-index:9600;display:none;}
+#legacy-root #galmodal,#legacy-root #sellmodal,#legacy-root #saveview{inset:0;
+  align-items:center;justify-content:center;background:rgba(4,4,6,.94);padding:16px;
+  overflow:auto;flex-direction:column;gap:10px;}
+#legacy-root #revbar,#legacy-root #tipbar{left:0;right:0;bottom:0;padding:9px 12px;
+  background:#12041af5;border-top:1px solid #ff2fa0;color:#ff8fd0;font-size:10px;
+  letter-spacing:.08em;cursor:pointer;}
+#legacy-root #mintbar{left:0;right:0;bottom:0;padding:9px 12px;gap:10px;
+  background:#0a0a12f5;border-top:1px solid var(--line);align-items:center;
+  justify-content:space-between;}
+#legacy-root #app{flex:1 1 auto;min-height:0;display:flex !important;flex-direction:row;
+  gap:12px;max-width:none;margin:0;padding:10px;align-items:stretch;}
+#legacy-root #app>header{display:none !important;}
+#legacy-root .colL{position:static !important;flex:1 1 auto;min-width:0;min-height:0;
+  display:flex;flex-direction:column;gap:4px;}
+#legacy-root .monitor{flex:1 1 0;min-height:0;min-width:0;border:none;
+  background:transparent;display:grid;place-items:center;container-type:size;}
+#legacy-root .screen-wrap{width:100%;height:auto;aspect-ratio:1/1;
+  max-width:100%;max-height:100%;border:1px solid var(--line2);background:#000;}
+@supports (width:100cqh){ #legacy-root .screen-wrap{width:min(100%,100cqh);} }
+#legacy-root .telem{flex:0 0 auto;padding:4px 2px;}
+#legacy-root .bar{flex:0 0 auto;}
+#legacy-root .colR{flex:0 0 clamp(300px,26vw,400px);min-width:0;min-height:0;
+  display:flex;flex-direction:column;}
+#legacy-root .tabs{flex:0 0 auto;margin-bottom:8px;}
+#legacy-root .tab{padding:9px 3px;}
+#legacy-root #panels{flex:1 1 auto;min-height:0;overflow-y:auto;
+  overscroll-behavior:contain;padding-right:6px;}
+#legacy-root .actions{flex:0 0 auto;margin-top:8px;}
+#legacy-root .actions button{padding:11px 5px;}
+#legacy-root .voidscroll{max-height:150px;}
+body.artmax #legacy-root .colR{display:none;}
+body.artmax #legacy-root #app{padding:6px;}
+/* ART MAX gives the artwork the vertical too, not just the horizontal:
+   on a wide screen the canvas is height-bound, so the chrome has to yield. */
+body.artmax #wbbanner{padding:2px 8px;padding-top:calc(2px + var(--sat));}
+body.artmax #legacy-root #wbverdict{padding:3px 6px calc(3px + var(--sab));}
+body.artmax #legacy-root #wbverdict button{min-height:26px;padding:4px 9px;font-size:10px;}
+body.artmax #legacy-root #wbverdict .wbtag,
+body.artmax #legacy-root #wbverdict .wbmini{padding:3px 6px;font-size:8.5px;}
+body.artmax #legacy-root .telem{display:none;}
+body.artmax #legacy-root .bar{display:none;}
+@media (max-width:860px),(orientation:portrait){
+  #legacy-root #app{flex-direction:column;gap:7px;padding:8px;}
+  #legacy-root .colL{flex:0 0 auto;}
+  #legacy-root .monitor{flex:0 0 auto;height:min(52dvh,calc(100vw - 16px));}
+  #legacy-root .colR{flex:1 1 0;min-height:0;}
+  #legacy-root .toggles{grid-template-columns:repeat(3,minmax(0,1fr));}
+  #legacy-root #wbverdict button{padding:6px 9px;min-height:32px;font-size:10px;}
+  #wbbanner .wbb-nav{gap:7px;}
+  body.artmax #legacy-root .monitor{height:min(78dvh,calc(100vw - 12px));}
+}
+@media (max-width:430px){
+  #wbbanner .wbb-nav a:not(:first-child){display:none;}
+  #wbbanner #wb-livestat{display:none;}
+}
+@media (orientation:landscape) and (max-height:520px){
+  #legacy-root .telem{display:none;}
+  #legacy-root #wbverdict button{min-height:28px;padding:4px 8px;font-size:10px;}
+}
 </style>
 </head>
 <body>
@@ -525,9 +615,10 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
 
 <!-- ==== EIDOLON E8.0 — untouched engine markup, headless ==== -->
 <div id="wbbanner">
-  <span>&#9874; WORKBENCH &middot; EXPERIMENTAL ENGINE &mdash; NOT THE PUBLIC BOX</span>
+  <span class="wbb-id">&#9874; WORKBENCH &mdash; NOT THE PUBLIC BOX</span>
   <span id="wb-livestat"></span>
-  <a href="/">PUBLIC BOX &rarr;</a>
+  <nav class="wbb-nav" aria-label="rooms"><a href="/">PUBLIC BOX</a><a href="/gardens.html">GARDENS</a><a href="/showcase.html">SHOWCASE</a><a href="/sealed.html">SEALED</a></nav>
+  <button type="button" id="wb-artmax" aria-pressed="false" title="give the whole deck to the artwork">&#9974; ART</button>
 </div>
 <div id="legacy-root">
 
@@ -756,6 +847,14 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
           <button id="wb-render" class="vio">&#9635; RENDER GIF NOW</button>
         </div>
         <p class="labnote">The engine runs LIVE, always: the loop animates continuously in a dedicated preview core and every control &mdash; dials, sigils, gains, bodies, dice, mutate, resurrect &mdash; lands within a frame. The preview runs the REAL algorithms at a resolution your device sustains (auto-adapts; the badge shows it). RENDER produces the exact master GIF at the size the raster implies; saves come only from that.</p>
+      </div>
+      <div class="field">
+        <label>TYPE ANY RASTER <span class="v" id="wb-rasttypelab">&mdash;</span></label>
+        <div class="seedrow">
+          <input id="wb-rasttype" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="e.g. 224">
+          <button type="button" id="wb-rasttypego" class="dice" title="draw and render at exactly this resolution">&#9654;</button>
+        </div>
+        <p class="labnote">Any number from 48 to 1080, not just the rungs. Typing here does BOTH things at once: it sets the raster the master GIF is built from, AND it pins the live preview to the same number &mdash; so what is on this screen is not an approximation of the render, it IS the render, running. The badge will read EXACT and there is nothing left to settle. Out-of-range numbers are clamped and the label says so.</p>
       </div>
       <div class="field">
         <label>RENDER RASTER <span class="v" id="wb-rastlab">360</span></label>
@@ -8088,6 +8187,9 @@ function wbRastSync(){
   const el=$('wb-raster'); if(!el)return;
   const R=rasterOf(), lab=(R===1080?'FULL':String(R));
   $('wb-rastlab').textContent=lab;
+  /* the typed field always states the truth, even when a rung was clicked */
+  const ti=$('wb-rasttype');
+  if(ti&&document.activeElement!==ti)ti.value=String(R);
   el.querySelectorAll('button').forEach(b=>
     b.setAttribute('aria-pressed', String(b.textContent.split(' ')[0]===lab)));
   const f=$('wb-fieldlab'); if(f)f.textContent=RCFG.field?'ON':'OFF';
@@ -8124,6 +8226,36 @@ window.wbResSync=wbResSync;
     el.appendChild(b); });
   wbRastSync();
 })();
+function wbRastType(){
+  const el=$('wb-rasttype'); if(!el)return;
+  const raw=String(el.value).replace(/[^0-9]/g,'');
+  const lab=$('wb-rasttypelab');
+  if(!raw){ if(lab)lab.textContent='\u2014'; return; }
+  const v=parseInt(raw,10);
+  if(!isFinite(v)||v<=0){ if(lab)lab.textContent='\u2014'; return; }
+  const cl=Math.max(48,Math.min(1080,v));
+  el.value=String(cl);
+  if(lab)lab.textContent=(cl!==v)?(v+' \u2192 '+cl+' (clamped)'):String(cl);
+  if(cl===rasterOf()&&WB.res===cl){ return; }
+  RCFG.raster=cl;
+  WB.res=cl;                    /* draw AT the render raster: EXACT, nothing to settle */
+  const rs=$('wb-res');
+  if(rs)rs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));
+  wbRasterChanged();
+  wbResLabel();
+}
+window.wbRastType=wbRastType;
+$('wb-rasttypego').addEventListener('click',e=>{e.preventDefault();wbRastType();});
+$('wb-rasttype').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();e.stopPropagation();wbRastType();} });
+$('wb-rasttype').addEventListener('change',wbRastType);
+$('wb-artmax').addEventListener('click',()=>{
+  const on=document.body.classList.toggle('artmax');
+  const b=$('wb-artmax');
+  b.setAttribute('aria-pressed',String(on));
+  b.textContent=on?'\u2637 CONTROLS':'\u26F6 ART';
+  try{ if(typeof fit==='function')fit(); }catch(e){}
+});
 $('wb-field').addEventListener('click',()=>{ RCFG.field=!RCFG.field;
   $('wb-field').textContent=RCFG.field
     ?'FIELD: ON (shading field scales with the raster)'
