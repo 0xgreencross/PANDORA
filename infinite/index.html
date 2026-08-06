@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DITHERVOID</title>
+<!-- ══════════════════════════════════════════════════════════════════════
+     INFINITE SCROLL — the wall page. Zero Pandora chrome, zero controls,
+     zero cursor, zero scroll, silent. Everything derives from config.json.
+
+     LAUNCH (laptop, kiosk):
+       serve this repo over localhost (any static server), then
+       chromium --kiosk --force-device-scale-factor=1 \
+         --autoplay-policy=no-user-gesture-required \
+         http://localhost:PORT/infinite/?s=A&i=0
+       External display at true native mode, DPR 1; the page refuses to
+       run otherwise. The wall crops the window 1:1 at the top left.
+     ══════════════════════════════════════════════════════════════════════ -->
+<style>
+  html, body { margin: 0; padding: 0; background: #000; overflow: hidden;
+               cursor: none; user-select: none; }
+  ::-webkit-scrollbar { display: none; }
+</style>
+<script>
+/* THE GUARD, before anything else: an infinite run's unwitnessed rolls
+   must never reach the canon. */
+window.PANDORA_PUBLIC = true;
+</script>
+</head>
+<body>
+<script src="voice.js"></script>
+<script src="feed.js"></script>
+</body>
+</html>
