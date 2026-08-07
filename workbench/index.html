@@ -764,7 +764,6 @@ body.artmax #legacy-root .bar{display:none;}
           <div class="tg gv" data-fx="braid"><span>BRAID</span><i class="dot"></i></div>
           <div class="tg gv" data-fx="lungs"><span>LUNGS</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="tunnel"><span>TUNNEL</span><i class="dot"></i></div>
-          <div class="tg gd" data-fx="kaleido"><span>KALEID</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="bloom"><span>BLOOM</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="embers"><span>EMBERS</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="runes"><span>RUNES</span><i class="dot"></i></div>
@@ -2267,8 +2266,13 @@ function massField(scene){
   const target=1-vf;
   const no=scene.noise;
   const arr=fam>>4, prim=fam&15;         // 16 skeletons x 16 vocabularies = 256 bodies
-  const mirror=(arr===1)||((arr===3||arr===2)&&rng()<0.4)
+  /* THE FOLD IS RETIRED - but its dice are not. This expression short-circuits,
+     so it consumes a VARIABLE number of rng() draws depending on arr, and that
+     draw pattern is load-bearing for every parameter rolled after it. Keep the
+     expression verbatim, discard the answer. */
+  const _foldRoll=(arr===1)||((arr===3||arr===2)&&rng()<0.4)
     ||((arr===9||arr===13||arr===15)&&rng()<0.35);
+  const mirror=false;   /* no bilateral symmetry: no butterflies, no totems */
   const ph=rng()*90;
   const fbmA=0.02+rng()*0.035, fbmF=4+rng()*5;
   /* ---- primitive vocabulary ---- */
@@ -4231,6 +4235,16 @@ const MASK_POLAR=[[3,0.55],[4,0.5],[5,-0.5],[6,0.45],[8,-0.32],[12,-0.4],[3,0.22
 function fxMaskComp(buf,scene,theta){
   const M=scene.rev4.mask; if(!M.type)return;
   const shape=M.type-1;
+  /* ORNAMENT PURGE. 21-28 is the polar rosette family - FOIL3, FOIL4, STAR5,
+     FLWR6 (the six-petal flower), GEAR8, STR12, BLOB, SUN16 - and 18 is DOTS9,
+     the polka grid. Returning here removes the motif without touching one byte
+     of the wire format: MASK_NAMES keeps all thirty entries, MASK_POLAR keeps
+     all eight slots, OV.maskType keeps its five bits and its numbering, and the
+     seeded mask block keeps its rng() draws. An old card carrying maskType 26
+     still decodes to 26 - it just paints nothing.
+     This also retires a loop-closure defect: FOIL3, STAR5 and BLOB at k===1
+     advance their rotation by a half-integer multiple of TAU and do not close. */
+  if(shape===18||(shape>=21&&shape<=28))return;
   const s=M.size*(1+0.12*Math.sin(theta*M.k+M.ph));
   const cx=M.cx*W, cy=M.cy*H, sPix=s*W;
   let edge=null;
@@ -4318,10 +4332,12 @@ function renderSource(rgbA,rgbC,scene,i,theta,grad,fx,corr){
   }
   if(fx.chrono)  fxChrono(rgbA,scene,theta,Math.min(150,corr*scene.vibe.g.chrono),grad);
   fxMaskComp(rgbA,scene,theta);
-  if(fx.kaleido){
-    const scr=renderSource._k||(renderSource._k=new Uint8Array(W*H*3));
-    fxKaleido(rgbA,scr,scene,theta,Math.min(150,corr*scene.vibe.g.kaleido));
-  }
+  /* KALEIDO IS RETIRED. The radial mandala fold was the most recognisable
+     ornament in the engine and the curator asked for it gone. The dispatch is
+     what is removed - fxKaleido, its LUT, its four rng() draws in buildScene,
+     its CORR_LADDER rung and its DNA bit 32 in CARD_CH all remain exactly
+     where they were, because every one of them is positional. Old cards with
+     bit 32 set still decode identically; they simply render unfolded. */
   graftApply(rgbA, scene, theta, grad, 0);   /* WITHIN — before the void bites */
   voidCarve(rgbA, scene, grad);
   chromaCap(rgbA, scene, grad);
