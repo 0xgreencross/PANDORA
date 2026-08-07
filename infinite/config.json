@@ -6,8 +6,16 @@
     "preludeFW": 360
   },
   "wall": {
-    "cabinet": { "wMm": 500, "hMm": 1000, "wPx": 104, "hPx": 208 },
-    "array": { "w": 3, "h": 3 },
+    "cabinet": {
+      "wMm": 500,
+      "hMm": 1000,
+      "wPx": 104,
+      "hPx": 208
+    },
+    "array": {
+      "w": 3,
+      "h": 3
+    },
     "width": 312,
     "height": 624,
     "pitchMm": 4.81,
@@ -15,10 +23,22 @@
     "playFps": 30,
     "controller": "NovaStar",
     "gpuMode": "1920x1080@60 native, DPR 1",
-    "origin": [0, 0]
+    "origin": [
+      0,
+      0
+    ]
   },
-  "frames": { "N": 60, "ladder": [60, 48, 36] },
-  "stream": { "id": "A" },
+  "frames": {
+    "N": 60,
+    "ladder": [
+      60,
+      48,
+      36
+    ]
+  },
+  "stream": {
+    "id": "A"
+  },
   "chrome": {
     "inset": 10,
     "header": 30,
@@ -27,15 +47,39 @@
     "comment": 18,
     "avatar": 22,
     "heart": 22,
-    "qr": { "modules": 29, "scalePx": 1, "enabled": true, "base": "dithervoid.art" }
+    "qr": {
+      "modules": 29,
+      "scalePx": 1,
+      "enabled": true,
+      "base": "https://dithervoid.art"
+    }
   },
-  "queue": { "ahead": 12, "low": 3 },
+  "queue": {
+    "ahead": 12,
+    "low": 3
+  },
   "choreo": {
-    "dwellCycles": [2, 3, 4],
-    "dwellWeights": [45, 35, 20],
+    "dwellCycles": [
+      2,
+      3,
+      4
+    ],
+    "dwellWeights": [
+      45,
+      35,
+      20
+    ],
     "flickFrames": 20,
-    "variance": { "doubleFlick": 0.08, "longDwell": 0.04, "backScroll": 0.03, "hesitate": 0.02 },
-    "longDwellCycles": [8, 12],
+    "variance": {
+      "doubleFlick": 0.08,
+      "longDwell": 0.04,
+      "backScroll": 0.03,
+      "hesitate": 0.02
+    },
+    "longDwellCycles": [
+      8,
+      12
+    ],
     "backScrollFracN": 1,
     "backScrollFracD": 3
   },
@@ -44,7 +88,13 @@
     "laptopPath": "/Users/alpha/Desktop/PANDORA-PROJECT/repo/infinite/reservoir",
     "note": "gitignored; lives on the laptop only; regenerable from the stream at any time"
   },
-  "wb": { "fam": null, "prim": null, "cam": null, "mod": null, "gain": {} },
+  "wb": {
+    "fam": null,
+    "prim": null,
+    "cam": null,
+    "mod": null,
+    "gain": {}
+  },
   "maintenance": {
     "reloadHourLocal": 4,
     "workerRecycleLoops": 500,
