@@ -92,8 +92,9 @@
       STREAM.start = u[0] % 100000000;
     }
     CH.post = STREAM.start;
-    CH.base = CH.post * S.postH;
-    CH.y = CH.base;
+    CH.origin = STREAM.start;   /* coordinates start at zero, whatever the index */
+    CH.base = 0;
+    CH.y = 0;
 
     /* the flick generator must reproduce the spec's baked table exactly */
     const specSum = FLICK_SPEC.reduce((a, b) => a + b, 0);
@@ -657,7 +658,7 @@
     card.post = post; card.loop = loop; card.anchor = CH.ref;
     card.vid = window.VOICE.identity(loop.addrSeed, loop.genome);
     card.likesShown = card.vid.likes.base; card.heart = false;
-    card.cv.style.top = (post * S.postH) + 'px';
+    card.cv.style.top = ((post - CH.origin) * S.postH) + 'px';
     drawChrome(card);
     blitFrame(card, 0);
   }
@@ -750,6 +751,13 @@
     ref: 0,                     /* the refresh counter: the only clock */
     state: 'PRIME', sRef: 0, k: 0, step: 0, hold: 0,
     post: 0, base: 0, y: 0,
+    /* THE COORDINATE ORIGIN. Card tops and the track offset are measured
+       relative to CH.origin, not from post 0: absolute post*postH breaks
+       layout at large indexes (Blink clamps lengths around 2^25 px), and
+       an infinite run reaches that in days even from index 0. The origin
+       rebases forward every rebasePx of travel, between beats, with every
+       card and the track shifted in the same tick — invisible. */
+    origin: 0, rebasePx: 1048576, rebases: 0,
     beat: 0, plan: null,
     log: [], starve: 0
   };
@@ -838,6 +846,13 @@
     const st = p.seq[CH.step];
     if (!st) {                             /* beat complete */
       CH.beat++;
+      if (CH.base >= CH.rebasePx) {        /* shift the origin; nothing moves on screen */
+        const d = (CH.post - CH.origin) * S.postH;
+        CH.origin = CH.post; CH.base -= d; CH.y -= d; CH.rebases++;
+        for (const card of CARDS.ring) if (card.post >= 0)
+          card.cv.style.top = ((card.post - CH.origin) * S.postH) + 'px';
+        applyY();
+      }
       CH.plan = planBeat(); CH.plan.seq = seqOf(CH.plan);
       CH.step = 0; CH.k = 0; CH.hold = 0; CH.sRef = CH.ref;
       logBeat(CH.plan);
@@ -1037,7 +1052,7 @@
     },
     probe() {
       const art = CARDS.ring.filter(c => c.post >= 0).map(c => ({
-        post: c.post, top: c.post * S.postH, artX: 0, artY: S.artY,
+        post: c.post, top: (c.post - CH.origin) * S.postH, artX: 0, artY: S.artY,
         artW: S.R, artH: S.R, smoothing: c.ctx.imageSmoothingEnabled,
         canvasW: c.cv.width, styleW: c.cv.style.width, frame: c.lastFi, N: c.loop ? c.loop.N : 0
       }));
