@@ -79,7 +79,18 @@
 
     const q = new URLSearchParams(location.search);
     STREAM.id = q.get('s') || cfg.stream.id;
-    STREAM.start = Math.max(0, parseInt(q.get('i') || '0', 10) || 0);
+    /* ?i= pins the entry point (QR resolution, reload-at-position).
+       Without it, every boot enters the infinite stream at a random
+       index: the run is always fresh, while every post keeps its
+       permanent deterministic address. Boot-time randomness only —
+       the choreography still counts refreshes, and each beat's plan
+       is keyed to its post index. */
+    const qi = q.get('i');
+    if (qi != null) STREAM.start = Math.max(0, parseInt(qi, 10) || 0);
+    else {
+      const u = new Uint32Array(1); crypto.getRandomValues(u);
+      STREAM.start = u[0] % 100000000;
+    }
     CH.post = STREAM.start;
     CH.base = CH.post * S.postH;
     CH.y = CH.base;

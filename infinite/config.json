@@ -1,9 +1,10 @@
 {
   "engine": {
-    "commit": "d682012",
-    "file": "../engine/core.d682012.js",
-    "sha256": "2a736c431a3f8491a59d864e5c050531910747e81bdfae45fe4f83da880f34ee",
-    "preludeFW": 360
+    "commit": "9f05151",
+    "file": "../engine/core.9f05151.js",
+    "sha256": "3d0f3c80c39e49ecedf38ec48838931b28bcaeea2d5a8fc4d4cb42f0468d629b",
+    "preludeFW": 360,
+    "lineage": "re-pinned from d682012 on 2026-08-08 (workbench/v2: ornament purge + emboss/silhouette roles)"
   },
   "wall": {
     "cabinet": {

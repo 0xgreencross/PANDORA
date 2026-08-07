@@ -28,8 +28,12 @@ const commit = (() => {
   return i >= 0 ? args[i + 1] : 'd682012';
 })();
 const CHECK = args.includes('--check');
+const src = (() => {
+  const i = args.indexOf('--src');
+  return i >= 0 ? args[i + 1] : 'workbench/index.html';
+})();
 
-const srcPath = join(repoRoot, 'workbench', 'index.html');
+const srcPath = join(repoRoot, src);
 const html = readFileSync(srcPath, 'utf8');
 
 /* ── the same script lookup wbPvSrc performs ──────────────────────────────
@@ -77,7 +81,7 @@ const out = core + '\n' + core2 + '\n' + DRIVER;
 const sha = b => createHash('sha256').update(b).digest('hex');
 const outPath = join(repoRoot, 'engine', 'core.' + commit + '.js');
 
-console.log('slice-engine · workbench/index.html @ ' + commit);
+console.log('slice-engine · ' + src + ' @ ' + commit);
 console.log('  core   ' + core.length + ' bytes  sha256 ' + sha(core));
 console.log('  core2  ' + core2.length + ' bytes  sha256 ' + sha(core2));
 console.log('  driver ' + DRIVER.length + ' bytes  sha256 ' + sha(DRIVER));
