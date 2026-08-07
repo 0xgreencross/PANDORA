@@ -615,7 +615,7 @@ body.artmax #legacy-root .bar{display:none;}
 
 <!-- ==== EIDOLON E8.0 — untouched engine markup, headless ==== -->
 <div id="wbbanner">
-  <span class="wbb-id">&#9874; WORKBENCH &mdash; NOT THE PUBLIC BOX</span>
+  <span class="wbb-id">&#9874; WORKBENCH V2 &mdash; ORNAMENTS PURGED &middot; EMBOSS + SILHOU</span>
   <span id="wb-livestat"></span>
   <nav class="wbb-nav" aria-label="rooms"><a href="/">PUBLIC BOX</a><a href="/gardens.html">GARDENS</a><a href="/showcase.html">SHOWCASE</a><a href="/sealed.html">SEALED</a></nav>
   <button type="button" id="wb-artmax" aria-pressed="false" title="give the whole deck to the artwork">&#9974; ART</button>
@@ -764,7 +764,6 @@ body.artmax #legacy-root .bar{display:none;}
           <div class="tg gv" data-fx="braid"><span>BRAID</span><i class="dot"></i></div>
           <div class="tg gv" data-fx="lungs"><span>LUNGS</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="tunnel"><span>TUNNEL</span><i class="dot"></i></div>
-          <div class="tg gd" data-fx="kaleido"><span>KALEID</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="bloom"><span>BLOOM</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="embers"><span>EMBERS</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="runes"><span>RUNES</span><i class="dot"></i></div>
@@ -1946,14 +1945,111 @@ function graftSlicePass(buf,g,theta,grad){
     }
   }
 }
+/* EMBOSS - the graphic as RELIEF rather than as ink. Its luminance gradient
+   is struck into the picture as a bevel, lit from a direction that makes
+   exactly one revolution per loop. cos/sin of theta are TAU-periodic by
+   construction, so the light returns to where it started and the loop closes.
+   Pixels where any of the four taps fall outside the graphic are skipped, so
+   the relief stops at the graphic's edge instead of ringing against the frame. */
+function graftEmbossPass(buf,g,theta){
+  const amp=g.amt*g.op*190; if(amp<=0)return;
+  /* THE SEAM MUST BE BIT-EXACT, NOT MERELY PERIODIC. cos/sin of theta are
+     mathematically TAU-periodic but not FLOATING-POINT periodic: sin(TAU) is
+     -2.45e-16, not 0, and cos(TAU) is 0.9999999999999999, not 1. That is far
+     below a pixel - until the accumulation lands on an integer and the
+     truncation below turns 100 into 99.999... into 99. Folding theta into
+     [0,TAU) first makes the last frame's light vector the SAME FLOAT as the
+     first frame's, so the seam closes exactly rather than nearly. */
+  let ph=(theta/TAU)%1; if(ph<0)ph+=1; ph*=TAU;
+  const lx=Math.cos(ph), ly=Math.sin(ph);
+  const ex=1/W, ey=1/H;
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){ const u=(x+0.5)/W;
+      if(graftLum(g,u,v)<0)continue;
+      const a=graftLum(g,u+ex,v), b=graftLum(g,u-ex,v);
+      const c=graftLum(g,u,v+ey), d=graftLum(g,u,v-ey);
+      if(a<0||b<0||c<0||d<0)continue;
+      const sft=((a-b)*lx+(c-d)*ly)*amp;
+      const o=(y*W+x)*3;
+      /* round, do not truncate: |0 chops toward zero, so a value that differs
+         by one ulp across the seam can differ by a whole index. */
+      let r=Math.round(buf[o]+sft), gg=Math.round(buf[o+1]+sft), bb=Math.round(buf[o+2]+sft);
+      buf[o]  = r<0?0:(r>255?255:r);
+      buf[o+1]= gg<0?0:(gg>255?255:gg);
+      buf[o+2]= bb<0?0:(bb>255?255:bb);
+    }
+  }
+}
+/* SILHOUETTE - the graphic as a SOLID BODY in the scene rather than a texture
+   on it. Its bright region becomes an opaque form punched out of the picture in
+   the artwork's own deepest tone, with a struck rim at the boundary, drifting
+   across the frame exactly once per loop.
+   This is not STENCIL inverted. STENCIL erases the picture where the graphic is
+   DARK - the graphic acts as a mask on what survives. SILHOUETTE puts the
+   graphic IN FRONT of the picture as an occluder with its own edge. */
+/* THE CUT CANNOT BE A CONSTANT. The graphic is whatever the artist uploads, so
+   any fixed threshold is wrong for some image: 0.13 selected every pixel of a
+   mid-band test card and flood-filled the frame, 0.72 selected none of it and
+   the role did nothing. Both failures came from asking an absolute question of
+   a relative thing.
+   So measure the image once and cut relative to its own distribution. A fixed
+   64x64 sample grid keeps this deterministic - same image, same numbers, in
+   both drivers - and the result is cached on g alongside the grain LUT. */
+function graftLumStats(g){
+  if(g._lst)return g._lst;
+  let n=0,s=0,s2=0;
+  for(let i=0;i<64;i++){ const v=(i+0.5)/64;
+    for(let j=0;j<64;j++){
+      const L=graftLum(g,(j+0.5)/64,v);
+      if(L<0)continue; n++; s+=L; s2+=L*L;
+    }
+  }
+  const m=n?s/n:0.5;
+  let sd=n?Math.sqrt(Math.max(0,s2/n-m*m)):0.25;
+  if(sd<0.02)sd=0.02;
+  return (g._lst={m:m,sd:sd});
+}
+function graftSilhouettePass(buf,g,theta,grad){
+  /* THE THRESHOLD AND THE FILL BOTH HAD TO MOVE. At 0.55-amt*0.42 the cut sat
+     at 0.13, which on any mid-band image selects EVERY pixel - so the pass
+     flood-filled the frame with grad[0..2], the exact tone STENCIL erases to,
+     and the two roles rendered byte-identical frames. A silhouette that covers
+     everything is not a silhouette.
+     So: the cut now sits high enough to pick out a form rather than a frame,
+     and the body is struck in the BRIGHT end of the ramp with a DARK rim -
+     the structural inverse of STENCIL, which cannot collide with it even in
+     the degenerate case where the whole image passes the test. */
+  /* amt sweeps the cut from "only the brightest crown" to "a fat solid form",
+     always measured against THIS image's own mean and spread. */
+  const st=graftLumStats(g);
+  const thr=st.m+st.sd*(1.15-g.amt*1.75);
+  let p=(theta/TAU)%1; if(p<0)p+=1;
+  const drift=0.18+g.amt*0.30;
+  const k0=grad[765], k1=grad[766], k2=grad[767];
+  const e0=grad[0], e1=grad[1], e2=grad[2];
+  const ex=2/W;
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){
+      let u=(x+0.5)/W-p*drift; u-=Math.floor(u);
+      const L=graftLum(g,u,v); if(L<thr)continue;
+      let un=u+ex; un-=Math.floor(un);
+      const Ln=graftLum(g,un,v);
+      const o=(y*W+x)*3;
+      if(Ln<thr){ buf[o]=e0; buf[o+1]=e1; buf[o+2]=e2; }
+      else      { buf[o]=k0; buf[o+1]=k1; buf[o+2]=k2; }
+    }
+  }
+}
 function graftApply(buf,scene,theta,grad,phase){
   const g=graftOf(scene); if(!g)return;
   if((g.depth|0)!==(phase|0))return;
   const R=g.roles;
   if(R.warp)    graftWarpPass(buf,g,theta);
   if(R.over)    graftOverPass(buf,g);
+  if(R.emboss)  graftEmbossPass(buf,g,theta);
   if(R.stencil) graftStencilPass(buf,g,theta,grad);
   if(R.slice)   graftSlicePass(buf,g,theta,grad);
+  if(R.silhouette) graftSilhouettePass(buf,g,theta,grad);
 }
 function renderScene(rgb, scene, theta, corr, grad){
   scene._corr=corr;
@@ -2267,8 +2363,13 @@ function massField(scene){
   const target=1-vf;
   const no=scene.noise;
   const arr=fam>>4, prim=fam&15;         // 16 skeletons x 16 vocabularies = 256 bodies
-  const mirror=(arr===1)||((arr===3||arr===2)&&rng()<0.4)
+  /* THE FOLD IS RETIRED - but its dice are not. This expression short-circuits,
+     so it consumes a VARIABLE number of rng() draws depending on arr, and that
+     draw pattern is load-bearing for every parameter rolled after it. Keep the
+     expression verbatim, discard the answer. */
+  const _foldRoll=(arr===1)||((arr===3||arr===2)&&rng()<0.4)
     ||((arr===9||arr===13||arr===15)&&rng()<0.35);
+  const mirror=false;   /* no bilateral symmetry: no butterflies, no totems */
   const ph=rng()*90;
   const fbmA=0.02+rng()*0.035, fbmF=4+rng()*5;
   /* ---- primitive vocabulary ---- */
@@ -4231,6 +4332,16 @@ const MASK_POLAR=[[3,0.55],[4,0.5],[5,-0.5],[6,0.45],[8,-0.32],[12,-0.4],[3,0.22
 function fxMaskComp(buf,scene,theta){
   const M=scene.rev4.mask; if(!M.type)return;
   const shape=M.type-1;
+  /* ORNAMENT PURGE. 21-28 is the polar rosette family - FOIL3, FOIL4, STAR5,
+     FLWR6 (the six-petal flower), GEAR8, STR12, BLOB, SUN16 - and 18 is DOTS9,
+     the polka grid. Returning here removes the motif without touching one byte
+     of the wire format: MASK_NAMES keeps all thirty entries, MASK_POLAR keeps
+     all eight slots, OV.maskType keeps its five bits and its numbering, and the
+     seeded mask block keeps its rng() draws. An old card carrying maskType 26
+     still decodes to 26 - it just paints nothing.
+     This also retires a loop-closure defect: FOIL3, STAR5 and BLOB at k===1
+     advance their rotation by a half-integer multiple of TAU and do not close. */
+  if(shape===18||(shape>=21&&shape<=28))return;
   const s=M.size*(1+0.12*Math.sin(theta*M.k+M.ph));
   const cx=M.cx*W, cy=M.cy*H, sPix=s*W;
   let edge=null;
@@ -4318,10 +4429,12 @@ function renderSource(rgbA,rgbC,scene,i,theta,grad,fx,corr){
   }
   if(fx.chrono)  fxChrono(rgbA,scene,theta,Math.min(150,corr*scene.vibe.g.chrono),grad);
   fxMaskComp(rgbA,scene,theta);
-  if(fx.kaleido){
-    const scr=renderSource._k||(renderSource._k=new Uint8Array(W*H*3));
-    fxKaleido(rgbA,scr,scene,theta,Math.min(150,corr*scene.vibe.g.kaleido));
-  }
+  /* KALEIDO IS RETIRED. The radial mandala fold was the most recognisable
+     ornament in the engine and the curator asked for it gone. The dispatch is
+     what is removed - fxKaleido, its LUT, its four rng() draws in buildScene,
+     its CORR_LADDER rung and its DNA bit 32 in CARD_CH all remain exactly
+     where they were, because every one of them is positional. Old cards with
+     bit 32 set still decode identically; they simply render unfolded. */
   graftApply(rgbA, scene, theta, grad, 0);   /* WITHIN — before the void bites */
   voidCarve(rgbA, scene, grad);
   chromaCap(rgbA, scene, grad);
@@ -7734,7 +7847,8 @@ function buildSC(J){
      scene that is about to be rendered, because a slider that silently does nothing
      gets blamed on the app rather than on the seed. IDOL has no mirror plane at all;
      roughly half of the other seeds have no floor either. */
-  const AV={over:1,under:1,floor:1,gobo:1,stencil:1,slice:1,warp:1,grain:1,palette:1};
+  const AV={over:1,under:1,floor:1,gobo:1,stencil:1,slice:1,warp:1,grain:1,palette:1,
+    emboss:1,silhouette:1};   /* both read only the graphic - always available */
   if(scene.mode==='IDOL'){ AV.floor=0; }
   else { try{ const sv0=sceneView(scene,0); let c0=0,c1=0,c2=0;
       for(let q=0;q<sv0.kind.length;q++){ const kk=sv0.kind[q];
@@ -8463,7 +8577,7 @@ function grOnSync(){
   /* roles are a multi-select: any number of them at once */
   const ROLES=[['over','OVER'],['under','UNDER'],['floor','FLOOR'],['gobo','GOBO'],
     ['stencil','STENCIL'],['slice','SLICE'],['warp','WARP'],['grain','GRAIN'],
-    ['palette','PALETTE']];
+    ['palette','PALETTE'],['emboss','EMBOSS'],['silhouette','SILHOU']];
   const rh=$('gr-roles');
   ROLES.forEach(([k,lab])=>{
     const b=document.createElement('button');
