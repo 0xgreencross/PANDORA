@@ -226,7 +226,10 @@
     spawn() {
       this.N = S.cfg.frames.N;
       this.nextIndex = STREAM.start;
-      const n = Math.max(1, (navigator.hardwareConcurrency || 4) - 2);
+      /* config wins: browsers with fingerprint shields lie about
+         hardwareConcurrency and would silently shrink the farm */
+      const n = (S.cfg.farm && S.cfg.farm.workers) ? (S.cfg.farm.workers | 0)
+        : Math.max(1, (navigator.hardwareConcurrency || 4) - 2);
       for (let k = 0; k < n; k++) this.slots.push(this.mkSlot(k));
       this.fill();
     },

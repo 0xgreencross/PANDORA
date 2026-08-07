@@ -101,5 +101,9 @@
     "watchdogRespawnS": 10,
     "watchdogReloadS": 60,
     "rssLogMinutes": 60
+  },
+  "farm": {
+    "workers": 6,
+    "note": "pinned; null = derive from hardwareConcurrency-2 (shielded browsers lie about cores)"
   }
 }
