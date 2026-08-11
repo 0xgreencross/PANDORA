@@ -15,14 +15,16 @@
   html, body { margin: 0; padding: 0; background: #000; height: 100%;
                overflow: hidden; user-select: none; -webkit-user-select: none;
                -webkit-tap-highlight-color: transparent; }
-  #stage { position: fixed; inset: 0; display: flex;
+  #stage { position: fixed; inset: 0; display: flex; flex-direction: column;
            align-items: center; justify-content: center; }
   #card { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  #dnalink { display: block; text-decoration: none; }
+  #dnacv { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
 </style>
 <script>window.PANDORA_PUBLIC = true;</script>
 </head>
 <body>
-<div id="stage"><canvas id="card"></canvas></div>
+<div id="stage"><canvas id="card"></canvas><a id="dnalink"><canvas id="dnacv"></canvas></a></div>
 <script src="../infinite/voice.js"></script>
 <script src="../infinite/stream.js"></script>
 <script src="../infinite/card.js"></script>

@@ -114,9 +114,55 @@
     };
   }
 
+
+  /* ── DNA CARD PACKER ──────────────────────────────────────────────────
+     A pure port of the public app's packCard() (root index.html): the
+     bridge from a stream address to the app's own resurrection door.
+     The wall genome always has no override and epoch 0, so cards come
+     out v2, or v5 when forked (voidamt/locality/chromacap/MASS), exactly
+     as the app itself would pack them. Round-tripped against the root's
+     unpackCard in the gate. */
+  const B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  function crc8(bytes) {
+    let c = 0;
+    for (const b of bytes) { c ^= b; for (let i = 0; i < 8; i++) c = (c & 0x80) ? ((c << 1) ^ 0x07) & 0xff : (c << 1) & 0xff; }
+    return c;
+  }
+  function packCardOf(CORE, g, frames) {
+    const CARD_SCHEMES = [...CORE.SCHEME_KEYS.slice(0, 14), 'GENESIS', ...CORE.SCHEME_KEYS.slice(14), 'TISGEN'];
+    const si = CARD_SCHEMES.indexOf(g.schemeKey), mi = CORE.MODES.indexOf(g.mode);
+    if (si < 0 || mi < 0) return '';
+    const forked = (g.voidamt | 0) > 0 || (g.locality | 0) > 0 || (g.chromacap | 0) === 1 || g.mode === 'MASS';
+    let v = 0n;
+    const push = (val, bits) => { v = (v << BigInt(bits)) | (BigInt(val) & ((1n << BigInt(bits)) - 1n)); };
+    push(forked ? 5 : 2, 4);
+    push(g.seed >>> 0, 32); push(si, 5); push(mi, 4); push(g.corr, 7); push(frames, 7); push(0, 2);
+    for (const ch of CARD_CH) push(g.fx[ch] ? 1 : 0, 1);
+    let nBytes = 13, pad = 6n;
+    if (forked) {
+      push(0, 5); push(0, 5); push(16, 5); push(16, 5); push(16, 5); push(0, 6); push(0, 5);
+      push(0, 1);
+      push(Math.min(100, g.voidamt | 0), 7);
+      push(g.chromacap ? 1 : 0, 1);
+      push(Math.min(100, g.locality | 0), 7);
+      nBytes = 19; pad = 2n;
+    }
+    v <<= pad;
+    const bytes = [];
+    for (let i = nBytes - 1; i >= 0; i--) bytes[nBytes - 1 - i] = Number((v >> BigInt(i * 8)) & 0xffn);
+    bytes.push(crc8(bytes));
+    let bv = 0n; for (const b of bytes) bv = (bv << 8n) | BigInt(b);
+    const nChars = Math.ceil(bytes.length * 8 / 5);
+    bv <<= BigInt(nChars * 5 - bytes.length * 8);
+    let out = '';
+    for (let i = nChars - 1; i >= 0; i--) out += B32[Number((bv >> BigInt(i * 5)) & 31n)];
+    let grp = ''; for (let i = 0; i < out.length; i += 4) grp += (i ? '-' : '') + out.slice(i, i + 4);
+    return 'PNDR-' + grp;
+  }
+
   window.STREAMLIB = {
     seedOf, fieldOf, preludeOf, coreEval,
     CARD_CH, OV0, GEN_MODE_W, GEN_SCHEME_W,
-    genomeOf, schemeOf, jobOf
+    genomeOf, schemeOf, jobOf, packCardOf
   };
 })();

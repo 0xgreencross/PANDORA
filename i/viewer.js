@@ -88,13 +88,39 @@
   }
 
   /* integer device-pixel upscale; never fractional, never smoothed */
+  const DNA_H = 26;                       /* the strip under the card */
   function fit() {
     const cv = document.getElementById('card');
     const dpr = window.devicePixelRatio || 1;
     const availW = window.innerWidth * dpr, availH = window.innerHeight * dpr;
-    const k = Math.max(1, Math.min(Math.floor(availW / V.R), Math.floor(availH / V.postH)));
+    const k = Math.max(1, Math.min(Math.floor(availW / V.R), Math.floor(availH / (V.postH + DNA_H))));
     cv.style.width = (V.R * k / dpr) + 'px';
     cv.style.height = (V.postH * k / dpr) + 'px';
+    const dc = document.getElementById('dnacv');
+    if (dc.width) {
+      dc.style.width = (dc.width * k / dpr) + 'px';
+      dc.style.height = (dc.height * k / dpr) + 'px';
+    }
+    V.k = k;
+  }
+
+  /* the DNA strip: the card's genome as the app's own resurrection door */
+  function drawDna() {
+    const card = window.STREAMLIB.packCardOf(V.CORE, V.genome, V.cfg.frames.N);
+    const a = document.getElementById('dnalink');
+    const dc = document.getElementById('dnacv');
+    if (!card) { a.style.display = 'none'; return; }
+    a.style.display = 'block';
+    a.href = '/?dna=' + card;
+    const t1 = 'TAP TO RESURRECT IN PANDORA';
+    const w = Math.max(window.CARDKIT.textW(t1, 1), window.CARDKIT.textW(card, 1)) + 4;
+    dc.width = w; dc.height = DNA_H;
+    const ctx = dc.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, DNA_H);
+    window.CARDKIT.drawText(ctx, t1, ((w - window.CARDKIT.textW(t1, 1)) / 2) | 0, 4, 1, '#9a9aa6');
+    window.CARDKIT.drawText(ctx, card, ((w - window.CARDKIT.textW(card, 1)) / 2) | 0, 15, 1, '#e8e8e8');
+    fit();
   }
 
   function render() {
@@ -109,6 +135,7 @@
     V.identity = window.VOICE.identity(V.seed, V.genome);
     V.likesShown = V.identity.likes.base;
     drawChrome();
+    drawDna();
 
     const spec = window.STREAMLIB.jobOf(V.CORE, cfg, V.streamId, V.index, V.N);
     const src = window.STREAMLIB.preludeOf(cfg.engine.preludeFW, V.R, 0) + V.engineText;
