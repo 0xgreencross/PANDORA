@@ -20,14 +20,49 @@
   #card { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
   #dnalink { display: block; text-decoration: none; }
   #dnacv { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+  #actions { display: flex; gap: 10px; justify-content: center; }
+  .abtn { background: #000; border: 1px solid #333; color: #e8e8e8;
+          font: 12px/1 monospace; letter-spacing: 1px; padding: 9px 14px;
+          cursor: pointer; }
+  .abtn:active { background: #111; }
+  #modal { position: fixed; inset: 0; background: rgba(0,0,0,.88);
+           display: none; align-items: center; justify-content: center; z-index: 9; }
+  #modal.on { display: flex; }
+  #mbox { background: #050508; border: 1px solid #2a2a33; padding: 18px;
+          max-width: 320px; width: calc(100vw - 48px); }
+  #mttl { color: #fff; font: 13px/1.4 monospace; letter-spacing: 2px; margin-bottom: 10px; }
+  #mnote { color: #9a9aa6; font: 11px/1.5 monospace; margin: 10px 0; }
+  #mnote b { color: #e8ff2e; font-weight: normal; }
+  .mbtn { display: block; width: 100%; background: #000; border: 1px solid #333;
+          color: #e8e8e8; font: 12px/1 monospace; letter-spacing: 1px;
+          padding: 11px 12px; margin: 8px 0; cursor: pointer; text-align: left;
+          text-decoration: none; box-sizing: border-box; }
+  .mbtn:active { background: #111; }
+  .mbtn[disabled] { color: #555; border-color: #222; cursor: default; }
+  #mclose { display: block; width: 100%; background: none; border: none;
+            color: #666; font: 11px/1 monospace; letter-spacing: 2px;
+            padding: 10px 0 0; cursor: pointer; }
 </style>
 <script>window.PANDORA_PUBLIC = true;</script>
 </head>
 <body>
-<div id="stage"><canvas id="card"></canvas><a id="dnalink"><canvas id="dnacv"></canvas></a></div>
+<div id="stage">
+  <canvas id="card"></canvas>
+  <a id="dnalink"><canvas id="dnacv"></canvas></a>
+  <div id="actions">
+    <button class="abtn" id="btn-share">&#x1D54F; SHARE</button>
+    <button class="abtn" id="btn-mint">&#x25C8; MINT</button>
+  </div>
+</div>
+<div id="modal"><div id="mbox">
+  <div id="mttl"></div>
+  <div id="mbody"></div>
+  <button id="mclose">CLOSE</button>
+</div></div>
 <script src="../infinite/voice.js"></script>
 <script src="../infinite/stream.js"></script>
 <script src="../infinite/card.js"></script>
+<script src="../infinite/gif.js"></script>
 <script src="viewer.js"></script>
 </body>
 </html>

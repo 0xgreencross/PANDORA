@@ -93,7 +93,7 @@
     const cv = document.getElementById('card');
     const dpr = window.devicePixelRatio || 1;
     const availW = window.innerWidth * dpr, availH = window.innerHeight * dpr;
-    const k = Math.max(1, Math.min(Math.floor(availW / V.R), Math.floor(availH / (V.postH + DNA_H))));
+    const k = Math.max(1, Math.min(Math.floor(availW / V.R), Math.floor(availH / (V.postH + DNA_H + 44))));
     cv.style.width = (V.R * k / dpr) + 'px';
     cv.style.height = (V.postH * k / dpr) + 'px';
     const dc = document.getElementById('dnacv');
@@ -213,6 +213,85 @@
     }
     requestAnimationFrame(tick);
   }
+
+  /* ═══ SHARE + MINT ═════════════════════════════════════════════════════
+     SHARE: the loop leaves as the canon GIF (the app's own encoder,
+     25fps, global palette). X takes only the words; the sharing law
+     rides: no URLs in the transmission, the address is spelled out.
+     MINT: the loop travels by its DNA into PANDORA, where the existing
+     wallet door (injected, handoffs, WalletConnect) and the existing
+     mint flow do the signing. One mint machinery, not two.            */
+
+  function gifBlob() {
+    if (!V.complete) return null;
+    if (V._gifFor !== V.index || !V._gif) {
+      V._gif = window.GIFKIT.encodeLoopGif(V.frames, V.pal, V.R, V.R);
+      V._gifFor = V.index;
+    }
+    return V._gif;
+  }
+  function gifName() {
+    return 'DITHERVOID-' + V.streamId + '-' + V.index + '.gif';
+  }
+  function xText() {
+    return V.identity.title + '\n\nDITHERVOID // INFINITE SCROLL by @greencrosslive\n\ndithervoid dot art';
+  }
+
+  const modal = () => document.getElementById('modal');
+  function openModal(title, bodyHtml, wire) {
+    document.getElementById('mttl').textContent = title;
+    document.getElementById('mbody').innerHTML = bodyHtml;
+    modal().classList.add('on');
+    if (wire) wire();
+  }
+  function closeModal() { modal().classList.remove('on'); }
+
+  function shareModal() {
+    const ready = V.complete;
+    const blob = ready ? gifBlob() : null;
+    const mb = blob ? (blob.size / 1048576).toFixed(1) : null;
+    const canPhotos = ready && navigator.canShare &&
+      navigator.canShare({ files: [new File([blob], gifName(), { type: 'image/gif' })] });
+    let h = '';
+    if (!ready) h += '<div id="mnote">THE LOOP IS STILL RENDERING. THE BUTTONS ARM WHEN IT COMPLETES.</div>';
+    h += '<a class="mbtn" id="m-save"' + (ready ? '' : ' disabled') + '>&#x2913; SAVE GIF' + (mb ? ' &middot; ' + mb + ' MB' : '') + '</a>';
+    if (canPhotos) h += '<button class="mbtn" id="m-photos">&#x2913; SAVE TO PHOTOS</button>';
+    h += '<button class="mbtn" id="m-x"' + (ready ? '' : ' disabled') + '>&#x1D54F; SHARE ON X</button>';
+    h += '<div id="mnote"><b>ATTACH THE GIF YOURSELF:</b> X ONLY TAKES THE WORDS. SAVE THE GIF FIRST, THEN ADD IT TO THE POST.'
+      + (mb ? ' THIS ONE IS ' + mb + ' MB, UNDER X&rsquo;S 15 MB CEILING.' : '') + '</div>';
+    openModal('TRANSMIT THE LOOP', h, () => {
+      const save = document.getElementById('m-save');
+      if (ready) {
+        save.href = URL.createObjectURL(blob);
+        save.download = gifName();
+      }
+      const ph = document.getElementById('m-photos');
+      if (ph) ph.addEventListener('click', async () => {
+        try {
+          await navigator.share({ files: [new File([gifBlob()], gifName(), { type: 'image/gif' })] });
+        } catch (e) { }
+      });
+      document.getElementById('m-x').addEventListener('click', () => {
+        if (!V.complete) return;
+        try { navigator.clipboard.writeText(xText()); } catch (e) { }
+        window.open('https://x.com/intent/post?text=' + encodeURIComponent(xText()), '_blank');
+      });
+    });
+  }
+
+  function mintModal() {
+    const card = window.STREAMLIB.packCardOf(V.CORE, V.genome, V.cfg.frames.N);
+    let h = '<div id="mnote">THE LOOP TRAVELS BY ITS DNA. PANDORA OPENS HOLDING THIS EXACT GENOME;'
+      + ' SUMMON A WALLET THERE AND MINT. ONE SEED, ONE TOKEN, ONE CHANCE.</div>'
+      + '<a class="mbtn" id="m-mint" href="/?dna=' + encodeURIComponent(card) + '">&#x25C8; OPEN IN PANDORA TO MINT</a>'
+      + '<div id="mnote">' + card + '</div>';
+    openModal('MINT TO ETHEREUM', h, null);
+  }
+
+  document.getElementById('btn-share').addEventListener('click', shareModal);
+  document.getElementById('btn-mint').addEventListener('click', mintModal);
+  document.getElementById('mclose').addEventListener('click', closeModal);
+  modal().addEventListener('click', e => { if (e.target === modal()) closeModal(); });
 
   window.__VIEWER = V;
   boot().catch(e => { console.error('INFINITE SCROLL viewer boot failed', e); });

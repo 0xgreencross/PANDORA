@@ -12,6 +12,20 @@
 (function(){var q=new URLSearchParams(location.search);
 if(q.get('s')!==null&&q.get('i')!==null)location.replace('/i/'+location.search);})();
 </script>
+<style>
+/* THE TOKEN RENDERER. The contract's animation_url is this page + ?dna=;
+   the registry is append-only, so the URL's behavior IS the renderer.
+   Embedded (iframe or ?ui=0), the page reduces to the artwork alone:
+   the loop, full bleed, square, black, nothing else. visibility (not
+   display) so the engine's layout and clocks run untouched beneath. */
+body.embed * { visibility: hidden !important; }
+html:has(body.embed), body.embed { background: #000 !important; overflow: hidden !important; }
+body.embed #view { visibility: visible !important; position: fixed !important;
+  inset: 0 !important; margin: auto !important;
+  width: min(100vw, 100vh) !important; height: min(100vw, 100vh) !important;
+  image-rendering: pixelated; border: none !important; box-shadow: none !important;
+  border-radius: 0 !important; }
+</style>
 <meta name="theme-color" content="#050508">
 <meta property="og:type" content="website">
 <meta property="og:title" content="DITHERVOID // PANDORA">
