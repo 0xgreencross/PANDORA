@@ -67,12 +67,7 @@
     /* evaluate the CORE slice on the main thread once, to borrow the pinned
        engine's own constants and scheme builders for job construction; the
        prelude mirrors the worker's, so the mathematics is the same object */
-    const F = fieldOf(S.R);
-    const coreOnly = S.engineText.slice(0, S.engineText.indexOf('/*CORE2-BEGIN*/'));
-    S.CORE = new Function('W', 'H', 'FW', 'PVSW', 'PVVG', 'OUTD', 'TAU',
-      coreOnly + '\nreturn {SCHEMES:SCHEMES,SCHEME_KEYS:SCHEME_KEYS,MODES:MODES,' +
-      'mulberry32:mulberry32,genesisScheme:genesisScheme,tisScheme:tisScheme};')(
-      S.R, S.R, cfg.engine.preludeFW, F.sw, F.vg, 0, 6.283185307179586);
+    S.CORE = window.STREAMLIB.coreEval(S.engineText, S.R, cfg.engine.preludeFW);
     for (const k of GEN_SCHEME_W.map(p => p[0]))
       if (k !== 'GENESIS' && k !== 'TISGEN' && !S.CORE.SCHEMES[k])
         console.error('INFINITE SCROLL: canon scheme ' + k + ' missing from engine');
@@ -116,28 +111,12 @@
 
   const STREAM = { id: 'A', start: 0 };
 
-  function seedOf(streamId, i) {
-    const s = streamId + ':' + i;
-    let h = 0x811C9DC5;
-    for (let k = 0; k < s.length; k++) { h ^= s.charCodeAt(k); h = Math.imul(h, 0x01000193); }
-    return h >>> 0;
-  }
+  const seedOf = (sid, i) => window.STREAMLIB.seedOf(sid, i);
 
   /* the engine's own rasterField(field:true) formula, mirrored for the
      worker prelude; the byte-identity gate proves the mirror is exact */
-  function fieldOf(r) {
-    return {
-      sw: Math.max(160, Math.min(448, r)),
-      vg: Math.max(56, Math.min(88, Math.round(88 * Math.min(1, r / 448))))
-    };
-  }
-
-  function preludeOf(R, outd) {
-    const F = fieldOf(R);
-    return '"use strict";const W=' + R + ',H=' + R + ',FW=' + S.cfg.engine.preludeFW +
-      ',PVSW=' + F.sw + ',PVVG=' + F.vg + ',OUTD=' + (outd | 0) +
-      ';const TAU=6.283185307179586;\n';
-  }
+  const fieldOf = r => window.STREAMLIB.fieldOf(r);
+  function preludeOf(R, outd) { return window.STREAMLIB.preludeOf(S.cfg.engine.preludeFW, R, outd); }
 
   function workerSrc() { return preludeOf(S.R, 0) + S.engineText; }
 
@@ -148,78 +127,13 @@
      Math.random is replaced by the stream RNG so that seed -> genome is
      permanent. Weights, bands and channel lists are copied verbatim.     */
 
-  const CARD_CH = ['chroma', 'tracking', 'pixelsort', 'grain', 'blocks', 'scanlines', 'echo',
-    'wave', 'slice', 'vroll', 'mosh', 'ghost', 'melt', 'bleed', 'invert', 'crush', 'dropout',
-    'chrono', 'mirror', 'flay', 'autoph', 'weave', 'entropy', 'meta', 'tect',
-    'panes', 'hilb', 'splice', 'moire', 'braid', 'lungs',
-    'tunnel', 'kaleido', 'bloom', 'embers', 'runes', 'chimera'];
-  const FX_FAV = new Set(['embers', 'bloom', 'panes', 'melt', 'ghost', 'invert', 'lungs', 'runes', 'meta', 'entropy', 'chimera', 'kaleido', 'hilb', 'tunnel', 'chrono']);
-  const FX_PILL = new Set(['chroma', 'tracking', 'pixelsort', 'grain', 'blocks', 'scanlines', 'echo']);
-  const GEN_MODE_W = [['MASS', 18], ['IDOL', 14], ['SEDIMENT', 11], ['VEINED', 10], ['LATHE', 9], ['BROADCAST', 9], ['MOLTEN', 8], ['ENGRAVED', 8], ['GRID', 7], ['SATELLITE', 6]];
-  const GEN_SCHEME_W = [['GENESIS', 18], ['POLE', 9], ['POISONFROG', 9], ['AIRNEON', 8], ['DES', 8], ['FAUXRGB', 6], ['TISGEN', 6], ['BONE', 4]];
-  const OV0 = { maskType: 0, maskStyle: 0, cx: 16, cy: 16, size: 16, n: 0, form: 0 };
-
-  function wpick(R, pairs) {
-    let t = 0; for (const q of pairs) t += q[1];
-    let r = R() * t;
-    for (const q of pairs) { r -= q[1]; if (r <= 0) return q[0]; }
-    return pairs[0][0];
-  }
-  function rollFx2(R, pill, fav, oth, rad) {
-    const fx = {};
-    for (const k of CARD_CH)
-      fx[k] = rad ? R() < 0.30 : FX_PILL.has(k) ? R() < pill : R() < (FX_FAV.has(k) ? fav : oth);
-    return fx;
-  }
-
-  function genomeOf(seed) {
-    const R = S.CORE.mulberry32((seed ^ 0x0D17E5C0) >>> 0);
-    const canon = R() < 0.60;
-    let mode = canon ? wpick(R, GEN_MODE_W) : S.CORE.MODES[(R() * S.CORE.MODES.length) | 0];
-    let engineSeed = seed >>> 0;
-    if (mode === 'MASS' && R() < 0.60) {           /* the strata/drape steer */
-      for (let t2 = 0; t2 < 12; t2++) {
-        const f2 = (S.CORE.mulberry32((engineSeed ^ 0x14CE55) >>> 0)() * 64) | 0;
-        if (((f2 >> 3) === 5) || ((f2 >> 3) === 7)) break;
-        engineSeed = (R() * 0xFFFFFFFF) >>> 0;
-      }
-    }
-    const ss = Object.keys(S.CORE.SCHEMES);
-    const schemeKey = canon && R() < 0.48 ? wpick(R, GEN_SCHEME_W) : ss[(R() * ss.length) | 0];
-    return {
-      seed: engineSeed, mode: mode, schemeKey: schemeKey,
-      corr: canon ? 45 + ((R() * 30) | 0) : 20 + ((R() * 81) | 0),
-      voidamt: canon ? 38 + ((R() * 21) | 0) : (R() * 80) | 0,
-      locality: canon ? 45 + ((R() * 51) | 0) : (R() * 101) | 0,
-      chromacap: R() < (canon ? 0.12 : 0.25) ? 1 : 0,
-      fx: canon ? rollFx2(R, 0.88, 0.30, 0.08, false) : rollFx2(R, 0.70, 0.22, 0.22, R() < 0.20),
-      canon: canon
-    };
-  }
-
-  function schemeOf(g) {
-    if (g.schemeKey === 'GENESIS') return S.CORE.genesisScheme(g.seed);
-    if (g.schemeKey === 'TISGEN') return S.CORE.tisScheme(g.seed);
-    return S.CORE.SCHEMES[g.schemeKey];
-  }
-
-  function jobOf(i, N) {
-    const seed = seedOf(STREAM.id, i);
-    const g = genomeOf(seed);
-    const sch = schemeOf(g);
-    return {
-      index: i, addrSeed: seed, genome: g,
-      job: {
-        seed: g.seed, mode: g.mode, voidamt: g.voidamt, locality: g.locality,
-        chromacap: g.chromacap, scheme: { stops: sch.stops, glitch: sch.glitch },
-        corr: g.corr, N: N, fx: Object.assign({}, g.fx), ov: Object.assign({}, OV0),
-        epoch: 0, wb: {
-          fam: S.cfg.wb.fam, prim: S.cfg.wb.prim, cam: S.cfg.wb.cam,
-          mod: S.cfg.wb.mod, gain: Object.assign({}, S.cfg.wb.gain)
-        }, gr: null
-      }
-    };
-  }
+  /* shared with the viewer: window.STREAMLIB (infinite/stream.js) holds
+     the genome roller, weights and job builder — one source, no drift */
+  const OV0 = window.STREAMLIB.OV0;
+  const GEN_SCHEME_W = window.STREAMLIB.GEN_SCHEME_W;
+  function genomeOf(seed) { return window.STREAMLIB.genomeOf(S.CORE, seed); }
+  function schemeOf(g) { return window.STREAMLIB.schemeOf(S.CORE, g); }
+  function jobOf(i, N) { return window.STREAMLIB.jobOf(S.CORE, S.cfg, STREAM.id, i, N); }
 
   /* ═══ 3 · THE FARM ═════════════════════════════════════════════════════
      Worker pool from the sliced engine, driven through the driver's own
@@ -384,238 +298,9 @@
      Bitmap 5x7 face, integer scales only, no antialiasing, no subpixel.
      2x is shouted (across the street), 1x is murmured (walk up close).  */
 
-  const FONT = {
-    A: [0x0E, 0x11, 0x11, 0x11, 0x1F, 0x11, 0x11], B: [0x1E, 0x11, 0x11, 0x1E, 0x11, 0x11, 0x1E],
-    C: [0x0E, 0x11, 0x10, 0x10, 0x10, 0x11, 0x0E], D: [0x1C, 0x12, 0x11, 0x11, 0x11, 0x12, 0x1C],
-    E: [0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x1F], F: [0x1F, 0x10, 0x10, 0x1E, 0x10, 0x10, 0x10],
-    G: [0x0E, 0x11, 0x10, 0x10, 0x13, 0x11, 0x0F], H: [0x11, 0x11, 0x11, 0x1F, 0x11, 0x11, 0x11],
-    I: [0x0E, 0x04, 0x04, 0x04, 0x04, 0x04, 0x0E], J: [0x07, 0x02, 0x02, 0x02, 0x02, 0x12, 0x0C],
-    K: [0x11, 0x12, 0x14, 0x18, 0x14, 0x12, 0x11], L: [0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x1F],
-    M: [0x11, 0x1B, 0x15, 0x15, 0x11, 0x11, 0x11], N: [0x11, 0x19, 0x15, 0x13, 0x11, 0x11, 0x11],
-    O: [0x0E, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E], P: [0x1E, 0x11, 0x11, 0x1E, 0x10, 0x10, 0x10],
-    Q: [0x0E, 0x11, 0x11, 0x11, 0x15, 0x12, 0x0D], R: [0x1E, 0x11, 0x11, 0x1E, 0x14, 0x12, 0x11],
-    S: [0x0F, 0x10, 0x10, 0x0E, 0x01, 0x01, 0x1E], T: [0x1F, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04],
-    U: [0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x0E], V: [0x11, 0x11, 0x11, 0x11, 0x11, 0x0A, 0x04],
-    W: [0x11, 0x11, 0x11, 0x15, 0x15, 0x15, 0x0A], X: [0x11, 0x11, 0x0A, 0x04, 0x0A, 0x11, 0x11],
-    Y: [0x11, 0x11, 0x0A, 0x04, 0x04, 0x04, 0x04], Z: [0x1F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x1F],
-    '0': [0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E], '1': [0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E],
-    '2': [0x0E, 0x11, 0x01, 0x02, 0x04, 0x08, 0x1F], '3': [0x1E, 0x01, 0x01, 0x0E, 0x01, 0x01, 0x1E],
-    '4': [0x02, 0x06, 0x0A, 0x12, 0x1F, 0x02, 0x02], '5': [0x1F, 0x10, 0x1E, 0x01, 0x01, 0x11, 0x0E],
-    '6': [0x06, 0x08, 0x10, 0x1E, 0x11, 0x11, 0x0E], '7': [0x1F, 0x01, 0x02, 0x04, 0x08, 0x08, 0x08],
-    '8': [0x0E, 0x11, 0x11, 0x0E, 0x11, 0x11, 0x0E], '9': [0x0E, 0x11, 0x11, 0x0F, 0x01, 0x02, 0x0C],
-    ' ': [0, 0, 0, 0, 0, 0, 0], '.': [0, 0, 0, 0, 0, 0x0C, 0x0C],
-    ',': [0, 0, 0, 0, 0, 0x0C, 0x04], "'": [0x0C, 0x04, 0x08, 0, 0, 0, 0],
-    '!': [0x04, 0x04, 0x04, 0x04, 0x04, 0, 0x04], '?': [0x0E, 0x11, 0x01, 0x02, 0x04, 0, 0x04],
-    '-': [0, 0, 0, 0x1F, 0, 0, 0], '_': [0, 0, 0, 0, 0, 0, 0x1F],
-    ':': [0, 0x0C, 0x0C, 0, 0x0C, 0x0C, 0], '/': [0x01, 0x01, 0x02, 0x04, 0x08, 0x10, 0x10],
-    '·': [0, 0, 0x0C, 0x0C, 0, 0, 0], '+': [0, 0x04, 0x04, 0x1F, 0x04, 0x04, 0],
-    '=': [0, 0, 0x1F, 0, 0x1F, 0, 0], '@': [0x0E, 0x11, 0x17, 0x15, 0x16, 0x10, 0x0E],
-    '(': [0x02, 0x04, 0x08, 0x08, 0x08, 0x04, 0x02], ')': [0x08, 0x04, 0x02, 0x02, 0x02, 0x04, 0x08]
-  };
-
-  function drawText(ctx, text, x, y, scale, color) {
-    ctx.fillStyle = color;
-    let cx = x;
-    const up = String(text).toUpperCase();
-    for (const ch of up) {
-      const g = FONT[ch] || FONT[' '];
-      for (let r = 0; r < 7; r++) {
-        const row = g[r];
-        for (let c = 0; c < 5; c++) if (row & (16 >> c))
-          ctx.fillRect(cx + c * scale, y + r * scale, scale, scale);
-      }
-      cx += 6 * scale;
-    }
-    return cx - x;
-  }
-  const textW = (t, s) => String(t).length * 6 * s - s;
-
-  /* heart, 11 wide x 9 tall mask, scaled x2 into its 22 box */
-  const HEART = ['01110001110', '11111011111', '11111111111', '11111111111',
-    '01111111110', '00111111100', '00011111000', '00000100000', '00000000000'];
-  function drawHeart(ctx, x, y, filled, color) {
-    const s = 2;
-    for (let r = 0; r < HEART.length; r++) for (let c = 0; c < 11; c++) {
-      if (HEART[r][c] !== '1') continue;
-      const edge = r === 0 || r === HEART.length - 1 ||
-        (HEART[r - 1] && HEART[r - 1][c] !== '1') || (HEART[r + 1] && HEART[r + 1][c] !== '1') ||
-        HEART[r][c - 1] !== '1' || HEART[r][c + 1] !== '1';
-      if (filled || edge) { ctx.fillStyle = color; ctx.fillRect(x + c * s, y + 2 + r * s, s, s); }
-    }
-  }
-
-  /* avatar: 5x5 mirrored identicon from the address seed, palette colors */
-  function avatarInto(ctx, x, y, size, seed, stops) {
-    const r = S.CORE.mulberry32((seed ^ 0x00A7A7) >>> 0);
-    const c1 = stops[Math.min(stops.length - 1, 2 + ((r() * (stops.length - 2)) | 0))];
-    const c0 = stops[1] || stops[0];
-    const cell = Math.floor(size / 5);
-    const pad = Math.floor((size - cell * 5) / 2);
-    ctx.fillStyle = c0; ctx.fillRect(x, y, size, size);
-    ctx.fillStyle = c1;
-    for (let col = 0; col < 3; col++) for (let row = 0; row < 5; row++) {
-      if (r() < 0.5) continue;
-      ctx.fillRect(x + pad + col * cell, y + pad + row * cell, cell, cell);
-      ctx.fillRect(x + pad + (4 - col) * cell, y + pad + row * cell, cell, cell);
-    }
-  }
-
-  /* ── QR · version 3 (29 modules), byte mode, EC level L, best mask ──── */
-  const QR = (function () {
-    const GF_EXP = new Uint8Array(512), GF_LOG = new Uint8Array(256);
-    (function () {
-      let x = 1;
-      for (let i = 0; i < 255; i++) { GF_EXP[i] = x; GF_LOG[x] = i; x <<= 1; if (x & 0x100) x ^= 0x11D; }
-      for (let i = 255; i < 512; i++) GF_EXP[i] = GF_EXP[i - 255];
-    })();
-    const gmul = (a, b) => (a && b) ? GF_EXP[GF_LOG[a] + GF_LOG[b]] : 0;
-    function rs(data, n) {
-      let gen = [1];
-      for (let i = 0; i < n; i++) {
-        const next = new Array(gen.length + 1).fill(0);
-        for (let j = 0; j < gen.length; j++) {
-          next[j] ^= gmul(gen[j], GF_EXP[i]);
-          next[j + 1] ^= gen[j];
-        }
-        gen = next;
-      }
-      gen.reverse();                      /* highest degree first */
-      const res = data.concat(new Array(n).fill(0));
-      for (let i = 0; i < data.length; i++) {
-        const f = res[i];
-        if (!f) continue;
-        for (let j = 0; j < gen.length; j++) res[i + j] ^= gmul(gen[j], f);
-      }
-      return res.slice(data.length);
-    }
-    const SZ = 29, DATA_CW = 55, EC_CW = 15;
-    const FMT_L = [0x77C4, 0x72F3, 0x7DAA, 0x789D, 0x662F, 0x6318, 0x6C41, 0x6976];
-    function build(text) {
-      const bytes = [...new TextEncoder().encode(text)];
-      if (bytes.length > 53) return null;
-      const bits = [];
-      const push = (v, n) => { for (let i = n - 1; i >= 0; i--) bits.push((v >> i) & 1); };
-      push(4, 4); push(bytes.length, 8);
-      for (const b of bytes) push(b, 8);
-      push(0, Math.min(4, DATA_CW * 8 - bits.length));
-      while (bits.length % 8) bits.push(0);
-      const data = [];
-      for (let i = 0; i < bits.length; i += 8) { let v = 0; for (let j = 0; j < 8; j++) v = (v << 1) | bits[i + j]; data.push(v); }
-      const PADS = [0xEC, 0x11];
-      let p = 0; while (data.length < DATA_CW) data.push(PADS[(p++) & 1]);
-      const cw = data.concat(rs(data, EC_CW));
-
-      const M = [], F = [];                /* module value, function-pattern flag */
-      for (let i = 0; i < SZ; i++) { M.push(new Uint8Array(SZ)); F.push(new Uint8Array(SZ)); }
-      const setF = (r, c, v) => { if (r >= 0 && r < SZ && c >= 0 && c < SZ) { M[r][c] = v; F[r][c] = 1; } };
-      const finder = (r0, c0) => {
-        for (let r = -1; r <= 7; r++) for (let c = -1; c <= 7; c++) {
-          const rr = r0 + r, cc = c0 + c;
-          if (rr < 0 || rr >= SZ || cc < 0 || cc >= SZ) continue;
-          const inF = r >= 0 && r <= 6 && c >= 0 && c <= 6;
-          const on = inF && (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4));
-          setF(rr, cc, on ? 1 : 0);
-        }
-      };
-      finder(0, 0); finder(0, SZ - 7); finder(SZ - 7, 0);
-      for (let i = 8; i < SZ - 8; i++) { setF(6, i, i % 2 === 0 ? 1 : 0); setF(i, 6, i % 2 === 0 ? 1 : 0); }
-      for (let r = -2; r <= 2; r++) for (let c = -2; c <= 2; c++)     /* alignment @ (22,22) */
-        setF(22 + r, 22 + c, (Math.max(Math.abs(r), Math.abs(c)) !== 1) ? 1 : 0);
-      setF(SZ - 8, 8, 1);                  /* dark module */
-      /* reserve format areas */
-      for (let i = 0; i <= 8; i++) { if (i !== 6) { F[8][i] = 1; F[i][8] = 1; } }
-      for (let i = 0; i < 8; i++) { F[8][SZ - 1 - i] = 1; F[SZ - 1 - i][8] = 1; }
-      F[8][8] = 1;
-
-      /* zigzag data placement */
-      let bi = 0;
-      const allBits = [];
-      for (const b of cw) for (let i = 7; i >= 0; i--) allBits.push((b >> i) & 1);
-      let col = SZ - 1, up = true;
-      while (col > 0) {
-        if (col === 6) col--;
-        for (let k = 0; k < SZ; k++) {
-          const r = up ? SZ - 1 - k : k;
-          for (const c of [col, col - 1]) {
-            if (F[r][c]) continue;
-            M[r][c] = bi < allBits.length ? allBits[bi++] : 0;
-          }
-        }
-        col -= 2; up = !up;
-      }
-
-      /* mask selection by full penalty */
-      const MASKS = [
-        (r, c) => (r + c) % 2 === 0, (r, c) => r % 2 === 0, (r, c) => c % 3 === 0,
-        (r, c) => (r + c) % 3 === 0, (r, c) => (((r / 2) | 0) + ((c / 3) | 0)) % 2 === 0,
-        (r, c) => (r * c) % 2 + (r * c) % 3 === 0, (r, c) => ((r * c) % 2 + (r * c) % 3) % 2 === 0,
-        (r, c) => ((r + c) % 2 + (r * c) % 3) % 2 === 0
-      ];
-      function penalty(G) {
-        let p = 0;
-        for (let pass = 0; pass < 2; pass++) {
-          for (let r = 0; r < SZ; r++) {
-            let run = 1;
-            for (let c = 1; c <= SZ; c++) {
-              const cur = c < SZ ? (pass ? G[c][r] : G[r][c]) : 2;
-              const prev = pass ? G[c - 1][r] : G[r][c - 1];
-              if (c < SZ && cur === prev) run++;
-              else { if (run >= 5) p += 3 + (run - 5); run = 1; }
-            }
-          }
-        }
-        for (let r = 0; r < SZ - 1; r++) for (let c = 0; c < SZ - 1; c++)
-          if (G[r][c] === G[r][c + 1] && G[r][c] === G[r + 1][c] && G[r][c] === G[r + 1][c + 1]) p += 3;
-        const P1 = [1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0], P2 = [0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1];
-        for (let pass = 0; pass < 2; pass++) for (let r = 0; r < SZ; r++) for (let c = 0; c <= SZ - 11; c++) {
-          let m1 = true, m2 = true;
-          for (let k = 0; k < 11; k++) {
-            const v = pass ? G[c + k][r] : G[r][c + k];
-            if (v !== P1[k]) m1 = false; if (v !== P2[k]) m2 = false;
-          }
-          if (m1) p += 40; if (m2) p += 40;
-        }
-        let dark = 0;
-        for (let r = 0; r < SZ; r++) for (let c = 0; c < SZ; c++) dark += G[r][c];
-        p += 10 * Math.floor(Math.abs(dark * 100 / (SZ * SZ) - 50) / 5);
-        return p;
-      }
-      let best = null, bestP = Infinity, bestMask = 0;
-      for (let mk = 0; mk < 8; mk++) {
-        const G = M.map(row => row.slice());
-        for (let r = 0; r < SZ; r++) for (let c = 0; c < SZ; c++)
-          if (!F[r][c] && MASKS[mk](r, c)) G[r][c] ^= 1;
-        const fmt = FMT_L[mk];
-        const fb = i => (fmt >> (14 - i)) & 1;
-        for (let i = 0; i < 6; i++) G[8][i] = fb(i);
-        G[8][7] = fb(6); G[8][8] = fb(7); G[7][8] = fb(8);
-        for (let i = 9; i < 15; i++) G[14 - i][8] = fb(i);
-        for (let i = 0; i < 7; i++) G[SZ - 1 - i][8] = fb(i);
-        for (let i = 7; i < 15; i++) G[8][SZ - 15 + i] = fb(i);
-        G[SZ - 8][8] = 1;
-        const p = penalty(G);
-        if (p < bestP) { bestP = p; best = G; bestMask = mk; }
-      }
-      return { size: SZ, grid: best, mask: bestMask };
-    }
-    return { build: build };
-  })();
-
-  /* Standard polarity with the wall-verified white apron (the form the
-     2026-08-05 scan test proved to 2.5m): a quiet tile 2 modules wider on
-     every side, black modules on it. Vertically the tile starts at the
-     actions row top and rides 3px into the black gap above the title
-     glyphs (they begin 6px lower); the 29² code itself sits right-aligned
-     at the chrome inset, per the layout. */
-  function drawQR(ctx, x, rowY, text) {
-    const q = QR.build(text);
-    if (!q) return;
-    const s = S.cfg.chrome.qr.scalePx, n = q.size * s;
-    ctx.fillStyle = '#fff'; ctx.fillRect(x - 2 * s, rowY, n + 4 * s, n + 4 * s);
-    ctx.fillStyle = '#000';
-    for (let r = 0; r < q.size; r++) for (let c = 0; c < q.size; c++)
-      if (q.grid[r][c]) ctx.fillRect(x + c * s, rowY + 2 * s + r * s, s, s);
-  }
+  /* shared with the viewer: window.CARDKIT (infinite/card.js) holds the
+     bitmap face, heart, avatar, QR and the chrome composition */
+  const drawText = window.CARDKIT.drawText;
 
   /* ═══ 6 · CARDS ════════════════════════════════════════════════════════
      DOM ring of 4 canvases, recycled, never appended past boot. One
@@ -663,37 +348,18 @@
     blitFrame(card, 0);
   }
 
-  function drawChrome(card) {
-    const cfg = S.cfg, ctx = card.ctx, ch = cfg.chrome;
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, S.R, S.postH);
-    const schStops = schemeOf(card.loop.genome).stops;
-    /* header: avatar + handle, bitmap 2x */
-    avatarInto(ctx, ch.inset, ((ch.header - ch.avatar) / 2) | 0, ch.avatar, card.loop.addrSeed, schStops);
-    drawText(ctx, '@' + card.vid.handle, ch.inset + ch.avatar + 6, ((ch.header - 14) / 2) | 0, 2, '#e8e8e8');
-    /* actions row */
-    drawActions(card);
-    /* title, bitmap 2x */
-    const tY = ch.header + S.R + ch.actions;
-    drawText(ctx, card.vid.title, ch.inset, tY + (((ch.title - 14) / 2) | 0), 2, '#ffffff');
-    /* comment, bitmap 1x, murmured */
-    const cY = tY + ch.title;
-    drawText(ctx, card.vid.comment, ch.inset, cY + (((ch.comment - 7) / 2) | 0), 1, '#9a9aa6');
+  function cardO(card) {
+    const ch = S.cfg.chrome;
+    return {
+      ch: ch, R: S.R, postH: S.postH, artY: S.artY, post: card.post,
+      streamId: STREAM.id, qrBase: ch.qr.base, qrScale: ch.qr.scalePx,
+      identity: card.vid, stops: schemeOf(card.loop.genome).stops,
+      likesShown: card.likesShown, heart: card.heart,
+      seed: card.loop.addrSeed, mul32: S.CORE.mulberry32
+    };
   }
-
-  function drawActions(card) {
-    const cfg = S.cfg, ctx = card.ctx, ch = cfg.chrome;
-    const aY = ch.header + S.R;
-    ctx.fillStyle = '#000'; ctx.fillRect(0, aY, S.R, ch.actions);
-    drawHeart(ctx, ch.inset, aY + (((ch.actions - ch.heart) / 2) | 0), card.heart, card.heart ? '#ff1f9c' : '#e8e8e8');
-    const likeTxt = String(card.likesShown).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    drawText(ctx, likeTxt, ch.inset + ch.heart + 6, aY + (((ch.actions - 14) / 2) | 0), 2, '#e8e8e8');
-    if (ch.qr.enabled) {
-      const qs = ch.qr.modules * ch.qr.scalePx;
-      drawQR(ctx, S.R - ch.inset - qs, aY,
-        ch.qr.base + '/?s=' + STREAM.id + '&i=' + card.post);
-    }
-  }
+  function drawChrome(card) { window.CARDKIT.composeChrome(card.ctx, cardO(card)); }
+  function drawActions(card) { window.CARDKIT.actionsRow(card.ctx, cardO(card)); }
 
   function blitFrame(card, fi) {
     const loop = card.loop;
@@ -1041,7 +707,7 @@
   window.__FEED = {
     S: S, CH: CH, FARM: FARM, GOV: GOV, CARDS: CARDS, STREAM: STREAM,
     seedOf, genomeOf, jobOf, fieldOf, preludeOf, workerSrc, flickTable, rhe,
-    FLICK_SPEC, SETTLES, QR,
+    FLICK_SPEC, SETTLES, QR: window.CARDKIT.QR,
     phase() {
       const st = CH.plan && CH.plan.seq ? CH.plan.seq[CH.step] : null;
       return {

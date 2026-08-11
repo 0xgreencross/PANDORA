@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>DITHERVOID</title>
+<!-- ══════════════════════════════════════════════════════════════════════
+     INFINITE SCROLL · /i/ — the pocket resolver.
+     The QR on every wall card points here: ?s=<stream>&i=<index> returns
+     that exact post, rendered live by the identical pinned engine, with
+     the identical identity. Without ?i= it shows one random post from the
+     stream; tap for another. Unlisted, like /f3.
+     ══════════════════════════════════════════════════════════════════════ -->
+<style>
+  html, body { margin: 0; padding: 0; background: #000; height: 100%;
+               overflow: hidden; user-select: none; -webkit-user-select: none;
+               -webkit-tap-highlight-color: transparent; }
+  #stage { position: fixed; inset: 0; display: flex;
+           align-items: center; justify-content: center; }
+  #card { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+</style>
+<script>window.PANDORA_PUBLIC = true;</script>
+</head>
+<body>
+<div id="stage"><canvas id="card"></canvas></div>
+<script src="../infinite/voice.js"></script>
+<script src="../infinite/stream.js"></script>
+<script src="../infinite/card.js"></script>
+<script src="viewer.js"></script>
+</body>
+</html>
