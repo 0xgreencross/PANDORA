@@ -520,7 +520,7 @@ body.artmax #ui{
   </div>
 
   <div id="actbar">
-    <button id="resetall" title="deactivate every sigil + clear all TUNE overrides">&#10226;</button>
+    <button id="wb-back" title="step back through the loops you have seen" disabled>&#8617; BACK</button>
     <button id="go">&#9654; RENDER</button>
     <button id="wb-keep">&#10003; KEEP</button>
     <button id="wb-kill">&#10007; KILL</button>
@@ -705,8 +705,13 @@ body.artmax #ui{
           <div id="gardenlist" class="voidscroll"></div>
         </div>
       </div>
+      <div class="field"><label>HISTORY</label>
+        <button id="wb-fwd" class="vio" title="step forward again if you went back too far" disabled>&#8618; FORWARD</button></div>
       <div class="field"><label>IRREVERSIBLE</label>
-        <button id="oblivion" class="vio" title="total oblivion">&#9760; OBLIVION</button></div>
+        <div class="duo">
+          <button id="resetall" class="vio" title="deactivate every sigil + clear all TUNE overrides">&#10226; RESET</button>
+          <button id="oblivion" class="vio" title="total oblivion">&#9760; OBLIVION</button>
+        </div></div>
     </section>
 
     <section id="p-judge" class="panel">
@@ -7800,8 +7805,111 @@ const wbPush=window.wbPush=function(){
   $('ph').style.display='none';
   WBPV.w.postMessage({t:'job', job:wbPvJob()});
   wbTrArm();                             /* the clock on the settle restarts */
+  try{ wbhNote(); }catch(e){}            /* and the loop you are leaving is remembered */
 };
 function wbPvPause(){ if(WBPV.w)WBPV.w.postMessage({t:'pause'}); }
+
+/* ═══ THE BACK STACK ══════════════════════════════════════════════════════
+   A rolled loop is gone the moment you roll again, and the good one is often
+   the one you just left. This keeps the last twenty genomes and walks them.
+
+   WHAT A SNAPSHOT HAS TO HOLD. Not the seed — the seed alone rebuilds a
+   different picture the moment any dial has moved. The whole genome: state
+   (palette, source, corruption, void, locality, chroma, era, frames, every
+   sigil), OV (the mask overrides), WB (skeleton, primitive, modifier, camera
+   and all 37 gains) and the graft config. Anything less and BACK returns
+   something that merely resembles what you lost.
+
+   WHERE IT HOOKS. wbPush() — the single funnel every control now goes
+   through. A hardcoded list of controls would drift the moment one is added;
+   the funnel cannot.
+   ══════════════════════════════════════════════════════════════════════ */
+const WBH=window.WBH={stack:[], idx:-1, max:20, hold:false, timer:0};
+
+function wbhCapture(){
+  return {
+    seed:(parseInt($('seed').value,10)>>>0)||1,
+    scheme:state.scheme, mode:state.mode,
+    corr:state.corr|0, frames:state.frames|0,
+    voidamt:state.voidamt|0, locality:state.locality|0,
+    chromacap:state.chromacap?1:0, epoch:EPOCH|0,
+    fx:Object.assign({},state.fx),
+    ov:Object.assign({},OV),
+    wb:{fam:WB.fam, prim:WB.prim, cam:WB.cam, mod:WB.mod, gain:Object.assign({},WB.gain)},
+    gr:(window.GRAFT&&GRAFT.cfg)?JSON.parse(JSON.stringify(GRAFT.cfg)):null
+  };
+}
+
+function wbhNote(){
+  clearTimeout(WBH.timer);
+  /* debounced, so dragging a slider across its whole range is ONE entry rather
+     than eighty. The hold is re-checked when the timer FIRES, not when it is
+     scheduled, because a restore's own wbPush would otherwise record the
+     restored genome as a fresh step and strand the pointer. */
+  WBH.timer=setTimeout(function(){
+    if(WBH.hold)return;
+    var snap=wbhCapture(), key=JSON.stringify(snap);
+    if(WBH.idx>=0 && JSON.stringify(WBH.stack[WBH.idx])===key)return;
+    WBH.stack.length=WBH.idx+1;      /* a new move drops whatever was ahead */
+    WBH.stack.push(snap);
+    while(WBH.stack.length>WBH.max)WBH.stack.shift();
+    WBH.idx=WBH.stack.length-1;
+    wbhPaint();
+  },500);
+}
+
+/* the WB segs carry AUTO first and then one button per index, so value v sits
+   at child v+1 and AUTO at child 0 */
+function wbhSegPick(id,val){
+  var h=$(id); if(!h)return;
+  var bs=[].slice.call(h.children), want=(val==null)?0:(val+1);
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute('aria-pressed', String(i===want));
+}
+
+function wbhApply(snap){
+  WBH.hold=true;
+  try{
+    applyCard(snap);                       /* the engine's own restore path */
+    WB.fam=snap.wb.fam; WB.prim=snap.wb.prim; WB.cam=snap.wb.cam; WB.mod=snap.wb.mod;
+    for(var k in snap.wb.gain) WB.gain[k]=snap.wb.gain[k];
+    wbhSegPick('wb-fam',snap.wb.fam);  wbhSegPick('wb-prim',snap.wb.prim);
+    wbhSegPick('wb-mod',snap.wb.mod);  wbhSegPick('wb-cam',snap.wb.cam);
+    [].slice.call(document.querySelectorAll('#wb-gains .wbrow')).forEach(function(row){
+      var lab=row.querySelector('label'); if(!lab)return;
+      var key=(lab.textContent||'').trim().toLowerCase(), v=WB.gain[key];
+      if(v==null)return;
+      var r=row.querySelector('input'), out=row.querySelector('.v');
+      if(r)r.value=v;
+      if(out){ out.textContent=v+'%'; out.style.color=(+v===100)?'#7c8':'#ff8fd0'; }
+    });
+    if(snap.gr && window.GRAFT && GRAFT.cfg){
+      Object.assign(GRAFT.cfg, snap.gr);
+      GRAFT.cfg.rev=(GRAFT.cfg.rev|0)+1;   /* graftOf caches on rev; bump or it serves the old graft */
+    }
+  }catch(e){}
+  wbPush();
+  /* outlast the note debounce so the restore does not record itself */
+  setTimeout(function(){ WBH.hold=false; wbhPaint(); },800);
+  wbhPaint();
+}
+
+function wbhBack(){ if(WBH.idx>0){ WBH.idx--; wbhApply(WBH.stack[WBH.idx]); } }
+function wbhFwd(){ if(WBH.idx<WBH.stack.length-1){ WBH.idx++; wbhApply(WBH.stack[WBH.idx]); } }
+
+function wbhPaint(){
+  var b=$('wb-back'), f=$('wb-fwd');
+  if(b){ b.disabled=(WBH.idx<=0);
+         b.innerHTML='↩ BACK'+(WBH.idx>0?' <b>'+WBH.idx+'</b>':''); }
+  if(f){ var ahead=WBH.stack.length-1-WBH.idx;
+         f.disabled=(ahead<=0);
+         f.innerHTML='↪ FORWARD'+(ahead>0?' <b>'+ahead+'</b>':''); }
+}
+$('wb-back').addEventListener('click',wbhBack);
+$('wb-fwd').addEventListener('click',wbhFwd);
+/* if nothing has pushed by the time the instrument has settled, record the
+   loop it booted with — otherwise the first roll has nothing to go back to */
+setTimeout(function(){ if(WBH.idx<0){ WBH.stack.push(wbhCapture()); WBH.idx=0; wbhPaint(); } },2500);
+
 /* ═══ THE TRUTH PASS ══════════════════════════════════════════════════════
    Fixing the corruption latch made the two paths the same MATHEMATICS. It
    did not make them the same PICTURE, because they never agreed on geometry:
