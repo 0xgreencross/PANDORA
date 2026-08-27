@@ -255,7 +255,8 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;
 }
 .vio:active,.dice:active{background:#23233a;}
 button[disabled]{opacity:.35;}
-#oblivion{color:var(--mag);}
+#actbar #oblivion{color:var(--mag);border-color:#5a1436;}
+#actbar #oblivion:active{background:#3a0f24;}
 .wbtag[aria-pressed="true"]{color:#06060a;background:var(--sulph);border-color:var(--sulph);}
 input[type=text],input[type=number]{
   min-height:var(--tap);width:100%;min-width:0;padding:0 8px;
@@ -525,7 +526,7 @@ body.artmax #ui{
     <button id="wb-keep">&#10003; KEEP</button>
     <button id="wb-kill">&#10007; KILL</button>
     <button id="download" disabled>&#10515; SAVE</button>
-    <button id="xsave" disabled title="X-safe version, under the 15MB GIF cap">&#120143;</button>
+    <button id="oblivion" title="total oblivion">&#9760; OBLIVION</button>
   </div>
 
   <div id="sidecol">
@@ -707,11 +708,10 @@ body.artmax #ui{
       </div>
       <div class="field"><label>HISTORY</label>
         <button id="wb-fwd" class="vio" title="step forward again if you went back too far" disabled>&#8618; FORWARD</button></div>
+      <div class="field"><label>SHARE</label>
+        <button id="xsave" class="vio" disabled title="X-safe version, guaranteed under the 15MB GIF cap">&#120143; POST</button></div>
       <div class="field"><label>IRREVERSIBLE</label>
-        <div class="duo">
-          <button id="resetall" class="vio" title="deactivate every sigil + clear all TUNE overrides">&#10226; RESET</button>
-          <button id="oblivion" class="vio" title="total oblivion">&#9760; OBLIVION</button>
-        </div></div>
+        <button id="resetall" class="vio" title="deactivate every sigil + clear all TUNE overrides">&#10226; RESET</button></div>
     </section>
 
     <section id="p-judge" class="panel">
