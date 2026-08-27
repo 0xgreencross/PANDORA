@@ -20,7 +20,7 @@
 <meta name="apple-mobile-web-app-title" content="PANDORA">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23050508%22/%3E%3Crect x=%229%22 y=%229%22 width=%2214%22 height=%2214%22 fill=%22none%22 stroke=%22%23FF1F9C%22 stroke-width=%222%22 stroke-dasharray=%223 2%22 transform=%22rotate(45 16 16)%22/%3E%3C/svg%3E">
-<title>DITHERVOID // WORKBENCH</title>
+<title>DITHERVOID // WORKBENCH V2</title>
 <meta name="robots" content="noindex,nofollow">
 <style>
 @font-face{font-family:'Silkscreen';font-weight:400;font-style:normal;font-display:block;
@@ -28,1020 +28,762 @@
 @font-face{font-family:'Silkscreen';font-weight:700;font-style:normal;font-display:block;
     src:url(data:font/woff2;base64,d09GMgABAAAAABM0ABEAAAAAQrwAABLYAAEAQgAAAAAAAAAAAAAAAAAAAAAAAAAAGhwbIBxsBmAAgUYIUgmcDBEICtc4zFYBNgIkA4MgC4FSAAQgBYNsByAMgTIbYTtlB0j1OBBc24Lg/z8lN8aEGjD7UXIkU6ladSrGgMsVUFnVB+RhOSA4fW9pUSAUSjCVCn/3vDvOSlh2T7Vw5jVRvvgpzVxNo8fOZxYwHCLi0vLP7dVGoyCNE/FLzbVthCSzFs1V1T0TXKYccY4AH0khq2elERWoFxLVqVcE8aP9mmio+Jmjqv8f7JzsYNES0UMmkojFbB+GIW14sZ72BcDGw/9f7f73ZgbjyUYgoDnDLdiuYWDFmS2bYIIdD55eWxosKiAFRplUvqcNkGFDOkr47JAmKPnWLmoX9XbV1xpjX7p6ux9rRrpjGSgyJ5nL6QeUWTLqh+ut/EpGiHA4L3MqIDjxtDUmwkicrpm2lAOEmlF0D96iCtAGCOyH6ZOmTFchFLDNv9yAkFQmpszEgHYGaHTG9R/COd+gVv5PZ9n+P7YPEH3vqhQdQ1FR01gzssYzkuyTDAvAPiJrJe/zvr3Q3gYQulQHwF0Iip6gStOny0vRELVdFKYT0XrwADvu7fvTfCb4xoRHHCyEMUKeOFzgVvvbLgkCuD283YyRAqRIA0IAU1oWDUMTC0ggAXD+BQCwa8+qRLn0/xkkkQAvIvJlJNGPtBIzWZjKq1e0SUV6unoBxuzrO3rCmrSQ2cbPKMCXWEEExquXph2y/a5x3QsgHMHidHwK16wuIVUnAPHDEZpBf35Gt+6RUTSFCXQaKd1ZPc5P0NUQ3dOwSSE7bjzsQlbCJ5/eYmvTa8SUMEAot7hDvP3eTpzTj/OxGyQOaAB0AYY8/ATYr9GQVuPmjBrWrUeLCXU61GpTr8G0SVOajOjXbsCsLgt6jekzoxH5bYMcx5gD2i2Pg4hAen8bQJVAvKXcktv/u54cQMFtmprI+xMMXL5Hvf6ZaJil9DHvSr/4AHv5r0uX1Je67bwHj4A6GRCEOQYIWGk3wFCvPiAg3b4Yu3QqjglRco6Vx8axFrUS5tc9wW0wx6VDXuwN3NLCHMlr3vAwx4N3/PT2DYGpcQiF0XGOCi7Sjg3R0DIxyDQRiTDVNUQ51jxVJ53wykYWP4fS0M/pcoq6mzzCbetXmuro+hVl5qIlek6bFkVzy6NJFRWlo1SHlSGO2NJGwKt2siv91VwCU+SOtCDSVJAmaMrPZjO7gR03l+AqgeN74esRp0k2PXtcTvyyBO7jRJGaWVcMimZMwN5EotRoAQUyFaSXTtC4SGgW0S067w1KAdXtIQOxsWq1KFp02YZbBu2sDKfpEqXq9RtD6a2vWyFWu92RxWbKC1e2LKl5E3quExSdf8Jz2lpAAwZHA1rCDfppGRZVgG0XuLYL1aGEVg0YENKreLk8kVITQ5X0JNON50m1IxODMSCcxhWfQOByJpThNrZvigqI9CzTviBL53Qbs4Fpw5qlx3H5CCeNyVQb4hnHonAZ4VqDly7sDdv39Enr7iJ5p95WfMCHyi277MyTgB9QEsHHdyMphUaLhl+JV7o/bhCI43fOWy4nUup9QSbALP1WJWBRA0G8/5qqbEzsLp6m7gVCeL+Z3n+5aDkffaHgMCpG+C0SzHYP5UggGiDssfpq9O8cmlBB+CJVEmakKuyv6vQV/qrXeU1lOBiwguylveHjHL9Uup0EzUso91ghIZtABOu/FMLzGxbBqUrL7tdE0KJM8VrEY3CKko/jU6dlWC5IjNETED5oKNdwV+RanL1jgSgqxmMglhOCOGFIEAFJIiFFFEgTFTJEgyzRIUeM0gpoHDaLmt5/TSoN9Fo0oZBbqdU/6v84e1X/Yv/na2bhFCPyrYby4SMVDp6Yh4r5qFiAioWoWISKxahYgoqlqFiGiuWoVdWQNnGhpmMmnmSsZX0c2kpKVOfuIhtUeaSmes2ohcjcQ1QrtazqFd47UDovQJ36UFm9HbuZtyVqq1UJ49N039ia9W7yDK1qgDxhUNKIU6KHXduFUKTk3r9bTPxDAAy80NXaEMY5vyZNkFbmPPIB/Zco0IzmShtoGVIBcTm3m1ZUlgmXRubAiqb+bX9136CxSNp2m+8ZWBxaQhi/uBJoA5j4jllEOtL1d17dso2Lo52+2kTavkWcS3tCGrO1qBZRhcLWrWW3PZdpX+p5dfuyOD9jccNtMil9ATJfZ9nfE2EWdNNTb06bkMydorB0R4VkcTWZ3zrFFhSVpT0XOiurTjE5gx2T1jaapZYqhBIyB+WZFS8oxguRxWyIC5GFN9QMm7UW6PCJkG5SKUS+tqsj/TvjmLDITNLJaTSjXRC2KNXjOwQ3qZFWvYMvSqFnSk1L9Wq3t0cYNZiuWR+OmrTUz+0mFGXYZN7pdLp0LdSNPVBpvBnCnceYFm7LkrTWVDuMjahz9l5zyy167jPhGfmc+0FbnLj9AGiPvXXSXOtj3zKkAyob7EUYjGMiT40iAs0Ft0UX0ERdWqWVRlftpA+hmm0eh3Z1av8l5tlMudHt7KmtrjqfN0lvdGG4FMvRO2KkGjqTXmWYFXcFjhrj698eUOiRC/0BTdXzM1Y/jopQtGg2FROgNYXJ7WFiV6WRWV+QvWZPIbEtJksdpsFgUJ9DmwBnEKFLgDdS/dAnIBhEGBIdI+yrbouxDySDCVMfyEYpmPtAMZiw9JE12/iSOq2gMYiwSUBrpPpjm4DOIMIuoffo4UP67ASDwYRDHxiNUnDsA5PBhFOfthmqrkDqc6WFEfwLNOXS+axCq2aFChTWAXybALDN0xjHnX9w7x/jcA4tOJpowikAnANAlac1ixf/4tW/ePMv3sMCHgHgGUC8ZP+Db//Bj//g13/wFxbwDwDhVwNUdQ2/rgPu8aPODrKldTepd94sjtCbiKXF3of2D1c4CRTHYQAO4IsT9SUaH2hAq/GEBBIFgdIi4Qbpemxnqtzs6ZGB7FscpbJvV63M7rB8bFeKLbjjqm9odsX0plK7329jAvPbjUMpLeuOGaic+/3A0rYYdyxyahhhNtpG7K262tu33CXxqrG6dk7o0dhQKmrdHy1856S8JtiAgD4reRS08HVXHO1h7QyVho6NSOhNpVtjBWY1XmXZBZJAM2WC9iodHUMVoyUnHVqpbOTPUA67a/fLfV7H2eYEJywedRBk1YQWdgwhGgZzshTClFLuaAubC5vbTtkfDYw5gX+7iUGneaQzA5LSjadG5lViki+8jwnl0lXJQKWjXmYSt6BSolaQqunoZR4ZbHOzvOw4sxyWY2zh0L8zuprluBHozNFiTFEw5mQVm6OfquQrPEB8L+El65q/9U1atEvu4gFjU3PTKhVe+vDayY6KsNHMYpJMiQlHXuKV6jfoagx0hZrhLR43BuF8tM0oA1s02fc8xISZUQbLjyY/sxFX730jtdL4Knu8Mk5fnDBOn/OldsSGzgz0yzTDqZvfM6FdRfrplyBzNXI04vjPTMxvAIM4wHms9eQrEQiC0C7DM300WIGIlekL6WSW0kQrlvGUgHNg6LaIjKIjhYzEA+sIu7a1RKMSM1Fu4euwB61BFfmSNWYUOB2g7PCBwUx0zazZqtRK9nltQQxK3x6W9ypZVDALlZvlrxJNVUOWVepcYm8KWTNP2jSNlBlt3ekVAw2KkLkgqmAixg12yam8+zGRRoImumPBb/9VHYTILevU89VvzPakGkn8piqMUGrxi6qoIoAM23A8lBFpaWcWTcQpWkrKRC1ohYslx38fI0W5CrNfKxjt4MHpSjFWnpTk1Ia1gpNmMXcHX0AZ40yrCkS4dJtSMp/DGgPPWCbaYXoFJilyW6mNQapzSSEAC+VLRSDp6XDvSHHWrpSVmeYRapMrmvPAoSgemf7U82Bx4PU2s3TWkooXaRlqKA2bf1UBGZln1aEZDs0LcEM1XRxgrTKtrq3XrFJAi8TM9wbQrnyqmyIkTUGb55kWXaT0SylXsJIWZNrrhLKKinAcWCfdLgW/8evycjNG54qNHtJFZVqlVpIpXwElPcAmSq/XSXV/+WUzI8K8xkC8yVU8eMt1v42cgGnYTiZXyPtHFEDXWKI662NweTHdxOS1OMmU730pPYYUyx1CgrLjjhVgSwERYUy19vcaVUhkhe+UGxJKcuq0IiIxDshgkbMMazYM89CKW25XI7/kR5eMLZ+LDTAL+FxYJeEThQjURHfIgegT3WfnDEno4fmSxjKbDTFqwJDv811zPBV0cMGDMMeO6lJCepVco8w5xahLXDIvwAfWHYNqa5OYnLc7pWN7gNIo5Mx6zwq91nzrS/lBgIuNVT6qw/eJEFkW++PdYSLC6GpnvMJPEBWsmddg1WLXlFu+8lp4JMFV0Pywj4teD/JeL6yQxfcgNkPKZojMQnKEwx8Ym287hAZ+QjhjNYGb+G6GFQoj0XFz9Mq5IY1wXsMyR0Y49ZV7Yss8vXxeDzVXOTQiyqcBzWgtFUgsGCxXy1lCNSEas/ZXhiE68aqRrJnjobd7TbqkyH5qkkEJ1/ShVYqutTU109AvlhgXmDDJETnfHwFCB4YGBZjBtEQha32ADTTrO1BQA47aROFHmSIKFxBx8afVBLPhTLYjk8wTmoo8nEhZLZHFeF0P2U/CM/m0s0hxqpwTjuAJxwgf90DVVo/3niVA3/pK73N/fKTAVrrwkI/TOT7I7V5sAd7jvdfz8a8mcNfhUCnpZ9b3iTjX9+/IxTH3eGE8akteBROKnVmCdOr54pDrIAInRLKMliG3axTY3nnIRxfEg3Qn8kdyHwpdvqOCu8khr5IG2HqI5sfTGYhMWAb6E/oOEWDsVDeRWVtSNZeSMe4JCOQhR1yYJbiGGz1AkQ+DHCEeKGeXK0N1nQcCyGKOUZ5uDgU15guN+9QAx9PlBWCtMHDZAwMM9OPlXGpAVSC77jNVT+d8dxXF4Kl2pMJ3CMQWRMzx+Eh4mPA87CkXemB3SuIqf5YGhfc7bZjGNu0BixgIP6z3AeMY6HzP5XQ3GbAOKF2BAqO4h2BFQGPPGQKWtTfk0w15YL5pr0t8/IgDrAb4JHTK14DH4cQhXdYNVPU3dv5NW1DRztp2NqJ5qF2sv3FkDEET7ElW5ZIGZ219pSqfHqnxTyBaHjKLo2vlN/D1HBuQGfKuCGIPjQiXOPM5iK/piIs/KRlmgi/vg2wQT5Uz6qYLLuUL2ZCLZ2i0tsOBKGLHvdb6pLyeHGlfnlCXPKR+Pw/38hanQGNaG+P6VbnhBIzV6K9Xpd5m+YojQ+AqFHBHNNlowPfoqOgTm4ClZfjIJKCIxBzRVRQmajseNMJ2yJB2t12nhiZV9rH8NkGbiN5gXZ/lNAHBOih6wHcO6oY9ZE3t6gfGS8i7mLZfkq0dNoXFM3cDn9SxvEAdhUnXksfrXdcPVlMm+AbVQMqs+2nzS/p25C488gBXKe2QfcCDvIcL7TDAbc1QwnQCjBhGXtIsSAkqZjDCXCoXkaVfvYPo2skKCCgK4ez45p7FN1RmmChUZLrL+4GpKcSUR/5FCIvnXuATOz9P6vEwKtTb1gYdA7PavywYIuoqVQFwHvdAjxut0z4bZvshH0cQh3Q93YNcWXPuP2x0v/rQi3aep4vXsbl0ucZ3VGFOWwwCwe87+THAizPPbCTc49RNwPQnBh1MdwY0GdohhvRE1Xa06/tHRO9YK2Dm8ZF+jxX/mZC5MP/3fmPJYhVkxaFZ2iBv/sTbvYvLS2Y/SvYi9360pfFwL6Ku+5jg3JtKxCP5B2UFBZKRz+go+D4zsCl/fzq80iUO+fiTdUgPP71yQjNCxWNGEpXajjdIgVIMc79NlaDDKzXkkI+HiUN6P7GrYeEDmpohO9DoUnp3gz6pOzturL6BAE8a1tKsb3t9T48EEPxP554vlLHr5GlY9n1kXDU5ZQHtiDxat4oiAD8Kvnr9by3/0y2+jm/RJ9YFPG5/DwB4/+bSnXBCfs51qBgAEMjGCUDZO/EvaJ/ReCV74yA4D7QHxxeu7qV8hcRzvXJinbDAAV7R/p+NPXe77qYS1ed2vN5CQ6JCfePocorclgsHiqFtDokdNMNOXHC+7iY5/4SI08cgErCXgZQmsUJTTgCnR24wAmjWRKPKAHAHVHNJ2J25TPd6rtDg3VwpW3iuYqFYQu2f+hHU2LApSLdkwaItBnVstlqWhQ7OiXlq5VUr/Gbocs9z1hnM0G1YNmcGX9BrOxeLPaEvFBqUmlW82KwWFKuBwj2WgArfMM1nh9fXesUGdFywas78JdZZ4e/3dNh6z05KovpaetWsLNUcOrZb1K4Fey55jXmxrqD+BtFflzohRq+7wZJusSyaN8VfbHi5xIEJ/RhCtCA2LNisSqOd92c7J614tMaNOueos/XxD97OpdtEN5e36G/4N3e8Da2/i2ygXLHk/QIZMNm8n1zCKXVTRv/UgDxjLg+uyehxt9vHEDBwLaTLi5VbPZdX7mEnKS1+pEOmYWCZqiX37Z7oF1DFp3YsaNDGzu8XcURlb/kjcv67ZTeucqTflZ0qBgY=) format('woff2');}
 </style>
-<style>
-/* ============================================================================
-   DITHERVOID // PANDORA — PUBLIC SHELL v1.0
-   This stylesheet is the ONLY layout authority on the page. The EIDOLON E8.0
-   engine lives headless inside #legacy-root (display:none); the single organ
-   relocated out of it is the #view canvas. No transplanted rules, no cascade
-   wars, no !important anywhere.
-   ========================================================================== */
+<style>/* ==========================================================================
+   PANDORA WORKBENCH V2 — LAYOUT, AUTHORED WHOLE
+   Not a patch. The previous sheet declared html,body{overflow:auto;height:auto}
+   in a later block that silently undid the overflow:hidden in an earlier one;
+   a sheet that argues with itself cannot be reasoned about, only fought.
+   ====================================================================== */
+*,*::before,*::after{box-sizing:border-box;}
+html,body{
+  margin:0;padding:0;height:100%;
+  overflow:hidden;                 /* LAW 2 — nothing later may relax this */
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  background:var(--void);color:var(--txt);
+  font:12px/1.4 'Silkscreen',ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.04em;-webkit-font-smoothing:antialiased;
+  touch-action:manipulation;
+}
 :root{
-  color-scheme:dark;
   --void:#050508; --panel:#0e0e16; --well:#000;
   --line:#26263a; --line2:#3a3a54;
-  --mag:#FF1F9C; --cyan:#19F0FF; --sulph:#E8FF2E;
-  --txt:#eeeef6; --mut:#9c9cb6; --faint:#6a6a84;
-  /* aliases the ported public-layer functions expect (mint modal, bands) */
-  --ink:#eeeef6; --hair:#26263a; --bg:#0a0a0c; --ox:#19F0FF; --oxd:#0a5a66;
-  --fD:'Silkscreen',"Arial Narrow",system-ui,sans-serif;
-  --fT:'Silkscreen',"Courier New",monospace;
-  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --mag:#FF1F9C;  --cyan:#19F0FF;  --sulph:#E8FF2E;
+  --txt:#eeeef6;  --mut:#9c9cb6;   --faint:#6a6a84;
+  --ink:#eeeef6;  --hair:#26263a;  --bg:#0a0a0c;
+  --ox:#19F0FF;   --oxd:#0a5a66;
+  --sat:env(safe-area-inset-top,0px);  --sar:env(safe-area-inset-right,0px);
+  --sab:env(safe-area-inset-bottom,0px); --sal:env(safe-area-inset-left,0px);
+  --tap:44px;   /* the floor for every hit target */
+  --gap:8px;    /* the floor between two of them */
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{position:fixed;inset:0;overflow:hidden;overscroll-behavior:none;}
-body{background:radial-gradient(120% 60% at 50% -12%,#10101e 0%,var(--void) 55%);
-  color:var(--txt);font-family:var(--fD);font-size:11px;letter-spacing:.4px;}
-button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
-input{font:inherit;color:inherit;}
-#legacy-root{display:block;}
-#shell{display:none !important;}
-/* ===================== WORKBENCH DRESSING ===================== */
-#wbbanner{position:fixed;top:0;left:0;right:0;z-index:9000;background:#12041a;
-  border-bottom:1px solid #ff2fa0;color:#ff8fd0;font:600 11px/1.4 ui-monospace,monospace;
-  letter-spacing:.12em;padding:6px 10px;display:flex;gap:12px;align-items:center;justify-content:space-between;}
-#wbbanner a{color:#19f0ff;text-decoration:none}
-#wbbanner .dotlive{color:#68ff9a}
-body{padding-top:30px;}
-#wbverdict{position:fixed;bottom:0;left:0;right:0;z-index:9000;background:#0a0a12f2;
-  border-top:1px solid #2a2a3e;padding:8px 10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
-  font:600 11px ui-monospace,monospace;backdrop-filter:blur(6px);}
-#wbverdict button{font:700 12px ui-monospace,monospace;letter-spacing:.08em;border-radius:4px;
-  padding:10px 16px;cursor:pointer;border:1px solid #333;background:#14141f;color:#ccc;min-height:40px;}
-#wb-keep{border-color:#1f9a52;color:#68ff9a}
-#wb-kill{border-color:#9a1f2f;color:#ff6f7f}
-#wbverdict .wbtag{padding:8px 10px;font-size:10px;opacity:.8}
-#wbverdict .wbtag[data-sel="1"]{border-color:#ff2fa0;color:#ff8fd0;opacity:1}
-#wbverdict .wbmini{padding:8px 10px;font-size:10px;border-color:#264;color:#8ac}
-#wb-count{color:#667;font-size:10px;margin-left:auto}
-body{padding-bottom:64px;}
-#p-wb .wbrow{display:flex;align-items:center;gap:8px;margin:3px 0}
-#p-wb .wbrow label{flex:0 0 74px;font-size:10px;letter-spacing:.08em;color:#9aa;cursor:pointer}
-#p-wb .wbrow input[type=range]{flex:1}
-#p-wb .wbrow .v{flex:0 0 40px;text-align:right;font-size:10px;color:#7c8}
-#p-wb h4{margin:12px 0 4px;font:700 10px ui-monospace,monospace;color:#ff8fd0;letter-spacing:.14em}
-#wbdigest{position:fixed;inset:6% 4%;z-index:9500;background:#07070ef8;border:1px solid #ff2fa0;
-  border-radius:8px;padding:16px;display:none;overflow:auto;color:#cde;font:11px/1.6 ui-monospace,monospace;white-space:pre-wrap;}
-#wbdigest .x{position:sticky;top:0;float:right;cursor:pointer;color:#ff6f7f;font-size:16px;padding:4px 10px}
-@media (max-width:700px){ #wbverdict button{padding:8px 10px} }
-/* ============ THE INSTRUMENT, DRESSED (legacy markup ships headless) ======= */
-html,body{position:static !important;overflow:auto !important;height:auto !important;}
-#mast,#cockpit,#dock,#colA{display:none !important;}
-#legacy-root #app{display:grid;grid-template-columns:minmax(380px,1fr) 400px;gap:16px;
-  max-width:1240px;margin:0 auto;padding:14px;align-items:start;}
-#legacy-root #app>header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;
-  border-bottom:1px solid var(--line);padding-bottom:8px;}
-#legacy-root .brand{font-size:15px;letter-spacing:.06em}
-#legacy-root .brand b{color:var(--mag)} #legacy-root .brand i{color:var(--cyan);font-style:normal}
-#legacy-root .brand span{color:var(--faint);font-size:10px}
-#legacy-root .ver{font-size:8px;color:var(--faint);text-align:right;line-height:1.5}
-#legacy-root .colL{position:sticky;top:36px;}
-#legacy-root .monitor{border:1px solid var(--line2);background:#000;}
-#legacy-root .screen-wrap{position:relative;width:100%;aspect-ratio:1/1;cursor:pointer;}
-#legacy-root #view{width:100%;height:100%;display:block;image-rendering:pixelated;}
-#legacy-root #result{display:none;position:absolute;inset:0;width:100%;height:100%;}
-#legacy-root .reg{display:none}
-#legacy-root .osd{position:absolute;left:8px;top:8px;font-size:9px;color:var(--cyan);
-  background:#000a;padding:3px 7px;border-radius:3px;letter-spacing:.1em;max-width:92%;}
-#legacy-root .osd .rec{color:var(--mag);animation:wbblink 1.2s steps(2) infinite}
-/* THE READOUT. Whatever else is on screen, this states the resolution of the
-   image you are actually looking at RIGHT NOW — which is not always the
-   preview rung, because a completed settle pass shows the raster instead.
-   Sized to be legible on a phone held at arm's length. */
-#legacy-root .pxbadge{position:absolute;right:8px;bottom:8px;text-align:right;
-  background:#000c;padding:6px 9px;border-radius:4px;max-width:70%;
-  border:1px solid #ffffff1f;pointer-events:auto;}
-#legacy-root .pxbadge .big{font-size:19px;line-height:1.05;font-weight:700;
-  letter-spacing:.02em;color:var(--cyan);font-variant-numeric:tabular-nums;}
-#legacy-root .pxbadge .sub{font-size:9px;letter-spacing:.09em;color:var(--mut);margin-top:2px;}
-#legacy-root .pxbadge button{margin-top:6px;font:inherit;font-size:8px;letter-spacing:.09em;
-  padding:5px 7px;min-height:30px;background:#ffffff10;color:var(--cyan);cursor:pointer;
-  border:1px solid #ffffff2e;border-radius:3px;display:none;}
-#legacy-root .pxbadge button:active{background:#ffffff26;}
-#legacy-root .pxbadge.armed button{display:inline-block;}
-/* it recedes when it has nothing new to say — you are judging ART through this
-   window, and a badge that sits at full opacity over 20% of a phone screen is
-   competing with the thing it is describing. Any change, hover or touch
-   brings it straight back. */
-#legacy-root .pxbadge{transition:opacity .5s ease;}
-#legacy-root .pxbadge.dim{opacity:.2;}
-#legacy-root .pxbadge:hover,#legacy-root .pxbadge:active,
-#legacy-root .pxbadge:focus-within{opacity:1;}
-#legacy-root .pxbadge.onraster .big{color:var(--mag);}
-@media(max-width:760px){
-  #legacy-root .pxbadge .big{font-size:16px;}
-  #legacy-root .pxbadge button{font-size:9px;min-height:34px;}
+
+/* --- the grid root -------------------------------------------------------
+   svh, not vh and not dvh. dvh CHANGES as Safari's bar collapses, moving
+   controls under a thumb mid-drag; vh is the LARGEST viewport, so with the bar
+   showing the bottom row is pushed off screen. svh lays out once for the worst
+   case and then never moves — which is what the law actually asks for.
+   FIVE NAMED AREAS, the same five at every breakpoint: bar rail stage side
+   acts. Only the arrangement changes, never the vocabulary. --- */
+#ui{
+  display:grid;
+  height:100vh; height:100svh;
+  width:100%;
+  padding:var(--sat) var(--sar) var(--sab) var(--sal);
+  gap:var(--gap);
+  overflow:hidden;
 }
-@keyframes wbblink{50%{opacity:.15}}
-#legacy-root .placeholder{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;
-  align-items:center;justify-content:center;color:var(--mut);font-size:10px;letter-spacing:.2em;}
-#legacy-root .ph-block{width:34px;height:34px;border:2px solid var(--mag);animation:wbblink 2s steps(2) infinite}
-#legacy-root .telem{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:9px;color:var(--mut);
-  padding:8px 2px;} #legacy-root .telem b{color:var(--txt)}
-#legacy-root .bar{height:3px;background:#14141f;margin-top:2px}
-#legacy-root #prog{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mag),var(--cyan));transition:width .2s}
-#legacy-root .tabs{display:flex;gap:4px;margin-bottom:10px;}
-#legacy-root .tab{flex:1;padding:10px 4px;border:1px solid var(--line);border-radius:4px;
-  font-size:9px;color:var(--mut);letter-spacing:.1em;background:#10101c;}
-#legacy-root .tab[aria-selected="true"]{border-color:var(--mag);color:#fff;background:#1c0f22;}
-#legacy-root #infobtn{flex:0 0 34px;border:1px solid var(--line);border-radius:4px;color:var(--cyan)}
-#legacy-root .panel{display:none} #legacy-root .panel.on{display:block}
-#legacy-root .field{margin:12px 0}
-#legacy-root .field>label{display:flex;gap:8px;justify-content:space-between;align-items:baseline;
-  font-size:9px;color:var(--mut);letter-spacing:.14em;margin-bottom:6px;}
-#legacy-root .field .v{color:var(--cyan);margin-left:auto}
-#legacy-root input[type=range]{width:100%;accent-color:var(--mag);height:26px;}
-#legacy-root .seg{display:flex;flex-wrap:wrap;gap:4px}
-#legacy-root .seg button{padding:8px 9px;border:1px solid var(--line);border-radius:4px;
-  font-size:9px;color:var(--mut);background:#10101c;letter-spacing:.06em;}
-#legacy-root .seg button[aria-pressed="true"]{border-color:var(--cyan);color:#fff;background:#0f1c22;}
-/* A ROLE THAT CANNOT LAND. Not disabled — the artist may still arm it, and it will
-   work the moment they reroll into a seed that has the surface. It is struck through
-   so the eye reads "nothing to land on here", never "this control is broken". */
-#legacy-root .seg button[data-avail="0"]{opacity:.42;text-decoration:line-through;
-  text-decoration-color:var(--hot,#ff2fa0);border-style:dashed;}
-#legacy-root .seg button[data-avail="0"][aria-pressed="true"]{border-color:var(--hot,#ff2fa0);
-  color:#ffb9de;background:#1c0f16;}
-#legacy-root .toggles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-#legacy-root .tg{display:flex;justify-content:space-between;align-items:center;gap:4px;
-  border:1px solid var(--line);border-radius:4px;padding:9px 7px;font-size:8.5px;color:var(--mut);
-  cursor:pointer;user-select:none;letter-spacing:.04em;}
-#legacy-root .tg .dot{width:6px;height:6px;border-radius:50%;background:#2a2a3e;flex:0 0 auto}
-#legacy-root .tg[data-on="1"]{border-color:var(--cyan);color:#e8ffff;background:#0d1a20;}
-#legacy-root .tg[data-on="1"] .dot{background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
-#legacy-root .tg.gb[data-on="1"]{border-color:var(--mag)} #legacy-root .tg.gb[data-on="1"] .dot{background:var(--mag);box-shadow:0 0 7px var(--mag)}
-#legacy-root .tg.gd[data-on="1"]{border-color:var(--sulph)} #legacy-root .tg.gd[data-on="1"] .dot{background:var(--sulph);box-shadow:0 0 7px var(--sulph)}
-#legacy-root .duo{display:flex;gap:8px;margin:8px 0} #legacy-root .duo .field{flex:1;margin:0}
-#legacy-root .duo button,#legacy-root .vio{flex:1;padding:11px 8px;border:1px solid #5a3bb0;border-radius:4px;
-  color:#c9b3ff;font-size:9px;letter-spacing:.1em;background:#140f22;}
-#legacy-root .seedrow{display:flex;gap:6px;align-items:center}
-#legacy-root .seedrow label{flex:0 0 42px;margin:0}
-#legacy-root .seedrow input{flex:1;min-width:0;background:#10101c;border:1px solid var(--line);
-  border-radius:4px;padding:10px;font-size:10px;color:var(--txt);}
-#legacy-root .dice{flex:0 0 40px;padding:10px 0;border:1px solid var(--line);border-radius:4px;
-  font-size:13px;color:var(--cyan);background:#10101c;}
-#legacy-root .voidscroll{max-height:220px;overflow:auto;margin-top:8px}
-#legacy-root .labnote{font-size:8px;color:var(--faint);line-height:1.7;margin-top:8px;letter-spacing:.06em}
-#legacy-root .actions{display:flex;gap:8px;margin-top:14px}
-#legacy-root .actions button{flex:1;padding:13px 6px;border:1px solid var(--line);border-radius:4px;
-  font-size:10px;letter-spacing:.1em;color:var(--mut);background:#10101c;}
-#legacy-root .actions #go{flex:2.2;border-color:var(--mag);color:#fff;
-  background:linear-gradient(90deg,#2a0f22,#0f2226);font-size:12px;}
-#legacy-root .actions button.ready{border-color:var(--cyan);color:var(--cyan)}
-#legacy-root .actions button:disabled{opacity:.35}
-#legacy-root #arclabel{display:none}
-#legacy-root #p-wb h4{margin:14px 0 6px}
-@media (max-width:860px){
-  #legacy-root #app{display:flex;flex-direction:column;gap:10px;padding:10px;}
-  #legacy-root .colL{position:static;order:1}
-  #legacy-root .colR{order:2}
-  #legacy-root .toggles{grid-template-columns:repeat(3,minmax(0,1fr));}
-  body{padding-bottom:120px;}
+#topline{grid-area:bar;}  #railwrap{grid-area:rail;}
+#stagecell{grid-area:stage;} #sidecol{grid-area:side;} #actbar{grid-area:acts;}
+
+/* === A — DESKTOP / LAPTOP, >=1024px ==================================== */
+#ui{
+  grid-template-columns:minmax(0,1fr) clamp(320px,30vw,430px);
+  grid-template-rows:auto minmax(0,1fr) auto;
+  grid-template-areas:
+    "bar    rail"
+    "stage  side"
+    "acts   side";
 }
-/* =========================================================================== */
-/* ============================================================= */
 
-/* ---- app frame: header / deck · one viewport · zero page scroll ---- */
-#shell{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:var(--sat);}
-#topbar{flex:0 0 auto;min-height:52px;display:flex;align-items:center;gap:10px 14px;
-  flex-wrap:wrap;justify-content:space-between;padding:6px 16px;border-bottom:1px solid var(--line);}
-#shellrooms{display:flex;gap:12px;align-items:center;}
-#shellrooms a{font-size:8px;letter-spacing:.14em;color:var(--mut);text-decoration:none;padding:6px 0;}
-#shellrooms a:hover{color:var(--sulph);}
-.brand{font-weight:700;font-size:16px;letter-spacing:0;text-transform:uppercase;white-space:nowrap;}
-.brand b{color:var(--mag);font-weight:800;}
-.brand i{color:var(--cyan);font-style:normal;font-weight:800;}
-.brand span{color:var(--faint);font-size:8px;letter-spacing:0;font-weight:400;}
-#topright{display:flex;align-items:center;gap:14px;min-width:0;}
-#tagline{font-family:var(--fT);font-size:8px;color:var(--faint);text-align:right;line-height:1.5;}
-#instrbtn{border:1px solid var(--line);color:var(--mut);font-size:9px;letter-spacing:.14em;
-  padding:7px 10px;flex:0 0 auto;}
-#instrbtn:hover{border-color:var(--line2);color:var(--txt);}
+/* --- the identification strip ------------------------------------------ */
+#topline{
+  display:flex;align-items:center;gap:10px;min-height:var(--tap);padding:0 4px;
+  font-size:9px;letter-spacing:.12em;color:var(--faint);
+  border-bottom:1px solid var(--line);overflow:hidden;
+}
+#topline .wbb-id{color:var(--mag);white-space:nowrap;}
+#topline #wb-livestat{color:var(--cyan);white-space:nowrap;overflow:hidden;}
+#topline nav{margin-left:auto;display:flex;gap:var(--gap);}
+@media (max-width:1439px){ #topline nav{display:none;} }
+#topline nav a{
+  color:var(--cyan);text-decoration:none;display:flex;align-items:center;
+  min-height:var(--tap);padding:0 4px;white-space:nowrap;
+}
 
-#deck{flex:1 1 auto;min-height:0;display:flex;}
+/* --- THE ARTWORK. LAW 1. -------------------------------------------------
+   aspect-ratio + height:100% does NOT resolve inside a centred flex line —
+   that is what stretched the square to 532x959 on iPad and collapsed it to
+   2x2 in landscape last time. Container query units ask the CELL how big it
+   is, which is the actual question being asked. --- */
+#stagecell{
+  min-width:0;min-height:0;display:grid;place-items:center;
+  container-type:size;
+}
+#stage{
+  position:relative;
+  width:min(100cqw,100cqh);height:min(100cqw,100cqh);
+  aspect-ratio:1/1;
+  background:var(--well);border:1px solid var(--line2);
+  cursor:pointer;touch-action:manipulation;
+}
+@supports not (width:1cqw){ #stage{width:auto;height:100%;max-width:100%;max-height:100%;} }
+#view,#result{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;}
+#result{display:none;}
+#ph{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;
+  color:var(--faint);font-size:10px;letter-spacing:.18em;text-align:center;pointer-events:none;
+}
+#ph .ph-block{width:54px;height:54px;border:2px dashed var(--mag);transform:rotate(45deg);}
+.osd{position:absolute;left:7px;top:6px;z-index:3;font-size:9px;letter-spacing:.1em;
+  color:var(--cyan);text-shadow:0 0 6px #000;pointer-events:none;}
+.osd .rec{color:var(--mag);animation:blink 1.2s steps(2) infinite;}
+@keyframes blink{50%{opacity:0}}
+#wb-pxbadge{position:absolute;right:7px;bottom:6px;z-index:3;text-align:right;transition:opacity .4s ease;}
+#wb-pxbadge.dim{opacity:.22;}
+#wb-pxbadge:hover,#wb-pxbadge:active,#wb-pxbadge:focus-within{opacity:1;}
+#wb-px-now{font-size:17px;font-weight:700;line-height:1.05;color:var(--cyan);text-shadow:0 0 8px #000;}
+#wb-pxbadge.onraster #wb-px-now{color:var(--mag);}
+#wb-px-sub{font-size:8px;letter-spacing:.09em;color:var(--mut);}
+#wb-px-lock{display:none;margin-top:5px;min-height:var(--tap);padding:0 10px;font:inherit;font-size:8px;
+  color:var(--txt);background:#ffffff14;border:1px solid #ffffff2e;border-radius:4px;}
+#wb-pxbadge.armed #wb-px-lock{display:inline-block;}
+.reg{display:none;}
 
-/* ---- stage: art is king — largest element, square, centered, contained ---- */
-#stagecol{flex:1 1 auto;min-width:0;display:grid;place-items:center;padding:16px;}
-#stage{position:relative;aspect-ratio:1/1;cursor:pointer;background:#000;
-  width:min(100%,calc(100dvh - 52px - 32px - var(--sat) - var(--sab)));max-height:100%;}
-#artframe{position:absolute;inset:0;}
-#artframe canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;}
-.reg{position:absolute;width:12px;height:12px;border:1px solid var(--faint);z-index:3;}
-.reg.tl{top:6px;left:6px;border-width:1px 0 0 1px;}
-.reg.tr{top:6px;right:6px;border-width:1px 1px 0 0;}
-.reg.bl{bottom:6px;left:6px;border-width:0 0 1px 1px;}
-.reg.br{bottom:6px;right:6px;border-width:0 1px 1px 0;}
-#pubosd{position:absolute;left:9px;top:7px;z-index:4;font-family:var(--fT);font-size:8px;
-  color:var(--sulph);letter-spacing:0;pointer-events:none;max-width:80%;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;}
-#pubosd::before{content:'●';color:var(--mag);margin-right:5px;font-size:7px;}
-#pubprog{position:absolute;left:0;bottom:0;height:2px;width:0%;z-index:4;
-  background:linear-gradient(90deg,var(--mag),var(--cyan));transition:width .15s linear;}
+/* --- THE ACTION BAR — always visible, thumb zone on phones.
+       KEEP and KILL live here, not in a panel: curation is the thing this
+       instrument exists for and it must never be a tap away. OBLIVION moved
+       to LAB, because a destructive control does not belong next to KEEP. */
+#actbar{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:var(--gap);padding:0 2px;}
+#actbar button{
+  min-height:var(--tap);min-width:var(--tap);
+  font:inherit;font-size:10px;letter-spacing:.06em;
+  color:var(--txt);background:#15151f;border:1px solid var(--line2);border-radius:5px;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+#actbar button:active{background:#22223a;}
+#actbar button[disabled]{opacity:.35;}
+#go{color:#06060a;background:var(--mag);border-color:var(--mag);font-weight:700;}
+#wb-keep{color:#06060a;background:#68ff9a;border-color:#68ff9a;font-weight:700;}
+#wb-kill{color:#06060a;background:var(--mag);border-color:var(--mag);font-weight:700;}
 
-/* ---- monitor state matrix — one class, no wars ---- */
-#caption{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:26px;pointer-events:none;}
-#caption .ph-block{width:40px;height:40px;border:1px dashed var(--mag);transform:rotate(45deg);opacity:.85;}
-#caption span{font-family:var(--fT);font-size:9px;color:var(--faint);letter-spacing:.18em;}
-#stage[data-state="rendering"] #caption{display:none;}
-#stage[data-state="rendered"] #caption{display:none;}
+/* --- the group rail ----------------------------------------------------- */
+/* THE PAGE CONTROLS SHARE THE RAIL'S GRID.
+   Given a row of their own they cost 52px, and on an iPhone SE that was the
+   difference between the artwork holding a quarter of the screen and dropping
+   to 19% — a layout that satisfied every tap-target and scroll rule while
+   quietly making the picture small, which is the failure this gate exists to
+   catch. display:contents dissolves both navs so their buttons become cells of
+   one auto-fit grid: the page arrows land in space the rail was reserving
+   anyway, and paginating a group costs no height at all. */
+#railwrap{display:grid;gap:var(--gap);grid-template-columns:repeat(auto-fit,minmax(var(--tap),1fr));align-content:start;}
+#grouprail{display:contents;}
+#grouprail button,#pagebar button{
+  min-height:var(--tap);padding:0 2px;font:inherit;font-size:9px;letter-spacing:.04em;
+  color:var(--mut);background:#101018;border:1px solid var(--line);border-radius:4px;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+#grouprail button[aria-selected="true"]{color:#06060a;background:var(--cyan);border-color:var(--cyan);}
 
-/* ---- rail: the manifest, one column ---- */
-#rail{flex:0 0 min(352px,34vw);min-height:0;display:flex;flex-direction:column;gap:12px;
-  padding:14px 16px calc(14px + var(--sab));border-left:1px solid var(--line);overflow-y:auto;}
-#rail::-webkit-scrollbar{width:4px;}
-#rail::-webkit-scrollbar-thumb{background:var(--line);}
-.ctl label{display:flex;justify-content:space-between;align-items:baseline;
-  font-size:9px;letter-spacing:.16em;color:var(--mut);margin-bottom:6px;}
-.ctl label .v{color:var(--cyan);font-family:var(--fT);}
-.ctl label .tag{color:var(--mag);}
+/* --- the side column: panels, then the page bar ------------------------- */
+#sidecol{display:grid;grid-template-rows:minmax(0,1fr);min-height:0;min-width:0;}
+#panels{
+  position:relative;min-height:0;min-width:0;overflow:hidden;
+  background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:var(--gap);
+}
+.panel{display:none;height:100%;min-height:0;overflow:hidden;}
+.panel.on{display:grid;align-content:start;gap:var(--gap);}
+/* the page bar exists only when a panel genuinely does not fit */
+#pagebar{display:none;}
+#pagebar.on{display:contents;}
+#pageprev,#pagenext{
+  min-height:var(--tap);font:inherit;font-size:10px;color:var(--txt);
+  background:#15151f;border:1px solid var(--line2);border-radius:4px;
+}
+#pagebar button[disabled]{opacity:.3;}
+#pagelab{display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--faint);min-height:var(--tap);}
 
-/* rituals — the studio's fate triggers, resurrected for the shell */
-#pub-rituals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
-#pub-rituals button{border:1px solid var(--line);background:#000;color:var(--txt);
-  font-size:9px;letter-spacing:.06em;padding:9px 2px;min-height:34px;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;}
-#pub-rituals button:hover{border-color:var(--cyan);color:var(--cyan);}
-#pub-rituals #pub-oblivion:hover{border-color:var(--mag);color:var(--mag);}
+/* --- fields ------------------------------------------------------------- */
+.field{display:grid;gap:5px;min-width:0;}
+.field>label{font-size:8px;letter-spacing:.1em;color:var(--faint);display:flex;gap:6px;align-items:baseline;}
+.field .v{color:var(--cyan);margin-left:auto;}
+.labnote{margin:0;font-size:8px;line-height:1.35;color:var(--mut);}
+h4{margin:2px 0 0;font-size:8px;letter-spacing:.1em;color:var(--sulph);font-weight:400;}
 
-/* sliders */
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:none;}
-input[type=range]::-webkit-slider-runnable-track{height:3px;
-  background:linear-gradient(90deg,var(--mag),var(--cyan));}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;
-  border-radius:50%;background:var(--void);border:2px solid var(--cyan);margin-top:-6px;}
-input[type=range]::-moz-range-track{height:3px;background:linear-gradient(90deg,var(--mag),var(--cyan));}
-input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
-  background:var(--void);border:2px solid var(--cyan);}
+/* --- sliders: >=28px thumb, expanded invisible hit area, and the drag
+       belongs to the slider so it can never trigger a back-swipe ---------- */
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:var(--tap);margin:0;
+  background:transparent;touch-action:none;
+}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--line2);border-radius:2px;}
+input[type=range]::-moz-range-track{height:4px;background:var(--line2);border-radius:2px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+  width:28px;height:28px;margin-top:-12px;border-radius:50%;background:var(--mag);border:2px solid #06060a;}
+input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;
+  background:var(--mag);border:2px solid #06060a;}
 
-/* seg rows (chroma) + palette grid — wrapped, never past an edge */
-.segrow{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;}
-#pub-palette{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
-.segrow button,#pub-palette button{border:1px solid var(--line);background:var(--panel);
-  color:var(--mut);font-size:8px;letter-spacing:.06em;padding:8px 2px;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.segrow button:hover,#pub-palette button:hover{border-color:var(--line2);color:var(--txt);}
-.segrow button[aria-pressed="true"],#pub-palette button[aria-pressed="true"]{
-  background:var(--sulph);border-color:var(--sulph);color:#000;font-weight:700;}
+/* --- segmented controls ------------------------------------------------- */
+.seg{display:flex;flex-wrap:wrap;gap:var(--gap);}
+.seg button{
+  flex:1 1 auto;min-width:var(--tap);min-height:var(--tap);padding:0 7px;
+  font:inherit;font-size:9px;letter-spacing:.04em;
+  color:var(--mut);background:#12121c;border:1px solid var(--line);border-radius:4px;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.seg button[aria-pressed="true"]{color:#06060a;background:var(--cyan);border-color:var(--cyan);}
+.seg button[data-avail="0"]{text-decoration:line-through;opacity:.45;}
 
-/* splice — the 52px gradient ignition */
-#pub-splice{flex:0 0 52px;height:52px;font-size:13px;font-weight:700;letter-spacing:.5em;
-  text-indent:.5em;color:#001016;background:linear-gradient(90deg,var(--mag),var(--cyan));}
-#pub-splice:hover{filter:brightness(1.12);}
-#pub-splice:disabled{filter:grayscale(.7) brightness(.55);cursor:default;}
+/* --- THE STEPPER --------------------------------------------------------
+   Six controls carry more options than any phone can show at the 44px floor:
+   MASK 32, FORM 32, PALETTE 28, STYLE 20, SKELETON 17, PRIMITIVE 17. Thirty-two
+   targets need eight rows of four, which is 416px of column — more than an
+   iPhone SE has left after the artwork takes its share.
+   So they collapse to four targets: back, the current value, forward, and a
+   grid key that opens the full set. Stepping is one tap; random access is two,
+   and two is the honest cost of thirty-two options on a 375px screen. --- */
+.seg.stepped{display:none;}
+.seg.stepped.expanded{display:flex;}
+.stepper{display:grid;grid-template-columns:var(--tap) minmax(0,1fr) var(--tap) var(--tap);gap:var(--gap);}
+.stepper button{
+  min-height:var(--tap);min-width:var(--tap);font:inherit;font-size:10px;
+  color:var(--txt);background:#12121c;border:1px solid var(--line2);border-radius:4px;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;overflow:hidden;
+}
+.stepper .stp-name{color:var(--cyan);font-size:10px;letter-spacing:.06em;}
+.stepper .stp-all[aria-pressed="true"]{color:#06060a;background:var(--sulph);border-color:var(--sulph);}
 
-/* actions row — lacquered: gradient-bordered, sheened, MINT glows above all */
-#pub-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
-#pub-actions button{position:relative;border:1px solid transparent;color:var(--txt);
-  background:linear-gradient(180deg,#181828 0%,#0d0d18 55%,#0a0a12 100%) padding-box,
-    linear-gradient(100deg,rgba(255,31,156,.55),rgba(25,240,255,.55)) border-box;
-  font-size:8px;letter-spacing:.06em;padding:11px 2px;min-width:0;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;
-  transition:box-shadow .18s ease,color .18s ease,filter .18s ease;}
-#pub-actions button::after{content:'';position:absolute;top:0;bottom:0;left:-70%;width:45%;
-  background:linear-gradient(105deg,transparent,rgba(238,238,246,.16),transparent);
-  transform:skewX(-18deg);transition:left .45s ease;pointer-events:none;}
-#pub-actions button:hover{color:#fff;
-  box-shadow:0 0 10px rgba(255,31,156,.30),0 0 14px rgba(25,240,255,.30);}
-#pub-actions button:hover::after{left:130%;}
-#pub-actions button:disabled{color:var(--faint);cursor:default;box-shadow:none;
-  background:var(--panel) padding-box,
-    linear-gradient(100deg,var(--line),var(--line)) border-box;}
-#pub-actions button:disabled::after{content:none;}
-/* MINT — the shiniest thing in the row, always lit, breathing */
-#pub-actions #pub-mint{color:var(--cyan);font-weight:700;
-  background:linear-gradient(180deg,#131a2a 0%,#0a1220 60%,#081018 100%) padding-box,
-    linear-gradient(100deg,var(--mag),var(--cyan)) border-box;
-  text-shadow:0 0 8px rgba(25,240,255,.55);
-  animation:mintbreathe 2.6s ease-in-out infinite;}
-#pub-actions #pub-mint:hover{color:#fff;animation-play-state:paused;
-  box-shadow:0 0 14px rgba(25,240,255,.6),0 0 26px rgba(255,31,156,.45);}
-@keyframes mintbreathe{
-  0%,100%{box-shadow:0 0 6px rgba(25,240,255,.28),0 0 12px rgba(255,31,156,.18);}
-  50%{box-shadow:0 0 12px rgba(25,240,255,.55),0 0 22px rgba(255,31,156,.35);}}
+/* --- ordinary buttons and text inputs ----------------------------------- */
+.vio,.dice,#collections button,.wbtag,.wbmini{
+  min-height:var(--tap);min-width:var(--tap);padding:0 9px;
+  font:inherit;font-size:9px;letter-spacing:.05em;
+  color:var(--txt);background:#15151f;border:1px solid var(--line2);border-radius:4px;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.vio:active,.dice:active{background:#23233a;}
+button[disabled]{opacity:.35;}
+#oblivion{color:var(--mag);}
+.wbtag[aria-pressed="true"]{color:#06060a;background:var(--sulph);border-color:var(--sulph);}
+input[type=text],input[type=number]{
+  min-height:var(--tap);width:100%;min-width:0;padding:0 8px;
+  font:inherit;font-size:10px;color:var(--txt);
+  background:#08080e;border:1px solid var(--line2);border-radius:4px;
+}
+.seedrow{display:flex;gap:var(--gap);align-items:center;}
+.seedrow input{flex:1 1 auto;}
+.duo{display:flex;gap:var(--gap);}
+.duo>*{flex:1 1 0;min-width:0;}
+.trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:var(--gap);}
 
-/* seed + dna */
-.iorow{display:flex;gap:6px;align-items:center;}
-.iorow label{flex:0 0 44px;font-size:9px;letter-spacing:.16em;color:var(--mut);}
-.iorow input{flex:1 1 auto;min-width:0;background:var(--well);border:1px solid var(--line);
-  color:var(--txt);font-family:var(--fT);font-size:10px;padding:8px;}
-.iorow input:focus{outline:none;border-color:var(--line2);}
-.iorow button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);
-  color:var(--mut);font-size:8px;letter-spacing:.1em;padding:9px 8px;}
-.iorow button:hover{border-color:var(--cyan);color:var(--cyan);}
-#pub-copydna{padding-left:7px;padding-right:7px;}
+/* --- telemetry: readouts, not targets ----------------------------------- */
+#telem{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:8px;
+  letter-spacing:.08em;color:var(--faint);min-height:12px;}
+#telem b{color:var(--cyan);font-weight:400;}
+#telem b.lk{color:var(--sulph);}
+.bar{height:2px;background:var(--line);overflow:hidden;}
+.bar i{display:block;height:100%;width:0;background:var(--mag);transition:width .2s linear;}
 
-/* minted band */
-#mintedband{display:none;padding:8px 10px;border:1px solid var(--oxd);color:var(--cyan);
-  font-size:9px;letter-spacing:.1em;line-height:1.6;}
-#mintedband.on{display:block;}
-#mintedband a{color:var(--txt);}
+/* --- the sigil grid ----------------------------------------------------- */
+#toggles{display:grid;gap:var(--gap);grid-template-columns:repeat(auto-fill,minmax(56px,1fr));align-content:start;}
+.tg{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  min-height:var(--tap);border-radius:4px;border:1px solid var(--line);
+  background:#12121c;color:var(--mut);font-size:8px;
+  cursor:pointer;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.tg .dot{position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:#2a2a3e;}
+.tg[data-on="1"]{color:#06060a;background:var(--cyan);border-color:var(--cyan);}
+.tg[data-on="1"] .dot{background:var(--mag);}
+.tg.gb .dot{box-shadow:0 0 0 1px #2ecc71;} .tg.gh .dot{box-shadow:0 0 0 1px #e67e22;}
+.tg.go2 .dot{box-shadow:0 0 0 1px #9b59b6;} .tg.gv .dot{box-shadow:0 0 0 1px #3498db;}
+.tg.gd .dot{box-shadow:0 0 0 1px #e8ff2e;}
 
-/* ---- mint modal (markup injected verbatim by the ported public layer) ---- */
-#mintmodal{display:none;position:fixed;inset:0;background:rgba(4,4,6,.92);z-index:60;overflow:auto;}
+/* --- gains -------------------------------------------------------------- */
+#wb-gains{display:grid;gap:var(--gap);align-content:start;}
+#wb-gains .wbrow{display:grid;grid-template-columns:70px minmax(0,1fr) 38px;gap:var(--gap);align-items:center;}
+#wb-gains .wbrow label{font-size:8px;color:var(--faint);}
+#wb-gains .wbrow .v{font-size:8px;color:#7c8;text-align:right;}
+
+/* --- lists are CONTENT, not controls: they may scroll inside themselves -- */
+.voidscroll{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  border:1px solid var(--line);border-radius:4px;background:#08080e;min-height:0;}
+#collections{display:grid;gap:var(--gap);}
+#c-vault,#c-gardens{display:grid;gap:var(--gap);}
+#gr-drop{border:1px dashed #4a3a5c;border-radius:6px;padding:12px 8px;text-align:center;
+  font-size:9px;letter-spacing:.1em;color:#8b7ba0;cursor:pointer;user-select:none;min-height:var(--tap);}
+#gr-thumbwrap{display:none;align-items:center;gap:var(--gap);}
+#gr-thumb{width:52px;height:52px;image-rendering:pixelated;border:1px solid #3a2d48;border-radius:3px;background:#0a080e;}
+#wb-count{font-size:8px;color:var(--faint);}
+#pubstub{display:none!important;}
+
+/* --- overlays ----------------------------------------------------------- */
+#galmodal,#sellmodal,#xmodal,#saveview,#wbdigest{
+  position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;
+  background:#050508e8;padding:calc(var(--sat) + 12px) 12px calc(var(--sab) + 12px);
+}
+#galmodal.on,#sellmodal.on,#xmodal.on,#saveview.on,#wbdigest.on{display:flex;}
+.xm-box,#wbdbody{width:min(560px,94vw);max-height:82svh;overflow:auto;overscroll-behavior:contain;
+  background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:14px;}
+.xm-head{font-size:10px;letter-spacing:.09em;color:var(--cyan);margin-bottom:var(--gap);}
+.xm-row{display:flex;gap:var(--gap);margin-top:10px;}
+.xm-row button,#galclose,#sellclose,#xm-close,.sv-close,#breedgo,#mb-collect,#mb-gal{
+  min-height:var(--tap);flex:1 1 auto;font:inherit;font-size:10px;
+  color:var(--txt);background:#15151f;border:1px solid var(--line2);border-radius:4px;}
+.xm-note{font-size:8px;color:var(--mut);margin-top:var(--gap);line-height:1.4;}
+#xm-img,#sv-img{width:100%;image-rendering:pixelated;border:1px solid var(--line);}
+#galgrid{max-height:46svh;padding:6px;}
+#tipbar{position:fixed;left:12px;right:12px;bottom:calc(var(--sab) + 12px);z-index:9500;display:none;
+  padding:10px;font-size:9px;line-height:1.45;background:#0c0c14f2;border:1px solid var(--cyan);
+  border-radius:5px;color:var(--txt);}
+#tipbar.on{display:block;}
+#revbar,#mintbar{display:none;}
+#mintbar.on{display:flex;gap:10px;align-items:center;}
+
+/* === B — TABLET ==========================================================
+   Orientation, not width, decides the arrangement here. A portrait tablet is
+   820x1180: side by side, the panel eats 280 of the width and the square is
+   width-limited to 532 — 29% of the screen on a device with 1180px of height
+   going spare. Stacked, the same square is 700 and takes half the screen. The
+   rule is not "tablets are wide", it is "a square wants the SHORT edge, so put
+   the controls on the LONG one". ==================================== */
+@media (max-width:1023px) and (min-width:700px) and (orientation:landscape){
+  #ui{grid-template-columns:minmax(0,1fr) clamp(280px,34vw,360px);}
+}
+@media (min-width:700px) and (orientation:portrait){
+  #ui{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto minmax(0,1fr) clamp(240px,26svh,360px) auto auto;
+    grid-template-areas:"bar" "stage" "side" "rail" "acts";
+  }
+  #sheetgrip{display:block;}
+  body.sheetup #ui{grid-template-rows:auto minmax(0,1fr) clamp(320px,42svh,560px) auto auto;}
+}
+
+/* === C — PHONE PORTRAIT, <=699px =======================================
+   One column. The artwork keeps every pixel the controls do not
+   mathematically need; the panel is a fixed-height sheet, and pagination —
+   not scrolling — is what makes a group fit inside it. ================== */
+@media (max-width:699px){
+  #ui{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto minmax(0,1fr) clamp(150px,27svh,230px) auto auto;
+    grid-template-areas:"bar" "stage" "side" "rail" "acts";
+  }
+  #topline nav{display:none;}
+  /* THE SHEET HAS TWO SNAP STATES. At rest the panel is short and the artwork
+     takes the screen — law 1. While you are actually tuning, the grip lifts it
+     to just over half the viewport, which cuts the page count on the heavy
+     groups by a factor of three. Pagination re-measures on the transition, so
+     the two states are not two hand-tuned layouts, only two heights. */
+  /* the raised state costs the picture, so it is bounded: at 40svh an SE still
+     leaves the artwork about a fifth of the screen rather than a tenth */
+  body.sheetup #ui{grid-template-rows:auto minmax(0,1fr) clamp(240px,40svh,420px) auto auto;}
+  #topline{min-height:26px;font-size:8px;}
+  #grouprail button,#pagebar button{font-size:8px;letter-spacing:0;padding:0;}
+  #actbar button{font-size:9px;}
+  .seg button{min-width:var(--tap);font-size:8px;padding:0 4px;}
+  #toggles{grid-template-columns:repeat(auto-fill,minmax(52px,1fr));}
+  #wb-gains .wbrow{grid-template-columns:58px minmax(0,1fr) 32px;}
+  /* every pixel of label chrome is a pixel of control that does not fit */
+  .field:not(.seedrow){gap:3px;}   /* a seedrow is a ROW of targets: the 8px law still governs it */
+  .field>label{font-size:7.5px;letter-spacing:.06em;}
+}
+
+/* === D — PHONE LANDSCAPE, height <=520px ==============================
+   A different layout, not a squeezed portrait. ~380px of height is too little
+   for any horizontal band, so nothing is stacked across the width: the rail
+   and the actions share the left column, the artwork is full height in the
+   middle, and the panel is the right column. Stage spans both rows, which is
+   what stops it collapsing the way the previous attempt did. ============ */
+@media (max-height:520px) and (orientation:landscape){
+  #ui{
+    grid-template-columns:112px minmax(0,1fr) clamp(230px,32vw,320px);
+    grid-template-rows:minmax(0,1fr) auto;
+    grid-template-areas:
+      "rail stage side"
+      "acts stage side";
+  }
+  #topline{display:none;}
+  #railwrap{grid-template-columns:repeat(2,minmax(var(--tap),1fr));grid-auto-rows:minmax(var(--tap),auto);}
+  #actbar{grid-auto-flow:row;grid-auto-columns:auto;}
+  #grouprail button,#pagebar button,#actbar button{font-size:8px;}
+  .seg button{min-width:var(--tap);font-size:8px;padding:0 4px;}
+  #toggles{grid-template-columns:repeat(auto-fill,minmax(50px,1fr));}
+}
+
+/* --- ARTMAX: the engine toggles body.artmax and calls fit(). Here that
+       means collapse every non-stage track and give the square everything. */
+body.artmax #sidecol,body.artmax #railwrap{display:none;}
+body.artmax #ui{
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr) auto;
+  grid-template-areas:"bar" "stage" "acts";
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important;}
+}
+
+
+/* ==========================================================================
+   ENGINE-INJECTED DIALOGS.
+   The engine writes three whole dialogs into <body> at boot — the mint modal,
+   the instructions modal and the wallet modal — as HTML strings. They are not
+   in the shell, so a rebuilt sheet that does not carry their rules leaves them
+   rendering inline, in flow, permanently visible under the instrument. That is
+   what the gate caught: ten off-screen controls in EVERY group at EVERY
+   viewport, all of them the mint modal lying open at the bottom of the page.
+   These rules are carried over from the previous sheet unchanged, because they
+   style the engine's own organs rather than this layout.
+   ====================================================================== */
+/* ---- mint modal (markup injected verbatim by the ported public layer) ---- */ #mintmodal{display:none;position:fixed;inset:0;background:rgba(4,4,6,.92);z-index:60;overflow:auto;}
 #mintmodal.on{display:block;}
-#mintbox{max-width:460px;margin:6vh auto;background:var(--bg);border:1px solid var(--hair);
-  padding:18px 16px 22px;position:relative;}
+#mintbox{max-width:460px;margin:6vh auto;background:var(--bg);border:1px solid var(--hair); padding:18px 16px 22px;position:relative;}
 #mintbox h3{margin:0 0 4px;font-size:13px;letter-spacing:.16em;color:var(--ink);}
 #mintbox .sub{font-size:9px;color:var(--mut);letter-spacing:.08em;margin-bottom:14px;line-height:1.7;}
 #mx{position:absolute;top:8px;right:10px;color:var(--mut);font-size:16px;}
 .mkind{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
-.mkind button{text-align:left;padding:10px 12px;border:1px solid var(--hair);
-  color:var(--ink);font-size:10px;letter-spacing:.08em;line-height:1.6;}
+.mkind button{text-align:left;padding:10px 12px;border:1px solid var(--hair); color:var(--ink);font-size:10px;letter-spacing:.08em;line-height:1.6;}
 .mkind button small{display:block;color:var(--mut);font-size:8.5px;letter-spacing:.06em;}
 .mkind button[aria-pressed="true"]{border-color:var(--ox);color:var(--ox);}
 .mfield{margin:10px 0;}
 .mfield label{display:block;font-size:8.5px;color:var(--mut);letter-spacing:.12em;margin-bottom:4px;}
-.mfield input[type=text],.mfield input[type=number]{width:100%;background:#000;
-  border:1px solid var(--hair);color:var(--ink);padding:8px;font-size:11px;}
+.mfield input[type=text],.mfield input[type=number]{width:100%;background:#000; border:1px solid var(--hair);color:var(--ink);padding:8px;font-size:11px;}
 .mfield.inline{display:flex;gap:8px;align-items:center;}
 .mfield.inline label{margin:0;}
-#mseal{width:100%;margin-top:14px;padding:12px;background:var(--ox);color:#000;
-  font-size:12px;letter-spacing:.2em;}
+#mseal{width:100%;margin-top:14px;padding:12px;background:var(--ox);color:#000; font-size:12px;letter-spacing:.2em;}
 #mseal:disabled{opacity:.4;}
 #mstat{margin-top:10px;font-size:9px;color:var(--mut);letter-spacing:.1em;min-height:14px;}
 #mfee{font-size:9px;color:var(--mut);margin-top:12px;line-height:1.7;}
 .pubhide{display:none;}
-
-/* ---- wallet rites modal — the curator chooses the keeper of the keys ---- */
-#wmodal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
-  background:rgba(4,4,6,.92);padding:14px;}
-#wbox{width:min(360px,94vw);max-height:88dvh;overflow-y:auto;background:var(--panel);
-  border:1px solid var(--line);padding:18px;}
-#wttl{font-size:12px;letter-spacing:.2em;color:var(--txt);margin-bottom:8px;}
-#wsub{font-size:8.5px;color:var(--mut);letter-spacing:.06em;line-height:1.8;margin-bottom:14px;}
-.wopt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#000;
-  color:var(--txt);font-size:10px;letter-spacing:.1em;padding:12px;margin-bottom:8px;}
-.wopt:hover{border-color:var(--cyan);color:var(--cyan);}
-#wnone{font-size:8.5px;color:var(--mut);letter-spacing:.08em;line-height:1.8;margin-bottom:10px;}
-#wcancel{display:block;width:100%;border:1px solid var(--line);background:none;
-  color:var(--mut);font-size:9px;letter-spacing:.14em;padding:10px;margin-top:4px;}
-#wcancel:hover{color:var(--txt);border-color:var(--line2,var(--line));}
-
-/* ---- X transmission modal — the engine's own organ (f3 behavior, verbatim);
-        the shell only relocates it to the body and makes it fit the screen ---- */
-#xmodal{position:fixed;inset:0;z-index:65;display:none;background:rgba(4,4,6,.92);
-  padding:14px;align-items:center;justify-content:center;}
-#xmodal .xm-box{width:min(430px,94vw);max-height:92dvh;overflow-y:auto;
-  background:var(--panel);border:1px solid var(--line);padding:16px;}
-.xm-head{font-family:var(--fT);font-size:11px;margin-bottom:10px;color:var(--txt);letter-spacing:.1em;}
-#xm-size{color:var(--mut);}
-#xm-img{display:block;width:100%;max-height:44dvh;object-fit:contain;
-  image-rendering:pixelated;background:#000;}
-#xm-tweet{white-space:pre-wrap;word-break:break-word;border:1px solid var(--line);
-  background:var(--well);color:var(--txt);font-family:var(--fT);font-size:10px;
-  line-height:1.8;padding:10px;margin-top:12px;}
-.xm-row{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 0;}
-.xm-row button{flex:1 1 auto;border:1px solid var(--line);background:var(--panel);
-  color:var(--txt);font-size:9px;letter-spacing:.08em;padding:10px 8px;}
-.xm-row button:hover{border-color:var(--cyan);color:var(--cyan);}
-.xm-note{color:var(--mut);font-size:8.5px;line-height:1.8;letter-spacing:.06em;margin-top:10px;}
-#xm-close{width:100%;margin-top:10px;border:1px solid var(--line);color:var(--mut);
-  padding:9px;font-size:9px;letter-spacing:.14em;}
-#xm-close:hover{border-color:var(--line2);color:var(--txt);}
-
-/* ---- instructions modal ---- */
-#instrmodal{display:none;position:fixed;inset:0;background:rgba(4,4,6,.96);z-index:70;overflow:auto;}
+/* ---- wallet rites modal — the curator chooses the keeper of the keys ---- */ #wmodal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center; background:rgba(4,4,6,.92);padding:14px;}
+/* ---- instructions modal ---- */ #instrmodal{display:none;position:fixed;inset:0;background:rgba(4,4,6,.96);z-index:70;overflow:auto;}
 #instrmodal.on{display:block;}
-#instrbox{max-width:640px;margin:8vh auto;padding:0 20px 60px;position:relative;
-  font-size:9px;letter-spacing:.08em;color:var(--mut);line-height:1.9;}
+#instrbox{max-width:640px;margin:8vh auto;padding:0 20px 60px;position:relative; font-size:9px;letter-spacing:.08em;color:var(--mut);line-height:1.9;}
 #instrbox h3{font-size:13px;letter-spacing:.2em;color:var(--txt);margin-bottom:18px;}
 #instrbox .row{margin-top:12px;}
 #instrbox b{color:var(--txt);}
 #instrbox a{color:var(--cyan);text-decoration:none;border-bottom:1px solid var(--oxd);}
 #ix{position:absolute;top:-4vh;right:18px;color:var(--mut);font-size:18px;}
 
-/* ---- compact heights: the rail must fit 768-tall frames without scroll ---- */
-@media (max-height:820px){
-  #rail{gap:9px;padding-top:10px;}
-  .segrow button,#pub-palette button{padding:6px 2px;}
-  #pub-actions button{padding:9px 2px;}
-  .iorow input{padding:6px 8px;}
-  .iorow button{padding:7px 8px;}
-  #pub-splice{flex-basis:52px;}
-  .ctl label{margin-bottom:4px;}
-}
-/* ---- portrait / narrow: stack — art first, rail scrolls internally ---- */
-@media (max-width:860px),(orientation:portrait){
-  #deck{flex-direction:column;}
-  #stagecol{flex:0 0 auto;padding:12px;}
-  #stage{width:min(100%,48dvh);}
-  #rail{flex:1 1 auto;border-left:none;border-top:1px solid var(--line);
-    padding:12px 14px calc(12px + var(--sab));}
-}
-@media (max-width:420px){
-  #topbar{padding:0 12px;}
-  #tagline{display:none;}
-  #pub-palette{grid-template-columns:repeat(4,minmax(0,1fr));}
-  #pub-actions{grid-template-columns:repeat(2,minmax(0,1fr));}
-}
-@media (min-width:2200px){
-  #rail{flex-basis:420px;}
-  body{font-size:12px;}
-}
+/* the tap floor still applies inside them */
+#mx,#ix{min-width:var(--tap);min-height:var(--tap);display:flex;align-items:center;justify-content:center;background:transparent;border:0;}
+.mkind button,#mseal{min-height:var(--tap);}
 
-/* ============ THE INSTRUMENT, RE-HUNG =====================================
-   ONE VIEWPORT. ZERO PAGE SCROLL. ART IS KING.
-   The page is a fixed column: banner / instrument / verdict. Only the control
-   rail's #panels scrolls, and it scrolls inside itself. Everything else is
-   sized from the viewport so the artwork takes every pixel that is left. */
-html,body{position:fixed !important;inset:0 !important;width:100% !important;
-  height:100% !important;overflow:hidden !important;padding:0 !important;
-  overscroll-behavior:none;}
-body{display:flex;flex-direction:column;}
-#wbbanner{position:static !important;flex:0 0 auto;display:flex;align-items:center;
-  gap:10px;padding:5px 10px;padding-top:calc(5px + var(--sat));
-  font:600 9.5px/1.35 ui-monospace,monospace;letter-spacing:.1em;}
-#wbbanner .wbb-id{flex:0 0 auto;white-space:nowrap;}
-#wbbanner #wb-livestat{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;color:#9c9cb6;}
-#wbbanner .wbb-nav{display:flex;gap:9px;align-items:center;margin-left:auto;flex:0 0 auto;}
-#wbbanner .wbb-nav a{font-size:8.5px;letter-spacing:.12em;color:#9c9cb6;
-  text-decoration:none;white-space:nowrap;}
-#wbbanner .wbb-nav a:hover{color:#19f0ff;}
-#wb-artmax{flex:0 0 auto;font:600 8.5px ui-monospace,monospace;letter-spacing:.12em;
-  color:#19f0ff;border:1px solid #19f0ff55;border-radius:3px;padding:5px 8px;
-  background:#0a1a1e;white-space:nowrap;min-height:26px;}
-#legacy-root{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
-#legacy-root #wbverdict{position:static !important;flex:0 0 auto;
-  padding:6px 8px calc(6px + var(--sab));gap:5px;}
-#legacy-root #wbverdict button{padding:7px 12px;min-height:34px;font-size:11px;}
-#legacy-root #wbverdict .wbtag,#legacy-root #wbverdict .wbmini{padding:6px 8px;font-size:9px;}
-#legacy-root #galmodal,#legacy-root #revbar,#legacy-root #mintbar,
-#legacy-root #sellmodal,#legacy-root #xmodal,#legacy-root #tipbar,
-#legacy-root #saveview{position:fixed;z-index:9600;display:none;}
-#legacy-root #galmodal,#legacy-root #sellmodal,#legacy-root #saveview{inset:0;
-  align-items:center;justify-content:center;background:rgba(4,4,6,.94);padding:16px;
-  overflow:auto;flex-direction:column;gap:10px;}
-#legacy-root #revbar,#legacy-root #tipbar{left:0;right:0;bottom:0;padding:9px 12px;
-  background:#12041af5;border-top:1px solid #ff2fa0;color:#ff8fd0;font-size:10px;
-  letter-spacing:.08em;cursor:pointer;}
-#legacy-root #mintbar{left:0;right:0;bottom:0;padding:9px 12px;gap:10px;
-  background:#0a0a12f5;border-top:1px solid var(--line);align-items:center;
-  justify-content:space-between;}
-#legacy-root #app{flex:1 1 auto;min-height:0;display:flex !important;flex-direction:row;
-  gap:12px;max-width:none;margin:0;padding:10px;align-items:stretch;}
-#legacy-root #app>header{display:none !important;}
-#legacy-root .colL{position:static !important;flex:1 1 auto;min-width:0;min-height:0;
-  display:flex;flex-direction:column;gap:4px;}
-#legacy-root .monitor{flex:1 1 0;min-height:0;min-width:0;border:none;
-  background:transparent;display:grid;place-items:center;container-type:size;}
-#legacy-root .screen-wrap{width:100%;height:auto;aspect-ratio:1/1;
-  max-width:100%;max-height:100%;border:1px solid var(--line2);background:#000;}
-@supports (width:100cqh){ #legacy-root .screen-wrap{width:min(100%,100cqh);} }
-#legacy-root .telem{flex:0 0 auto;padding:4px 2px;}
-#legacy-root .bar{flex:0 0 auto;}
-#legacy-root .colR{flex:0 0 clamp(300px,26vw,400px);min-width:0;min-height:0;
-  display:flex;flex-direction:column;}
-#legacy-root .tabs{flex:0 0 auto;margin-bottom:8px;}
-#legacy-root .tab{padding:9px 3px;}
-#legacy-root #panels{flex:1 1 auto;min-height:0;overflow-y:auto;
-  overscroll-behavior:contain;padding-right:6px;}
-#legacy-root .actions{flex:0 0 auto;margin-top:8px;}
-#legacy-root .actions button{padding:11px 5px;}
-#legacy-root .voidscroll{max-height:150px;}
-body.artmax #legacy-root .colR{display:none;}
-body.artmax #legacy-root #app{padding:6px;}
-/* ART MAX gives the artwork the vertical too, not just the horizontal:
-   on a wide screen the canvas is height-bound, so the chrome has to yield. */
-body.artmax #wbbanner{padding:2px 8px;padding-top:calc(2px + var(--sat));}
-body.artmax #legacy-root #wbverdict{padding:3px 6px calc(3px + var(--sab));}
-body.artmax #legacy-root #wbverdict button{min-height:26px;padding:4px 9px;font-size:10px;}
-body.artmax #legacy-root #wbverdict .wbtag,
-body.artmax #legacy-root #wbverdict .wbmini{padding:3px 6px;font-size:8.5px;}
-body.artmax #legacy-root .telem{display:none;}
-body.artmax #legacy-root .bar{display:none;}
-@media (max-width:860px),(orientation:portrait){
-  #legacy-root #app{flex-direction:column;gap:7px;padding:8px;}
-  #legacy-root .colL{flex:0 0 auto;}
-  #legacy-root .monitor{flex:0 0 auto;height:min(52dvh,calc(100vw - 16px));}
-  #legacy-root .colR{flex:1 1 0;min-height:0;}
-  #legacy-root .toggles{grid-template-columns:repeat(3,minmax(0,1fr));}
-  #legacy-root #wbverdict button{padding:6px 9px;min-height:32px;font-size:10px;}
-  #wbbanner .wbb-nav{gap:7px;}
-  body.artmax #legacy-root .monitor{height:min(78dvh,calc(100vw - 12px));}
-}
-@media (max-width:430px){
-  #wbbanner .wbb-nav a:not(:first-child){display:none;}
-  #wbbanner #wb-livestat{display:none;}
-}
-@media (orientation:landscape) and (max-height:520px){
-  #legacy-root .telem{display:none;}
-  #legacy-root #wbverdict button{min-height:28px;padding:4px 8px;font-size:10px;}
-}
+#sheetgrip{display:none;}
+@media (max-width:699px){#sheetgrip{display:block;}}
+#sheetgrip[aria-pressed="true"]{color:#06060a;background:var(--sulph);border-color:var(--sulph);}
+
+/* pagination hides what does not fit on the current page */
+.pghide{display:none!important;}
 </style>
 </head>
 <body>
-<div id="shell">
-  <header id="topbar">
-    <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div id="topright">
-      <div id="tagline">ENGINE · EIDOLON E4.0 TABULA RASA<br>ONE SEED · ONE TOKEN · ONE CHANCE</div>
-      <nav id="shellrooms">
-        <a href="gardens.html">GARDENS</a>
-        <a href="showcase.html">SHOWCASE</a>
-        <a href="sealed.html">THE SEALED</a>
-      </nav>
-      <button id="instrbtn">INSTRUCTIONS</button>
-    </div>
+<div id="ui">
+
+  <header id="topline">
+    <span class="wbb-id">&#9874; WORKBENCH V2</span>
+    <span id="wb-livestat"></span>
+    <nav id="shellrooms" aria-label="rooms"><a href="/">PUBLIC BOX</a><a href="/gardens.html">GARDENS</a><a href="/showcase.html">SHOWCASE</a><a href="/sealed.html">SEALED</a></nav>
+    <button type="button" id="wb-artmax" class="vio" aria-pressed="false" title="give the whole deck to the artwork">&#9974; ART</button>
+    <button type="button" id="infobtn" class="vio" title="INFO MODE: tap this, then tap anything to learn what it does">?</button>
   </header>
-  <div id="deck">
-    <div id="stagecol">
-      <div id="stage" data-state="standby" title="tap the box — every tap mints a loop no one has seen">
-        <div id="artframe"></div>
-        <div class="reg tl"></div><div class="reg tr"></div><div class="reg bl"></div><div class="reg br"></div>
-        <div id="pubosd">STANDBY</div>
-        <div id="caption"><div class="ph-block"></div><span>PANDORA SEALED — TAP TO OPEN</span></div>
-        <div id="pubprog"></div>
-      </div>
-    </div>
-    <div id="rail">
-      <div id="mintedband"></div>
-      <div class="ctl">
-        <label>RITUALS</label>
-        <div id="pub-rituals">
-          <button id="pub-dice">⚄ DICE</button>
-          <button id="pub-mutate">Ω MUTATE</button>
-          <button id="pub-oblivion">☠ OBLIVION</button>
-        </div>
-      </div>
-      <div class="ctl">
-        <label>CORRUPTION <span class="tag" id="pub-corrtag"></span><span class="v" id="pub-corrval">62</span></label>
-        <input type="range" id="pub-corr" min="0" max="100" value="62">
-      </div>
-      <div class="ctl">
-        <label>VOID <span class="tag" id="pub-voidtag"></span><span class="v" id="pub-voidval">34</span></label>
-        <input type="range" id="pub-void" min="0" max="90" value="34">
-      </div>
-      <div class="ctl">
-        <label>CHROMA</label>
-        <div class="segrow" id="pub-chroma"></div>
-      </div>
-      <button id="pub-splice">SPLICE</button>
-      <div class="ctl">
-        <label>PALETTE</label>
-        <div id="pub-palette"></div>
-      </div>
-      <div id="pub-actions">
-        <button id="pub-download" disabled>⤓ DOWNLOAD</button>
-        <button id="pub-xpost" disabled>𝕏 POST</button>
-        <button id="pub-garden">⚘ GARDEN</button>
-        <button id="pub-mint">⛓ MINT</button>
-      </div>
-      <div class="ctl iorow">
-        <label>SEED</label>
-        <input id="pub-seed" type="text" inputmode="numeric" autocomplete="off">
-      </div>
-      <div class="ctl iorow">
-        <label>DNA</label>
-        <input id="pub-dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PNDR-…">
-        <button id="pub-resurrect" title="decodes the pasted card and rebuilds its loop byte-exactly">▶ RESURRECT</button>
-        <button id="pub-copydna" title="copies this loop's DNA card to your clipboard">⧉ COPY</button>
-      </div>
-    </div>
+
+  <div id="railwrap">
+  <nav id="grouprail" aria-label="control groups">
+    <button class="tab" data-p="p-signal" aria-selected="true">SIGNAL</button>
+    <button class="tab" data-p="p-sigils" aria-selected="false">SIGILS</button>
+    <button class="tab" data-p="p-tune" aria-selected="false">TUNE</button>
+    <button class="tab" data-p="p-raster" aria-selected="false">RASTER</button>
+    <button class="tab" data-p="p-body" aria-selected="false">BODY</button>
+    <button class="tab" data-p="p-graft" aria-selected="false">GRAFT</button>
+    <button class="tab" data-p="p-gains" aria-selected="false">GAINS</button>
+    <button class="tab" data-p="p-lab" aria-selected="false">LAB</button>
+    <button class="tab" data-p="p-judge" aria-selected="false">JUDGE</button>
+    <button id="sheetgrip" type="button" aria-pressed="false" title="raise or lower the control sheet">&#9650;</button>
+  </nav>
+  <nav id="pagebar" aria-label="panel pages">
+    <button id="pageprev" type="button">&#9664;</button>
+    <span id="pagelab"></span>
+    <button id="pagenext" type="button">&#9654;</button>
+  </nav>
   </div>
-</div>
 
-<div id="instrmodal"><div id="instrbox">
-  <button id="ix">✕</button>
-  <h3>DITHERVOID // PANDORA</h3>
-  <div class="row"><b>TAP THE BOX.</b> Every tap mints a loop no one has seen and no one will see again. CORRUPTION is the violence dial, VOID is how much darkness the body keeps, CHROMA caps the spectrum, the PALETTE grid picks the colorway. SPLICE re-renders the current genome.</div>
-  <div class="row"><b>ROLLING, SAVING AND USING LOOPS IS FREE.</b> Open the box as many times as you like. Download the GIFs. Use them anywhere.</div>
-  <div class="row"><b>DNA IS THE ARTWORK'S PROOF.</b> The card in the DNA field is the loop's complete genome. Copy it, post it, keep it: RESURRECT rebuilds the exact loop from any card, on any device, forever.</div>
-  <div class="row"><b>MINTING CARRIES A SMALL FEE</b> — 0.01 ETH for a 1/1, 0.001 ETH for editions — because this is an art project by <b>GREENCROSS</b> and the fee pays the artist's monthly AI bill. One seed, one token, one chance.</div>
-  <div class="row"><b>CC0 — NO RIGHTS RESERVED.</b> Copy it, remix it, sell it, build it into your own work. You are encouraged to. Made something with a loop? <a href="showcase.html#submit">Submit it to the showcase</a>.</div>
-  <div class="row"><a href="gardens.html">GARDENS</a> · <a href="showcase.html">SHOWCASE</a> · <a href="sealed.html">THE SEALED</a> · <a target="_blank" rel="noopener" id="instr-contract" href="#">CONTRACT ↗</a> · ENGINE: EIDOLON E8.0</div>
-</div></div>
-
-<!-- ==== EIDOLON E8.0 — untouched engine markup, headless ==== -->
-<div id="wbbanner">
-  <span class="wbb-id">&#9874; WORKBENCH V2 &mdash; ORNAMENTS PURGED &middot; EMBOSS + SILHOU</span>
-  <span id="wb-livestat"></span>
-  <nav class="wbb-nav" aria-label="rooms"><a href="/">PUBLIC BOX</a><a href="/gardens.html">GARDENS</a><a href="/showcase.html">SHOWCASE</a><a href="/sealed.html">SEALED</a></nav>
-  <button type="button" id="wb-artmax" aria-pressed="false" title="give the whole deck to the artwork">&#9974; ART</button>
-</div>
-<div id="legacy-root">
-
-<header id="mast">
-  <div id="wordmark">EIDO<b>LON</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV E4.0 · EIDOLON<br>TABULA RASA</div>
-</header>
-<div id="cockpit">
-  <section id="bay-engine" class="bay">
-    <div class="bayhead">ENGINE</div>
-    <div class="baybody" id="engbody"></div>
-  </section>
-  <section id="bay-stage" class="bay">
-    <div id="stagewrap"></div>
-    <div id="stagetelem"></div>
-    <div id="surface">
-      <div id="surfdials"></div>
-      <div id="surfacts"></div>
-      <div id="surfrow2"></div>
-    </div>
-  </section>
-  <section id="bay-archive" class="bay">
-    <div class="bayhead">ARCHIVE</div>
-    <div class="baybody" id="arcbody"></div>
-  </section>
-</div>
-<nav id="dock" aria-label="rooms">
-  <button id="dock-engine" aria-pressed="true">ENGINE</button>
-  <button id="dock-archive" aria-pressed="false">ARCHIVE</button>
-</nav>
-
-<div id="app">
-  <header>
-    <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV E4.0 · EIDOLON<br>TABULA RASA</div>
-  </header>
-
-  <div class="colL">
-  <div class="monitor">
-    <div class="screen-wrap">
+  <div id="stagecell">
+    <div id="stage" class="screen-wrap">
       <canvas id="view" width="1080" height="1080"></canvas>
       <img id="result" alt="generated glitch loop">
-      <div class="reg tl"></div><div class="reg tr"></div><div class="reg bl"></div><div class="reg br"></div>
-      <div class="osd"><span class="rec">●</span> <span id="osd">STANDBY</span></div>
+      <div class="osd"><span class="rec">&#9679;</span> <span id="osd">STANDBY</span></div>
       <div class="pxbadge" id="wb-pxbadge">
         <div class="big" id="wb-px-now">&mdash;</div>
         <div class="sub" id="wb-px-sub">waking</div>
-        <button type="button" id="wb-px-lock">LOCK THIS AS THE RENDER RASTER</button>
+        <button type="button" id="wb-px-lock">LOCK AS RENDER RASTER</button>
       </div>
       <div class="placeholder" id="ph">
         <div class="ph-block"></div>
-        <span>PANDORA SEALED — TAP TO OPEN</span>
+        <span>PANDORA SEALED &mdash; TAP TO OPEN</span>
       </div>
     </div>
   </div>
 
-  <div class="telem">
-    <div>SIG <b class="lk" id="t-sig">—</b></div>
-    <div>MODE <b id="t-mode">—</b></div>
-    <div>SEED <b id="t-seed">—</b></div>
-    <div>FRM <b id="t-frame">0/0</b></div>
-    <div><b id="t-size">—</b></div>
-  </div>
-  <div class="bar"><i id="prog"></i></div>
+  <div id="actbar">
+    <button id="resetall" title="deactivate every sigil + clear all TUNE overrides">&#10226;</button>
+    <button id="go">&#9654; RENDER</button>
+    <button id="wb-keep">&#10003; KEEP</button>
+    <button id="wb-kill">&#10007; KILL</button>
+    <button id="download" disabled>&#10515; SAVE</button>
+    <button id="xsave" disabled title="X-safe version, under the 15MB GIF cap">&#120143;</button>
   </div>
 
-  <div class="colR">
-  <nav class="tabs">
-    <button class="tab" data-p="p-signal" aria-selected="true">SIGNAL</button>
-    <button class="tab" data-p="p-sigils" aria-selected="false">SIGILS·37</button>
-    <button class="tab" data-p="p-tune" aria-selected="false">TUNE</button>
-    <button class="tab" data-p="p-lab" aria-selected="false">LAB</button>
-      <button class="tab" data-p="p-wb" aria-selected="false">WB</button>
-    <button id="infobtn" title="INFO MODE: tap this, then tap anything to learn what it does">?</button>
-</nav>
-
+  <div id="sidecol">
   <main id="panels">
+
     <section id="p-signal" class="panel on">
-      <div class="field">
-        <label>PALETTE</label>
-        <div class="seg" id="scheme"></div>
+      <div id="telem">
+        <div>SIG <b class="lk" id="t-sig">&mdash;</b></div>
+        <div>MODE <b id="t-mode">&mdash;</b></div>
+        <div>SEED <b id="t-seed">&mdash;</b></div>
+        <div>FRM <b id="t-frame">0/0</b></div>
+        <div><b id="t-size">&mdash;</b></div>
       </div>
-      <div class="field">
-        <label>SOURCE</label>
-        <div class="seg" id="mode"></div>
-      </div>
-      <div class="field">
-        <label>CORRUPTION <span id="lab-corr"></span><span class="v" id="v-corr">62</span></label>
-        <input type="range" id="corr" min="0" max="100" value="62">
-      </div>
-      <div class="field">
-        <label>VOID <span id="lab-voidamt"></span><span class="v" id="v-voidamt">34</span></label>
-        <input type="range" id="voidamt" min="0" max="90" value="34">
-      </div>
-      <div class="field">
-        <label>WOUND LOCALITY <span class="v" id="v-locality">60</span></label>
-        <input type="range" id="locality" min="0" max="100" value="60">
-      </div>
-      <div class="field">
-        <label>CHROMA</label>
-        <div class="seg" id="chromaseg"></div>
-      </div>
-      <div class="field">
-        <label>ERA</label>
-        <div class="seg" id="epochseg"></div>
-      </div>
-      <div class="field">
-        <label>FRAMES <span id="lab-dur"></span><span class="v" id="v-frames">36</span></label>
-        <input type="range" id="frames" min="8" max="80" step="4" value="36">
+      <div class="bar"><i id="prog"></i></div>
+      <div class="field"><label>PALETTE</label><div class="seg" id="scheme"></div></div>
+      <div class="field"><label>SOURCE</label><div class="seg" id="mode"></div></div>
+      <div class="field"><label>CORRUPTION <span id="lab-corr"></span><span class="v" id="v-corr">62</span></label>
+        <input type="range" id="corr" min="0" max="100" value="62"></div>
+      <div class="field"><label>VOID <span id="lab-voidamt"></span><span class="v" id="v-voidamt">34</span></label>
+        <input type="range" id="voidamt" min="0" max="90" value="34"></div>
+      <div class="field"><label>WOUND LOCALITY <span class="v" id="v-locality">60</span></label>
+        <input type="range" id="locality" min="0" max="100" value="60"></div>
+      <div class="field"><label>CHROMA</label><div class="seg" id="chromaseg"></div></div>
+      <div class="field"><label>ERA</label><div class="seg" id="epochseg"></div></div>
+      <div class="field"><label>FRAMES <span id="lab-dur"></span><span class="v" id="v-frames">36</span></label>
+        <input type="range" id="frames" min="8" max="80" step="4" value="36"></div>
+    </section>
+
+    <section id="p-sigils" class="panel" data-page-target="toggles">
+      <div id="toggles">
+        <div class="tg gb" data-fx="chroma" data-on="1"><span>CHROMA</span><i class="dot"></i></div>
+        <div class="tg gb" data-fx="tracking" data-on="1"><span>TRACK</span><i class="dot"></i></div>
+        <div class="tg gb" data-fx="pixelsort" data-on="1"><span>SORT</span><i class="dot"></i></div>
+        <div class="tg gb" data-fx="grain" data-on="1"><span>CRAWL</span><i class="dot"></i></div>
+        <div class="tg gb" data-fx="blocks" data-on="1"><span>BLOCKS</span><i class="dot"></i></div>
+        <div class="tg gb" data-fx="scanlines" data-on="1"><span>CLASH</span><i class="dot"></i></div>
+        <div class="tg gb" data-fx="echo" data-on="1"><span>ECHO</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="wave"><span>SHRED</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="slice"><span>SLICE</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="vroll"><span>V-ROLL</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="mosh"><span>MOSH</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="ghost"><span>IXTEAR</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="melt"><span>MELT</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="bleed"><span>BLEED</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="invert"><span>XSLAM</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="crush"><span>DQUAKE</span><i class="dot"></i></div>
+        <div class="tg gh" data-fx="dropout"><span>TAPROT</span><i class="dot"></i></div>
+        <div class="tg go2" data-fx="chrono"><span>CHRONO</span><i class="dot"></i></div>
+        <div class="tg go2" data-fx="mirror"><span>RANSOM</span><i class="dot"></i></div>
+        <div class="tg go2" data-fx="flay"><span>FLAY</span><i class="dot"></i></div>
+        <div class="tg go2" data-fx="autoph"><span>AUTOPH</span><i class="dot"></i></div>
+        <div class="tg go2" data-fx="weave"><span>WEAVE</span><i class="dot"></i></div>
+        <div class="tg go2" data-fx="entropy"><span>ENTRPY</span><i class="dot"></i></div>
+        <div class="tg go2" data-fx="meta"><span>PLAGUE</span><i class="dot"></i></div>
+        <div class="tg go2" data-fx="tect"><span>TECTON</span><i class="dot"></i></div>
+        <div class="tg gv" data-fx="panes"><span>PANES</span><i class="dot"></i></div>
+        <div class="tg gv" data-fx="hilb"><span>HILBRT</span><i class="dot"></i></div>
+        <div class="tg gv" data-fx="splice"><span>DNA</span><i class="dot"></i></div>
+        <div class="tg gv" data-fx="moire"><span>MOIRE</span><i class="dot"></i></div>
+        <div class="tg gv" data-fx="braid"><span>BRAID</span><i class="dot"></i></div>
+        <div class="tg gv" data-fx="lungs"><span>LUNGS</span><i class="dot"></i></div>
+        <div class="tg gd" data-fx="tunnel"><span>TUNNEL</span><i class="dot"></i></div>
+        <div class="tg gd" data-fx="bloom"><span>BLOOM</span><i class="dot"></i></div>
+        <div class="tg gd" data-fx="embers"><span>EMBERS</span><i class="dot"></i></div>
+        <div class="tg gd" data-fx="runes"><span>RUNES</span><i class="dot"></i></div>
+        <div class="tg gd" data-fx="chimera"><span>CHIMERA</span><i class="dot"></i></div>
       </div>
     </section>
-    <section id="p-sigils" class="panel">
-      <div class="toggles">
-          <div class="tg gb" data-fx="chroma" data-on="1"><span>CHROMA</span><i class="dot"></i></div>
-          <div class="tg gb" data-fx="tracking" data-on="1"><span>TRACK</span><i class="dot"></i></div>
-          <div class="tg gb" data-fx="pixelsort" data-on="1"><span>SORT</span><i class="dot"></i></div>
-          <div class="tg gb" data-fx="grain" data-on="1"><span>CRAWL</span><i class="dot"></i></div>
-          <div class="tg gb" data-fx="blocks" data-on="1"><span>BLOCKS</span><i class="dot"></i></div>
-          <div class="tg gb" data-fx="scanlines" data-on="1"><span>CLASH</span><i class="dot"></i></div>
-          <div class="tg gb" data-fx="echo" data-on="1"><span>ECHO</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="wave"><span>SHRED</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="slice"><span>SLICE</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="vroll"><span>V-ROLL</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="mosh"><span>MOSH</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="ghost"><span>IXTEAR</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="melt"><span>MELT</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="bleed"><span>BLEED</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="invert"><span>XSLAM</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="crush"><span>DQUAKE</span><i class="dot"></i></div>
-          <div class="tg gh" data-fx="dropout"><span>TAPROT</span><i class="dot"></i></div>
-          <div class="tg go2" data-fx="chrono"><span>CHRONO</span><i class="dot"></i></div>
-          <div class="tg go2" data-fx="mirror"><span>RANSOM</span><i class="dot"></i></div>
-          <div class="tg go2" data-fx="flay"><span>FLAY</span><i class="dot"></i></div>
-          <div class="tg go2" data-fx="autoph"><span>AUTOPH</span><i class="dot"></i></div>
-          <div class="tg go2" data-fx="weave"><span>WEAVE</span><i class="dot"></i></div>
-          <div class="tg go2" data-fx="entropy"><span>ENTRPY</span><i class="dot"></i></div>
-          <div class="tg go2" data-fx="meta"><span>PLAGUE</span><i class="dot"></i></div>
-          <div class="tg go2" data-fx="tect"><span>TECTON</span><i class="dot"></i></div>
-          <div class="tg gv" data-fx="panes"><span>PANES</span><i class="dot"></i></div>
-          <div class="tg gv" data-fx="hilb"><span>HILBRT</span><i class="dot"></i></div>
-          <div class="tg gv" data-fx="splice"><span>DNA</span><i class="dot"></i></div>
-          <div class="tg gv" data-fx="moire"><span>MOIRE</span><i class="dot"></i></div>
-          <div class="tg gv" data-fx="braid"><span>BRAID</span><i class="dot"></i></div>
-          <div class="tg gv" data-fx="lungs"><span>LUNGS</span><i class="dot"></i></div>
-          <div class="tg gd" data-fx="tunnel"><span>TUNNEL</span><i class="dot"></i></div>
-          <div class="tg gd" data-fx="bloom"><span>BLOOM</span><i class="dot"></i></div>
-          <div class="tg gd" data-fx="embers"><span>EMBERS</span><i class="dot"></i></div>
-          <div class="tg gd" data-fx="runes"><span>RUNES</span><i class="dot"></i></div>
-          <div class="tg gd" data-fx="chimera"><span>CHIMERA</span><i class="dot"></i></div>
-      </div>
-    </section>
+
     <section id="p-tune" class="panel">
-      <div class="field">
-        <label>MASK <span class="v" id="lab-ov"></span></label>
-        <div class="seg" id="ovmask"></div>
-      </div>
-      <div class="duo duostyle">
-        <div class="field" style="flex:0 0 auto"><label>STYLE</label><div class="seg" id="ovstyle"></div></div>
-        <div class="field" style="flex:1"><label>SIZE</label><input type="range" id="ovsize" min="0" max="31" value="16"></div>
-      </div>
+      <div class="field"><label>MASK <span class="v" id="lab-ov"></span></label><div class="seg" id="ovmask"></div></div>
+      <div class="field"><label>STYLE</label><div class="seg" id="ovstyle"></div></div>
+      <div class="field"><label>SIZE</label><input type="range" id="ovsize" min="0" max="31" value="16"></div>
       <div class="duo">
-        <div class="field" style="flex:1"><label>POS X</label><input type="range" id="ovx" min="0" max="31" value="16"></div>
-        <div class="field" style="flex:1"><label>POS Y</label><input type="range" id="ovy" min="0" max="31" value="16"></div>
+        <div class="field"><label>POS X</label><input type="range" id="ovx" min="0" max="31" value="16"></div>
+        <div class="field"><label>POS Y</label><input type="range" id="ovy" min="0" max="31" value="16"></div>
       </div>
-      <div class="field">
-        <label>BODIES <span class="v" id="lab-ovn">AUTO</span></label>
-        <input type="range" id="ovn" min="0" max="50" value="0">
-      </div>
-      <div class="field">
-        <label>FORM</label>
-        <div class="seg" id="ovform"></div>
+      <div class="field"><label>BODIES <span class="v" id="lab-ovn">AUTO</span></label>
+        <input type="range" id="ovn" min="0" max="50" value="0"></div>
+      <div class="field"><label>FORM</label><div class="seg" id="ovform"></div></div>
+    </section>
+
+    <section id="p-raster" class="panel">
+      <div class="field"><label>LIVING ENGINE <span class="v" id="wb-fps"></span></label>
+        <button id="wb-render" class="vio">&#9635; RENDER GIF NOW</button></div>
+      <div class="field"><label>TYPE ANY RASTER <span class="v" id="wb-rasttypelab">&mdash;</span></label>
+        <div class="seedrow">
+          <input id="wb-rasttype" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="e.g. 224">
+          <button type="button" id="wb-rasttypego" class="dice" title="draw and render at exactly this resolution">&#9654;</button>
+        </div></div>
+      <div class="field"><label>RENDER RASTER <span class="v" id="wb-rastlab">360</span></label>
+        <div class="seg" id="wb-raster"></div>
+        <p class="labnote" id="wb-outlad">&mdash;</p></div>
+      <div class="field"><label>PREVIEW RESOLUTION <span class="v" id="wb-reslab">AUTO</span></label>
+        <div class="seg" id="wb-res"></div></div>
+      <div class="trio">
+        <div class="field"><label>FIELD <span class="v" id="wb-fieldlab">ON</span></label>
+          <button id="wb-field" class="vio">FIELD</button></div>
+        <div class="field"><label>TRUTH <span class="v" id="wb-truthlab">ON</span></label>
+          <button id="wb-truth" class="vio">TRUTH</button></div>
+        <div class="field"><label>LADDER <span class="v" id="wb-ladlab">OFF</span></label>
+          <button id="wb-ladder" class="vio">LADDER</button></div>
       </div>
     </section>
+
+    <section id="p-body" class="panel">
+      <div class="field"><label>VOID BODY &middot; SKELETON</label><div class="seg" id="wb-fam"></div></div>
+      <div class="field"><label>VOID BODY &middot; PRIMITIVE</label><div class="seg" id="wb-prim"></div></div>
+      <div class="field"><label>VOID BODY &middot; MODIFIER</label><div class="seg" id="wb-mod"></div></div>
+      <div class="field"><label>CAMERA &middot; GESTURE</label><div class="seg" id="wb-cam"></div>
+        <p class="labnote" id="wb-camnote"></p></div>
+    </section>
+
+    <section id="p-graft" class="panel">
+      <div class="field"><label>SOURCE <span class="v" id="gr-name">NONE</span></label>
+        <div id="gr-drop">DROP AN IMAGE HERE &middot; OR TAP TO CHOOSE</div>
+        <input type="file" id="gr-file" accept="image/*" style="display:none">
+        <div id="gr-thumbwrap">
+          <canvas id="gr-thumb" width="72" height="72"></canvas>
+          <p class="labnote" id="gr-dims" style="flex:1">&mdash;</p>
+          <button id="gr-clear" class="vio">CLEAR</button>
+        </div></div>
+      <div class="trio">
+        <div class="field"><label>GRAFT <span class="v" id="gr-onlab">OFF</span></label>
+          <button id="gr-on" class="vio">GRAFT</button></div>
+        <div class="field"><label>SAMPLING <span class="v" id="gr-blocklab">SMOOTH</span></label>
+          <button id="gr-block" class="vio">SAMPLING</button></div>
+        <div class="field"><label>INVERT <span class="v" id="gr-invlab">OFF</span></label>
+          <button id="gr-invert" class="vio">INVERT</button></div>
+      </div>
+      <div class="field"><label>ROLES &mdash; any number at once</label>
+        <div class="seg" id="gr-roles"></div>
+        <p class="labnote" id="gr-avail">THIS SEED &mdash; reading the surfaces&hellip;</p></div>
+      <div class="field"><label>BLEND <span class="v" id="gr-blendlab">NORMAL</span></label><div class="seg" id="gr-blend"></div></div>
+      <div class="duo">
+        <div class="field"><label>DEPTH <span class="v" id="gr-depthlab">WITHIN</span></label><div class="seg" id="gr-depth"></div></div>
+        <div class="field"><label>FIT <span class="v" id="gr-fitlab">COVER</span></label><div class="seg" id="gr-fit"></div></div>
+      </div>
+      <div id="gr-sliders"></div>
+    </section>
+
+    <section id="p-gains" class="panel" data-page-target="wb-gains">
+      <div id="wb-gains"></div>
+    </section>
+
     <section id="p-lab" class="panel">
-      <div class="field seedrow">
-        <label>SEED</label>
+      <div class="field seedrow"><label>SEED</label>
         <input id="seed" type="text" inputmode="numeric" autocomplete="off">
-        <button id="dice" class="dice" title="randomize seed">⚄</button><button id="mutate" title="MUTATE — one sigil flips, corruption drifts, the seed holds. Same soul, new scars.">Ω</button>
-      </div>
-      <div class="field seedrow">
-        <label>DNA</label>
-        <input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PNDR-…">
-        <button id="dnacopy" class="dice" title="copy card">⧉</button>
-        <button id="dnaload" class="dice" title="reproduce from card">▶</button>
-      </div>
+        <button id="dice" class="dice" title="randomize seed">&#9860;</button>
+        <button id="mutate" class="dice" title="MUTATE">&#937;</button></div>
+      <div class="field seedrow"><label>DNA</label>
+        <input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PNDR-&hellip;">
+        <button id="dnacopy" class="dice" title="copy card">&#10697;</button>
+        <button id="dnaload" class="dice" title="reproduce from card">&#9654;</button></div>
       <div id="collections">
         <div class="seg" id="shelfseg">
           <button data-shelf="vault" aria-pressed="true">VAULT</button>
           <button data-shelf="gardens" aria-pressed="false">GARDENS</button>
         </div>
         <div id="c-vault">
-          <div class="field">
-            <label>PUBLIC VAULT <span class="v" id="vcount"></span></label>
-            <button id="vaultadd" disabled>⬇ STORE CURRENT LOOP</button>
-          </div>
+          <div class="field"><label>PUBLIC VAULT <span class="v" id="vcount"></span></label>
+            <button id="vaultadd" class="vio" disabled>&#11015; STORE CURRENT LOOP</button></div>
           <div class="duo">
-            <button id="vexport" class="vio">⇪ EXPORT</button>
-            <button id="vimport" class="vio">⇩ IMPORT</button>
+            <button id="vexport" class="vio">&#8682; EXPORT</button>
+            <button id="vimport" class="vio">&#8681; IMPORT</button>
             <input type="file" id="vfile" accept="application/json,.json" style="display:none">
           </div>
           <div id="vaultlist" class="voidscroll"></div>
-          <p class="labnote" id="vaultnote">THE VAULT IS THE COMMONS. ANYONE CAN STORE A LOOP HERE, NO WALLET, NO NAME, DNA INCLUDED. TAP A THUMB TO RESURRECT THE EXACT LOOP. THE HOUSE PRUNES WHAT ROTS.</p>
         </div>
         <div id="c-gardens">
-          <div class="field">
-            <label>GARDENS <span class="v" id="gaddr"></span></label>
-            <div class="duo">
-              <button id="gconnect" class="vio">◈ CONNECT WALLET</button>
-              <button id="gplant" class="vio" disabled>⚘ SAVE TO MY GARDEN</button>
-            </div>
-            <div class="duo">
-              <button id="galopen" class="vio">▦ GALLERY</button>
-            </div>
+          <div class="duo">
+            <button id="gconnect" class="vio">&#9672; CONNECT</button>
+            <button id="gplant" class="vio" disabled>&#9880; PLANT</button>
           </div>
+          <div class="field"><label>GARDENS <span class="v" id="gaddr"></span></label>
+            <button id="galopen" class="vio">&#9638; GALLERY</button></div>
           <div id="gardenlist" class="voidscroll"></div>
-          <p class="labnote">YOUR WALLET IS YOUR SHELF. PLANT WITHOUT LIMIT: EVERY SAVE IS SIGNED, PUBLIC, AND CURATED BY YOU ALONE. WHAT GROWS HERE MINTS IN THE NEXT ERA. PLANT NOW, MINT LATER.</p>
         </div>
       </div>
-      <p class="labnote">DNA cards resurrect the exact loop: seed, colorway, source, corruption, frames, all sigils, motion. The public vault keeps them for everyone. Your garden keeps them in your name.</p>
+      <div class="field"><label>IRREVERSIBLE</label>
+        <button id="oblivion" class="vio" title="total oblivion">&#9760; OBLIVION</button></div>
     </section>
-    <section id="p-wb" class="panel">
-      <div class="field">
-        <label>LIVING ENGINE <span class="v" id="wb-fps"></span></label>
-        <div class="duo">
-          <button id="wb-render" class="vio">&#9635; RENDER GIF NOW</button>
-        </div>
-        <p class="labnote">The engine runs LIVE, always: the loop animates continuously in a dedicated preview core and every control &mdash; dials, sigils, gains, bodies, dice, mutate, resurrect &mdash; lands within a frame. The preview runs the REAL algorithms at a resolution your device sustains (auto-adapts; the badge shows it). RENDER produces the exact master GIF at the size the raster implies; saves come only from that.</p>
+
+    <section id="p-judge" class="panel">
+      <div class="field"><label>WHY IT DIES <span class="v" id="wb-count"></span></label>
+        <div class="seg" id="wbtags">
+          <button class="wbtag" data-tag="EMPTY">EMPTY</button>
+          <button class="wbtag" data-tag="ORNAMENT">ORNAMENT</button>
+          <button class="wbtag" data-tag="MUDDY">MUDDY</button>
+          <button class="wbtag" data-tag="FLAT">FLAT</button>
+          <button class="wbtag" data-tag="DULL">DULL</button>
+        </div></div>
+      <div class="duo">
+        <button class="wbmini" id="wb-digest">DIGEST</button>
+        <button class="wbmini" id="wb-export">EXPORT</button>
       </div>
-      <div class="field">
-        <label>TYPE ANY RASTER <span class="v" id="wb-rasttypelab">&mdash;</span></label>
-        <div class="seedrow">
-          <input id="wb-rasttype" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="e.g. 224">
-          <button type="button" id="wb-rasttypego" class="dice" title="draw and render at exactly this resolution">&#9654;</button>
-        </div>
-        <p class="labnote">Any number from 48 to 1080, not just the rungs. Typing here does BOTH things at once: it sets the raster the master GIF is built from, AND it pins the live preview to the same number &mdash; so what is on this screen is not an approximation of the render, it IS the render, running. The badge will read EXACT and there is nothing left to settle. Out-of-range numbers are clamped and the label says so.</p>
-      </div>
-      <div class="field">
-        <label>RENDER RASTER <span class="v" id="wb-rastlab">360</span></label>
-        <div class="seg" id="wb-raster"></div>
-        <p class="labnote" id="wb-outlad">&mdash;</p>
-        <p class="labnote">The size the loop is actually DRAWN at &mdash; and now the size everything else is derived FROM. The master GIF is no longer fixed at 1080&sup2;: it is the multiple of this raster nearest 1080, so every block in it is a square of exactly the same size (192 &rarr; 1152&sup2;, 300 &rarr; 1200&sup2;, 360 &rarr; 1080&sup2;). The &#120143; rungs are the multiples that fit under &#120143;&rsquo;s 1080px ceiling. The multiplier on each button is that button&rsquo;s block size, and it is always a whole number now &mdash; there is no &ldquo;uneven&rdquo; raster any more. FULL is the old 1080&sup2; behaviour. Changing this rebuilds the render pool and respawns the preview, and the preview is never allowed finer than the raster.</p>
-      </div>
-      <div class="field">
-        <label>FIELD RIDES DOWN <span class="v" id="wb-fieldlab">ON</span></label>
-        <button id="wb-field" class="vio">FIELD: ON (shading field scales with the raster)</button>
-        <p class="labnote">ON shrinks the shading field and march grid with the raster &mdash; this is the geometry the live preview always used, and the look you said you preferred. OFF marches the full 448&sup2; field into the small raster: finer structure, harsher aliasing, slower.</p>
-      </div>
-      <div class="field">
-        <label>PREVIEW RESOLUTION <span class="v" id="wb-reslab">AUTO</span></label>
-        <div class="seg" id="wb-res"></div>
-        <p class="labnote">The rung you tune on, capped at the render raster. When it SITS at the raster the preview is not an approximation of the GIF &mdash; it is the GIF, live, with nothing to settle. Below the raster it is still a different picture and SETTLE TO TRUTH covers the gap. AUTO picks a rung your device sustains at 25fps and steps down within a quarter-second if a scene turns heavy.</p>
-      </div>
-      <div class="field">
-        <label>SETTLE TO TRUTH <span class="v" id="wb-truthlab">ON</span></label>
-        <button id="wb-truth" class="vio">TRUTH: ON (settles to the exact GIF when your hands come off)</button>
-        <p class="labnote">Tune fast, settle true. While you are moving a control the fast rung answers instantly; the moment you stop, the loop is re-rasterised at the render's exact geometry and swapped in, byte for byte. If the preview is already sitting at the render raster there is nothing to settle and the badge reads EXACT instead. Touch anything and it drops back to fast.</p>
-      </div>
-      <div class="field">
-        <label>CORRUPTION LADDER <span class="v" id="wb-ladlab">OFF</span></label>
-        <button id="wb-ladder" class="vio">LADDER: OFF (dial = amplitude only, sigils are yours)</button>
-      </div>
-      <div class="field">
-        <label>VOID BODY &middot; SKELETON</label>
-        <div class="seg" id="wb-fam"></div>
-      </div>
-      <div class="field">
-        <label>VOID BODY &middot; PRIMITIVE</label>
-        <div class="seg" id="wb-prim"></div>
-      </div>
-      <div class="field">
-        <label>VOID BODY &middot; MODIFIER</label>
-        <div class="seg" id="wb-mod"></div>
-        <p class="labnote">The modifier bends the space the body is measured in, so one skeleton and one primitive can come out twisted, tapered, terraced, hollowed or split in two. It multiplies the vocabulary rather than adding to it.</p>
-      </div>
-      <div class="field">
-        <label>CAMERA &middot; GESTURE</label>
-        <div class="seg" id="wb-cam"></div>
-        <p class="labnote" id="wb-camnote">Every render used to be the same move: one revolution, always the same way round, from the same height, at the same distance. This is the move itself. AUTO lets the seed choose; each gesture returns exactly to its start, so the loop always closes.</p>
-      </div>
-      <h4>THE GRAFT &mdash; your own graphic, entered into the transmission</h4>
-      <div class="field">
-        <label>SOURCE <span class="v" id="gr-name">NONE</span></label>
-        <div id="gr-drop" style="border:1px dashed #4a3a5c;border-radius:8px;padding:18px 10px;text-align:center;font-size:11px;letter-spacing:.14em;color:#8b7ba0;cursor:pointer;user-select:none">DROP AN IMAGE HERE &middot; OR TAP TO CHOOSE</div>
-        <input type="file" id="gr-file" accept="image/*" style="display:none">
-        <div id="gr-thumbwrap" style="display:none;align-items:center;gap:10px;margin-top:8px">
-          <canvas id="gr-thumb" width="72" height="72" style="image-rendering:pixelated;border:1px solid #3a2d48;border-radius:4px;background:#0a080e"></canvas>
-          <div style="flex:1"><p class="labnote" id="gr-dims" style="margin:0">&mdash;</p></div>
-          <button id="gr-clear" class="vio">CLEAR</button>
-        </div>
-        <p class="labnote">The image never leaves your device &mdash; it is decoded in the page, capped at 512px on its longest side, and handed to the render workers as raw bytes. It is also hashed at ingest, and that hash is written into every verdict, so a loop made with a graft can always be traced back to the exact graphic that made it. Note the fork: the engine can rebuild any loop from its seed alone, but it cannot rebuild YOUR graphic from a seed. Grafted loops are workbench work for now, not mint-safe DNA.</p>
-      </div>
-      <div class="field">
-        <label>GRAFT <span class="v" id="gr-onlab">OFF</span></label>
-        <button id="gr-on" class="vio">GRAFT: OFF</button>
-      </div>
-      <div class="field">
-        <label>ROLES &mdash; what the graphic DOES (any number at once)</label>
-        <div class="seg" id="gr-roles"></div>
-        <p class="labnote"><b>OVER</b> is the layer &mdash; but placed inside the signal, not on top of it. <b>UNDER</b> lays it into the empty space behind the mass, drawn in the artwork&rsquo;s own tone ramp, so the body occludes it and the void eats it. <b>FLOOR</b> lies it flat on the mirror plane &mdash; it perspective-projects and slides as the camera orbits, and the fog swallows its far edge. <b>GOBO</b> puts it in front of the LIGHT: the body is lit <i>through</i> your picture, so the image appears as shadow cast across the geometry. <b>STENCIL</b> cuts the whole transmission away wherever the graphic is dark, and the cut level breathes once per revolution. <b>SLICE</b> sends a scan head down the frame exactly once per loop, carrying the graphic in the band behind it. <b>WARP</b> turns its luminance gradient into a displacement field and drags the finished frame through it. <b>GRAIN</b> never draws the image at all &mdash; it replaces the ordered-dither threshold, so the picture exists only as a bias in the halftone. <b>PALETTE</b> steals the graphic&rsquo;s own colours and rebuilds the artwork&rsquo;s ramp from them (the house NO-WHITE cap still applies, so stolen palettes come back darker than the source).</p>
-        <p class="labnote" id="gr-avail">THIS SEED &mdash; reading the surfaces&hellip;</p>
-        <p class="labnote">Three roles depend on what the seed actually grew, so the row above marks them live. <b>FLOOR</b> needs a mirror plane and roughly half of all seeds do not have one &mdash; an IDOL never does. <b>UNDER</b> needs empty space in frame; a body that fills the raster leaves it nothing to lie in. <b>GOBO</b> needs a body to be lit. A struck-through role is not broken: arm it anyway and it comes alive the moment you reroll into a seed that has the surface.</p>
-      </div>
-      <div class="field">
-        <label>BLEND <span class="v" id="gr-blendlab">NORMAL</span></label>
-        <div class="seg" id="gr-blend"></div>
-        <p class="labnote">Blending happens in RGB, before quantisation &mdash; so the result is dithered into the artwork&rsquo;s 64 colours by the same pass that dithers the artwork. Affects OVER.</p>
-      </div>
-      <div class="field">
-        <label>DEPTH <span class="v" id="gr-depthlab">WITHIN</span></label>
-        <div class="seg" id="gr-depth"></div>
-        <p class="labnote">WITHIN puts the graft into the chain BEFORE the void carves, the chroma caps and the DCT ghosts &mdash; the transmission damages your graphic exactly as it damages its own body. ABOVE puts it after all of them, clean. WITHIN is the interesting one.</p>
-      </div>
-      <div class="field">
-        <label>FIT <span class="v" id="gr-fitlab">COVER</span></label>
-        <div class="seg" id="gr-fit"></div>
-      </div>
-      <div class="field">
-        <label>SAMPLING <span class="v" id="gr-blocklab">SMOOTH</span></label>
-        <button id="gr-block" class="vio">SAMPLING: SMOOTH</button>
-        <p class="labnote">BLOCK is nearest-neighbour: at low raster it turns any graphic into hard pixel blocks that agree with the dither grid instead of fighting it.</p>
-      </div>
-      <div class="field">
-        <label>INVERT <span class="v" id="gr-invlab">OFF</span></label>
-        <button id="gr-invert" class="vio">INVERT: OFF</button>
-      </div>
-      <div id="gr-sliders"></div>
-      <h4>SIGIL GAINS &mdash; per-effect amplitude, 0&ndash;300% (100 = engine default; double-tap a name to reset)</h4>
-      <div id="wb-gains"></div>
+      <p class="labnote">KEEP and KILL live in the action bar, always in reach. Tag first if the loop is dying for a reason worth recording.</p>
     </section>
+
   </main>
+  </div>
 
-  <div class="actions">
-    <button id="resetall" title="deactivate every sigil + clear all TUNE overrides">⟲</button>
-    <button id="go">▶ RENDER</button>
-    <button id="oblivion" title="total oblivion">☠</button>
-    <button id="download" disabled>⤓ SAVE</button>
-    <button id="xsave" disabled title="X-safe version, guaranteed under the 15MB GIF cap">𝕏</button>
-  </div>
-  </div>
-  <aside id="colA"><div id="arclabel">THE ARCHIVE</div></aside>
+
 </div>
 
-
-
-<div id="galmodal">
-  <div class="xm-box" style="width:min(560px,96vw)">
-    <div class="xm-head">GALLERY <span id="gal-you"></span></div>
-    <div class="seg" id="galseg">
-      <button data-g="planted" aria-pressed="true">PLANTED</button>
-      <button data-g="collected" aria-pressed="false">COLLECTED</button>
-    </div>
-    <div id="galgrid" class="voidscroll"></div>
-    <div id="galbreed">
-      <div id="breedslots">SELECT TWO PLANTED LOOPS TO BREED ⚭</div>
-      <button id="breedgo" disabled>⚭ BREED</button>
-    </div>
-    <button id="galclose">CLOSE</button>
-  </div>
-</div>
-<div id="wbverdict">
-  <button id="wb-keep">&#10003; KEEP</button>
-  <button id="wb-kill">&#10007; KILL</button>
-  <button class="wbtag" data-tag="EMPTY">EMPTY</button>
-  <button class="wbtag" data-tag="ORNAMENT">ORNAMENT</button>
-  <button class="wbtag" data-tag="MUDDY">MUDDY</button>
-  <button class="wbtag" data-tag="FLAT">FLAT</button>
-  <button class="wbtag" data-tag="DULL">DULL</button>
-  <button class="wbmini" id="wb-digest">DIGEST</button>
-  <button class="wbmini" id="wb-export">EXPORT</button>
-  <span id="wb-count"></span>
-</div>
-<div id="wbdigest"><span class="x" id="wbdx">&#10005;</span><div id="wbdbody"></div></div>
+<div id="wbdigest"><div id="wbdbody"></div><span class="x" id="wbdx">&#10005;</span></div>
 <div id="revbar"></div>
-<div id="mintbar">
-  <div>
-    <div id="mb-title"></div>
-    <div id="mb-meta"></div>
-    <div id="mb-stat"></div>
+<div id="mintbar"><div><div id="mb-title"></div><div id="mb-meta"></div><div id="mb-stat"></div></div>
+  <button id="mb-collect">&#9939; COLLECT</button><button id="mb-gal">&#9638; GALLERY</button></div>
+
+<div id="galmodal"><div class="xm-box">
+  <div class="xm-head">GALLERY <span id="gal-you"></span></div>
+  <div class="seg" id="galseg">
+    <button data-g="planted" aria-pressed="true">PLANTED</button>
+    <button data-g="collected" aria-pressed="false">COLLECTED</button>
   </div>
-  <button id="mb-collect">⛓ COLLECT</button>
-</div>
-<div id="sellmodal">
-  <div class="xm-box">
-    <div class="xm-head">INSCRIBE INTO LAZARUS <span id="sellnet"></span><br><span id="sellcard"></span></div>
-    <div class="field"><label>EDITION</label><div class="seg" id="sellkind"></div></div>
-    <div class="duo">
-      <div class="field" style="flex:1" id="sell-f-ed"><label>EDITIONS</label><input type="number" id="selled" value="10" min="2"></div>
-      <div class="field" style="flex:1" id="sell-f-days"><label>OPEN DAYS</label><input type="number" id="selldays" value="3" min="1" max="30"></div>
-    </div>
-    <div class="field"><label id="sell-l-price">PRICE ETH PER COPY</label><input type="text" id="sellprice" value="0.01" inputmode="decimal"></div>
-    <div class="xm-note">ONE TRANSACTION: PAYS THE INSCRIPTION FEE, WRITES THE DNA ON-CHAIN FOREVER, MINTS COPY Nº1 TO YOU. COLLECTORS PAY YOU 100%.</div>
-    <div id="sellstat"></div>
-    <div class="xm-row">
-      <button id="sellgo">⛓ INSCRIBE</button>
-    </div>
-    <button id="sellclose">CLOSE</button>
+  <div id="galgrid" class="voidscroll"></div>
+  <div id="galbreed"><div id="breedslots">SELECT TWO PLANTED LOOPS TO BREED &#9773;</div>
+    <button id="breedgo" disabled>&#9773; BREED</button></div>
+  <button id="galclose">CLOSE</button>
+</div></div>
+
+<div id="sellmodal"><div class="xm-box">
+  <div class="xm-head">INSCRIBE INTO LAZARUS <span id="sellnet"></span><br><span id="sellcard"></span></div>
+  <div class="field"><label>EDITION</label><div class="seg" id="sellkind"></div></div>
+  <div class="duo">
+    <div class="field" id="sell-f-ed"><label>EDITIONS</label><input type="number" id="selled" value="10" min="2"></div>
+    <div class="field" id="sell-f-days"><label>OPEN DAYS</label><input type="number" id="selldays" value="3" min="1" max="30"></div>
   </div>
-</div>
-<div id="xmodal">
-  <div class="xm-box">
-    <div class="xm-head">𝕏-SAFE TRANSMISSION <span id="xm-size"></span></div>
-    <img id="xm-img" alt="x-safe loop">
-    <div id="xm-tweet"></div>
-    <div class="xm-row">
-      <button id="xm-reroll">⟳</button>
-      <button id="xm-save">⤓ SAVE GIF</button>
-      <button id="xm-compose">𝕏 COMPOSE</button>
-    </div>
-    <div class="xm-note">𝕏 CANNOT CARRY THE GIF FOR YOU:<br>1 · SAVE THE GIF &nbsp; 2 · OPEN THE COMPOSER &nbsp; 3 · ATTACH IT BY HAND &nbsp; 4 · POST</div>
-    <button id="xm-close">CLOSE</button>
+  <div class="field"><label id="sell-l-price">PRICE ETH PER COPY</label><input type="text" id="sellprice" value="0.01" inputmode="decimal"></div>
+  <div id="sellstat"></div>
+  <div class="xm-row"><button id="sellgo">&#9939; INSCRIBE</button></div>
+  <button id="sellclose">CLOSE</button>
+</div></div>
+
+<div id="xmodal"><div class="xm-box">
+  <div class="xm-head">&#120143;-SAFE TRANSMISSION <span id="xm-size"></span></div>
+  <img id="xm-img" alt="x-safe loop">
+  <div id="xm-tweet"></div>
+  <div class="xm-row">
+    <button id="xm-reroll">&#10227;</button>
+    <button id="xm-save">&#10515; SAVE GIF</button>
+    <button id="xm-compose">&#120143; COMPOSE</button>
   </div>
-</div>
+  <button id="xm-close">CLOSE</button>
+</div></div>
+
+<div id="saveview"><div class="xm-box">
+  <div class="xm-head">SAVE TO PHOTOS</div>
+  <img id="sv-img" alt="finished loop">
+  <div class="xm-note"><b>Touch and hold the image</b> until the menu appears, then choose <b>Save to Photos</b>.</div>
+  <button class="sv-close" id="sv-close">&#10005; CLOSE</button>
+</div></div>
+
 <div id="tipbar"></div>
-<div id="saveview">
-  <div class="sv-head">SAVE TO PHOTOS</div>
-  <img id="sv-img" alt="finished loop — long-press to save">
-  <div class="sv-tip"><b>Touch and hold the image</b> until the menu appears,<br>then choose <b>Save to Photos</b> / <b>Add to Photos</b>.</div>
-  <div class="sv-tip dim">No menu? Open this page in <b>Safari</b>, generate again, long-press there.</div>
-  <button class="sv-close" id="sv-close">✕ CLOSE</button>
-</div>
 
+<div id="pubstub" hidden aria-hidden="true"><input type="range" id="instr-contract" hidden><input type="range" id="instrbtn" hidden><input type="range" id="instrmodal" hidden><input type="range" id="ix" hidden><input type="range" id="pub-chroma" hidden><input type="range" id="pub-copydna" hidden><input type="range" id="pub-corr" hidden><input type="range" id="pub-corrtag" hidden><input type="range" id="pub-corrval" hidden><input type="range" id="pub-dice" hidden><input type="range" id="pub-dna" hidden><input type="range" id="pub-download" hidden><input type="range" id="pub-garden" hidden><input type="range" id="pub-mint" hidden><input type="range" id="pub-mutate" hidden><input type="range" id="pub-oblivion" hidden><input type="range" id="pub-palette" hidden><input type="range" id="pub-resurrect" hidden><input type="range" id="pub-seed" hidden><input type="range" id="pub-splice" hidden><input type="range" id="pub-void" hidden><input type="range" id="pub-voidtag" hidden><input type="range" id="pub-voidval" hidden><input type="range" id="pub-xpost" hidden><input type="range" id="pubosd" hidden><input type="range" id="pubprog" hidden></div>
 
-</div>
 <script>window.PANDORA_PUBLIC=true;</script>
 <script>
 "use strict";
@@ -8171,7 +7913,7 @@ applyCard=function(c){ _wbAC2(c); };
 document.addEventListener('input',e=>{
   const t=e.target; if(!t||!t.matches||!t.matches('input'))return;
   if(t.id==='dna')return;
-  if(t.closest('#p-signal,#p-tune,#p-wb')||t.id==='seed')wbPush();
+  if(t.closest('#p-signal,#p-tune,#p-raster,#p-body,#p-graft,#p-gains')||t.id==='seed')wbPush();
 },true);
 document.addEventListener('click',e=>{
   const t=e.target&&e.target.closest&&e.target.closest(
@@ -9036,5 +8778,203 @@ async function uploadPreview(seed){
   }catch(e){}
 }
 </script>
+<script>
+/* ==========================================================================
+   SHELL BEHAVIOUR — layout only. The engine is not touched.
+   Two mechanisms, both of which exist because of arithmetic rather than taste:
+
+   THE STEPPER. Six segmented controls carry more options than any phone can
+   show at the 44px floor (MASK 32, FORM 32, PALETTE 28, STYLE 20, SKELETON 17,
+   PRIMITIVE 17). Thirty-two targets want eight rows of four — 416px of column,
+   more than an iPhone SE has left once the artwork takes its share. Those
+   collapse to four targets and keep a grid key for random access.
+
+   PAGINATION. Whatever is left still may not fit. Rather than guess per
+   breakpoint, the panel MEASURES itself at runtime and splits its children
+   into pages that do fit. On a desktop everything lands on page one and the
+   page bar never appears; on an SE it appears exactly where it is needed. No
+   magic numbers, and it cannot be wrong at a viewport nobody tested.
+   ====================================================================== */
+(function(){
+  'use strict';
+  /* THE THRESHOLD IS 8, NOT 13. At 13 only the six giants collapsed, and the
+     SIGNAL group still needed EIGHT pages on an iPhone SE — one control per
+     page, which is worse than the scrolling this layout exists to abolish. The
+     culprits were the middling segs: SOURCE at ten buttons and the raster rungs
+     at eleven each wrap to two rows on a 375px panel and eat a whole page.
+     Anything from eight options up now steps.
+     EXCEPT the roles: gr-roles is the one MULTI-select seg in the instrument —
+     any number of roles at once — and a stepper, which moves a single cursor,
+     would silently make it single-select and quietly break the graft. */
+  var STEP_MIN = 8;
+  var NEVER_STEP = {'gr-roles':1};
+  var panels   = document.getElementById('panels');
+  var pagebar  = document.getElementById('pagebar');
+  var pagelab  = document.getElementById('pagelab');
+  var pgprev   = document.getElementById('pageprev');
+  var pgnext   = document.getElementById('pagenext');
+  var pages = [], pageIdx = 0;
+  var grip = document.getElementById('sheetgrip');
+  var userPinned = false;   /* the grip was pressed by a hand, not by arithmetic */
+
+  /* ---------- the stepper ------------------------------------------------ */
+  function segButtons(seg){
+    return [].slice.call(seg.children).filter(function(c){ return c.tagName === 'BUTTON'; });
+  }
+  function currentIndex(seg){
+    var bs = segButtons(seg);
+    for (var i = 0; i < bs.length; i++)
+      if (bs[i].getAttribute('aria-pressed') === 'true') return i;
+    return 0;
+  }
+  function buildStepper(seg){
+    if (seg.__stepped) return;
+    if (NEVER_STEP[seg.id]) return;
+    var bs = segButtons(seg);
+    if (bs.length < STEP_MIN) return;
+    seg.__stepped = true;
+    seg.classList.add('stepped');
+
+    var wrap = document.createElement('div');
+    wrap.className = 'stepper';
+    var prev = document.createElement('button'); prev.type='button'; prev.innerHTML='&#9664;';
+    prev.setAttribute('aria-label','previous');
+    var name = document.createElement('button'); name.type='button'; name.className='stp-name';
+    var next = document.createElement('button'); next.type='button'; next.innerHTML='&#9654;';
+    next.setAttribute('aria-label','next');
+    var all  = document.createElement('button'); all.type='button'; all.className='stp-all';
+    all.innerHTML='&#9638;'; all.setAttribute('aria-pressed','false');
+    all.setAttribute('aria-label','show every option');
+    wrap.appendChild(prev); wrap.appendChild(name); wrap.appendChild(next); wrap.appendChild(all);
+    seg.parentNode.insertBefore(wrap, seg);
+
+    function sync(){
+      /* read the buttons LIVE every time — several segs are rebuilt by the
+         engine (the raster rungs are rebuilt whenever the raster changes), so
+         a cached list would go stale and step to the wrong value. */
+      var b = segButtons(seg);
+      name.textContent = b.length ? (b[currentIndex(seg)].textContent || '—') : '—';
+    }
+    function step(d){
+      var b = segButtons(seg); if (!b.length) return;
+      var i = (currentIndex(seg) + d + b.length) % b.length;
+      b[i].click();                 /* the engine's own onclick fires normally */
+      sync();
+    }
+    prev.addEventListener('click', function(){ step(-1); });
+    next.addEventListener('click', function(){ step(1); });
+    name.addEventListener('click', function(){ step(1); });
+    all.addEventListener('click', function(){
+      var on = !seg.classList.contains('expanded');
+      seg.classList.toggle('expanded', on);
+      all.setAttribute('aria-pressed', String(on));
+      relayout();
+    });
+    seg.addEventListener('click', function(){ setTimeout(sync, 0); });
+    /* the engine flips aria-pressed directly, so watch the attribute rather
+       than trying to intercept every path that could change the selection */
+    try {
+      new MutationObserver(sync).observe(seg,
+        {attributes:true, subtree:true, attributeFilter:['aria-pressed'], childList:true});
+    } catch(e){}
+    sync();
+  }
+
+  /* ---------- pagination ------------------------------------------------- */
+  function activePanel(){ return panels.querySelector('.panel.on'); }
+  function pageTargetOf(p){
+    var id = p.getAttribute('data-page-target');
+    return id ? (document.getElementById(id) || p) : p;
+  }
+  function computePages(tgt, avail){
+    var kids = [].slice.call(tgt.children);
+    kids.forEach(function(k){ k.classList.add('pghide'); });
+    var out = [], cur = [];
+    for (var i = 0; i < kids.length; i++){
+      var k = kids[i];
+      k.classList.remove('pghide');
+      cur.push(k);
+      if (cur.length > 1 && tgt.scrollHeight > avail + 1){
+        cur.pop();
+        k.classList.add('pghide');
+        out.push(cur);
+        cur.forEach(function(x){ x.classList.add('pghide'); });
+        cur = [k];
+        k.classList.remove('pghide');
+      }
+    }
+    if (cur.length) out.push(cur);
+    return out;
+  }
+  function showPage(n){
+    if (!pages.length) return;
+    pageIdx = Math.max(0, Math.min(pages.length - 1, n));
+    pages.forEach(function(pg, i){
+      pg.forEach(function(k){ k.classList.toggle('pghide', i !== pageIdx); });
+    });
+    pagebar.classList.toggle('on', pages.length > 1);   /* CSS forces it on for phones, where the grip lives here */
+    pagelab.textContent = pages.length > 1 ? (pageIdx + 1) + ' / ' + pages.length : '';
+    pgprev.disabled = pageIdx === 0;
+    pgnext.disabled = pageIdx === pages.length - 1;
+  }
+  var relayoutPending = 0;
+  function relayout(){
+    var p = activePanel(); if (!p) return;
+    var tgt = pageTargetOf(p);
+    /* EVERY RELAYOUT STARTS FROM REST. The first version of this raised the
+       sheet for GAINS and never lowered it, so one visit to a heavy group left
+       the artwork at 4.3% of an iPhone SE for the rest of the session — the
+       gate passed every rule and the picture was a postage stamp. The raise is
+       a property of the GROUP you are in, not a mode you fall into. */
+    if (!userPinned && document.body.classList.contains('sheetup')){
+      document.body.classList.remove('sheetup');
+      grip.setAttribute('aria-pressed','false');
+      grip.innerHTML = '&#9650;';
+    }
+    var avail = p.clientHeight;
+    if (avail < 40){ return; }              /* not laid out yet */
+    pages = computePages(tgt, avail);
+    /* NO AUTOMATIC RAISE. The first version raised the sheet whenever a group
+       needed more than four pages, and on an iPhone SE every group does — so
+       the sheet was permanently up and the artwork sat at 4.3% of the screen.
+       The gate passed every tap-target and scroll rule while the picture was a
+       postage stamp, which is how that got out the door for one round.
+       The trade between picture size and controls-per-page is the curator's,
+       exactly like the raster. The grip offers it; nothing takes it. */
+    showPage(0);
+  }
+  function relayoutSoon(){
+    clearTimeout(relayoutPending);
+    relayoutPending = setTimeout(relayout, 60);
+  }
+  grip.addEventListener('click', function(){
+    var up = document.body.classList.toggle('sheetup');
+    userPinned = up;        /* a hand decides; arithmetic only ever suggests */
+    grip.setAttribute('aria-pressed', String(up));
+    grip.innerHTML = up ? '&#9660;' : '&#9650;';
+    relayoutSoon();
+  });
+  pgprev.addEventListener('click', function(){ showPage(pageIdx - 1); });
+  pgnext.addEventListener('click', function(){ showPage(pageIdx + 1); });
+
+  /* the engine's own .tab handler already switches panels; this only has to
+     re-measure afterwards, which is why the rail needed no new protocol */
+  document.getElementById('grouprail').addEventListener('click', function(){ setTimeout(relayout, 0); });
+  document.getElementById('wb-artmax').addEventListener('click', relayoutSoon);
+  window.addEventListener('resize', relayoutSoon);
+  window.addEventListener('orientationchange', relayoutSoon);
+
+  function boot(){
+    [].slice.call(document.querySelectorAll('#panels .seg')).forEach(buildStepper);
+    relayout();
+  }
+  /* the engine builds its segs and its 37 gain rows at boot; re-run a few
+     times so the shell measures the instrument as it finally is, not as it
+     was one tick after parse */
+  boot();
+  [120, 400, 1200, 2500].forEach(function(t){ setTimeout(boot, t); });
+})();
+</script>
+
 </body>
 </html>
