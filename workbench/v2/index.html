@@ -715,6 +715,10 @@ body.artmax #ui{
     </section>
 
     <section id="p-judge" class="panel">
+      <div class="field"><label>HARVEST &mdash; judge fast, feed the machine <span class="v" id="wbhv-stat">OFF</span></label>
+        <button id="wbhv" class="vio">HARVEST: OFF</button></div>
+      <div class="field"><label>TASTE &mdash; how hard your verdicts steer the dice <span class="v" id="wbt-stat">&mdash;</span></label>
+        <div class="seg" id="wbt-str"></div></div>
       <div class="field"><label>WHY IT DIES <span class="v" id="wb-count"></span></label>
         <div class="seg" id="wbtags">
           <button class="wbtag" data-tag="EMPTY">EMPTY</button>
@@ -727,7 +731,7 @@ body.artmax #ui{
         <button class="wbmini" id="wb-digest">DIGEST</button>
         <button class="wbmini" id="wb-export">EXPORT</button>
       </div>
-      <p class="labnote">KEEP and KILL live in the action bar, always in reach. Tag first if the loop is dying for a reason worth recording.</p>
+      <p class="labnote" id="wbt-read">&mdash;</p>
     </section>
 
   </main>
@@ -8695,18 +8699,121 @@ async function wbDigest(){
     +'ACTIVE SUPPRESSION (culled from 75% of fresh rolls)\n'
     +(Object.keys(suppress).map(k2=>'  '+k2).join('\n')||'  none yet — needs ≥8 samples and <25% keep-rate');
   $('wbdigest').style.display='block';
+  wbtLearn();          /* the panel and the dice now read the same numbers */
 }
 $('wb-digest').addEventListener('click',wbDigest);
 $('wbdx').addEventListener('click',()=>{$('wbdigest').style.display='none';});
 
-/* taste rides the dice: after a fresh roll, reliably-killed sigils get culled */
+/* ═══ THE TASTE MODEL ═════════════════════════════════════════════════════
+   Every verdict is a labelled example of a whole genome. This turns the pile
+   of them into a per-value keep-rate, and lets that rate steer fresh rolls.
+
+   WHY SMOOTHING RATHER THAN A THRESHOLD. The previous rule culled a sigil once
+   it had eight samples AND a keep-rate under 25%. Against the real table — 28
+   verdicts at an 82% keep-rate — nothing had ever crossed that line, so the
+   loop had never once closed. A Beta-style shrink toward the global rate gives
+   every value a usable estimate from the first verdict, and confidence grows
+   with evidence: the machine leans a little on eight verdicts and hard on eight
+   hundred, with no cliff to fall off.
+
+   WHY EVERY DIMENSION, NOT JUST SIGILS. Mode, palette, corruption band, void
+   band, locality, skeleton and camera were all being measured and displayed by
+   DIGEST and then discarded. They score now.
+
+   WHERE IT LIVES. Derived from the shared supabase table on every boot rather
+   than cached in localStorage, so taste learned on the desktop is the same
+   taste the phone rolls with. The verdicts are the store; no new table.
+   ══════════════════════════════════════════════════════════════════════ */
+const WBT=window.WBT={on:true, strength:1, K:6, model:null, raw:null,
+                      p0:0.5, n:0, ts:0, learning:false};
+
+const wbtBand=(v,w)=>Math.min(9,((v||0)/w)|0)*w;
+function wbtDims(st){
+  if(!st)return [];
+  const d=[];
+  if(st.mode)   d.push('mode:'+st.mode);
+  if(st.scheme) d.push('palette:'+st.scheme);
+  if(st.corr!=null)     d.push('corr:'+wbtBand(st.corr,10)+'s');
+  if(st.voidamt!=null)  d.push('void:'+wbtBand(st.voidamt,10)+'s');
+  if(st.locality!=null) d.push('loc:'+wbtBand(st.locality,20)+'s');
+  if(st.fam!=null) d.push('fam:'+st.fam);
+  if(st.cam!=null) d.push('cam:'+st.cam);
+  const fx=st.fx||[]; for(let i=0;i<fx.length;i++) d.push('fx:'+fx[i]);
+  return d;
+}
+
+async function wbtLearn(){
+  if(WBT.learning)return WBT;
+  WBT.learning=true;
+  let rows=[];
+  try{
+    const r=await fetch(SB.url+'/rest/v1/'+WBV.table+'?select=verdict,snapshot&order=id.desc&limit=2000',
+      {headers:{apikey:SB.key,Authorization:'Bearer '+SB.key}});
+    if(r.ok){ const j=await r.json(); if(Array.isArray(j))rows=j; }
+  }catch(e){}
+  try{ rows=rows.concat(wbLocal()||[]); }catch(e){}
+  const m={}; let K=0,N=0;
+  for(const row of rows){
+    const keep=row.verdict==='KEEP'?1:0; K+=keep; N++;
+    const dims=wbtDims(row.snapshot);
+    for(const d of dims){ const q=m[d]||(m[d]={k:0,n:0}); q.n++; q.k+=keep; }
+  }
+  WBT.p0=N?K/N:0.5; WBT.n=N; WBT.raw=m;
+  const A=6;                                  /* prior strength, in verdicts */
+  WBT.model={};
+  for(const kk in m) WBT.model[kk]=(m[kk].k + A*WBT.p0)/(m[kk].n + A);
+  WBT.ts=Date.now(); WBT.learning=false;
+  wbtPaint();
+  return WBT;
+}
+let _wbtSoon=0;
+function wbtLearnSoon(){ clearTimeout(_wbtSoon); _wbtSoon=setTimeout(wbtLearn,1500); }
+
+/* a normalised log-odds: 0 means "as ordinary as everything else you have
+   judged". Divided by sqrt(count) so a genome with many lit sigils is not
+   automatically extreme just for having more terms. */
+function wbtScore(st){
+  if(!WBT.model||!WBT.n)return 0;
+  const p0=Math.max(1e-3,WBT.p0);
+  let s=0,c=0;
+  for(const d of wbtDims(st)){
+    const r=WBT.model[d]; if(r==null)continue;
+    s+=Math.log(Math.max(1e-3,r)/p0); c++;
+  }
+  return c? s/Math.sqrt(c) : 0;
+}
+function wbtAccept(sc){
+  /* a smooth gate, not a bar: an ordinary roll still gets through about half
+     the time, so variety survives the steering */
+  return Math.random() < 1/(1+Math.exp(-sc*2.2*WBT.strength));
+}
+
+/* THE DICE, STEERED. Rejection sampling rather than surgery inside the roll:
+   roll, score, and if it is poor, roll again — up to K times, with the last
+   one standing whatever it scores. Nothing inside machineRoll is touched, so
+   the canon-breeding and the frontier exploration keep working exactly as
+   they did, and with no verdicts the whole thing collapses to a single roll. */
 const _wbMR=machineRoll;
 machineRoll=function(opts){
-  const tag=_wbMR(opts);
-  try{
-    const taste=JSON.parse(localStorage.getItem('wb_taste')||'{}');
-    if(taste.suppress)for(const k2 in taste.suppress){
-      if(state.fx[k2]&&Math.random()<taste.suppress[k2]){
+  const steer=WBT.on && WBT.strength>0 && WBT.n>=6 && WBT.model;
+  const K=steer?WBT.K:1;
+  let tag=null;
+  for(let i=0;i<K;i++){
+    tag=_wbMR(opts);
+    if(i===K-1)break;
+    let sc=0; try{ sc=wbtScore(wbSnapshot().st); }catch(e){ break; }
+    if(wbtAccept(sc))break;
+  }
+  /* the direct lever kept alongside the scoring: a sigil you reliably kill is
+     culled outright, with a probability proportional to the deficit AND to how
+     much evidence stands behind it — so two unlucky verdicts barely register */
+  if(steer)try{
+    for(const k2 in state.fx){
+      if(!state.fx[k2])continue;
+      const r=WBT.model['fx:'+k2], q=WBT.raw['fx:'+k2];
+      if(r==null||!q)continue;
+      const conf=q.n/(q.n+8), deficit=Math.max(0,(WBT.p0-r)/Math.max(1e-3,WBT.p0));
+      if(Math.random() < Math.min(0.85, deficit*conf*WBT.strength)){
         state.fx[k2]=false;
         const tg=document.querySelector('.tg[data-fx="'+k2+'"]'); if(tg)tg.dataset.on=0;
       }
@@ -8715,6 +8822,69 @@ machineRoll=function(opts){
   }catch(e){}
   return tag;
 };
+
+/* ═══ HARVEST ═════════════════════════════════════════════════════════════
+   The corpus is 23 keeps to 5 kills, and a taste model learns almost entirely
+   from the noes. That ratio is not a preference, it is a cost: KEEP is what
+   you press when you stop to admire, KILL is what you skip because rolling on
+   is easier. HARVEST removes the cost — judge, and the next loop arrives on
+   its own. It rolls through the live preview, so nothing renders and nothing
+   waits. ══════════════════════════════════════════════════════════════════ */
+const WBHV=window.WBHV={on:false, judged:0, keeps:0, kills:0, t:0};
+function wbhvPaint(){
+  const b=$('wbhv'), s2=$('wbhv-stat');
+  if(b)b.textContent='HARVEST: '+(WBHV.on?'ON (next loop arrives after each verdict)':'OFF');
+  if(s2)s2.textContent=WBHV.on?('ON · '+WBHV.judged+' judged'):'OFF';
+}
+function wbhvAfter(v){
+  WBHV.judged++; if(v==='KEEP')WBHV.keeps++; else WBHV.kills++;
+  wbhvPaint(); wbtLearnSoon();
+  if(WBHV.on){ clearTimeout(WBHV.t); WBHV.t=setTimeout(function(){
+    try{ if(!busy)$('dice').click(); }catch(e){}
+  },650); }
+}
+$('wb-keep').addEventListener('click',()=>wbhvAfter('KEEP'));
+$('wb-kill').addEventListener('click',()=>wbhvAfter('KILL'));
+$('wbhv').addEventListener('click',()=>{ WBHV.on=!WBHV.on; wbhvPaint(); });
+
+function wbtPaint(){
+  const st=$('wbt-stat'), rd=$('wbt-read');
+  const names=['OFF','GENTLE','STRONG'];
+  if(st)st.textContent=WBT.n?(names[WBT.strength===0?0:(WBT.strength>1?2:1)]+' · '+WBT.n+' verdicts'):'no verdicts yet';
+  if(rd){
+    if(!WBT.n){ rd.textContent='No verdicts yet. KEEP and KILL teach the dice; HARVEST makes it fast.'; }
+    else{
+      const ent=Object.entries(WBT.raw||{}).filter(([k2,q])=>q.n>=3)
+        .map(([k2,q])=>[k2, WBT.model[k2], q.n]).sort((a,b)=>b[1]-a[1]);
+      const top=ent.slice(0,3).map(e=>e[0]+' '+((100*e[1])|0)+'%').join(' · ');
+      const bot=ent.slice(-3).reverse().map(e=>e[0]+' '+((100*e[1])|0)+'%').join(' · ');
+      rd.textContent=WBT.n+' verdicts · '+((100*WBT.p0)|0)+'% kept'
+        +(top?('\nLEANS TOWARD  '+top):'')
+        +(bot?('\nLEANS AWAY    '+bot):'');
+    }
+  }
+}
+(function(){
+  const host=$('wbt-str'); if(!host)return;
+  [['OFF',0],['GENTLE',1],['STRONG',2]].forEach(([lab,v])=>{
+    const b=document.createElement('button');
+    b.textContent=lab; b.dataset.v=String(v);
+    b.setAttribute('aria-pressed', String(v===WBT.strength));
+    b.addEventListener('click',()=>{
+      WBT.strength=v;
+      [...host.children].forEach(c=>c.setAttribute('aria-pressed', String(+c.dataset.v===v)));
+      wbtPaint();
+    });
+    host.appendChild(b);
+  });
+})();
+/* the block this sits in is not the global scope, so the helpers are exported
+   explicitly — otherwise they are unreachable from the console and, more to the
+   point, from the gate that has to prove the loop actually turns */
+window.wbtLearn=wbtLearn; window.wbtScore=wbtScore; window.wbtDims=wbtDims;
+window.wbhvAfter=wbhvAfter; window.wbtPaint=wbtPaint;
+/* learn on boot — the loop should never again be waiting for a button press */
+setTimeout(wbtLearn, 2200);
 
 window.__paint=paint;
 
