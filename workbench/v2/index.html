@@ -7915,10 +7915,36 @@ document.addEventListener('input',e=>{
   if(t.id==='dna')return;
   if(t.closest('#p-signal,#p-tune,#p-raster,#p-body,#p-graft,#p-gains')||t.id==='seed')wbPush();
 },true);
+/* THE PREVIEW WAS ALWAYS ONE CHANGE BEHIND.
+   This listener is registered in the CAPTURE phase — the `true` below. Capture
+   runs from the document DOWN to the target, so wbPush() fired BEFORE the
+   segmented button's own onclick had set state.scheme / state.mode / OV.*.
+   Every push therefore posted the genome as it was a moment ago: pick TOXIC and
+   the preview kept painting DITHERVOID; pick a third palette and it finally
+   showed TOXIC. Switching back and forth between two settings, you are always
+   looking at the other one — and RENDER, which reads state directly, then
+   produced something the curator had never seen. That is the whole of "I found
+   a loop I liked and the render was different".
+   Deferring by a turn of the event loop makes the push read state AFTER every
+   synchronous handler has run, whatever phase they are in and whether or not
+   any of them stops propagation.
+   The selector also gained the controls that change the genome and were never
+   listed: the camera gesture, and the two rituals that rewrite the whole sigil
+   set. wb-fam/prim/mod are matched by id, so splitting p-wb into four panels
+   left them covered. */
 document.addEventListener('click',e=>{
   const t=e.target&&e.target.closest&&e.target.closest(
-    '#p-signal .seg button,#p-tune .seg button,.tg,#wb-fam button,#wb-prim button,#wb-mod button,#wb-ladder');
-  if(t)wbPush();
+    '#p-signal .seg button,#p-tune .seg button,.tg,'
+    +'#wb-fam button,#wb-prim button,#wb-mod button,#wb-cam button,'
+    +'#wb-ladder,#resetall,#mutate');
+  /* TWO TICKS, NOT ONE. CHROMA writes its own state inside a setTimeout(...,0)
+     of its own (line ~5270), so a single deferral only queued this push AHEAD
+     of that write and it still read the stale value — off by one timer instead
+     of one phase. A timer scheduled from inside a timer callback necessarily
+     runs after every timer queued during the original turn, so this is exact
+     rather than a race won by luck, and it covers any other control that
+     defers its write the same way. */
+  if(t)setTimeout(()=>setTimeout(wbPush,0),0);
 },true);
 setInterval(()=>{
   const fresh=performance.now()-WBPV.fmsg<1500;
