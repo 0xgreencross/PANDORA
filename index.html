@@ -314,6 +314,37 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   #rail{flex-basis:420px;}
   body{font-size:12px;}
 }
+
+/* --- THE GRAFT: an uploaded graphic entered into the transmission --------- */
+#grwrap{border:1px solid var(--line);border-radius:4px;background:var(--panel);}
+#grwrap>summary{list-style:none;cursor:pointer;padding:9px 10px;font-size:9px;
+  letter-spacing:.16em;color:var(--mut);display:flex;justify-content:space-between;align-items:baseline;}
+#grwrap>summary::-webkit-details-marker{display:none;}
+#grwrap>summary .v{color:var(--cyan);font-family:var(--fT);}
+#grwrap[open]>summary{border-bottom:1px solid var(--line);color:var(--txt);}
+#grbody{display:grid;gap:10px;padding:10px;}
+#gr-drop{border:1px dashed var(--line2);border-radius:4px;padding:14px 8px;text-align:center;
+  font-size:8px;letter-spacing:.12em;color:var(--mut);cursor:pointer;user-select:none;min-height:44px;}
+#gr-drop.over{border-color:var(--cyan);color:var(--cyan);}
+#gr-thumbwrap{display:none;align-items:center;gap:8px;}
+#gr-thumb{width:52px;height:52px;image-rendering:pixelated;border:1px solid var(--line);
+  border-radius:3px;background:var(--well);}
+#grbody .labnote{margin:0;font-size:8px;line-height:1.4;color:var(--faint);}
+#grbody .field>label{display:flex;justify-content:space-between;align-items:baseline;
+  font-size:9px;letter-spacing:.16em;color:var(--mut);margin-bottom:6px;}
+#grbody .field>label .v{color:var(--cyan);font-family:var(--fT);}
+#grbody .trio{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:6px;}
+#grbody .duo{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+#grbody .seg{display:grid;grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:6px;}
+#grbody .seg button,#grbody button.vio{border:1px solid var(--line);background:var(--panel);
+  color:var(--mut);font-size:8px;letter-spacing:.08em;padding:8px 4px;min-height:44px;
+  border-radius:3px;cursor:pointer;}
+#grbody .seg button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan);}
+#gr-sliders{display:grid;gap:8px;}
+#gr-sliders .wbrow{display:grid;grid-template-columns:66px minmax(0,1fr) 42px;gap:8px;align-items:center;}
+#gr-sliders .wbrow label{font-size:8px;letter-spacing:.1em;color:var(--faint);}
+#gr-sliders .wbrow .v{font-size:8px;color:#7c8;text-align:right;}
+@media (max-width:760px){ #gr-sliders .wbrow{grid-template-columns:56px minmax(0,1fr) 38px;} }
 </style>
 </head>
 <body>
@@ -367,6 +398,38 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <label>PALETTE</label>
         <div id="pub-palette"></div>
       </div>
+      <details id="grwrap">
+        <summary>GRAFT <span class="v" id="gr-onlab">OFF</span></summary>
+        <div id="grbody">
+          <div class="field"><label>SOURCE <span class="v" id="gr-name">NONE</span></label>
+            <div id="gr-drop">DROP AN IMAGE HERE &middot; OR TAP TO CHOOSE</div>
+            <input type="file" id="gr-file" accept="image/*" style="display:none">
+            <div id="gr-thumbwrap">
+              <canvas id="gr-thumb" width="72" height="72"></canvas>
+              <p class="labnote" id="gr-dims" style="flex:1">&mdash;</p>
+              <button id="gr-clear" class="vio">CLEAR</button>
+            </div></div>
+          <div class="trio">
+            <button id="gr-on" class="vio">GRAFT</button>
+            <button id="gr-block" class="vio">SAMPLING</button>
+            <button id="gr-invert" class="vio">INVERT</button>
+          </div>
+          <p class="labnote"><span id="gr-blocklab">SMOOTH</span> &middot; INVERT <span id="gr-invlab">OFF</span></p>
+          <div class="field"><label>ROLES &mdash; any number at once</label>
+            <div class="seg" id="gr-roles"></div>
+            <p class="labnote" id="gr-avail">THIS SEED &mdash; reading the surfaces&hellip;</p></div>
+          <div class="field"><label>BLEND <span class="v" id="gr-blendlab">NORMAL</span></label>
+            <div class="seg" id="gr-blend"></div></div>
+          <div class="duo">
+            <div class="field"><label>DEPTH <span class="v" id="gr-depthlab">WITHIN</span></label>
+              <div class="seg" id="gr-depth"></div></div>
+            <div class="field"><label>FIT <span class="v" id="gr-fitlab">COVER</span></label>
+              <div class="seg" id="gr-fit"></div></div>
+          </div>
+          <div id="gr-sliders"></div>
+        </div>
+      </details>
+
       <div id="pub-actions">
         <button id="pub-download" disabled>⤓ DOWNLOAD</button>
         <button id="pub-xpost" disabled>𝕏 POST</button>
@@ -1278,7 +1341,7 @@ function famMat(scene){
   };
   return scene._fmat=Object.assign(base, D[m]||{});
 }
-const SW=448, FLY=1.06;
+const SW=(typeof PVSW!=='undefined'?PVSW:448), FLY=1.06;   /* preview may shrink the shading field; production is always 448 */
 function sceneView(scene, theta){
   /* THE STAGE: body + mirror floor + void, marched per frame at VG,
      reflections and contact shadow included. */
@@ -1287,13 +1350,13 @@ function sceneView(scene, theta){
   mf.tearAmp=((scene._corr!=null?scene._corr:60)/100)*0.045;
   if(mf._svt===theta)return mf._sv;
   mf._svt=theta;
-  const VG=88, S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
+  const VG=(typeof PVVG!=='undefined'?PVVG:88), S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
   const M=VG*VG;
   const sv=mf._sv||(mf._sv={kind:new Uint8Array(M),nx:new Float32Array(M),ny:new Float32Array(M),
     nz:new Float32Array(M),px:new Float32Array(M),py:new Float32Array(M),pz:new Float32Array(M),
     dp:new Float32Array(M),ao:new Float32Array(M),rf:new Float32Array(M),VG});
-  const hasFloor=(mulberry32((scene.seed^0xF700)>>>0)())<0.65;
-  const laz=theta*0+mf.lightBase+0.6;
+  const hasFloor=mf.hasFloor;   /* decided in massField now — the camera has to respect it */
+  const laz=mf.cam.lightSpin*theta+mf.lightBase+0.6;   /* lightSpin!==0 only for the LOCKED camera, where the light is what moves */
   const lx=Math.cos(0.6)*Math.cos(laz), ly=-Math.sin(0.6), lz=Math.cos(0.6)*Math.sin(laz);
   const t0=C.dist-0.95*Math.max(1,S), t1=C.dist+1.6*Math.max(1,S);
   for(let gy=0;gy<VG;gy++){
@@ -1358,10 +1421,351 @@ function sceneView(scene, theta){
       }
     }
   }
-  sv.lx=lx; sv.ly=ly; sv.lz=lz; sv.hasFloor=hasFloor;
+  sv.lx=lx; sv.ly=ly; sv.lz=lz; sv.hasFloor=hasFloor; sv.az=C.az;
   return sv;
 }
 const BAYER4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+/* ============================================================================
+   THE GRAFT — an uploaded graphic ENTERED INTO the transmission.
+
+   The whole trick is where it happens. renderScene emits RGB, not palette
+   indices; quantize() comes later and dithers the finished frame into the
+   artwork's own 64-colour palette. So anything grafted in BEFORE that pass is
+   dithered by the same pass that dithers the art — it is not a layer sitting
+   on top of the picture, it is inside the picture's own colour physics, and
+   the void carves it, the corruption chews it, the chroma cap crushes it.
+
+   Nothing in this organ touches the distance field, so no role here can
+   punch a hole in the march. Geometry roles are a separate, later organ.
+   ========================================================================== */
+const GBLENDN=['NORMAL','MULTIPLY','SCREEN','OVERLAY','DIFFERENCE','ADD',
+               'SUBTRACT','DARKEN','LIGHTEN','XOR','HARDLIGHT','SOFTLIGHT'];
+function gblend(m,a,b){
+  switch(m){
+    case 1:  return (a*b)/255;
+    case 2:  return 255-(255-a)*(255-b)/255;
+    case 3:  return a<128 ? (2*a*b)/255 : 255-2*(255-a)*(255-b)/255;
+    case 4:  return a>b?a-b:b-a;
+    case 5:  { const v=a+b; return v>255?255:v; }
+    case 6:  { const v=a-b; return v<0?0:v; }
+    case 7:  return a<b?a:b;
+    case 8:  return a>b?a:b;
+    case 9:  return ((a|0)^(b|0));
+    case 10: return b<128 ? (2*a*b)/255 : 255-2*(255-a)*(255-b)/255;
+    case 11: { const A=a/255, B=b/255;
+               const D=A<=0.25?((16*A-12)*A+4)*A:Math.sqrt(A);
+               const O=B<=0.5?A-(1-2*B)*A*(1-A):A+(2*B-1)*(D-A);
+               return O*255; }
+    default: return b;
+  }
+}
+function buildGraft(im,c){
+  const rad=(c.rot||0)*Math.PI/180, ca=Math.cos(rad), sa=Math.sin(rad);
+  const sc=Math.max(0.05,(c.scale==null?100:c.scale)/100);
+  const ar=(im.w/im.h)||1;
+  let dx=1, dy=1;
+  if(c.fit===0){ dx=ar>=1?ar:1;   dy=ar>=1?1:1/ar; }      /* COVER   */
+  else if(c.fit===1){ dx=ar>=1?1:ar; dy=ar>=1?1/ar:1; }   /* CONTAIN */
+  /* 2 STRETCH and 3 TILE keep 1,1 */
+  const roles=c.roles||{};
+  return {im:im, c:c, ca:ca, sa:sa, sc:sc, dx:dx, dy:dy, tile:(c.fit===3),
+    ox:(c.offx||0)/100, oy:(c.offy||0)/100,
+    op:(c.opacity==null?100:c.opacity)/100,
+    amt:(c.amt==null?100:c.amt)/100,
+    blend:c.blend|0, depth:c.depth|0, block:!!c.block, inv:!!c.invert,
+    gam:Math.max(0.05,(c.gamma==null?100:c.gamma)/100),
+    thr:(c.thresh|0)/100, roles:roles,
+    _grain:null,_grainW:0,_grainH:0,_grainO:null,_wf:null};
+}
+const GUV=[0,0];
+function graftUV(g,u,v){
+  const x=u-0.5-g.ox, y=v-0.5-g.oy;
+  const rx=(x*g.ca+y*g.sa)/g.sc, ry=(-x*g.sa+y*g.ca)/g.sc;
+  let iu=rx/g.dx+0.5, iv=ry/g.dy+0.5;
+  if(g.tile){ iu-=Math.floor(iu); iv-=Math.floor(iv); }
+  else if(iu<0||iu>=1||iv<0||iv>=1) return 0;
+  GUV[0]=iu; GUV[1]=iv; return 1;
+}
+function graftTone(g,t){
+  let o=Math.pow(t<0?0:(t>1?1:t), g.gam);
+  if(g.thr>0) o = o<g.thr?0:1;
+  return g.inv?1-o:o;
+}
+function graftLum(g,u,v){
+  if(!graftUV(g,u,v))return -1;
+  const im=g.im, w=im.w, h=im.h; let t;
+  if(g.block){
+    let ix=(GUV[0]*w)|0, iy=(GUV[1]*h)|0;
+    if(ix<0)ix=0; else if(ix>=w)ix=w-1;
+    if(iy<0)iy=0; else if(iy>=h)iy=h-1;
+    t=im.lum[iy*w+ix]/255;
+  }else{
+    const fx=GUV[0]*w-0.5, fy=GUV[1]*h-0.5;
+    let x0=Math.floor(fx), y0=Math.floor(fy);
+    const tx=fx-x0, ty=fy-y0;
+    let x1=x0+1, y1=y0+1;
+    if(x0<0)x0=0; if(y0<0)y0=0; if(x1<0)x1=0; if(y1<0)y1=0;
+    if(x0>=w)x0=w-1; if(y0>=h)y0=h-1; if(x1>=w)x1=w-1; if(y1>=h)y1=h-1;
+    const a=im.lum[y0*w+x0], b=im.lum[y0*w+x1], c2=im.lum[y1*w+x0], d=im.lum[y1*w+x1];
+    const top=a+(b-a)*tx, bot=c2+(d-c2)*tx;
+    t=(top+(bot-top)*ty)/255;
+  }
+  return graftTone(g,t);
+}
+const GRGB=[0,0,0];
+function graftRGB(g,u,v){
+  if(!graftUV(g,u,v))return 0;
+  const im=g.im, w=im.w, h=im.h;
+  if(g.block){
+    let ix=(GUV[0]*w)|0, iy=(GUV[1]*h)|0;
+    if(ix<0)ix=0; else if(ix>=w)ix=w-1;
+    if(iy<0)iy=0; else if(iy>=h)iy=h-1;
+    const o=(iy*w+ix)*3;
+    GRGB[0]=graftTone(g,im.rgb[o]/255)*255;
+    GRGB[1]=graftTone(g,im.rgb[o+1]/255)*255;
+    GRGB[2]=graftTone(g,im.rgb[o+2]/255)*255;
+  }else{
+    const fx=GUV[0]*w-0.5, fy=GUV[1]*h-0.5;
+    let x0=Math.floor(fx), y0=Math.floor(fy);
+    const tx=fx-x0, ty=fy-y0;
+    let x1=x0+1, y1=y0+1;
+    if(x0<0)x0=0; if(y0<0)y0=0; if(x1<0)x1=0; if(y1<0)y1=0;
+    if(x0>=w)x0=w-1; if(y0>=h)y0=h-1; if(x1>=w)x1=w-1; if(y1>=h)y1=h-1;
+    const oA=(y0*w+x0)*3, oB=(y0*w+x1)*3, oC=(y1*w+x0)*3, oD=(y1*w+x1)*3;
+    for(let q=0;q<3;q++){
+      const a=im.rgb[oA+q], b=im.rgb[oB+q], c2=im.rgb[oC+q], d=im.rgb[oD+q];
+      const top=a+(b-a)*tx, bot=c2+(d-c2)*tx;
+      GRGB[q]=graftTone(g,(top+(bot-top)*ty)/255)*255;
+    }
+  }
+  return 1;
+}
+/* the built graft is cached on the scene and keyed by the config revision,
+   because the config crosses a postMessage boundary and arrives as a fresh
+   object every frame — identity comparison would rebuild the grain and warp
+   fields 25 times a second. */
+function graftOf(scene){
+  const G=scene&&scene.__graft;
+  if(!G||!G.img||!G.cfg||!G.cfg.on)return null;
+  const sig=G.cfg.rev|0;
+  if(scene._gr&&scene._grSig===sig&&scene._grImg===G.img)return scene._gr;
+  scene._grImg=G.img; scene._grSig=sig;
+  return (scene._gr=buildGraft(G.img,G.cfg));
+}
+/* GRAIN — the graphic becomes the dither threshold itself. It is not drawn;
+   it decides WHERE the ordered dither tips one way or the other, so the
+   picture appears only in the texture of the halftone. */
+function graftGrain(g){
+  if(g._grainO&&g._grainW===W&&g._grainH===H)return g._grainO;
+  const gr=new Int8Array(W*H);
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){
+      const L=graftLum(g,(x+0.5)/W,v);
+      let s=(L<0)?0:Math.round((L-0.5)*96);
+      if(s>120)s=120; else if(s<-120)s=-120;
+      gr[y*W+x]=s; } }
+  g._grain=gr; g._grainW=W; g._grainH=H;
+  /* AMOUNT runs past 100 now; grain is a full replacement at 1 and there is
+     nothing beyond full, so this one arm clamps. */
+  return (g._grainO={g:gr, a:Math.min(1,g.amt)});
+}
+/* WARP — the graphic's luminance gradient becomes a displacement field over
+   the finished frame. Frame-invariant, so it is built once at 128x128. */
+const GWD=128;
+function graftWarpField(g){
+  if(g._wf)return g._wf;
+  const L=new Float32Array(GWD*GWD), gx=new Float32Array(GWD*GWD), gy=new Float32Array(GWD*GWD);
+  for(let y=0;y<GWD;y++)for(let x=0;x<GWD;x++){
+    const l=graftLum(g,(x+0.5)/GWD,(y+0.5)/GWD);
+    L[y*GWD+x]=(l<0)?0.5:l; }
+  for(let y=0;y<GWD;y++)for(let x=0;x<GWD;x++){
+    const xm=x>0?x-1:x, xp=x<GWD-1?x+1:x, ym=y>0?y-1:y, yp=y<GWD-1?y+1:y;
+    gx[y*GWD+x]=L[y*GWD+xp]-L[y*GWD+xm];
+    gy[y*GWD+x]=L[yp*GWD+x]-L[ym*GWD+x]; }
+  return (g._wf={gx:gx, gy:gy});
+}
+function graftWarpPass(buf,g,theta){
+  /* TAU-periodic, and deliberately never zero: the old 0.5+0.5cos put a dead
+     frame at half the loop, which is exactly where a contact sheet looks. */
+  const amp=g.amt*0.115*(0.60+0.40*Math.cos(theta));
+  if(amp<=0.0002)return;
+  const wf=graftWarpField(g);
+  let tmp=graftWarpPass._t;
+  if(!tmp||tmp.length!==W*H*3) tmp=graftWarpPass._t=new Uint8Array(W*H*3);
+  tmp.set(buf);
+  const AX=amp*W, AY=amp*H;
+  for(let y=0;y<H;y++){
+    const gyi=Math.min(GWD-1,(y*GWD/H)|0);
+    for(let x=0;x<W;x++){
+      const gi=gyi*GWD+Math.min(GWD-1,(x*GWD/W)|0);
+      let sx=(x+wf.gx[gi]*AX)|0, sy=(y+wf.gy[gi]*AY)|0;
+      if(sx<0)sx=0; else if(sx>=W)sx=W-1;
+      if(sy<0)sy=0; else if(sy>=H)sy=H-1;
+      const o=(y*W+x)*3, s=(sy*W+sx)*3;
+      buf[o]=tmp[s]; buf[o+1]=tmp[s+1]; buf[o+2]=tmp[s+2];
+    }
+  }
+}
+/* OVER — the classic layer, but placed inside the signal chain. */
+function graftOverPass(buf,g){
+  const op=g.op*g.amt; if(op<=0)return;
+  const bm=g.blend|0;
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){
+      if(!graftRGB(g,(x+0.5)/W,v))continue;
+      const o=(y*W+x)*3;
+      for(let q=0;q<3;q++){
+        const a=buf[o+q];
+        let r=a+(gblend(bm,a,GRGB[q])-a)*op;
+        buf[o+q]= r<0?0:(r>255?255:r|0);
+      }
+    }
+  }
+}
+/* STENCIL — the graphic is a hole cut through the whole transmission, and
+   the hole BREATHES: the cut level swings once per revolution and closes
+   exactly where it opened. */
+function graftStencilPass(buf,g,theta,grad){
+  /* breathes, but never fully closes — a role that is a no-op for a third of
+     the loop reads as a role that does not work. */
+  const cut=g.amt*(0.32+0.68*(0.5+0.5*Math.sin(theta)));
+  if(cut<=0)return;
+  const b0=grad[0], b1=grad[1], b2=grad[2];
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){
+      const L=graftLum(g,(x+0.5)/W,v);
+      if(((L<0)?0:L)<cut){ const o=(y*W+x)*3; buf[o]=b0; buf[o+1]=b1; buf[o+2]=b2; }
+    }
+  }
+}
+/* SLICE — a scan head travels the frame exactly once per loop, and only the
+   band behind it carries the graphic. The picture arrives as a transmission,
+   line by line, and is gone by the time the head comes round again. */
+function graftSlicePass(buf,g,theta,grad){
+  let p=(theta/TAU)%1; if(p<0)p+=1;
+  const bh=Math.max(0.06,g.amt*0.5);
+  const h0=grad[765], h1=grad[766], h2=grad[767];
+  for(let y=0;y<H;y++){
+    const fy=(y+0.5)/H;
+    let d=fy-p; d-=Math.floor(d);
+    if(d>bh)continue;
+    const k=(1-d/bh)*g.op;
+    for(let x=0;x<W;x++){
+      if(!graftRGB(g,(x+0.5)/W,fy))continue;
+      const o=(y*W+x)*3;
+      buf[o]  =(buf[o]  +(GRGB[0]-buf[o]  )*k)|0;
+      buf[o+1]=(buf[o+1]+(GRGB[1]-buf[o+1])*k)|0;
+      buf[o+2]=(buf[o+2]+(GRGB[2]-buf[o+2])*k)|0;
+      if(d<0.007){ buf[o]=h0; buf[o+1]=h1; buf[o+2]=h2; }
+    }
+  }
+}
+/* EMBOSS - the graphic as RELIEF rather than as ink. Its luminance gradient
+   is struck into the picture as a bevel, lit from a direction that makes
+   exactly one revolution per loop. cos/sin of theta are TAU-periodic by
+   construction, so the light returns to where it started and the loop closes.
+   Pixels where any of the four taps fall outside the graphic are skipped, so
+   the relief stops at the graphic's edge instead of ringing against the frame. */
+function graftEmbossPass(buf,g,theta){
+  const amp=g.amt*g.op*190; if(amp<=0)return;
+  /* THE SEAM MUST BE BIT-EXACT, NOT MERELY PERIODIC. cos/sin of theta are
+     mathematically TAU-periodic but not FLOATING-POINT periodic: sin(TAU) is
+     -2.45e-16, not 0, and cos(TAU) is 0.9999999999999999, not 1. That is far
+     below a pixel - until the accumulation lands on an integer and the
+     truncation below turns 100 into 99.999... into 99. Folding theta into
+     [0,TAU) first makes the last frame's light vector the SAME FLOAT as the
+     first frame's, so the seam closes exactly rather than nearly. */
+  let ph=(theta/TAU)%1; if(ph<0)ph+=1; ph*=TAU;
+  const lx=Math.cos(ph), ly=Math.sin(ph);
+  const ex=1/W, ey=1/H;
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){ const u=(x+0.5)/W;
+      if(graftLum(g,u,v)<0)continue;
+      const a=graftLum(g,u+ex,v), b=graftLum(g,u-ex,v);
+      const c=graftLum(g,u,v+ey), d=graftLum(g,u,v-ey);
+      if(a<0||b<0||c<0||d<0)continue;
+      const sft=((a-b)*lx+(c-d)*ly)*amp;
+      const o=(y*W+x)*3;
+      /* round, do not truncate: |0 chops toward zero, so a value that differs
+         by one ulp across the seam can differ by a whole index. */
+      let r=Math.round(buf[o]+sft), gg=Math.round(buf[o+1]+sft), bb=Math.round(buf[o+2]+sft);
+      buf[o]  = r<0?0:(r>255?255:r);
+      buf[o+1]= gg<0?0:(gg>255?255:gg);
+      buf[o+2]= bb<0?0:(bb>255?255:bb);
+    }
+  }
+}
+/* SILHOUETTE - the graphic as a SOLID BODY in the scene rather than a texture
+   on it. Its bright region becomes an opaque form punched out of the picture in
+   the artwork's own deepest tone, with a struck rim at the boundary, drifting
+   across the frame exactly once per loop.
+   This is not STENCIL inverted. STENCIL erases the picture where the graphic is
+   DARK - the graphic acts as a mask on what survives. SILHOUETTE puts the
+   graphic IN FRONT of the picture as an occluder with its own edge. */
+/* THE CUT CANNOT BE A CONSTANT. The graphic is whatever the artist uploads, so
+   any fixed threshold is wrong for some image: 0.13 selected every pixel of a
+   mid-band test card and flood-filled the frame, 0.72 selected none of it and
+   the role did nothing. Both failures came from asking an absolute question of
+   a relative thing.
+   So measure the image once and cut relative to its own distribution. A fixed
+   64x64 sample grid keeps this deterministic - same image, same numbers, in
+   both drivers - and the result is cached on g alongside the grain LUT. */
+function graftLumStats(g){
+  if(g._lst)return g._lst;
+  let n=0,s=0,s2=0;
+  for(let i=0;i<64;i++){ const v=(i+0.5)/64;
+    for(let j=0;j<64;j++){
+      const L=graftLum(g,(j+0.5)/64,v);
+      if(L<0)continue; n++; s+=L; s2+=L*L;
+    }
+  }
+  const m=n?s/n:0.5;
+  let sd=n?Math.sqrt(Math.max(0,s2/n-m*m)):0.25;
+  if(sd<0.02)sd=0.02;
+  return (g._lst={m:m,sd:sd});
+}
+function graftSilhouettePass(buf,g,theta,grad){
+  /* THE THRESHOLD AND THE FILL BOTH HAD TO MOVE. At 0.55-amt*0.42 the cut sat
+     at 0.13, which on any mid-band image selects EVERY pixel - so the pass
+     flood-filled the frame with grad[0..2], the exact tone STENCIL erases to,
+     and the two roles rendered byte-identical frames. A silhouette that covers
+     everything is not a silhouette.
+     So: the cut now sits high enough to pick out a form rather than a frame,
+     and the body is struck in the BRIGHT end of the ramp with a DARK rim -
+     the structural inverse of STENCIL, which cannot collide with it even in
+     the degenerate case where the whole image passes the test. */
+  /* amt sweeps the cut from "only the brightest crown" to "a fat solid form",
+     always measured against THIS image's own mean and spread. */
+  const st=graftLumStats(g);
+  const thr=st.m+st.sd*(1.15-g.amt*1.75);
+  let p=(theta/TAU)%1; if(p<0)p+=1;
+  const drift=0.18+g.amt*0.30;
+  const k0=grad[765], k1=grad[766], k2=grad[767];
+  const e0=grad[0], e1=grad[1], e2=grad[2];
+  const ex=2/W;
+  for(let y=0;y<H;y++){ const v=(y+0.5)/H;
+    for(let x=0;x<W;x++){
+      let u=(x+0.5)/W-p*drift; u-=Math.floor(u);
+      const L=graftLum(g,u,v); if(L<thr)continue;
+      let un=u+ex; un-=Math.floor(un);
+      const Ln=graftLum(g,un,v);
+      const o=(y*W+x)*3;
+      if(Ln<thr){ buf[o]=e0; buf[o+1]=e1; buf[o+2]=e2; }
+      else      { buf[o]=k0; buf[o+1]=k1; buf[o+2]=k2; }
+    }
+  }
+}
+function graftApply(buf,scene,theta,grad,phase){
+  const g=graftOf(scene); if(!g)return;
+  if((g.depth|0)!==(phase|0))return;
+  const R=g.roles;
+  if(R.warp)    graftWarpPass(buf,g,theta);
+  if(R.over)    graftOverPass(buf,g);
+  if(R.emboss)  graftEmbossPass(buf,g,theta);
+  if(R.stencil) graftStencilPass(buf,g,theta,grad);
+  if(R.slice)   graftSlicePass(buf,g,theta,grad);
+  if(R.silhouette) graftSilhouettePass(buf,g,theta,grad);
+}
 function renderScene(rgb, scene, theta, corr, grad){
   scene._corr=corr;
   const mf=massField(scene);
@@ -1374,13 +1778,44 @@ function renderScene(rgb, scene, theta, corr, grad){
     return ((((h^(h>>16))>>>0)&1023)/1023)-0.5; };
   const crawlPh=Math.sin(theta)*F.crawl;
   const roll=(theta/TAU)%1;
+  /* THE GRAFT, field side. UNDER lays the graphic into the empty space
+     BEHIND the mass, so the body occludes it for free and it is rendered in
+     the artwork's own tone ramp. FLOOR lies it flat on the mirror plane, so
+     it perspective-projects and slides as the camera orbits. GOBO puts it in
+     front of the LIGHT — the body is lit THROUGH the picture. */
+  const GRs=graftOf(scene);
+  const GRU=(GRs&&GRs.roles.under)?GRs:null;
+  const GRF=(GRs&&GRs.roles.floor)?GRs:null;
+  const GRG=(GRs&&GRs.roles.gobo)?GRs:null;
+  /* THE FOOTPRINT. Measured, not guessed: across a spread of seeds the
+     visible floor patch spans ~1.0–1.9 body-scales and the body's own extent
+     in light space spans ~0.5–1.2. The old single 2.4 constant sized the
+     picture to more than twice either, so the surface only ever sampled a
+     20–45% crop of it and both roles read as a near-flat wash. Size each
+     projection to the thing it actually lands on. */
+  const GSF=1.55*Math.max(1,mf.S);   /* FLOOR — the mirror patch */
+  const GSG=1.20*Math.max(1,mf.S);   /* GOBO  — the body in light space */
+  const FCAP=GRF?0.72:0.55;          /* a lit graphic on the floor needs headroom */
+  let gux=1,guy=0,guz=0,gwx=0,gwy=1,gwz=0;
+  if(GRG){
+    let ax=-sv.ly, ay=sv.lx, az=0;
+    let al=Math.sqrt(ax*ax+ay*ay+az*az);
+    if(al<1e-4){ ax=1; ay=0; az=0; al=1; }
+    gux=ax/al; guy=ay/al; guz=az/al;
+    gwx=sv.ly*guz-sv.lz*guy; gwy=sv.lz*gux-sv.lx*guz; gwz=sv.lx*guy-sv.ly*gux;
+    const wl=Math.sqrt(gwx*gwx+gwy*gwy+gwz*gwz)||1; gwx/=wl; gwy/=wl; gwz/=wl;
+  }
   for(let y=0;y<SW;y++){
     const gyf=y*VG/SW, gy=Math.min(VG-1,gyf|0), fy=y/SW;
     for(let x=0;x<SW;x++){
       const gxf=x*VG/SW, gx=Math.min(VG-1,gxf|0);
       const gi=gy*VG+gx, k=sv.kind[gi], i=y*SW+x;
       if(k===0){
-        fld[i]=0.016+0.020*(1-fy)+gh(x>>2,y>>2)*0.010;
+        let bg0=0.016+0.020*(1-fy)+gh(x>>2,y>>2)*0.010;
+        if(GRU){ const L=graftLum(GRU,(x+0.5)/SW,(y+0.5)/SW);
+          if(L>=0){ bg0+=((L*0.78+0.010)-bg0)*GRU.amt;
+            if(bg0<0)bg0=0; else if(bg0>0.92)bg0=0.92; } }
+        fld[i]=bg0;
         continue;
       }
       const px=sv.px[gi], py=sv.py[gi], pz=sv.pz[gi];
@@ -1389,12 +1824,28 @@ function renderScene(rgb, scene, theta, corr, grad){
         v*=Math.max(0.12, 1-Math.max(0,sv.dp[gi])*F.fogA*1.4);
         const bandF2=Math.sin(px*8+pz*8+crawlPh*0.5);
         if(bandF2>0.75)v+=0.015;
-        fld[i]=Math.max(0.02,Math.min(0.55,v))+gh(x,y)*0.028;
+        if(GRF){ const L=graftLum(GRF, px/GSF+0.5, pz/GSF+0.5);
+          if(L>=0){ const fade=Math.max(0.15,1-Math.max(0,sv.dp[gi])*F.fogA*1.2);
+            v+=((L*0.58+0.015)-v)*GRF.amt*fade; } }
+        if(GRG){ const L=graftLum(GRG,(px*gux+py*guy+pz*guz)/GSG+0.5,
+                                       (px*gwx+py*gwy+pz*gwz)/GSG+0.5);
+          if(L>=0){ v*=(1-GRG.amt)+GRG.amt*(0.18+1.55*L); if(v<0)v=0; } }
+        fld[i]=Math.max(0.02,Math.min(FCAP,v))+gh(x,y)*0.028;
         continue;
       }
-      const dif=Math.max(0, sv.nx[gi]*sv.lx+sv.ny[gi]*sv.ly+sv.nz[gi]*sv.lz);
-      const rimV=Math.pow(Math.max(0, 1 - Math.abs(sv.nx[gi]*(-Math.sin(theta+mf.lightBase*0.7)) + sv.nz[gi]*(-Math.cos(theta+mf.lightBase*0.7)))),3)*0.24;
-      let v=0.07+dif*0.60*sv.ao[gi]+rimV;
+      let dif=Math.max(0, sv.nx[gi]*sv.lx+sv.ny[gi]*sv.ly+sv.nz[gi]*sv.lz);
+      /* GOBO carries a second term. Attenuating the diffuse alone is invisible
+         on a body that is already dim — a real gel in a real gate also THROWS
+         light, so the bright parts of the picture lift the surface whether or
+         not that surface happens to face the lamp. */
+      let goE=0;
+      if(GRG){ const L=graftLum(GRG,(px*gux+py*guy+pz*guz)/GSG+0.5,
+                                     (px*gwx+py*gwy+pz*gwz)/GSG+0.5);
+        if(L>=0){ dif*=(1-GRG.amt)+GRG.amt*(0.10+1.75*L); if(dif<0)dif=0;
+          goE=GRG.amt*0.26*(L-0.42); } }
+      const rimV=Math.pow(Math.max(0, 1 - Math.abs(sv.nx[gi]*(-Math.sin(sv.az)) + sv.nz[gi]*(-Math.cos(sv.az)))),3)*0.24;
+      let v=0.07+dif*0.60*sv.ao[gi]+rimV+goE;
+      if(v<0)v=0;
       /* the material dialect */
       let bc;
       if(F.bandAxis===1) bc=Math.atan2(px,pz)*4 + py*F.bandF*0.4;
@@ -1422,6 +1873,7 @@ function renderScene(rgb, scene, theta, corr, grad){
       fld[i]=Math.max(0.02,Math.min(0.97,v));
     }
   }
+  const GRN=(GRs&&GRs.roles.grain)?graftGrain(GRs):null;
   /* fine bilinear upscale + ordered dither: the new surface signature */
   let UX=renderScene._ux;
   if(!UX){ UX=renderScene._ux={x0:new Int32Array(W),x1:new Int32Array(W),tx:new Float32Array(W)};
@@ -1434,18 +1886,34 @@ function renderScene(rgb, scene, theta, corr, grad){
       const x0=UX.x0[x], x1=UX.x1[x], tx=UX.tx[x];
       const a2=fld[rowA+x0], b2=fld[rowA+x1], c2=fld[rowB+x0], d2=fld[rowB+x1];
       const v=a2+(b2-a2)*tx + ((c2+(d2-c2)*tx)-(a2+(b2-a2)*tx))*ty;
-      let gi2=(v*255 + (BAYER4[by+(x&3)]-7.5)*1.7)|0;
+      let dth=(BAYER4[by+(x&3)]-7.5)*1.7;
+      if(GRN) dth=dth*(1-GRN.a)+GRN.g[y*W+x]*GRN.a;
+      let gi2=(v*255 + dth)|0;
       if(gi2<0)gi2=0; else if(gi2>255)gi2=255;
       const o=(y*W+x)*3;
       rgb[o]=grad[gi2*3]; rgb[o+1]=grad[gi2*3+1]; rgb[o+2]=grad[gi2*3+2];
     }
   }
 }
-function renderBase(rgb, scene, t, theta, grad){
+/* THE CORRUPTION LATCH — fixed.
+   renderBase used to read the corruption from scene._corr, which renderScene
+   itself writes on entry. On a freshly built scene that field is undefined, so
+   the first frame fell back to the hardcoded 60 and then LATCHED it: every
+   later frame read back the 60 renderScene had just written. The slider never
+   reached the base render at all — which is why corruption "did nothing" to a
+   rendered loop, and why the living preview (which sets _corr itself before
+   every frame) and the GIF were two different pictures. Corruption is now an
+   argument, passed down from renderSource, so every caller — preview worker,
+   render worker, sequential path — is the same image by construction. */
+function renderBase(rgb, scene, t, theta, grad, corr){
   const m=scene.mode;
+  const CORR=(scene.__ver>=6) ? (corr!=null?corr:(scene._corr!=null?scene._corr:60))
+                              : (scene._corr!=null?scene._corr:60);   /* pre-v6 latched it; that is what those pieces are */
   if(m==='IDOL'){
     const field=renderBase._fi||(renderBase._fi=new Float32Array(FW*FW));
-    scene._corr=(scene._corr!=null?scene._corr:60);
+    scene._corr=CORR;
+    const GRi=graftOf(scene);
+    const GRNi=(GRi&&GRi.roles.grain)?graftGrain(GRi):null;
     renderIdol(field, scene, theta);
     for(let y=0;y<H;y++){
       const sy=y*FW/H, y0=Math.min(FW-1,sy|0), y1=Math.min(FW-1,y0+1), ty=sy-y0;
@@ -1453,7 +1921,9 @@ function renderBase(rgb, scene, t, theta, grad){
         const sx=x*FW/W, x0=Math.min(FW-1,sx|0), x1=Math.min(FW-1,x0+1), tx=sx-x0;
         const v=field[y0*FW+x0]*(1-tx)*(1-ty)+field[y0*FW+x1]*tx*(1-ty)
                +field[y1*FW+x0]*(1-tx)*ty+field[y1*FW+x1]*tx*ty;
-        let gi2=(v*255 + (BAYER4[(y&3)*4+(x&3)]-7.5)*1.7)|0;
+        let dthi=(BAYER4[(y&3)*4+(x&3)]-7.5)*1.7;
+        if(GRNi) dthi=dthi*(1-GRNi.a)+GRNi.g[y*W+x]*GRNi.a;
+        let gi2=(v*255 + dthi)|0;
         if(gi2<0)gi2=0; else if(gi2>255)gi2=255;
         const o=(y*W+x)*3;
         rgb[o]=grad[gi2*3]; rgb[o+1]=grad[gi2*3+1]; rgb[o+2]=grad[gi2*3+2];
@@ -1461,7 +1931,7 @@ function renderBase(rgb, scene, t, theta, grad){
     }
     return;
   }
-  renderScene(rgb, scene, theta, (scene._corr!=null?scene._corr:60), grad);
+  renderScene(rgb, scene, theta, CORR, grad);
 }
 
 function analogPass(src,dst,scene,theta,corr,fx){
@@ -1599,15 +2069,28 @@ function faultOf(scene){
 }
 function massField(scene){
   if(scene._mf) return scene._mf;
+  /* THE VERSION GATE. Cards minted before v6 were grown in a 64-body space
+     by a fixed turntable. That output is a record, not a preference, so it
+     is reproduced here exactly — bugs included. v6 and later get the full
+     256 bodies, the modifier organ and the camera organ. */
+  const LEG=!(scene.__ver>=6);
   const rng=mulberry32((scene.seed^0x14CE55)>>>0);
-  const fam=(rng()*64)|0;             // the sixty-four bodies
+  let fam=(rng()*(LEG?64:256))|0;   // one draw either way: the rng stream never shifts
+  if(!LEG&&scene.__wbFam!=null)fam=((scene.__wbFam&15)<<4)|(fam&15);  // workbench: skeleton by hand
+  if(!LEG&&scene.__wbPrim!=null)fam=(fam&240)|(scene.__wbPrim&15);    // workbench: vocabulary by hand
   let vf=(scene.voidamt|0)/100;
   if(scene.mode==='MASS'&&vf<=0)vf=0.45;
   vf=Math.max(0.12,Math.min(0.88,vf));
   const target=1-vf;
   const no=scene.noise;
-  const arr=fam>>3, prim=fam&7;          // 8 skeletons x 8 vocabularies = 64 bodies
-  const mirror=(arr===1)||((arr===3||arr===2)&&rng()<0.4);
+  const arr=LEG?(fam>>3):(fam>>4), prim=LEG?(fam&7):(fam&15);
+  /* THE FOLD IS RETIRED - but its dice are not. This expression short-circuits,
+     so it consumes a VARIABLE number of rng() draws depending on arr, and that
+     draw pattern is load-bearing for every parameter rolled after it. Keep the
+     expression verbatim, discard the answer. */
+  const _foldRoll=(arr===1)||((arr===3||arr===2)&&rng()<0.4)
+    ||((arr===9||arr===13||arr===15)&&rng()<0.35);
+  const mirror=LEG?_foldRoll:false;   /* purged for new work; preserved for the record */
   const ph=rng()*90;
   const fbmA=0.02+rng()*0.035, fbmF=4+rng()*5;
   /* ---- primitive vocabulary ---- */
@@ -1615,8 +2098,11 @@ function massField(scene){
   const P=[];    // parts: [type, x,y,z, a,b,c, k(blend), rot]
   const C=[];    // carvings: spheres [x,y,z,r] subtracted
   const F=[];    // fracture planes [nx,ny,off,halfwidth]
-  const pick=(base)=>{ const r=rng(); return r<0.62?base:( (base+1+((r*6)|0))&7 ); };
-  const addPart=(t,x,y,z,a,b,c,k)=>{ P.push([t,x,y,z,a,b,c,k, rng()*0.9-0.45]); };
+  const pick=(base)=>{ const r=rng(); return LEG ? (r<0.62?base:((base+1+((r*6)|0))&7))
+                                                 : (r<0.58?base:((base+1+((r*14)|0))&15)); };
+  /* rot may now be given explicitly — a truss bar has to point AT its node.
+     Omit it and the old behaviour (a random tilt) is preserved exactly. */
+  const addPart=(t,x,y,z,a,b,c,k,rot)=>{ P.push([t,x,y,z,a,b,c,k, rot==null?(rng()*0.9-0.45):rot]); };
   let hasDrape=false;
   if(arr===0){        // STACK — vertical accumulation
     let cy=0.24+rng()*0.08; const n2=3+((rng()*4)|0);
@@ -1649,21 +2135,86 @@ function massField(scene){
       0.16+rng()*0.13, 0.028+rng()*0.03, 0.07, 0.02+rng()*0.02); cy+=0.075+rng()*0.05; }
   } else if(arr===6){ // MONO — one mass, wounded
     addPart(pick(prim), 0, 0.48+rng()*0.06, 0, 0.19+rng()*0.10, 0.24+rng()*0.12, 0.10, 0.03);
-  } else {            // FIELD — drapery with buried parts
+  } else if(arr===7){ // FIELD — drapery with buried parts
     hasDrape=true;
     const n2=1+((rng()*2)|0);
     for(let i=0;i<n2;i++) addPart(pick(prim), (rng()-0.5)*0.4, 0.3+rng()*0.4, -0.02,
       0.07+rng()*0.08, 0.06+rng()*0.07, 0.05, 0.10);
   }
+  /* ─── the eight new skeletons. The first eight are the engine's whole
+         history; these are the postures it never had. ─────────────────── */
+  else if(arr===8){   // HELIX — a rising spiral
+    const n2=5+((rng()*5)|0), R=0.13+rng()*0.12, turns=0.8+rng()*1.7, a0=rng()*TAU,
+          y0=0.22+rng()*0.06, rise=0.30+rng()*0.24;
+    for(let i=0;i<n2;i++){ const t=i/(n2-1||1), an=a0+t*TAU*turns;
+      addPart(pick(prim), Math.cos(an)*R, y0+t*rise, Math.sin(an)*R*0.6,
+        0.045+rng()*0.055, 0.045+rng()*0.05, 0.04, 0.06+rng()*0.05); }
+  } else if(arr===9){ // FAN — blades thrown out of a hub
+    addPart(pick(prim), 0, 0.5, 0, 0.06+rng()*0.05, 0.06+rng()*0.05, 0.055, 0.05);
+    const n2=3+((rng()*5)|0), a0=rng()*TAU, L=0.15+rng()*0.15;
+    for(let i=0;i<n2;i++){ const an=a0+i*TAU/n2;
+      addPart(pick(prim), Math.cos(an)*L*0.72, 0.5+Math.sin(an)*L*0.72, (rng()-0.5)*0.05,
+        0.028+rng()*0.045, 0.09+rng()*0.09, 0.03, 0.04+rng()*0.05, Math.PI/2-an); }
+  } else if(arr===10){ // TRUSS — nodes joined by bars that actually point at them
+    const n2=3+((rng()*3)|0), nodes=[];
+    for(let i=0;i<n2;i++) nodes.push([(rng()-0.5)*0.34, 0.26+rng()*0.44, (rng()-0.5)*0.16]);
+    for(const nd of nodes) addPart(pick(prim), nd[0],nd[1],nd[2],
+      0.035+rng()*0.04, 0.035+rng()*0.04, 0.035, 0.03);
+    for(let i=0;i<nodes.length;i++){ const A2=nodes[i], B2=nodes[(i+1)%nodes.length];
+      const dx=B2[0]-A2[0], dy=B2[1]-A2[1];
+      addPart(3, (A2[0]+B2[0])/2, (A2[1]+B2[1])/2, (A2[2]+B2[2])/2,
+        0.013+rng()*0.013, Math.hypot(dx,dy)*0.5, 0, 0.02, Math.atan2(dx,dy)); }
+  } else if(arr===11){ // SHARDS — slabs at every angle, no two alike
+    const n2=4+((rng()*5)|0);
+    for(let i=0;i<n2;i++) addPart(rng()<0.5?1:6, (rng()-0.5)*0.36, 0.24+rng()*0.48, (rng()-0.5)*0.2,
+      0.05+rng()*0.13, 0.02+rng()*0.05, 0.03+rng()*0.05, 0.015+rng()*0.02, rng()*TAU);
+  } else if(arr===12){ // TOWER — telescoping tiers, each smaller than the last
+    let cy=0.20+rng()*0.06, w=0.19+rng()*0.09; const n2=4+((rng()*4)|0);
+    for(let i=0;i<n2;i++){ addPart(pick(prim), 0, cy, 0, w, 0.045+rng()*0.05, w*0.82, 0.03+rng()*0.03);
+      cy+=0.09+rng()*0.06; w*=0.62+rng()*0.24; }
+  } else if(arr===13){ // ARCH — a vault carried on an arc
+    const n2=5+((rng()*4)|0), R=0.22+rng()*0.12, span=1.2+rng()*1.5, a0=Math.PI/2-span/2,
+          y0=0.32+rng()*0.08;
+    for(let i=0;i<n2;i++){ const an=a0+span*i/(n2-1||1);
+      addPart(pick(prim), Math.cos(an)*R, y0+Math.sin(an)*R, (rng()-0.5)*0.05,
+        0.045+rng()*0.05, 0.045+rng()*0.04, 0.045, 0.05+rng()*0.05, Math.PI/2-an); }
+  } else if(arr===14){ // CLUSTER — an accreted mass, wounded twice over
+    const n2=6+((rng()*6)|0);
+    for(let i=0;i<n2;i++){ const an=rng()*TAU, rr=rng()*0.16;
+      addPart(pick(prim), Math.cos(an)*rr, 0.46+(rng()-0.5)*0.30, Math.sin(an)*rr,
+        0.055+rng()*0.09, 0.055+rng()*0.09, 0.06, 0.10+rng()*0.08); }
+  } else {             // BEAM — a long span with weight hanging off it
+    const L=0.24+rng()*0.13, hy=0.52+rng()*0.16;
+    addPart(1, 0, hy, 0, L, 0.028+rng()*0.03, 0.05, 0.02);
+    const n2=2+((rng()*4)|0);
+    for(let i=0;i<n2;i++){ const t=(i+0.5)/n2;
+      addPart(pick(prim), (t-0.5)*2*L*0.85, hy-0.07-rng()*0.22, (rng()-0.5)*0.06,
+        0.028+rng()*0.05, 0.05+rng()*0.09, 0.03, 0.04+rng()*0.04); }
+  }
   const PB=[];
   for(const p of P){ rotc.push(Math.cos(p[8])); rots.push(Math.sin(p[8]));
     PB.push(Math.max(p[4],p[5],p[6]||0)+p[7]+0.02); }
   /* wounds in the anatomy */
-  const sockets=(arr===6?2:((rng()*3)|0));
+  const sockets=(arr===6?2:(arr===14?3:((rng()*3)|0)));
   for(let i=0;i<sockets;i++) C.push([(rng()-0.5)*0.24, 0.3+rng()*0.35, 0.02+rng()*0.06, 0.04+rng()*0.05]);
-  const fracN=(arr===6||arr===5)?2+((rng()*2)|0):((rng()*2)|0);
+  const fracN=(arr===6||arr===5||arr===12)?2+((rng()*2)|0):((rng()*2)|0);
   for(let i=0;i<fracN;i++){ const a=rng()*TAU;
     F.push([Math.cos(a), Math.sin(a), (rng()-0.5)*0.4, 0.004+rng()*0.006]); }
+  /* ═══ THE MODIFIER — the body's second organ ═══════════════════════════
+     256 bodies is still 256 silhouettes. A domain modifier bends the space the
+     body is measured in, so the SAME skeleton and the SAME vocabulary come out
+     twisted, tapered, terraced, hollowed or doubled. It multiplies the
+     vocabulary instead of adding to it. Distorting the domain also distorts
+     the distance metric, so each modifier carries a Lipschitz factor MODK and
+     the march takes more steps whenever one is active — otherwise the ray
+     overshoots the surface and punches holes in the body. */
+  const modrng=mulberry32((scene.seed^0x30D1F1)>>>0);
+  const MK0=modrng()<0.30?0:1+((modrng()*7)|0);
+  const MOD={kind:MK0, amt:0.45+modrng()*1.05, freq:2+modrng()*5, ph:modrng()*TAU};
+  if(!LEG&&scene.__wbMod!=null)MOD.kind=scene.__wbMod&7;
+  const MK=LEG?0:MOD.kind, MA=MOD.amt, MF=MOD.freq, MP=MOD.ph;
+  const MODK=(MK===1||MK===4)?0.55:(MK===2?0.62:(MK===3?0.58:(MK===5?0.72:1)));
+  const MCLIP=MK?1.05:0.85, MSTEP=MK?34:22;
   const sm=(a,b,k)=>{const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25;};
   const foldAt=(x,y,S)=>{
     let px=x/S, py=(y-0.5)/S+0.5;
@@ -1685,13 +2236,71 @@ function massField(scene){
       case 6:{ const qx=Math.abs(px)-a, qy=Math.abs(py)-b, qz=Math.abs(pz)-0.02;
         return Math.sqrt(Math.max(qx,0)**2+Math.max(qy,0)**2+Math.max(qz,0)**2)
           +Math.min(Math.max(qx,Math.max(qy,qz)),0); }
-      default:{ const l=Math.sqrt((px*px)/(a*a)+(py*py)/(b*b)+(pz*pz)/(a*a)); return (l-1)*Math.min(a,b); }
+      /* ─── the eight new vocabularies. Every one stays inside the same
+             a/b/c envelope the first eight used, so the part bounding radius
+             PB is still valid and the march cannot overshoot. ─────────── */
+      case 8:{  /* PRISM6 — hexagonal column */
+        const h=a*0.86; let qx=Math.abs(px), qz=Math.abs(pz);
+        const kx=-0.8660254, ky=0.5, kz=0.57735;
+        const dt=Math.min(kx*qx+ky*qz,0)*2; qx-=dt*kx; qz-=dt*ky;
+        const cl=Math.max(-kz*h,Math.min(kz*h,qx));
+        const d1=Math.hypot(qx-cl, qz-h)*Math.sign(qz-h), d2=Math.abs(py)-b;
+        return Math.min(Math.max(d1,d2),0)+Math.hypot(Math.max(d1,0),Math.max(d2,0)); }
+      case 9:{  /* SPOKE — radial blades */
+        const NB=5, th=Math.max(0.012,(c||0.05)*0.42), d2=Math.abs(py)-b;
+        let best=1e9;
+        for(let i=0;i<NB;i++){ const an=i*Math.PI/NB, ca=Math.cos(an), sa=Math.sin(an);
+          const rx=px*ca+pz*sa, rz=-px*sa+pz*ca;
+          const qx=Math.abs(rx)-a, qz=Math.abs(rz)-th;
+          const dd=Math.min(Math.max(qx,qz),0)+Math.hypot(Math.max(qx,0),Math.max(qz,0));
+          if(dd<best)best=dd; }
+        return Math.min(Math.max(best,d2),0)+Math.hypot(Math.max(best,0),Math.max(d2,0)); }
+      case 10:{ /* CROSS — three bars through one another */
+        const t=Math.max(0.018,Math.min(a,b)*0.40);
+        const bx=(qa,qb,qc)=>{ const x=Math.abs(px)-qa, y=Math.abs(py)-qb, z=Math.abs(pz)-qc;
+          return Math.min(Math.max(x,Math.max(y,z)),0)
+               +Math.hypot(Math.max(x,0),Math.max(y,0),Math.max(z,0)); };
+        return Math.min(bx(a,t,t), Math.min(bx(t,b,t), bx(t,t,a))); }
+      case 11:{ /* WEDGE — a box cut on the diagonal */
+        const cz=c||0.07, qx=Math.abs(px)-a, qy=Math.abs(py)-b, qz=Math.abs(pz)-cz;
+        let d=Math.min(Math.max(qx,Math.max(qy,qz)),0)
+             +Math.hypot(Math.max(qx,0),Math.max(qy,0),Math.max(qz,0));
+        const L=Math.hypot(a,b)||1;
+        return Math.max(d, (px*(b/L)+py*(a/L))); }
+      case 12:{ /* LENS — two spheres meeting, exactly a wide and b tall */
+        const bb=Math.max(0.02,b), R=(a*a+bb*bb)/(2*bb), off=R-bb;
+        return Math.max(Math.hypot(px,py-off,pz)-R, Math.hypot(px,py+off,pz)-R); }
+      case 13:{ /* TUBE — an open cylinder */
+        const w=Math.max(0.014,Math.min(a*0.45,(c||0.03)));
+        const r=Math.abs(Math.hypot(px,pz)-(a-w))-w, d2=Math.abs(py)-b;
+        return Math.min(Math.max(r,d2),0)+Math.hypot(Math.max(r,0),Math.max(d2,0)); }
+      case 14:{ /* PYRA — a square pyramid standing on its base */
+        const H=2*b, L=Math.hypot(H,a)||1, nx=H/L, ny=a/L;
+        const ax=Math.abs(px), az=Math.abs(pz), yb=py+b;
+        let d=Math.max(ax*nx+yb*ny-a*nx, az*nx+yb*ny-a*nx);
+        return Math.max(d, -yb); }
+      case 15:{ /* OCTA — an octahedron, squashed to fit b */
+        const sy=a/Math.max(0.03,b);
+        return (Math.abs(px)+Math.abs(py)*sy+Math.abs(pz)-a)*0.57735/Math.max(1,sy); }
+      case 7: default:{ const l=Math.sqrt((px*px)/(a*a)+(py*py)/(b*b)+(pz*pz)/(a*a)); return (l-1)*Math.min(a,b); }
     }
   };
   const sdf=(x,y,z,S,fold)=>{
     let px=x/S, py=(y-0.5)/S+0.5, pz=z/S;
-    if(px>0.85||px<-0.85||py<-0.2||py>1.25) return 0.3;
+    if(px>MCLIP||px<-MCLIP||py<-0.2-(MK?0.2:0)||py>1.25+(MK?0.2:0)) return 0.3;
     if(mirror)px=Math.abs(px);
+    if(MK){                                  /* bend the space, not the body */
+      const yy=py-0.5;
+      if(MK===1){ const an=MA*1.7*yy, ca=Math.cos(an), sa=Math.sin(an);   /* TWIST */
+        const tx=px*ca-pz*sa; pz=px*sa+pz*ca; px=tx; }
+      else if(MK===2){ const k2=Math.max(0.28,1+MA*0.85*yy);              /* TAPER */
+        px/=k2; pz/=k2; }
+      else if(MK===3){ px+=MA*0.55*yy*yy-MA*0.055; }                      /* BEND  */
+      else if(MK===4){ const r=Math.hypot(px,pz)||1e-6,                   /* RIPPLE*/
+        w=Math.sin(py*MF*3+MP)*MA*0.032; px+=px/r*w; pz+=pz/r*w; }
+      else if(MK===5){ px+=MA*0.38*yy; }                                  /* SHEAR */
+      else if(MK===7){ px=Math.abs(px)-MA*0.055; }                        /* SPLIT */
+    }
     let d=1e9;
     if(hasDrape){ d=pz+0.06-fold;
       const rimB=Math.max(Math.abs(px)-0.32, Math.abs(py-0.5)-0.42);
@@ -1708,7 +2317,8 @@ function massField(scene){
       d=Math.max(d, -(Math.sqrt(dx*dx+dy*dy+dz*dz)-c2[3])); }
     for(const f2 of F){ const pd=Math.abs(px*f2[0]+py*f2[1]+f2[2])-f2[3];
       d=Math.max(d,-pd); }
-    return d;
+    if(MK===6) d=Math.abs(d)-(0.010+MA*0.016);          /* SHELL — hollow it out */
+    return d*MODK;
   };
   /* --- march at half grid, area-law scale iteration --- */
   const FH=96;
@@ -1716,7 +2326,7 @@ function massField(scene){
   const march=(px,py,S,cheap)=>{  // returns [hit, z, nx,ny,nz] via ortho ray
     let z=-0.5;
     const fold=hasDrape?foldAt(px,py,S):0;
-    for(let st=0;st<22;st++){
+    for(let st=0;st<MSTEP;st++){
       const d=sdf(px,py,z,S,fold);
       if(d<0.008){
         if(cheap)return [1,z,0,0,0];
@@ -1765,26 +2375,59 @@ function massField(scene){
     }
   }
   const lightBase=rng()*TAU, grainPh=rng()*50;
-  /* frame the body: probe perspective coverage at theta=0, tune the lens */
+
+  /* ═══ THE CAMERA — AN ORGAN, NOT A CONSTANT ═══════════════════════════════
+     Until now every render in the engine used the SAME camera move:
+        az = theta + lightBase*0.7
+     so the body turned exactly ONE revolution, always the same direction,
+     always at the same rate, from an elevation pinned inside an 8-degree band
+     (0.20..0.344 rad — the only variance being fam%9), at a fixed distance,
+     with the rim light welded to the camera's own azimuth. Sixty-four bodies,
+     ONE gesture. THAT — not the body vocabulary — is why so much of the output
+     reads as "another 3D thing spinning to the right." It was never a
+     tendency. It was the only move the engine had.
+     The camera now carries its own seeded DNA: gesture, handedness, rate,
+     elevation, distance, roll. See camAt() for the loop-closure contract. */
+  const hasFloor=(mulberry32((scene.seed^0xF700)>>>0)())<0.65;
+  const crng=mulberry32((scene.seed^0x0CA3E4)>>>0);
+  const _lspin=crng()<0.5?1:-1;              /* drawn unconditionally: keeps the stream stable */
+  const CAM={
+    motion:(crng()*8)|0,
+    spin:  crng()<0.5?1:-1,        /* ← the handedness that never existed before */
+    a0:    crng()*TAU,
+    swing: 0.55+crng()*1.20,
+    elAmp: 0.08+crng()*0.30,
+    distK: 0.95+crng()*0.58,
+    distAmp:0.06+crng()*0.15,
+    roll:  crng()<0.25?(crng()*0.44-0.22):0,
+    /* elevation was 0.20..0.344 for EVERY seed that ever rendered. Now a real
+       range — worm's-eye through high overhead — floored by the mirror. */
+    el:    hasFloor?(0.06+crng()*0.80):(-0.26+crng()*1.12),
+    lightSpin:0 };
+  if(!LEG&&scene.__wbCam!=null) CAM.motion=scene.__wbCam&7;   /* workbench: gesture by hand */
+  if(LEG){ CAM.legacy=1; CAM.motion=-1; CAM.spin=1; CAM.a0=lightBase*0.7;
+           CAM.el=0.20+(fam%9)*0.018; CAM.distK=1; CAM.distAmp=0; CAM.roll=0;
+           CAM.lightSpin=0; }   /* motion=-1 so the LOCKED-camera light orbit below cannot fire */
+  if(CAM.motion===5) CAM.lightSpin=_lspin;   /* LOCKED camera => the LIGHT orbits instead */
+
+  /* frame the body: probe coverage at theta=0 through the REAL camera, so the
+     lens is tuned for the gesture the seed will actually perform, not for a
+     turntable it may never do. */
   let fovK=0.34*Math.max(1,S);
-  { const dist=1.25*Math.max(1,S), el=0.20+(fam%9)*0.018, az=lightBase*0.7;
-    const ex=dist*Math.cos(el)*Math.sin(az), ey=0.5-dist*Math.sin(el), ez=dist*Math.cos(el)*Math.cos(az);
-    let fx3=-ex, fy3=0.5-ey, fz3=-ez; const fl=Math.hypot(fx3,fy3,fz3); fx3/=fl;fy3/=fl;fz3/=fl;
-    let rx=fz3, rz=-fx3; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
-    const ux=-rz*fy3, uy=rz*fx3-rx*fz3, uz=rx*fy3;
+  { const stub={cam:CAM,S:S,hasFloor:hasFloor}, A=camAt(stub,0),
+          B=camBasis(A.az,A.el,A.dist,A.roll), ex=B.ex, ey=B.ey, ez=B.ez;
     for(let it=0;it<2;it++){
       let hits2=0, tot=0;
       for(let gy=0;gy<60;gy+=3)for(let gx=0;gx<60;gx+=3){ tot++;
         const sxc=(gx/60-0.5)*2*fovK, syc=(gy/60-0.5)*2*fovK;
-        let dx=fx3+rx*sxc+ux*syc, dy=fy3+syc*uy, dz=fz3+rz*sxc+uz*syc;
-        dy=fy3+ux*0; dy=fy3+uy*syc;
+        let dx=B.fx+B.rx*sxc+B.ux*syc, dy=B.fy+B.ry*sxc+B.uy*syc, dz=B.fz+B.rz*sxc+B.uz*syc;
         const dl=Math.hypot(dx,dy,dz); dx/=dl;dy/=dl;dz/=dl;
-        let t=dist-0.95*Math.max(1,S);
+        let t=A.dist-0.95*Math.max(1,S);
         for(let st=0;st<22;st++){
           const d2=sdf(ex+dx*t, ey+dy*t, ez+dz*t, S, 0);
           if(d2<0.012){hits2++;break;}
           t+=Math.max(d2,0.016);
-          if(t>dist+0.95*Math.max(1,S))break;
+          if(t>A.dist+0.95*Math.max(1,S))break;
         }
       }
       const cov=hits2/tot;
@@ -1792,7 +2435,7 @@ function massField(scene){
       fovK=Math.max(0.14,Math.min(1.3,fovK));
     }
   }
-  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,PX:new Float32Array(FW*FW),PY:new Float32Array(FW*FW),PZ:new Float32Array(FW*FW),AO:new Float32Array(FW*FW),lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK};
+  scene._mf={n,q:0.5,fam,vf,z,NX,NY,NZ,DP,BP,PX:new Float32Array(FW*FW),PY:new Float32Array(FW*FW),PZ:new Float32Array(FW*FW),AO:new Float32Array(FW*FW),lightBase,grainPh,mirror,sdf,S,hasDrape,foldAt,P,rotc,rots,arr,prim,fovK,cam:CAM,hasFloor:hasFloor,mod:MOD};
   return scene._mf;
 }
 function matOf(scene){
@@ -1815,14 +2458,53 @@ function surfTear(px,py,pz,theta,M,amp){
   const d3=Math.sin((px+pz)*9+py*M.tearF2*0.6-sn*1.3);
   return (d1*d2+d3*0.5)*amp;
 }
-function eCam(mf, theta){
-  const S=mf.S, az=theta+mf.lightBase*0.7, el=0.20+(mf.fam%9)*0.018;
-  const dist=1.25*Math.max(1,S);
+/* ═══ WHERE THE CAMERA IS AT A GIVEN PHASE ════════════════════════════════
+   EVERY branch below is exactly TAU-periodic — built only from theta itself
+   (whole revolutions) or from sin/cos of integer multiples of theta. That is
+   what keeps the GIF loop seamless: at theta=TAU the camera is back where it
+   started, exactly. Do not add a term here that does not close. */
+function camAt(mf, theta){
+  const K=mf.cam;
+  /* the pre-v6 camera: one revolution, fixed elevation and distance, no
+     floor clamp and no elevation clamp — exactly the old inline block. */
+  if(K.legacy) return {az:theta+K.a0, el:K.el, dist:1.25*Math.max(1,mf.S), roll:0}; let az=K.a0, el=K.el, dk=K.distK, roll=0;
+  switch(K.motion){
+    case 1: az+=K.swing*Math.sin(theta)*K.spin; break;                  /* PENDULUM — rocks, never completes */
+    case 2: az+=theta*2*K.spin; break;                                  /* DOUBLE   — two revolutions per loop */
+    case 3: az+=K.swing*Math.sin(theta)*K.spin;                         /* CRANE    — rocks while it descends */
+            el+=K.elAmp*Math.cos(theta)-K.elAmp; break;
+    case 4: dk*=1+K.distAmp*Math.cos(theta); break;                     /* DOLLY    — locked heading, breathes in */
+    case 5: break;                                                      /* LOCKED   — camera still; the LIGHT orbits */
+    case 6: az+=theta*K.spin; el+=K.elAmp*Math.sin(theta*2); break;     /* SPIRAL   — orbit with a vertical wobble */
+    case 7: az+=K.swing*Math.sin(theta)*K.spin;                         /* SWAY     — handheld drift */
+            dk*=1+K.distAmp*Math.cos(theta*2); break;
+    default: az+=theta*K.spin;                                          /* TURNTABLE — the old one, now handed */
+  }
+  if(K.roll) roll=K.roll*Math.sin(theta);
+  const dist=dk*1.25*Math.max(1,mf.S);
+  /* the camera may never sink below the mirror floor, or the stage inverts */
+  if(mf.hasFloor){ const lim=(0.5-(FLY-0.16))/dist;
+    if(Math.sin(el)<lim) el=Math.asin(Math.max(-1,Math.min(1,lim))); }
+  el=Math.max(-0.34,Math.min(1.05,el));
+  return {az,el,dist,roll};
+}
+/* orthonormal camera basis. Identical math to the old inline block when
+   roll===0, so a zero-roll camera stays directly comparable with the old one. */
+function camBasis(az, el, dist, roll){
   const ex=dist*Math.cos(el)*Math.sin(az), ey=0.5-dist*Math.sin(el), ez=dist*Math.cos(el)*Math.cos(az);
-  let fx=-ex, fy=0.5-ey, fz=-ez; const fl=Math.hypot(fx,fy,fz); fx/=fl;fy/=fl;fz/=fl;
-  let rx=fz, rz=-fx; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
-  const ux=-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy;
-  return {ex,ey,ez,fx,fy,fz,rx,ry:0,rz,ux,uy,uz,dist,fov:(mf.fovK||0.34*Math.max(1,S))};
+  let fx=-ex, fy=0.5-ey, fz=-ez; const fl=Math.hypot(fx,fy,fz)||1; fx/=fl;fy/=fl;fz/=fl;
+  let rx=fz, ry=0, rz=-fx; const rl=Math.hypot(rx,rz)||1; rx/=rl; rz/=rl;
+  let ux=-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy;
+  if(roll){ const c=Math.cos(roll), s=Math.sin(roll);
+    const ax=rx*c+ux*s, ay=ry*c+uy*s, az2=rz*c+uz*s;
+    const bx=ux*c-rx*s, by=uy*c-ry*s, bz=uz*c-rz*s;
+    rx=ax; ry=ay; rz=az2; ux=bx; uy=by; uz=bz; }
+  return {ex,ey,ez,fx,fy,fz,rx,ry,rz,ux,uy,uz,dist};
+}
+function eCam(mf, theta){
+  const A=camAt(mf,theta), B=camBasis(A.az,A.el,A.dist,A.roll);
+  B.fov=(mf.fovK||0.34*Math.max(1,mf.S)); B.az=A.az; B.el=A.el;
+  return B;
 }
 function massView(scene, mf, theta){
   mf.mat=mf.mat||matOf(scene);
@@ -1831,7 +2513,7 @@ function massView(scene, mf, theta){
      loop. Marched fresh per frame at coarse grid; the film layer absorbs it. */
   if(mf._vt===theta)return;
   mf._vt=theta;
-  const VG=88, S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
+  const VG=(typeof PVVG!=='undefined'?PVVG:88), S=mf.S, sdf=mf.sdf, C=eCam(mf,theta);
   const hitG=new Uint8Array(VG*VG), nxG=new Float32Array(VG*VG), nyG=new Float32Array(VG*VG),
         nzG=new Float32Array(VG*VG), dpG=new Float32Array(VG*VG),
         pxG=new Float32Array(VG*VG), pyG=new Float32Array(VG*VG), pzG=new Float32Array(VG*VG);
@@ -1971,7 +2653,24 @@ function renderIdol(field, scene, theta){
   const mf=massField(scene), M=idolMesh(scene), C=eCam(mf,theta);
   const corr=(scene._corr!=null?scene._corr:60);
   const M2=matOf(scene);
-  field.fill(0.022);
+  /* THE GEL IN THE GATE. IDOL never went through renderScene, so UNDER and GOBO
+     — the two roles that live in the lighting — simply did not exist for one seed
+     in ten. They do now. FLOOR still cannot: an idol has no mirror plane to catch
+     a reflection, and faking one would be a lie the rest of the frame contradicts.
+     The UI availability readout is what tells you so, rather than a dead slider. */
+  const GRs=graftOf(scene);
+  const GRU=(GRs&&GRs.roles.under)?GRs:null;
+  const GRG=(GRs&&GRs.roles.gobo)?GRs:null;
+  if(GRU){
+    for(let gy=0;gy<FW;gy++){ const fy=(gy+0.5)/FW;
+      for(let gx=0;gx<FW;gx++){
+        let b=0.022;
+        const L=graftLum(GRU,(gx+0.5)/FW,fy);
+        if(L>=0){ b+=((L*0.78+0.010)-b)*GRU.amt;
+          if(b<0)b=0; else if(b>0.92)b=0.92; }
+        field[gy*FW+gx]=b;
+      } }
+  } else field.fill(0.022);
   const n=M.V.length/3;
   const sx=new Float32Array(n), sy=new Float32Array(n), sz=new Float32Array(n);
   const wx=new Float32Array(n), wy=new Float32Array(n), wz=new Float32Array(n);
@@ -1994,6 +2693,26 @@ function renderIdol(field, scene, theta){
   order.sort((a,b)=>b[0]-a[0]);
   const laz=theta+mf.lightBase*0.7+0.8;
   const lx=Math.cos(0.5)*Math.sin(laz), ly=-Math.sin(0.5), lz=Math.cos(0.5)*Math.cos(laz);
+  /* GOBO basis. The scale is measured, not guessed — the footprint bug cost me a
+     whole role by guessing once already. Across 53 idols x 8 thetas the ratio of
+     (what the light-space projection actually spans) to (the mesh's own max vertex
+     radius) sits in 1.71-1.94, p50 1.83; 1.90 covers all of them. mf.S is NOT the
+     unit here: the idol mesh is built in its own normalized space and the measured
+     ratio has no correlation with S whatsoever. laz is theta plus a constant, so
+     every axis below is exactly TAU-periodic and the loop still closes. */
+  let gux=0,guy=0,guz=0,gwx=0,gwy=0,gwz=0,GSG=1;
+  if(GRG){
+    let mrad=0.001;
+    for(let j=0;j<M.V.length;j+=3){
+      const rr=Math.sqrt(M.V[j]*M.V[j]+M.V[j+1]*M.V[j+1]+M.V[j+2]*M.V[j+2]);
+      if(rr>mrad)mrad=rr; }
+    GSG=1.90*mrad;
+    let ax=-ly, ay=lx, az=0;
+    let al=Math.sqrt(ax*ax+ay*ay+az*az); if(al<1e-4){ax=1;ay=0;az=0;al=1;}
+    gux=ax/al; guy=ay/al; guz=az/al;
+    gwx=ly*guz-lz*guy; gwy=lz*gux-lx*guz; gwz=lx*guy-ly*gux;
+    const wl=Math.sqrt(gwx*gwx+gwy*gwy+gwz*gwz)||1; gwx/=wl; gwy/=wl; gwz/=wl;
+  }
   const edge=(x0,y0,x1,y1,v)=>{
     const steps=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))|0;
     for(let k=0;k<=steps;k++){ const x=(x0+(x1-x0)*k/Math.max(1,steps))|0, y=(y0+(y1-y0)*k/Math.max(1,steps))|0;
@@ -2008,8 +2727,19 @@ function renderIdol(field, scene, theta){
     const facing=nx*C.fx+ny*C.fy+nz*C.fz;
     if(facing>0){nx=-nx;ny=-ny;nz=-nz;}
     const diff=Math.max(0,nx*lx+ny*ly+nz*lz);
-    let v=0.10+diff*0.60+Math.pow(Math.max(0,1+(nx*C.fx+ny*C.fy+nz*C.fz)),2.2)*0.20;
     const cx3=(wx[a]+wx[b]+wx[c])/3, cy3=(wy[a]+wy[b]+wy[c])/3, cz3=(wz[a]+wz[b]+wz[c])/3;
+    /* Parity with renderScene, not merely an effect: the gel attenuates the DIFFUSE
+       term only and adds its own throw. Scaling the whole of v would eat the 0.10
+       ambient floor too, and the idol would drop to black wherever the graphic is
+       dark — which no other mode does. A role has to be ONE role in ten modes.
+       Edges inherit v further down, so wireframe idols get gelled for free. */
+    let dif2=diff, goE=0;
+    if(GRG){ const L=graftLum(GRG,(cx3*gux+cy3*guy+cz3*guz)/GSG+0.5,
+                                  (cx3*gwx+cy3*gwy+cz3*gwz)/GSG+0.5);
+      if(L>=0){ dif2*=(1-GRG.amt)+GRG.amt*(0.10+1.75*L); if(dif2<0)dif2=0;
+        goE=GRG.amt*0.26*(L-0.42); } }
+    let v=0.10+dif2*0.60+Math.pow(Math.max(0,1+(nx*C.fx+ny*C.fy+nz*C.fz)),2.2)*0.20+goE;
+    if(v<0)v=0;
     const bandV=Math.sin(cy3*M2.bandF+cx3*2.2+Math.sin(theta)*M2.crawl);
     if(bandV>M2.bandTh)v+=M2.bandA*0.8;
     const ci2=(((cx3*M2.cellF)|0)*7+((cy3*M2.cellF)|0)*13+((cz3*M2.cellF)|0)*29)|0;
@@ -3330,6 +4060,16 @@ const MASK_POLAR=[[3,0.55],[4,0.5],[5,-0.5],[6,0.45],[8,-0.32],[12,-0.4],[3,0.22
 function fxMaskComp(buf,scene,theta){
   const M=scene.rev4.mask; if(!M.type)return;
   const shape=M.type-1;
+  /* ORNAMENT PURGE. 21-28 is the polar rosette family - FOIL3, FOIL4, STAR5,
+     FLWR6 (the six-petal flower), GEAR8, STR12, BLOB, SUN16 - and 18 is DOTS9,
+     the polka grid. Returning here removes the motif without touching one byte
+     of the wire format: MASK_NAMES keeps all thirty entries, MASK_POLAR keeps
+     all eight slots, OV.maskType keeps its five bits and its numbering, and the
+     seeded mask block keeps its rng() draws. An old card carrying maskType 26
+     still decodes to 26 - it just paints nothing.
+     This also retires a loop-closure defect: FOIL3, STAR5 and BLOB at k===1
+     advance their rotation by a half-integer multiple of TAU and do not close. */
+  if(scene.__ver>=6 && (shape===18||(shape>=21&&shape<=28)))return;   /* purged for v6+; pre-v6 cards keep the ornament they were made with */
   const s=M.size*(1+0.12*Math.sin(theta*M.k+M.ph));
   const cx=M.cx*W, cy=M.cy*H, sPix=s*W;
   let edge=null;
@@ -3407,23 +4147,31 @@ function fxMaskComp(buf,scene,theta){
 }
 
 function renderSource(rgbA,rgbC,scene,i,theta,grad,fx,corr){
-  renderBase(rgbA,scene,i,theta,grad);
-  if(fx.flay){   renderBase(rgbC,scene,i,theta+TAU/8,grad); combineFlay(rgbA,rgbC,scene,theta,corr); }
+  renderBase(rgbA,scene,i,theta,grad,corr);
+  if(fx.flay){   renderBase(rgbC,scene,i,theta+TAU/8,grad,corr); combineFlay(rgbA,rgbC,scene,theta,corr); }
   if(fx.braid){
     const rgbD=renderSource._d||(renderSource._d=new Uint8Array(W*H*3));
-    renderBase(rgbC,scene,i,theta+TAU/3,grad);
-    renderBase(rgbD,scene,i,theta-TAU/3,grad);
+    renderBase(rgbC,scene,i,theta+TAU/3,grad,corr);
+    renderBase(rgbD,scene,i,theta-TAU/3,grad,corr);
     combineBraid(rgbA,rgbC,rgbD,scene,theta,Math.min(150,corr*scene.vibe.g.braid));
   }
   if(fx.chrono)  fxChrono(rgbA,scene,theta,Math.min(150,corr*scene.vibe.g.chrono),grad);
   fxMaskComp(rgbA,scene,theta);
-  if(fx.kaleido){
+  /* KALEIDO IS RETIRED. The radial mandala fold was the most recognisable
+     ornament in the engine and the curator asked for it gone. The dispatch is
+     what is removed - fxKaleido, its LUT, its four rng() draws in buildScene,
+     its CORR_LADDER rung and its DNA bit 32 in CARD_CH all remain exactly
+     where they were, because every one of them is positional. Old cards with
+     bit 32 set still decode identically; they simply render unfolded. */
+  if(!(scene.__ver>=6) && fx.kaleido){          /* retired for v6+, preserved for the record */
     const scr=renderSource._k||(renderSource._k=new Uint8Array(W*H*3));
     fxKaleido(rgbA,scr,scene,theta,Math.min(150,corr*scene.vibe.g.kaleido));
   }
+  graftApply(rgbA, scene, theta, grad, 0);   /* WITHIN — before the void bites */
   voidCarve(rgbA, scene, grad);
   chromaCap(rgbA, scene, grad);
   dctGhost(rgbA, scene, theta, corr);
+  graftApply(rgbA, scene, theta, grad, 1);   /* ABOVE — after everything */
 }
 
 /* ============================================================================
@@ -3631,9 +4379,12 @@ async function generateSeq(){
     const rr=mulberry32((seed^0x77aa11)>>>0)();
     schemeKey = rr<0.4 ? 'GENESIS' : (rr<0.6 ? 'TISGEN' : SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0]);
   }
-  const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
+  let scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
+  if(window.graftScheme) scheme=window.graftScheme(scheme);   /* the PALETTE role */
   const scene=buildScene(seed, state.mode);
+  scene.__ver=CARDVER|0;
+  if(window.wbGraftScene)window.wbGraftScene(scene);   /* seated BEFORE seatWounds, which caches the mass field */
   scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
@@ -3847,10 +4598,17 @@ function detectPlatform(){
 const PLAT=detectPlatform();
 
 const WORKER_DRIVER=`
+let GRAFTIMG=null;
 self.onmessage=function(e){
   const J=e.data;
+  /* the graphic is heavy and changes only on upload, so it is posted once per
+     worker and held here; the per-frame job carries only the light config plus
+     the image's hash, and the two must agree before it is used. */
+  if(J&&J.t==='graft'){ GRAFTIMG=J.g; return; }
   try{
     const scene=buildScene(J.seed,J.mode);
+    scene.__ver=J.ver|0;   /* <6 renders on the legacy body space */
+    scene.__graft=(J.gr&&J.gr.on&&GRAFTIMG&&GRAFTIMG.id===J.gr.id)?{img:GRAFTIMG,cfg:J.gr}:null;
     scene.voidamt=J.voidamt|0; scene.locality=J.locality|0; scene.chromacap=J.chromacap|0; seatWounds(scene);
     scene.epoch=J.epoch|0;
     applyOverridesPure(scene,J.seed,J.ov);
@@ -3966,7 +4724,9 @@ function spawnPool(){
   try{
     const url=URL.createObjectURL(new Blob([getWorkerSrc()],{type:'text/javascript'}));
     POOL.workers=[];
-    for(let i=0;i<PLAT.workers;i++)POOL.workers.push(new Worker(url));
+    for(let i=0;i<PLAT.workers;i++){ const wk=new Worker(url);
+      if(window.wbGraftPost)window.wbGraftPost(wk);   /* the graphic rides once per worker */
+      POOL.workers.push(wk); }
     return true;
   }catch(e){ POOL.ok=false; POOL.workers=null; return false; }
 }
@@ -4005,9 +4765,12 @@ async function generate(){
     const rr=mulberry32((seed^0x77aa11)>>>0)();
     schemeKey = rr<0.4 ? 'GENESIS' : (rr<0.6 ? 'TISGEN' : SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0]);
   }
-  const scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
+  let scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
     : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
+  if(window.graftScheme) scheme=window.graftScheme(scheme);   /* the PALETTE role */
   const scene=buildScene(seed, state.mode);
+  scene.__ver=CARDVER|0;
+  if(window.wbGraftScene)window.wbGraftScene(scene);   /* seated BEFORE seatWounds, which caches the mass field */
   scene.voidamt=state.voidamt|0; scene.locality=state.locality|0; scene.chromacap=state.chromacap|0; seatWounds(scene);
   scene.epoch=EPOCH;
   applyOverrides(scene, seed);
@@ -4041,7 +4804,8 @@ async function generate(){
   const pimg=pctx.createImageData(540,540);
 
   const jobOf=w=>({seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0, chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
-    corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
+    corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH, ver:CARDVER,
+    gr:(window.wbGraftCfg?window.wbGraftCfg():null),
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
   await new Promise(resolve=>{
@@ -4413,26 +5177,33 @@ function crc8(bytes){let c=0;
   for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c&0x80)?((c<<1)^0x07)&0xff:(c<<1)&0xff;}
   return c;}
 const CARD_MOTION=['AUTO','FLOW','STEP'];
+/* THE ENGINE VERSION. Cards written before v6 grew in a 64-body space under a
+   fixed turntable; the core reproduces that exactly when it is told the card's
+   version. Fresh work is v6 and gets the whole engine — 256 bodies, the camera
+   organ, the modifier. A resurrected old card keeps its own version, so
+   re-saving it never silently re-bodies it. */
+let CARDVER=6;
 function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
   const si=CARD_SCHEMES.indexOf(schemeKey), mi=MODES.indexOf(modeKey);
   const mo=Math.max(0,CARD_MOTION.indexOf(motion||'AUTO'));
   if(si<0||mi<0)return '';
   const forked=(state.voidamt|0)>0||(state.locality|0)>0||(state.chromacap|0)===1||modeKey==='MASS';
-  const v4=(ovActive()||EPOCH===1)&&!forked;
-  const v5=forked;
+  const v6=(CARDVER>=6);
+  const v4=!v6&&(ovActive()||EPOCH===1)&&!forked;
+  const v5=!v6&&forked;
   let v=0n;
   const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
-  push(v5?5:(v4?4:2),4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
+  push(v6?6:(v5?5:(v4?4:2)),4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
   for(const ch of CARD_CH)push(fx[ch]?1:0,1);          // 98 bits
   let nBytes=13, pad=6n;
-  if(v4||v5){                                          // +36-bit override block -> 134 bits
+  if(v4||v5||v6){                                      // +36-bit override block -> 134 bits
     push(OV.maskType,5); push(OV.maskStyle,5);
     push(OV.cx,5); push(OV.cy,5); push(OV.size,5);
     push(OV.n,6); push(OV.form,5);
     push(EPOCH?1:0,1);                     // epoch bit lives in what was padding
     nBytes=17; pad=1n;
   }
-  if(v5){                                              // fork block: +15 bits -> 149
+  if(v5||v6){                                          // fork block: +15 bits -> 149
     push(Math.min(100,state.voidamt|0),7);
     push(state.chromacap?1:0,1);
     push(Math.min(100,state.locality|0),7);
@@ -4469,7 +5240,7 @@ function unpackCard(str){
   let used=0;
   const pull=bits=>{const r=Number((v>>BigInt(TOT-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
   const ver=pull(4);
-  if(!((ver===1&&sx.length===21)||(ver===2&&sx.length===23)||(ver===3&&sx.length===28)||(ver===4&&sx.length===29)||(ver===5&&sx.length===32)))return null;
+  if(!((ver===1&&sx.length===21)||(ver===2&&sx.length===23)||(ver===3&&sx.length===28)||(ver===4&&sx.length===29)||(ver===5&&sx.length===32)||(ver===6&&sx.length===32)))return null;
   const seed=pull(32), si=pull(5), mi=pull(4), corr=pull(7), frames=pull(7);
   const mo=ver>=2?pull(2):0;
   if(si>=CARD_SCHEMES.length||mi>=MODES.length||corr>100||frames<8||frames>80||mo>2)return null;
@@ -4481,20 +5252,21 @@ function unpackCard(str){
     if(ov.form===3)ov.form=31;                          // old MIX -> new MIX
   }
   let epoch=0;
-  if(ver===4||ver===5){
+  if(ver===4||ver===5||ver===6){
     ov={maskType:pull(5),maskStyle:pull(5),cx:pull(5),cy:pull(5),size:pull(5),n:pull(6),form:pull(5)};
     if(ov.maskType>31||ov.maskStyle>19||(ov.n!==0&&(ov.n<2||ov.n>50))||ov.form>31)return null;
     epoch=pull(1);                         // legacy v4 cards carry 0 here by construction
   }
   let voidamt=0, chromacap=0, locality=0;
-  if(ver===5){
+  if(ver===5||ver===6){
     voidamt=pull(7); chromacap=pull(1); locality=pull(7);
     if(voidamt>100||locality>100)return null;
     if(ov&&ov.maskType===0&&ov.n===0&&ov.form===0&&ov.size===0)ov=null;   // fork cards without an override
   }
-  return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov, epoch, voidamt, chromacap, locality};
+  return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov, epoch, voidamt, chromacap, locality, ver};
 }
 function applyCard(c){
+  CARDVER=(c && c.ver!=null) ? c.ver : 6;   /* a decoded card keeps its era; a fresh roll is new work */
   clearOV();
   EPOCH=c.epoch||0;
   setSeg('epochseg','_epoch',String(EPOCH));
@@ -5912,6 +6684,236 @@ $('go').addEventListener('click',()=>{
   $('osd').textContent=rolled;
   generate();
 });
+/* ============================================================================
+   THE GRAFT — ingest, transport and control.
+   ========================================================================== */
+const GRAFT=window.GRAFT={
+  img:null,
+  cfg:{ on:false, rev:1, id:0,
+    roles:{over:true,under:false,floor:false,gobo:false,stencil:false,
+           slice:false,warp:false,grain:false,palette:false},
+    blend:0, depth:0, fit:0, block:false, invert:false,
+    opacity:100, amt:100, scale:100, offx:0, offy:0, rot:0, gamma:100, thresh:0 }
+};
+window.wbGraftCfg=function(){
+  if(!GRAFT.img||!GRAFT.cfg.on)return null;
+  const c=GRAFT.cfg;
+  return { on:true, rev:c.rev|0, id:GRAFT.img.id,
+    roles:Object.assign({},c.roles), blend:c.blend|0, depth:c.depth|0,
+    fit:c.fit|0, block:!!c.block, invert:!!c.invert,
+    opacity:c.opacity, amt:c.amt, scale:c.scale, offx:c.offx, offy:c.offy,
+    rot:c.rot, gamma:c.gamma, thresh:c.thresh };
+};
+window.wbGraftScene=function(scene){
+  const c=window.wbGraftCfg();
+  scene.__graft=(c&&GRAFT.img)?{img:GRAFT.img,cfg:c}:null;
+};
+window.wbGraftPost=function(w){
+  try{ if(GRAFT.img&&w)w.postMessage({t:'graft', g:GRAFT.img}); }catch(e){}
+};
+function grBroadcast(){
+  /* POOL is a top-level `let` in the engine block — a global LEXICAL binding,
+     never a window property. Reach it by name or it is never reached at all. */
+  try{ if(POOL&&POOL.workers)for(const w of POOL.workers)window.wbGraftPost(w); }catch(e){}
+}
+window.graftScheme=function(s){
+  if(!GRAFT.img||!GRAFT.cfg.on||!GRAFT.cfg.roles.palette)return s;
+  const p=GRAFT.img.pal;
+  if(!p||p.length<2)return s;
+  return { stops:p.slice(),
+    glitch:(GRAFT.img.glitch&&GRAFT.img.glitch.length?GRAFT.img.glitch.slice():s.glitch) };
+};
+/* every change bumps the revision — that number is the cache key on the other
+   side of the postMessage boundary, and the only thing that makes a config
+   change land on the next frame instead of the next scene rebuild. */
+/* no living preview in the box: a change bumps the revision and re-arms the
+   button, so the next RENDER is the picture you just set up. */
+function grTouch(){ GRAFT.cfg.rev=(GRAFT.cfg.rev+1)|0; grBroadcast();
+  try{ if(typeof markStale==='function')markStale(); }catch(e){} }
+
+function grPaletteOf(rgb,n){
+  const bins=new Map();
+  for(let i=0;i<n;i++){
+    const r=rgb[i*3], g=rgb[i*3+1], b=rgb[i*3+2];
+    const k=((r>>4)<<8)|((g>>4)<<4)|(b>>4);
+    const e=bins.get(k);
+    if(e){ e[0]+=r; e[1]+=g; e[2]+=b; e[3]++; } else bins.set(k,[r,g,b,1]);
+  }
+  let all=[...bins.values()];
+  if(!all.length)return {pal:['#050507','#ffffff'], glitch:[]};
+  all.sort((a,b)=>b[3]-a[3]);
+  all=all.slice(0,48).map(e=>[e[0]/e[3],e[1]/e[3],e[2]/e[3],e[3]]);
+  const hx=c=>'#'+[c[0],c[1],c[2]].map(v=>('0'+(Math.max(0,Math.min(255,v|0))).toString(16)).slice(-2)).join('');
+  const L=c=>(c[0]*77+c[1]*151+c[2]*28)/256;
+  const byL=all.slice().sort((a,b)=>L(a)-L(b));
+  const NS=7, pal=[];
+  for(let i=0;i<NS;i++){
+    const j=Math.round(i*(byL.length-1)/(NS-1));
+    pal.push(hx(byL[Math.min(byL.length-1,Math.max(0,j))]));
+  }
+  const sat=c=>{ const mx=Math.max(c[0],c[1],c[2]), mn=Math.min(c[0],c[1],c[2]);
+    return (mx-mn)*(mx/255); };
+  const glitch=all.slice().sort((a,b)=>sat(b)-sat(a)).slice(0,5).map(hx);
+  return {pal:pal, glitch:glitch};
+}
+function grAdopt(im,name){
+  const CAP=512;
+  let w=im.naturalWidth||im.width, h=im.naturalHeight||im.height;
+  if(!w||!h){ $('gr-name').textContent='EMPTY IMAGE'; return; }
+  const s=Math.min(1,CAP/Math.max(w,h));
+  w=Math.max(1,Math.round(w*s)); h=Math.max(1,Math.round(h*s));
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  const cx=cv.getContext('2d',{willReadFrequently:true});
+  cx.imageSmoothingEnabled=true; cx.drawImage(im,0,0,w,h);
+  let d;
+  try{ d=cx.getImageData(0,0,w,h).data; }
+  catch(e){ $('gr-name').textContent='BLOCKED BY CANVAS SECURITY'; return; }
+  const rgb=new Uint8Array(w*h*3), lum=new Uint8Array(w*h);
+  let hsh=2166136261;
+  for(let i=0;i<w*h;i++){
+    const o=i*4, a=d[o+3];
+    /* transparency reads as the void's own black, so a cut-out graphic
+       behaves like a mask everywhere without a separate alpha path */
+    const r=(d[o]*a/255)|0, g=(d[o+1]*a/255)|0, b=(d[o+2]*a/255)|0;
+    rgb[i*3]=r; rgb[i*3+1]=g; rgb[i*3+2]=b;
+    lum[i]=(r*77+g*151+b*28)>>8;
+    hsh=Math.imul(hsh^r,16777619); hsh=Math.imul(hsh^g,16777619); hsh=Math.imul(hsh^b,16777619);
+  }
+  const pk=grPaletteOf(rgb,w*h);
+  GRAFT.img={ id:hsh>>>0, name:String(name||'image').slice(0,64),
+    w:w, h:h, rgb:rgb, lum:lum, pal:pk.pal, glitch:pk.glitch };
+  const tc=$('gr-thumb'), tx=tc.getContext('2d');
+  tx.fillStyle='#0a080e'; tx.fillRect(0,0,72,72);
+  const ts=Math.min(72/w,72/h);
+  tx.imageSmoothingEnabled=false;
+  tx.drawImage(cv,(72-w*ts)/2,(72-h*ts)/2,w*ts,h*ts);
+  $('gr-thumbwrap').style.display='flex';
+  $('gr-name').textContent=GRAFT.img.name.toUpperCase();
+  $('gr-dims').textContent=w+'×'+h+' · hash '+GRAFT.img.id.toString(16).toUpperCase()
+    +' · palette '+GRAFT.img.pal.join(' ');
+  if(!GRAFT.cfg.on){ GRAFT.cfg.on=true; grOnSync(); }
+  grBroadcast(); grTouch();
+}
+function grIngest(file){
+  if(!file||!/^image\//.test(file.type||'')){ $('gr-name').textContent='NOT AN IMAGE'; return; }
+  const fr=new FileReader();
+  fr.onload=()=>{ const im=new Image();
+    im.onload=()=>grAdopt(im,file.name);
+    im.onerror=()=>{ $('gr-name').textContent='COULD NOT DECODE'; };
+    im.src=fr.result; };
+  fr.onerror=()=>{ $('gr-name').textContent='COULD NOT READ'; };
+  fr.readAsDataURL(file);
+}
+function grOnSync(){
+  $('gr-onlab').textContent=GRAFT.cfg.on?'ON':'OFF';
+  $('gr-on').textContent=GRAFT.cfg.on
+    ?'GRAFT: ON (your graphic is in the signal)'
+    :'GRAFT: OFF';
+}
+(function(){
+  const drop=$('gr-drop'), file=$('gr-file');
+  drop.addEventListener('click',()=>file.click());
+  file.addEventListener('change',()=>{ if(file.files&&file.files[0])grIngest(file.files[0]); file.value=''; });
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{
+    e.preventDefault(); e.stopPropagation(); drop.style.borderColor='#ff8fd0'; }));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{
+    e.preventDefault(); e.stopPropagation(); drop.style.borderColor='#4a3a5c'; }));
+  drop.addEventListener('drop',e=>{
+    const dt=e.dataTransfer; if(dt&&dt.files&&dt.files[0])grIngest(dt.files[0]); });
+  $('gr-clear').addEventListener('click',()=>{
+    GRAFT.img=null; GRAFT.cfg.on=false; grOnSync();
+    $('gr-thumbwrap').style.display='none';
+    $('gr-name').textContent='NONE';
+    grTouch(); });
+  $('gr-on').addEventListener('click',()=>{
+    if(!GRAFT.img){ $('gr-name').textContent='CHOOSE A GRAPHIC FIRST'; return; }
+    GRAFT.cfg.on=!GRAFT.cfg.on; grOnSync(); grTouch(); });
+  $('gr-block').addEventListener('click',()=>{
+    GRAFT.cfg.block=!GRAFT.cfg.block;
+    $('gr-blocklab').textContent=GRAFT.cfg.block?'BLOCK':'SMOOTH';
+    $('gr-block').textContent='SAMPLING: '+(GRAFT.cfg.block?'BLOCK (nearest neighbour)':'SMOOTH');
+    grTouch(); });
+  $('gr-invert').addEventListener('click',()=>{
+    GRAFT.cfg.invert=!GRAFT.cfg.invert;
+    $('gr-invlab').textContent=GRAFT.cfg.invert?'ON':'OFF';
+    $('gr-invert').textContent='INVERT: '+(GRAFT.cfg.invert?'ON':'OFF');
+    grTouch(); });
+
+  /* roles are a multi-select: any number of them at once */
+  const ROLES=[['over','OVER'],['under','UNDER'],['floor','FLOOR'],['gobo','GOBO'],
+    ['stencil','STENCIL'],['slice','SLICE'],['warp','WARP'],['grain','GRAIN'],
+    ['palette','PALETTE'],['emboss','EMBOSS'],['silhouette','SILHOU']];
+  const rh=$('gr-roles');
+  ROLES.forEach(([k,lab])=>{
+    const b=document.createElement('button');
+    b.textContent=lab; b.setAttribute('data-role',k);
+    b.setAttribute('aria-pressed',String(!!GRAFT.cfg.roles[k]));
+    b.addEventListener('click',()=>{ GRAFT.cfg.roles[k]=!GRAFT.cfg.roles[k];
+      b.setAttribute('aria-pressed',String(!!GRAFT.cfg.roles[k])); grTouch(); });
+    rh.appendChild(b);
+  });
+  /* THE AVAILABILITY READOUT. The seed decides which surfaces exist; the UI has to
+     say so out loud. Driven by the preview worker's meta, which measures the same
+     seated scene it is about to render — so this can never disagree with the pixels. */
+  window.grAvailUI=function(av,mode){
+    const NAME={over:'OVER',under:'UNDER',floor:'FLOOR',gobo:'GOBO'};
+    const dead=[];
+    rh.querySelectorAll('button[data-role]').forEach(b2=>{
+      const k2=b2.getAttribute('data-role'), ok=(av[k2]==null)?1:av[k2];
+      b2.setAttribute('data-avail', ok?'1':'0');
+      if(!ok)dead.push(NAME[k2]||k2.toUpperCase());
+    });
+    const el=$('gr-avail'); if(!el)return;
+    if(!dead.length){ el.innerHTML='THIS SEED ('+(mode||'?')+') &mdash; all nine roles have a surface to land on.'; return; }
+    el.innerHTML='THIS SEED ('+(mode||'?')+') &mdash; <b>'+dead.join(' / ')+'</b> '+
+      (dead.length>1?'have':'has')+' nothing to land on here'+
+      (mode==='IDOL'&&dead.indexOf('FLOOR')>=0?' (an idol has no mirror plane)':'')+
+      '. Arm '+(dead.length>1?'them':'it')+' anyway and '+(dead.length>1?'they':'it')+
+      ' will come alive on a seed that does.';
+  };
+  /* single-choice segments */
+  const one=(host,labels,get,set,lab)=>{
+    const el=$(host);
+    labels.forEach((n,i)=>{
+      const b=document.createElement('button');
+      b.textContent=n; b.setAttribute('aria-pressed',String(get()===i));
+      b.addEventListener('click',()=>{ set(i);
+        el.querySelectorAll('button').forEach(o=>o.setAttribute('aria-pressed','false'));
+        b.setAttribute('aria-pressed','true');
+        if(lab)$(lab).textContent=n; grTouch(); });
+      el.appendChild(b);
+    });
+  };
+  one('gr-blend',['NORMAL','MULTIPLY','SCREEN','OVERLAY','DIFFERENCE','ADD',
+    'SUBTRACT','DARKEN','LIGHTEN','XOR','HARDLIGHT','SOFTLIGHT'],
+    ()=>GRAFT.cfg.blend, v=>{GRAFT.cfg.blend=v;}, 'gr-blendlab');
+  one('gr-depth',['WITHIN','ABOVE'],()=>GRAFT.cfg.depth, v=>{GRAFT.cfg.depth=v;}, 'gr-depthlab');
+  one('gr-fit',['COVER','CONTAIN','STRETCH','TILE'],()=>GRAFT.cfg.fit, v=>{GRAFT.cfg.fit=v;}, 'gr-fitlab');
+
+  const SL=[['opacity','OPACITY',0,100,'%'],['amt','AMOUNT',0,200,'%'],
+    ['scale','SCALE',5,400,'%'],['offx','OFFSET X',-100,100,'%'],
+    ['offy','OFFSET Y',-100,100,'%'],['rot','ROTATION',-180,180,'°'],
+    ['gamma','GAMMA',10,400,'%'],['thresh','THRESHOLD',0,100,'%']];
+  const host=$('gr-sliders');
+  for(const [k,lab,lo,hi,suf] of SL){
+    const row=document.createElement('div'); row.className='wbrow';
+    row.innerHTML='<label>'+lab+'</label><input type="range" min="'+lo+'" max="'+hi
+      +'" value="'+GRAFT.cfg[k]+'"><span class="v">'+GRAFT.cfg[k]+suf+'</span>';
+    const r=row.querySelector('input'), v=row.querySelector('.v'), l=row.querySelector('label');
+    const dflt=GRAFT.cfg[k];
+    r.addEventListener('input',()=>{ GRAFT.cfg[k]=+r.value; v.textContent=r.value+suf;
+      v.style.color=(+r.value===dflt)?'#7c8':'#ff8fd0'; grTouch(); });
+    l.addEventListener('dblclick',()=>{ r.value=dflt; GRAFT.cfg[k]=dflt;
+      v.textContent=dflt+suf; v.style.color='#7c8'; grTouch(); });
+    host.appendChild(row);
+  }
+  grOnSync();
+})();
+/* the instrument's own hand on the graft — the shell block is wrapped in an
+   IIFE, so these have to be handed out explicitly for gates and the console. */
+window.grAdopt=grAdopt; window.grIngest=grIngest; window.grTouch=grTouch;
+window.grBroadcast=grBroadcast; window.grOnSync=grOnSync; window.grPaletteOf=grPaletteOf;
+
 document.querySelectorAll('.tab').forEach(t=>{
   t.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(o=>o.setAttribute('aria-selected', o===t?'true':'false'));
