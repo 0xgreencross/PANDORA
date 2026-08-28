@@ -306,7 +306,13 @@ input[type=text],input[type=number]{
 #gr-drop{border:1px dashed #4a3a5c;border-radius:6px;padding:12px 8px;text-align:center;
   font-size:9px;letter-spacing:.1em;color:#8b7ba0;cursor:pointer;user-select:none;min-height:var(--tap);}
 #gr-thumbwrap{display:none;align-items:center;gap:var(--gap);}
-#gr-thumb{width:52px;height:52px;image-rendering:pixelated;border:1px solid #3a2d48;border-radius:3px;background:#0a080e;}
+#gr-thumb{width:52px;height:52px;image-rendering:pixelated;border:1px solid #3a2d48;border-radius:3px;background:#0a080e;cursor:pointer;}
+/* THE DROP ZONE IS AN INVITATION, NOT A CONTROL. Once a source is loaded it
+   is 50px of nothing on a phone — and on a 375px screen that is the whole
+   difference between the GRAFT / SAMPLING / INVERT row sitting on the page
+   you land on and being paged away where it reads as missing. It folds
+   away, and the thumbnail becomes the way back to the picker. */
+#p-graft.hasgraft #gr-drop{display:none;}
 #wb-count{font-size:8px;color:var(--faint);}
 #pubstub{display:none!important;}
 
@@ -8484,7 +8490,9 @@ function grAdopt(im,name){
   $('gr-name').textContent=GRAFT.img.name.toUpperCase();
   $('gr-dims').textContent=w+'×'+h+' · hash '+GRAFT.img.id.toString(16).toUpperCase()
     +' · palette '+GRAFT.img.pal.join(' ');
-  if(!GRAFT.cfg.on){ GRAFT.cfg.on=true; grOnSync(); }
+  if(!GRAFT.cfg.on) GRAFT.cfg.on=true;
+  grOnSync();   /* unconditional: replacing a source while the graft is already on
+                   must still refresh the labels and the folded drop zone */
   grBroadcast(); grTouch();
 }
 /* ============================================================================
@@ -8752,7 +8760,9 @@ function grAdoptAnim(dec,name){
   /* short enough to stay one line on a phone: the panel is paged, not scrolled */
   $('gr-dims').textContent=w+'×'+h+' · '+nk+(nk<dec.n?('/'+dec.n):'')+'f'
     +(L.cycles>1?(' ×'+L.cycles):'')+' · '+secs+'s @ '+fps+'fps · LOOP SYNCED';
-  if(!GRAFT.cfg.on){ GRAFT.cfg.on=true; grOnSync(); }
+  if(!GRAFT.cfg.on) GRAFT.cfg.on=true;
+  grOnSync();   /* unconditional: replacing a source while the graft is already on
+                   must still refresh the labels and the folded drop zone */
   grBroadcast(); grTouch();
   return true;
 }
@@ -8786,7 +8796,13 @@ function grIngestStill(file){
   fr.onerror=()=>{ $('gr-name').textContent='COULD NOT READ'; };
   fr.readAsDataURL(file);
 }
+/* one switch, so the fold can never disagree with what is loaded */
+function grHasSync(){
+  const p=document.getElementById('p-graft');
+  if(p)p.classList.toggle('hasgraft', !!(window.GRAFT&&GRAFT.img));
+}
 function grOnSync(){
+  grHasSync();
   $('gr-onlab').textContent=GRAFT.cfg.on?'ON':'OFF';
   $('gr-on').textContent=GRAFT.cfg.on
     ?'GRAFT: ON (your graphic is in the signal)'
@@ -8795,6 +8811,10 @@ function grOnSync(){
 (function(){
   const drop=$('gr-drop'), file=$('gr-file');
   drop.addEventListener('click',()=>file.click());
+  /* with the drop zone folded away the thumbnail IS the picker */
+  const thumb=$('gr-thumb');
+  if(thumb){ thumb.title='TAP TO REPLACE THE SOURCE';
+    thumb.addEventListener('click',()=>file.click()); }
   file.addEventListener('change',()=>{ if(file.files&&file.files[0])grIngest(file.files[0]); file.value=''; });
   ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{
     e.preventDefault(); e.stopPropagation(); drop.style.borderColor='#ff8fd0'; }));
