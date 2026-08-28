@@ -51,7 +51,7 @@ body.embed #view { visibility: visible !important; position: fixed !important;
 <style>
 /* ============================================================================
    DITHERVOID // PANDORA — PUBLIC SHELL v1.0
-   This stylesheet is the ONLY layout authority on the page. The EIDOLON E8.0
+   This stylesheet is the ONLY layout authority on the page. The EIDOLON E9.0
    engine lives headless inside #legacy-root (display:none); the single organ
    relocated out of it is the #view canvas. No transplanted rules, no cascade
    wars, no !important anywhere.
@@ -352,7 +352,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   <header id="topbar">
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
     <div id="topright">
-      <div id="tagline">ENGINE · EIDOLON E4.0 TABULA RASA<br>ONE SEED · ONE TOKEN · ONE CHANCE</div>
+      <div id="tagline">ENGINE · EIDOLON E9.0 CHIMERA<br>ONE SEED · ONE TOKEN · ONE CHANCE</div>
       <nav id="shellrooms">
         <a href="gardens.html">GARDENS</a>
         <a href="showcase.html">SHOWCASE</a>
@@ -458,15 +458,15 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   <div class="row"><b>DNA IS THE ARTWORK'S PROOF.</b> The card in the DNA field is the loop's complete genome. Copy it, post it, keep it: RESURRECT rebuilds the exact loop from any card, on any device, forever.</div>
   <div class="row"><b>MINTING CARRIES A SMALL FEE</b> — 0.01 ETH for a 1/1, 0.001 ETH for editions — because this is an art project by <b>GREENCROSS</b> and the fee pays the artist's monthly AI bill. One seed, one token, one chance.</div>
   <div class="row"><b>CC0 — NO RIGHTS RESERVED.</b> Copy it, remix it, sell it, build it into your own work. You are encouraged to. Made something with a loop? <a href="showcase.html#submit">Submit it to the showcase</a>.</div>
-  <div class="row"><a href="gardens.html">GARDENS</a> · <a href="showcase.html">SHOWCASE</a> · <a href="sealed.html">THE SEALED</a> · <a target="_blank" rel="noopener" id="instr-contract" href="#">CONTRACT ↗</a> · ENGINE: EIDOLON E8.0</div>
+  <div class="row"><a href="gardens.html">GARDENS</a> · <a href="showcase.html">SHOWCASE</a> · <a href="sealed.html">THE SEALED</a> · <a target="_blank" rel="noopener" id="instr-contract" href="#">CONTRACT ↗</a> · ENGINE: EIDOLON E9.0 CHIMERA</div>
 </div></div>
 
-<!-- ==== EIDOLON E8.0 — untouched engine markup, headless ==== -->
+<!-- ==== EIDOLON E9.0 — engine markup, headless ==== -->
 <div id="legacy-root" style="display:none">
 
 <header id="mast">
   <div id="wordmark">EIDO<b>LON</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV E4.0 · EIDOLON<br>TABULA RASA</div>
+  <div id="mastrev">REV E9.0 · EIDOLON<br>CHIMERA</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -495,7 +495,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV E4.0 · EIDOLON<br>TABULA RASA</div>
+    <div class="ver">REV E9.0 · EIDOLON<br>CHIMERA</div>
   </header>
 
   <div class="colL">
@@ -563,7 +563,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
       </div>
       <div class="field">
         <label>FRAMES <span id="lab-dur"></span><span class="v" id="v-frames">36</span></label>
-        <input type="range" id="frames" min="8" max="80" step="4" value="36">
+        <input type="range" id="frames" min="8" max="80" step="1" value="36">
       </div>
     </section>
     <section id="p-sigils" class="panel">
@@ -1474,7 +1474,7 @@ function buildGraft(im,c){
     amt:(c.amt==null?100:c.amt)/100,
     blend:c.blend|0, depth:c.depth|0, block:!!c.block, inv:!!c.invert,
     gam:Math.max(0.05,(c.gamma==null?100:c.gamma)/100),
-    thr:(c.thresh|0)/100, roles:roles,
+    thr:(c.thresh|0)/100, roles:roles, fr:-1, lo:0, ro:0,
     _grain:null,_grainW:0,_grainH:0,_grainO:null,_wf:null};
 }
 const GUV=[0,0];
@@ -1498,7 +1498,7 @@ function graftLum(g,u,v){
     let ix=(GUV[0]*w)|0, iy=(GUV[1]*h)|0;
     if(ix<0)ix=0; else if(ix>=w)ix=w-1;
     if(iy<0)iy=0; else if(iy>=h)iy=h-1;
-    t=im.lum[iy*w+ix]/255;
+    t=im.lum[g.lo+iy*w+ix]/255;
   }else{
     const fx=GUV[0]*w-0.5, fy=GUV[1]*h-0.5;
     let x0=Math.floor(fx), y0=Math.floor(fy);
@@ -1506,7 +1506,8 @@ function graftLum(g,u,v){
     let x1=x0+1, y1=y0+1;
     if(x0<0)x0=0; if(y0<0)y0=0; if(x1<0)x1=0; if(y1<0)y1=0;
     if(x0>=w)x0=w-1; if(y0>=h)y0=h-1; if(x1>=w)x1=w-1; if(y1>=h)y1=h-1;
-    const a=im.lum[y0*w+x0], b=im.lum[y0*w+x1], c2=im.lum[y1*w+x0], d=im.lum[y1*w+x1];
+    const L0=g.lo;
+    const a=im.lum[L0+y0*w+x0], b=im.lum[L0+y0*w+x1], c2=im.lum[L0+y1*w+x0], d=im.lum[L0+y1*w+x1];
     const top=a+(b-a)*tx, bot=c2+(d-c2)*tx;
     t=(top+(bot-top)*ty)/255;
   }
@@ -1520,7 +1521,7 @@ function graftRGB(g,u,v){
     let ix=(GUV[0]*w)|0, iy=(GUV[1]*h)|0;
     if(ix<0)ix=0; else if(ix>=w)ix=w-1;
     if(iy<0)iy=0; else if(iy>=h)iy=h-1;
-    const o=(iy*w+ix)*3;
+    const o=g.ro+(iy*w+ix)*3;
     GRGB[0]=graftTone(g,im.rgb[o]/255)*255;
     GRGB[1]=graftTone(g,im.rgb[o+1]/255)*255;
     GRGB[2]=graftTone(g,im.rgb[o+2]/255)*255;
@@ -1531,7 +1532,8 @@ function graftRGB(g,u,v){
     let x1=x0+1, y1=y0+1;
     if(x0<0)x0=0; if(y0<0)y0=0; if(x1<0)x1=0; if(y1<0)y1=0;
     if(x0>=w)x0=w-1; if(y0>=h)y0=h-1; if(x1>=w)x1=w-1; if(y1>=h)y1=h-1;
-    const oA=(y0*w+x0)*3, oB=(y0*w+x1)*3, oC=(y1*w+x0)*3, oD=(y1*w+x1)*3;
+    const R0=g.ro;
+    const oA=R0+(y0*w+x0)*3, oB=R0+(y0*w+x1)*3, oC=R0+(y1*w+x0)*3, oD=R0+(y1*w+x1)*3;
     for(let q=0;q<3;q++){
       const a=im.rgb[oA+q], b=im.rgb[oB+q], c2=im.rgb[oC+q], d=im.rgb[oD+q];
       const top=a+(b-a)*tx, bot=c2+(d-c2)*tx;
@@ -1544,13 +1546,38 @@ function graftRGB(g,u,v){
    because the config crosses a postMessage boundary and arrives as a fresh
    object every frame — identity comparison would rebuild the grain and warp
    fields 25 times a second. */
-function graftOf(scene){
+function graftOf(scene,theta){
   const G=scene&&scene.__graft;
   if(!G||!G.img||!G.cfg||!G.cfg.on)return null;
   const sig=G.cfg.rev|0;
-  if(scene._gr&&scene._grSig===sig&&scene._grImg===G.img)return scene._gr;
-  scene._grImg=G.img; scene._grSig=sig;
-  return (scene._gr=buildGraft(G.img,G.cfg));
+  let g;
+  if(scene._gr&&scene._grSig===sig&&scene._grImg===G.img) g=scene._gr;
+  else { scene._grImg=G.img; scene._grSig=sig; g=(scene._gr=buildGraft(G.img,G.cfg)); }
+  /* AN ANIMATED GRAFT. The imported loop is the clock. On import the box takes
+     the GIF's frame count and its per-frame delays for its own, so frame i of
+     the render IS frame i of the GIF and the two cycles are the same cycle.
+     The phase is floored, and a phase that reaches exactly 1.0 at TAU wraps to
+     0 — which is the whole of why the composite loop still closes.
+     A still graft has n===1: the cursor never moves and nothing below runs. */
+  const n=G.img.n|0;
+  if(n>1){
+    /* cyc is how many whole times the source runs inside one loop — 1 for any
+       animation long enough to be the loop, more for a short one that repeats
+       rather than being slowed down. floor of a phase reaching exactly 1.0 at
+       TAU gives n*cyc, and n*cyc mod n is 0: the cycle closes on frame one. */
+    const cyc=(G.img.cyc|0)||1;
+    let ph=(theta||0)/TAU; ph-=Math.floor(ph);
+    /* theta/TAU for frame i does not always land exactly on i/N — 7*TAU/12
+       divided by TAU comes back a hair under 7/12, and a bare floor then
+       shows the wrong frame. Nudge past the float, far below the 1/N grid. */
+    let fr=Math.floor(ph*n*cyc+1e-9); fr%=n; if(fr<0)fr+=n; if(fr>=n)fr=n-1;
+    if(g.fr!==fr){
+      g.fr=fr; g.lo=fr*G.img.w*G.img.h; g.ro=g.lo*3;
+      /* everything derived from the picture is derived from THIS picture */
+      g._grain=null; g._grainO=null; g._grainW=0; g._grainH=0; g._lst=null; g._wf=null;
+    }
+  }
+  return g;
 }
 /* GRAIN — the graphic becomes the dither threshold itself. It is not drawn;
    it decides WHERE the ordered dither tips one way or the other, so the
@@ -1756,7 +1783,7 @@ function graftSilhouettePass(buf,g,theta,grad){
   }
 }
 function graftApply(buf,scene,theta,grad,phase){
-  const g=graftOf(scene); if(!g)return;
+  const g=graftOf(scene,theta); if(!g)return;
   if((g.depth|0)!==(phase|0))return;
   const R=g.roles;
   if(R.warp)    graftWarpPass(buf,g,theta);
@@ -1783,7 +1810,7 @@ function renderScene(rgb, scene, theta, corr, grad){
      the artwork's own tone ramp. FLOOR lies it flat on the mirror plane, so
      it perspective-projects and slides as the camera orbits. GOBO puts it in
      front of the LIGHT — the body is lit THROUGH the picture. */
-  const GRs=graftOf(scene);
+  const GRs=graftOf(scene,theta);
   const GRU=(GRs&&GRs.roles.under)?GRs:null;
   const GRF=(GRs&&GRs.roles.floor)?GRs:null;
   const GRG=(GRs&&GRs.roles.gobo)?GRs:null;
@@ -1912,7 +1939,7 @@ function renderBase(rgb, scene, t, theta, grad, corr){
   if(m==='IDOL'){
     const field=renderBase._fi||(renderBase._fi=new Float32Array(FW*FW));
     scene._corr=CORR;
-    const GRi=graftOf(scene);
+    const GRi=graftOf(scene,theta);
     const GRNi=(GRi&&GRi.roles.grain)?graftGrain(GRi):null;
     renderIdol(field, scene, theta);
     for(let y=0;y<H;y++){
@@ -2658,7 +2685,7 @@ function renderIdol(field, scene, theta){
      in ten. They do now. FLOOR still cannot: an idol has no mirror plane to catch
      a reflection, and faking one would be a lie the rest of the frame contradicts.
      The UI availability readout is what tells you so, rather than a dead slider. */
-  const GRs=graftOf(scene);
+  const GRs=graftOf(scene,theta);
   const GRU=(GRs&&GRs.roles.under)?GRs:null;
   const GRG=(GRs&&GRs.roles.gobo)?GRs:null;
   if(GRU){
@@ -4312,9 +4339,15 @@ document.addEventListener('visibilitychange',()=>{
   if(document.hidden) stopPlayer();
   else if(PLAYER.args && !PLAYER.raf) startPlayer(...PLAYER.args);
 });
-function startPlayer(frames,pal,dim,N,delayMs){
+function startPlayer(frames,pal,dim,N,delayMs,table){
   stopPlayer();
-  PLAYER.args=[frames,pal,dim,N,delayMs];
+  PLAYER.args=[frames,pal,dim,N,delayMs,table];
+  /* an adopted animation may carry uneven delays, so the player walks a
+     cumulative table rather than dividing by one cadence */
+  let cum=null, span=0;
+  if(table&&table.length===N){ cum=new Float64Array(N+1);
+    for(let i=0;i<N;i++) cum[i+1]=cum[i]+table[i]*10;
+    span=cum[N]; }
   const off=PLAYER.cv||(PLAYER.cv=document.createElement('canvas'));
   off.width=dim; off.height=dim;
   const octx=off.getContext('2d');
@@ -4327,7 +4360,11 @@ function startPlayer(frames,pal,dim,N,delayMs){
     PLAYER.raf=requestAnimationFrame(tick);
     if(st.prevRaf){const g=now-st.prevRaf; st.rafN++; st.rafSum+=g; if(g>st.rafWorst)st.rafWorst=g;}
     st.prevRaf=now;
-    const fi=(((((now-t0)/delayMs)|0)%N)+N)%N;   /* rAF can stamp BEFORE t0: never index backwards */
+    let fi;
+    if(cum){ let e=(now-t0)%span; if(e<0)e+=span;
+      let lo=0,hi=N; while(lo+1<hi){ const mid=(lo+hi)>>1; if(cum[mid]<=e)lo=mid; else hi=mid; }
+      fi=lo; }
+    else fi=(((((now-t0)/delayMs)|0)%N)+N)%N;   /* rAF can stamp BEFORE t0: never index backwards */
     if(fi===last)return;
     if(lastAdv){const d=now-lastAdv; st.n++; st.sum+=d; if(d>st.worst)st.worst=d;
       if(d>delayMs*1.6)st.late++;}
@@ -4354,7 +4391,10 @@ function startPlayer(frames,pal,dim,N,delayMs){
 $('osd').addEventListener('click',()=>{PLAYER.hud=!PLAYER.hud;
   if(!PLAYER.hud&&PLAYER.stats)$('osd').textContent='LOOP';});
 const TAU=6.283185307179586;
-const FPS=25, DELAY=4;                 // 25fps locked  (4 centiseconds = 40ms/frame)
+/* the clock was locked at 25fps. An imported animation is allowed to set it:
+   GDLY, when present, is the per-frame delay table in centiseconds and it is
+   what every encoder and the on-screen player read. */
+let FPS=25, DELAY=4, GDLY=null;        // 4 centiseconds = 40ms/frame
 
 /* can this device hand a GIF file to the native share sheet? (iOS -> Save Image -> Photos) */
 const canShareFiles=(()=>{ try{
@@ -4501,11 +4541,11 @@ async function generateSeq(){
     for(let q=0;q<W*H;q++){const c=pal[indices[q]]; const k=q*4; pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
     vctx.putImageData(preview,0,0);
 
-    gifFrame(sink, W, H, indices, DELAY, minCodeSize);   // encode + discard
+    gifFrame(sink, W, H, indices, (GDLY&&GDLY.length===N)?GDLY[i]:DELAY, minCodeSize);   // encode + discard
     for(const xs of XS){const d=xs.d, xi=xs.idx;
       for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W, row=y*d;
         for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
-      gifFrame(xs.sink, d, d, xi, DELAY, xs.mcs);
+      gifFrame(xs.sink, d, d, xi, (GDLY&&GDLY.length===N)?GDLY[i]:DELAY, xs.mcs);
       if(d===540)pvFrames[i]=xi.slice();               // retained for the canvas player
     }
 
@@ -4547,7 +4587,7 @@ async function generateSeq(){
   // play the finished loop right in the monitor. data: URL (not blob:) so an iOS
   // long-press offers "Save to Photos"; blob is kept for share/download.
   lastDataURL=bytesToDataURL(bytes);
-  startPlayer(pvFrames, pal, 540, N, DELAY*10);
+  startPlayer(pvFrames, pal, 540, N, DELAY*10, (GDLY&&GDLY.length===N)?GDLY:null);
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
   $('download').classList.add('ready');   // saving is deliberate on every platform
@@ -4614,6 +4654,8 @@ self.onmessage=function(e){
     applyOverridesPure(scene,J.seed,J.ov);
     const {grad,pal,near}=buildPalette(J.scheme,scene.vibe);
     const N=J.N, corr=J.corr, fx=J.fx, DELAY=J.DELAY;
+    const DLY=(J.DLY&&J.DLY.length===N)?J.DLY:null;   /* an adopted animation's own timing */
+    const dlyAt=function(i){ return DLY?DLY[i]:DELAY; };
     const dAmt=(14+corr*0.20)*scene.vibe.ditherMul;
     const MV=Object.assign({},scene.rev4.motion,{quant:0,strobes:[]});
     const tEff=function(th){let t=th;
@@ -4690,11 +4732,11 @@ self.onmessage=function(e){
       if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices,pal.length,scene,theta,corr,fx);
       sanctityIdx(indices, scene, i);
       const chunks=[];
-      { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,DELAY,MCS[0]); chunks.push(cs.done().slice()); }
+      { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,dlyAt(i),MCS[0]); chunks.push(cs.done().slice()); }
       for(let k2=0;k2<3;k2++){const d=DIMS[k2+1],xi=xidx[k2];
         for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W,row=y*d;
           for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
-        const cs=new Sink(1<<14); gifFrame(cs,d,d,xi,DELAY,MCS[k2+1]); chunks.push(cs.done().slice());
+        const cs=new Sink(1<<14); gifFrame(cs,d,d,xi,dlyAt(i),MCS[k2+1]); chunks.push(cs.done().slice());
       }
       const pv=xidx[1].slice();                       // 540-idx twin: live preview + retained playback
       self.postMessage({t:'frame',i:i,c:chunks,pv:pv},
@@ -4804,7 +4846,7 @@ async function generate(){
   const pimg=pctx.createImageData(540,540);
 
   const jobOf=w=>({seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0, chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
-    corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH, ver:CARDVER,
+    corr, N, fx, ov:{...OV}, DELAY, DLY:(GDLY&&GDLY.length===N)?GDLY:null, epoch:EPOCH, ver:CARDVER,
     gr:(window.wbGraftCfg?window.wbGraftCfg():null),
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
@@ -4886,7 +4928,7 @@ async function generate(){
   $('osd').textContent='LOOP · '+mainSz;
 
   lastDataURL=bytesToDataURL(bytes);
-  startPlayer(pvFrames, pal, 540, N, DELAY*10);
+  startPlayer(pvFrames, pal, 540, N, DELAY*10, (GDLY&&GDLY.length===N)?GDLY:null);
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
   $('download').classList.add('ready');   // saving is deliberate on every platform
@@ -5137,7 +5179,9 @@ function bindSlider(id,labId,key,fmt){
 }
 bindSlider('corr','v-corr','corr');
 bindSlider('frames','v-frames','frames');
-const updDur=()=>{ $('lab-dur').textContent=(+$('frames').value/FPS).toFixed(2)+'s @ '+FPS+'fps'; };
+const updDur=()=>{ const n=+$('frames').value;
+  const cs=(GDLY&&GDLY.length===n)?GDLY.reduce((a,b)=>a+b,0):n*DELAY;
+  $('lab-dur').textContent=(cs/100).toFixed(2)+'s @ '+(cs?(n/(cs/100)).toFixed(1):FPS)+'fps'; };
 $('frames').addEventListener('input',updDur); updDur();
 $('corr').addEventListener('input',()=>{
   applyCorrFx(state.corr);                       /* existence, not just amplitude */
@@ -6481,12 +6525,12 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='E4.0';
+const REV_SELF='E9.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
     const t=await r.text();
-    const m=t.match(/REV (\d+\.\d+[a-z]?)/);
+    const m=t.match(/REV (E?\d+\.\d+[a-z]?)/);   /* the page writes REV E9.0 — the old pattern demanded a bare digit and never matched */
     if(m&&m[1]!==REV_SELF){
       const b=$('revbar');
       b.textContent='A NEWER PANDORA IS LIVE (REV '+m[1]+' — THIS TAB RUNS '+REV_SELF+') · TAP TO RELOAD';
@@ -6781,7 +6825,7 @@ function grAdopt(im,name){
   }
   const pk=grPaletteOf(rgb,w*h);
   GRAFT.img={ id:hsh>>>0, name:String(name||'image').slice(0,64),
-    w:w, h:h, rgb:rgb, lum:lum, pal:pk.pal, glitch:pk.glitch };
+    w:w, h:h, n:1, rgb:rgb, lum:lum, pal:pk.pal, glitch:pk.glitch };
   const tc=$('gr-thumb'), tx=tc.getContext('2d');
   tx.fillStyle='#0a080e'; tx.fillRect(0,0,72,72);
   const ts=Math.min(72/w,72/h);
@@ -6794,8 +6838,297 @@ function grAdopt(im,name){
   if(!GRAFT.cfg.on){ GRAFT.cfg.on=true; grOnSync(); }
   grBroadcast(); grTouch();
 }
+/* ============================================================================
+   THE GIF READER — a self-contained GIF87a/89a decoder.
+   The engine has always been able to WRITE a GIF; to graft one it has to read
+   one. No dependency: the box is a single file and stays one. Returns every
+   frame already composited (disposal honoured) as full-canvas RGBA, plus each
+   frame's own delay, because a GIF's timing is not always uniform and the
+   loop is going to inherit it.
+   ========================================================================== */
+function grDecodeGIF(buf){
+  const b=new Uint8Array(buf); let p=0;
+  const u8=()=>b[p++];
+  const u16=()=>{ const v=b[p]|(b[p+1]<<8); p+=2; return v; };
+  const sig=String.fromCharCode(b[0],b[1],b[2],b[3],b[4],b[5]);
+  if(sig!=='GIF87a'&&sig!=='GIF89a')return null;
+  p=6;
+  const W=u16(), H=u16();
+  if(!W||!H||W*H>36e6)return null;
+  const packed=u8(); u8(); u8();                       /* bg index, aspect: unused */
+  let gct=null;
+  if(packed&0x80){ const n=2<<(packed&7); gct=b.subarray(p,p+n*3); p+=n*3; }
+
+  /* sub-block chains appear after every extension and every image */
+  const skipBlocks=()=>{ let s; while((s=u8()))p+=s; };
+  const readBlocks=()=>{ const parts=[]; let s,total=0;
+    while((s=u8())){ parts.push(b.subarray(p,p+s)); p+=s; total+=s; }
+    const out=new Uint8Array(total); let o=0;
+    for(const q of parts){ out.set(q,o); o+=q.length; }
+    return out; };
+
+  /* LZW, the variable-code-width kind GIF uses, cleared by an explicit code */
+  const lzw=(minCode,data,npx)=>{
+    const out=new Uint8Array(npx);
+    const clear=1<<minCode, eoi=clear+1;
+    const prefix=new Int32Array(4096), suffix=new Uint8Array(4096), first=new Uint8Array(4096);
+    let codeSize=minCode+1, next=eoi+1, mask=(1<<codeSize)-1;
+    for(let i=0;i<clear;i++){ prefix[i]=-1; suffix[i]=i; first[i]=i; }
+    let bit=0, prev=-1, oi=0;
+    const stack=new Uint8Array(4096);
+    const nbits=data.length*8;
+    while(oi<npx){
+      if(bit+codeSize>nbits)break;
+      let code=0;
+      for(let i=0;i<codeSize;i++){
+        const by=data[(bit+i)>>3], bv=(by>>((bit+i)&7))&1;
+        code|=bv<<i;
+      }
+      bit+=codeSize;
+      if(code===clear){ codeSize=minCode+1; mask=(1<<codeSize)-1; next=eoi+1; prev=-1; continue; }
+      if(code===eoi)break;
+      let cur=code, sp=0;
+      if(code>=next){                                  /* the KwKwK case */
+        if(prev<0)break;
+        stack[sp++]=first[prev]; cur=prev;
+      }
+      while(cur>=clear){ stack[sp++]=suffix[cur]; cur=prefix[cur]; if(sp>4095)break; }
+      stack[sp++]=suffix[cur]|0;
+      const fc=stack[sp-1];
+      while(sp>0&&oi<npx) out[oi++]=stack[--sp];
+      if(prev>=0&&next<4096){
+        prefix[next]=prev; suffix[next]=fc; first[next]=first[prev]<0?fc:first[prev];
+        next++;
+        if((next&mask)===0&&codeSize<12){ codeSize++; mask=(1<<codeSize)-1; }
+      }
+      prev=code>=next?prev:code;
+      if(code<next) prev=code;
+    }
+    return out;
+  };
+
+  const frames=[], delays=[];
+  const canvas=new Uint8ClampedArray(W*H*4);           /* the composited stage */
+  let saved=null;
+  let delay=0, tIdx=-1, disposal=0;
+  let guard=0;
+  for(;;){
+    if(p>=b.length||++guard>4096)break;
+    const blk=u8();
+    if(blk===0x3B)break;                               /* trailer */
+    if(blk===0x21){                                    /* extension */
+      const label=u8();
+      if(label===0xF9){
+        const sz=u8();                                  /* always 4 */
+        const pk=u8(); delay=u16(); const ti=u8(); u8();
+        disposal=(pk>>2)&7; tIdx=(pk&1)?ti:-1;
+        if(sz!==4)return null;
+      } else skipBlocks();
+      continue;
+    }
+    if(blk!==0x2C)  continue;                          /* only images remain */
+    const ix=u16(), iy=u16(), iw=u16(), ih=u16();
+    const ip=u8();
+    let ct=gct;
+    if(ip&0x80){ const n=2<<(ip&7); ct=b.subarray(p,p+n*3); p+=n*3; }
+    const interlaced=!!(ip&0x40);
+    const minCode=u8();
+    const data=readBlocks();
+    if(!ct||!iw||!ih){ continue; }
+    const idx=lzw(minCode,data,iw*ih);
+
+    /* what the NEXT frame starts from depends on THIS frame's disposal */
+    if(disposal===3) saved=canvas.slice();
+
+    const rows=new Int32Array(ih);
+    if(interlaced){
+      let r=0;
+      for(const [start,step] of [[0,8],[4,8],[2,4],[1,2]])
+        for(let y=start;y<ih;y+=step) rows[r++]=y;
+    } else for(let y=0;y<ih;y++) rows[y]=y;
+
+    for(let sy=0;sy<ih;sy++){
+      const dy=iy+rows[sy]; if(dy<0||dy>=H)continue;
+      for(let sx=0;sx<iw;sx++){
+        const dx=ix+sx; if(dx<0||dx>=W)continue;
+        const v=idx[sy*iw+sx];
+        if(v===tIdx)continue;                          /* transparent: keep what is under */
+        const o=(dy*W+dx)*4, c=v*3;
+        canvas[o]=ct[c]; canvas[o+1]=ct[c+1]; canvas[o+2]=ct[c+2]; canvas[o+3]=255;
+      }
+    }
+    frames.push(canvas.slice());
+    /* GIF delay is centiseconds; 0 and 1 are historically rendered as 10 */
+    delays.push(delay<2?10:delay);
+
+    if(disposal===2){                                  /* restore to background */
+      for(let y=0;y<ih;y++){ const dy=iy+y; if(dy<0||dy>=H)continue;
+        for(let x=0;x<iw;x++){ const dx=ix+x; if(dx<0||dx>=W)continue;
+          const o=(dy*W+dx)*4; canvas[o]=canvas[o+1]=canvas[o+2]=canvas[o+3]=0; } }
+    } else if(disposal===3 && saved){ canvas.set(saved); }
+    delay=0; tIdx=-1; disposal=0;
+    if(frames.length>=512)break;
+  }
+  if(!frames.length)return null;
+  return {w:W, h:H, n:frames.length, delays:delays, frames:frames};
+}
+
+/* ============================================================================
+   THE MOVING GRAFT — importing an animated GIF, and handing it the clock.
+   The imported loop is not stretched to fit ours; ours is rebuilt to fit IT.
+   On import the box takes the GIF's frame count and its per-frame delays for
+   its own, so the composite plays at the source's true fps for the source's
+   true duration, and frame i of the render is frame i of the GIF. Because both
+   cycles are then the SAME cycle, the loop still closes exactly.
+   ========================================================================== */
+const GRANI={ budget:1.2e6, maxFrames:80, minFrames:8, prev:null };
+
+function grFitFrames(n){
+  /* the DNA card carries the frame count in seven bits and the engine accepts
+     8..80. Inside that window the mapping is one to one; outside it, the loop
+     still closes because floor(i*n/N) wraps with i. */
+  if(n<GRANI.minFrames)return GRANI.minFrames;
+  if(n>GRANI.maxFrames)return GRANI.maxFrames;
+  return n;
+}
+/* fold a source with more frames than the loop can carry down to N, summing the
+   delays it swallows so the DURATION survives even when frames do not */
+function grFoldDelays(delays,N){
+  const n=delays.length, out=new Array(N).fill(0);
+  for(let j=0;j<n;j++){ let i=Math.floor(j*N/n); if(i>=N)i=N-1; out[i]+=delays[j]; }
+  for(let i=0;i<N;i++) if(out[i]<1) out[i]=1;
+  return out;
+}
+/* HOW A SOURCE BECOMES A LOOP.
+   The obvious move for a GIF with fewer frames than the loop's floor of eight
+   is to stretch it — but stretching is exactly what breaks the promise. Hold
+   one source frame across two of ours and its 8cs becomes 15cs: the duration
+   still adds up but the CADENCE is a lie. So a short source is not stretched,
+   it is REPEATED: every source frame keeps its own delay, verbatim, and the
+   animation runs whole cycles inside one loop at precisely its own fps. The
+   mapping stays floor(i*n/N), which for N = n*k is just floor(i/k) — uniform,
+   so nothing has to travel to the worker to describe it, and the cycle still
+   lands on frame 0 at TAU. */
+function grLoopPlan(n,delays){
+  if(n>=GRANI.minFrames && n<=GRANI.maxFrames)
+    return {N:n, dly:delays.slice(), cycles:1};       /* one to one, delays and all */
+  if(n<GRANI.minFrames){
+    const k=Math.ceil(GRANI.minFrames/n), N=n*k;
+    const dly=new Array(N);
+    for(let i=0;i<N;i++) dly[i]=delays[i%n];          /* every frame keeps its own time */
+    return {N:N, dly:dly, cycles:k};
+  }
+  /* longer than the card's seven bits can carry: frames go, duration stays */
+  return {N:GRANI.maxFrames, dly:grFoldDelays(delays,GRANI.maxFrames), cycles:1};
+}
+function grLoopAdopt(n,delays){
+  const plan=grLoopPlan(n,delays);
+  const N=plan.N, dly=plan.dly;
+  if(!GRANI.prev) GRANI.prev={frames:state.frames, delay:DELAY, gdly:GDLY};
+  GDLY=dly;
+  DELAY=Math.max(1,Math.round(dly.reduce((a,b)=>a+b,0)/N));
+  FPS=100/DELAY;
+  state.frames=N;
+  const fs=$('frames'); if(fs){ fs.value=N; fs.dispatchEvent(new Event('input')); }
+  return {N:N, total:dly.reduce((a,b)=>a+b,0), dly:dly, cycles:plan.cycles};
+}
+function grLoopRestore(){
+  if(!GRANI.prev)return;
+  state.frames=GRANI.prev.frames; DELAY=GRANI.prev.delay; GDLY=GRANI.prev.gdly;
+  FPS=100/Math.max(1,DELAY);
+  const fs=$('frames'); if(fs){ fs.value=state.frames; fs.dispatchEvent(new Event('input')); }
+  GRANI.prev=null;
+}
+
+function grAdoptAnim(dec,name){
+  const nAll=dec.n;
+  const N=grLoopPlan(nAll,dec.delays).N;
+  /* which source frames survive, and the delays they carry */
+  const keep=[], kd=[];
+  if(N>=nAll){ for(let j=0;j<nAll;j++){ keep.push(j); kd.push(dec.delays[j]); } }
+  else {
+    const folded=grFoldDelays(dec.delays,N);
+    for(let i=0;i<N;i++){ let j=Math.floor(i*nAll/N); if(j>=nAll)j=nAll-1; keep.push(j); kd.push(folded[i]); }
+  }
+  const nk=keep.length;
+  /* a whole animation has to fit in memory AND cross to every worker, so the
+     per-frame size comes out of a total-pixel budget, not a fixed cap */
+  let cap=Math.floor(Math.sqrt(GRANI.budget/nk));
+  cap=Math.max(64,Math.min(384,cap));
+  const s=Math.min(1,cap/Math.max(dec.w,dec.h));
+  const w=Math.max(1,Math.round(dec.w*s)), h=Math.max(1,Math.round(dec.h*s));
+
+  const sc=document.createElement('canvas'); sc.width=dec.w; sc.height=dec.h;
+  const sx2=sc.getContext('2d',{willReadFrequently:true});
+  const tc=document.createElement('canvas'); tc.width=w; tc.height=h;
+  const tx2=tc.getContext('2d',{willReadFrequently:true});
+  tx2.imageSmoothingEnabled=true;
+
+  const px=w*h;
+  const rgb=new Uint8Array(px*3*nk), lum=new Uint8Array(px*nk);
+  let hsh=2166136261;
+  for(let f=0;f<nk;f++){
+    const src=dec.frames[keep[f]];
+    const id=sx2.createImageData(dec.w,dec.h); id.data.set(src);
+    sx2.putImageData(id,0,0);
+    tx2.clearRect(0,0,w,h); tx2.drawImage(sc,0,0,w,h);
+    let d;
+    try{ d=tx2.getImageData(0,0,w,h).data; }
+    catch(e){ $('gr-name').textContent='BLOCKED BY CANVAS SECURITY'; return false; }
+    const lo=f*px, ro=lo*3;
+    for(let i=0;i<px;i++){
+      const o=i*4, a=d[o+3];
+      const r=(d[o]*a/255)|0, g2=(d[o+1]*a/255)|0, b=(d[o+2]*a/255)|0;
+      rgb[ro+i*3]=r; rgb[ro+i*3+1]=g2; rgb[ro+i*3+2]=b;
+      lum[lo+i]=(r*77+g2*151+b*28)>>8;
+      if((i&7)===0){ hsh=Math.imul(hsh^r,16777619); hsh=Math.imul(hsh^g2,16777619); hsh=Math.imul(hsh^b,16777619); }
+    }
+    hsh=Math.imul(hsh^kd[f],16777619);
+  }
+  const pk=grPaletteOf(rgb,px);                    /* the colourway of frame one */
+  GRAFT.img={ id:hsh>>>0, name:String(name||'animation').slice(0,64),
+    w:w, h:h, n:nk, cyc:1, rgb:rgb, lum:lum, pal:pk.pal, glitch:pk.glitch, anim:true };
+
+  const L=grLoopAdopt(nk,kd);
+  GRAFT.img.cyc=L.cycles||1;
+  /* the thumbnail shows the first frame */
+  const th=$('gr-thumb'), thx=th.getContext('2d');
+  thx.fillStyle='#0a080e'; thx.fillRect(0,0,72,72);
+  const ts=Math.min(72/w,72/h);
+  thx.imageSmoothingEnabled=false;
+  thx.drawImage(tc,(72-w*ts)/2,(72-h*ts)/2,w*ts,h*ts);
+  $('gr-thumbwrap').style.display='flex';
+  $('gr-name').textContent=GRAFT.img.name.toUpperCase();
+  const secs=(L.total/100).toFixed(2), fps=(L.N/(L.total/100)).toFixed(1);
+  $('gr-dims').textContent=w+'×'+h+' · '+nk+(nk<dec.n?('/'+dec.n):'')+' frames · '
+    +secs+'s · '+fps+' fps'+(L.cycles>1?(' · '+L.cycles+' cycles per loop'):'')
+    +' · the loop now runs at the source’s clock';
+  if(!GRAFT.cfg.on){ GRAFT.cfg.on=true; grOnSync(); }
+  grBroadcast(); grTouch();
+  return true;
+}
+
 function grIngest(file){
   if(!file||!/^image\//.test(file.type||'')){ $('gr-name').textContent='NOT AN IMAGE'; return; }
+  /* a GIF may be a loop rather than a picture; read the bytes and find out */
+  if(/gif/i.test(file.type)||/\.gif$/i.test(file.name||'')){
+    const br=new FileReader();
+    br.onload=()=>{
+      let dec=null;
+      try{ dec=grDecodeGIF(br.result); }catch(e){ dec=null; }
+      if(dec&&dec.n>1){ $('gr-name').textContent='READING '+dec.n+' FRAMES…';
+        setTimeout(()=>{ try{ grAdoptAnim(dec,file.name); }
+          catch(e){ $('gr-name').textContent='COULD NOT ADOPT THE ANIMATION'; } },0);
+        return; }
+      grIngestStill(file);            /* one frame, or unreadable: an ordinary picture */
+    };
+    br.onerror=()=>grIngestStill(file);
+    br.readAsArrayBuffer(file);
+    return;
+  }
+  grIngestStill(file);
+}
+function grIngestStill(file){
   const fr=new FileReader();
   fr.onload=()=>{ const im=new Image();
     im.onload=()=>grAdopt(im,file.name);
@@ -6821,7 +7154,7 @@ function grOnSync(){
   drop.addEventListener('drop',e=>{
     const dt=e.dataTransfer; if(dt&&dt.files&&dt.files[0])grIngest(dt.files[0]); });
   $('gr-clear').addEventListener('click',()=>{
-    GRAFT.img=null; GRAFT.cfg.on=false; grOnSync();
+    GRAFT.img=null; GRAFT.cfg.on=false; grOnSync(); grLoopRestore();
     $('gr-thumbwrap').style.display='none';
     $('gr-name').textContent='NONE';
     grTouch(); });
@@ -7449,7 +7782,7 @@ function hideMintedBand(){ const b=document.getElementById('mintedband'); if(b)b
 <script>
 /* ============================================================================
    PUBLIC SHELL WIRING — the shell owns every visible element and drives the
-   headless EIDOLON E8.0 engine by direct calls only. One relocation is
+   headless EIDOLON E9.0 engine by direct calls only. One relocation is
    permitted: the #view canvas moves into the shell's stage. Nothing else is
    adopted, moved, or restyled. State flows one way: engine → paint().
    ========================================================================== */
