@@ -8749,9 +8749,9 @@ function grAdoptAnim(dec,name){
   $('gr-thumbwrap').style.display='flex';
   $('gr-name').textContent=GRAFT.img.name.toUpperCase();
   const secs=(L.total/100).toFixed(2), fps=(L.N/(L.total/100)).toFixed(1);
-  $('gr-dims').textContent=w+'×'+h+' · '+nk+(nk<dec.n?('/'+dec.n):'')+' frames · '
-    +secs+'s · '+fps+' fps'+(L.cycles>1?(' · '+L.cycles+' cycles per loop'):'')
-    +' · the loop now runs at the source’s clock';
+  /* short enough to stay one line on a phone: the panel is paged, not scrolled */
+  $('gr-dims').textContent=w+'×'+h+' · '+nk+(nk<dec.n?('/'+dec.n):'')+'f'
+    +(L.cycles>1?(' ×'+L.cycles):'')+' · '+secs+'s @ '+fps+'fps · LOOP SYNCED';
   if(!GRAFT.cfg.on){ GRAFT.cfg.on=true; grOnSync(); }
   grBroadcast(); grTouch();
   return true;
@@ -9590,8 +9590,29 @@ async function uploadPreview(seed){
     pgprev.disabled = pageIdx === 0;
     pgnext.disabled = pageIdx === pages.length - 1;
   }
-  var relayoutPending = 0;
-  function relayout(){
+  var relayoutPending = 0, relayoutKeepPending = 0, roBusy = false, ro = null;
+  /* WHY A WATCHER AND NOT A CALL AT EACH SITE.
+     A page is measured once, on arrival at its group. But a control can grow
+     AFTER that measurement: the graft readout goes from one line to three the
+     moment a GIF is loaded, and the role-availability note rewrites itself for
+     every seed. When that happens the page silently overflows and everything
+     below the cut is simply gone — no scroll, no pager, no clue that there is
+     more. Measuring only on arrival was the bug; the shell now watches the
+     live page and measures again whenever its own height changes, keeping you
+     on the page you were reading rather than throwing you back to the first. */
+  function watchPage(tgt){
+    if (!window.ResizeObserver) return;
+    try{
+      if (ro) ro.disconnect();
+      ro = new ResizeObserver(function(){
+        if (roBusy) return;                 /* our own show/hide, not the content */
+        clearTimeout(relayoutKeepPending);
+        relayoutKeepPending = setTimeout(function(){ relayout(true); }, 80);
+      });
+      [].slice.call(tgt.children).forEach(function(k){ ro.observe(k); });
+    }catch(e){}
+  }
+  function relayout(keep){
     var p = activePanel(); if (!p) return;
     var tgt = pageTargetOf(p);
     /* EVERY RELAYOUT STARTS FROM REST. The first version of this raised the
@@ -9599,13 +9620,15 @@ async function uploadPreview(seed){
        the artwork at 4.3% of an iPhone SE for the rest of the session — the
        gate passed every rule and the picture was a postage stamp. The raise is
        a property of the GROUP you are in, not a mode you fall into. */
-    if (!userPinned && document.body.classList.contains('sheetup')){
+    if (!keep && !userPinned && document.body.classList.contains('sheetup')){
       document.body.classList.remove('sheetup');
       grip.setAttribute('aria-pressed','false');
       grip.innerHTML = '&#9650;';
     }
     var avail = p.clientHeight;
     if (avail < 40){ return; }              /* not laid out yet */
+    var prev = pageIdx;
+    roBusy = true;                          /* suppress the echo of our own toggling */
     pages = computePages(tgt, avail);
     /* NO AUTOMATIC RAISE. The first version raised the sheet whenever a group
        needed more than four pages, and on an iPhone SE every group does — so
@@ -9614,7 +9637,11 @@ async function uploadPreview(seed){
        postage stamp, which is how that got out the door for one round.
        The trade between picture size and controls-per-page is the curator's,
        exactly like the raster. The grip offers it; nothing takes it. */
-    showPage(0);
+    showPage(keep ? Math.min(prev, pages.length - 1) : 0);
+    watchPage(tgt);
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){ roBusy = false; });
+    });
   }
   function relayoutSoon(){
     clearTimeout(relayoutPending);
