@@ -552,7 +552,7 @@ body.artmax #ui{
       <div class="field"><label>CHROMA</label><div class="seg" id="chromaseg"></div></div>
       <div class="field"><label>ERA</label><div class="seg" id="epochseg"></div></div>
       <div class="field"><label>FRAMES <span id="lab-dur"></span><span class="v" id="v-frames">36</span></label>
-        <input type="range" id="frames" min="8" max="80" step="4" value="36"></div>
+        <input type="range" id="frames" min="8" max="80" step="1" value="36"></div>
     </section>
 
     <section id="p-sigils" class="panel" data-page-target="toggles">
@@ -1510,7 +1510,7 @@ function buildGraft(im,c){
     amt:(c.amt==null?100:c.amt)/100,
     blend:c.blend|0, depth:c.depth|0, block:!!c.block, inv:!!c.invert,
     gam:Math.max(0.05,(c.gamma==null?100:c.gamma)/100),
-    thr:(c.thresh|0)/100, roles:roles,
+    thr:(c.thresh|0)/100, roles:roles, fr:-1, lo:0, ro:0,
     _grain:null,_grainW:0,_grainH:0,_grainO:null,_wf:null};
 }
 const GUV=[0,0];
@@ -1534,7 +1534,7 @@ function graftLum(g,u,v){
     let ix=(GUV[0]*w)|0, iy=(GUV[1]*h)|0;
     if(ix<0)ix=0; else if(ix>=w)ix=w-1;
     if(iy<0)iy=0; else if(iy>=h)iy=h-1;
-    t=im.lum[iy*w+ix]/255;
+    t=im.lum[g.lo+iy*w+ix]/255;
   }else{
     const fx=GUV[0]*w-0.5, fy=GUV[1]*h-0.5;
     let x0=Math.floor(fx), y0=Math.floor(fy);
@@ -1542,7 +1542,8 @@ function graftLum(g,u,v){
     let x1=x0+1, y1=y0+1;
     if(x0<0)x0=0; if(y0<0)y0=0; if(x1<0)x1=0; if(y1<0)y1=0;
     if(x0>=w)x0=w-1; if(y0>=h)y0=h-1; if(x1>=w)x1=w-1; if(y1>=h)y1=h-1;
-    const a=im.lum[y0*w+x0], b=im.lum[y0*w+x1], c2=im.lum[y1*w+x0], d=im.lum[y1*w+x1];
+    const L0=g.lo;
+    const a=im.lum[L0+y0*w+x0], b=im.lum[L0+y0*w+x1], c2=im.lum[L0+y1*w+x0], d=im.lum[L0+y1*w+x1];
     const top=a+(b-a)*tx, bot=c2+(d-c2)*tx;
     t=(top+(bot-top)*ty)/255;
   }
@@ -1556,7 +1557,7 @@ function graftRGB(g,u,v){
     let ix=(GUV[0]*w)|0, iy=(GUV[1]*h)|0;
     if(ix<0)ix=0; else if(ix>=w)ix=w-1;
     if(iy<0)iy=0; else if(iy>=h)iy=h-1;
-    const o=(iy*w+ix)*3;
+    const o=g.ro+(iy*w+ix)*3;
     GRGB[0]=graftTone(g,im.rgb[o]/255)*255;
     GRGB[1]=graftTone(g,im.rgb[o+1]/255)*255;
     GRGB[2]=graftTone(g,im.rgb[o+2]/255)*255;
@@ -1567,7 +1568,8 @@ function graftRGB(g,u,v){
     let x1=x0+1, y1=y0+1;
     if(x0<0)x0=0; if(y0<0)y0=0; if(x1<0)x1=0; if(y1<0)y1=0;
     if(x0>=w)x0=w-1; if(y0>=h)y0=h-1; if(x1>=w)x1=w-1; if(y1>=h)y1=h-1;
-    const oA=(y0*w+x0)*3, oB=(y0*w+x1)*3, oC=(y1*w+x0)*3, oD=(y1*w+x1)*3;
+    const R0=g.ro;
+    const oA=R0+(y0*w+x0)*3, oB=R0+(y0*w+x1)*3, oC=R0+(y1*w+x0)*3, oD=R0+(y1*w+x1)*3;
     for(let q=0;q<3;q++){
       const a=im.rgb[oA+q], b=im.rgb[oB+q], c2=im.rgb[oC+q], d=im.rgb[oD+q];
       const top=a+(b-a)*tx, bot=c2+(d-c2)*tx;
@@ -1580,13 +1582,38 @@ function graftRGB(g,u,v){
    because the config crosses a postMessage boundary and arrives as a fresh
    object every frame — identity comparison would rebuild the grain and warp
    fields 25 times a second. */
-function graftOf(scene){
+function graftOf(scene,theta){
   const G=scene&&scene.__graft;
   if(!G||!G.img||!G.cfg||!G.cfg.on)return null;
   const sig=G.cfg.rev|0;
-  if(scene._gr&&scene._grSig===sig&&scene._grImg===G.img)return scene._gr;
-  scene._grImg=G.img; scene._grSig=sig;
-  return (scene._gr=buildGraft(G.img,G.cfg));
+  let g;
+  if(scene._gr&&scene._grSig===sig&&scene._grImg===G.img) g=scene._gr;
+  else { scene._grImg=G.img; scene._grSig=sig; g=(scene._gr=buildGraft(G.img,G.cfg)); }
+  /* AN ANIMATED GRAFT. The imported loop is the clock. On import the box takes
+     the GIF's frame count and its per-frame delays for its own, so frame i of
+     the render IS frame i of the GIF and the two cycles are the same cycle.
+     The phase is floored, and a phase that reaches exactly 1.0 at TAU wraps to
+     0 — which is the whole of why the composite loop still closes.
+     A still graft has n===1: the cursor never moves and nothing below runs. */
+  const n=G.img.n|0;
+  if(n>1){
+    /* cyc is how many whole times the source runs inside one loop — 1 for any
+       animation long enough to be the loop, more for a short one that repeats
+       rather than being slowed down. floor of a phase reaching exactly 1.0 at
+       TAU gives n*cyc, and n*cyc mod n is 0: the cycle closes on frame one. */
+    const cyc=(G.img.cyc|0)||1;
+    let ph=(theta||0)/TAU; ph-=Math.floor(ph);
+    /* theta/TAU for frame i does not always land exactly on i/N — 7*TAU/12
+       divided by TAU comes back a hair under 7/12, and a bare floor then
+       shows the wrong frame. Nudge past the float, far below the 1/N grid. */
+    let fr=Math.floor(ph*n*cyc+1e-9); fr%=n; if(fr<0)fr+=n; if(fr>=n)fr=n-1;
+    if(g.fr!==fr){
+      g.fr=fr; g.lo=fr*G.img.w*G.img.h; g.ro=g.lo*3;
+      /* everything derived from the picture is derived from THIS picture */
+      g._grain=null; g._grainO=null; g._grainW=0; g._grainH=0; g._lst=null; g._wf=null;
+    }
+  }
+  return g;
 }
 /* GRAIN — the graphic becomes the dither threshold itself. It is not drawn;
    it decides WHERE the ordered dither tips one way or the other, so the
@@ -1792,7 +1819,7 @@ function graftSilhouettePass(buf,g,theta,grad){
   }
 }
 function graftApply(buf,scene,theta,grad,phase){
-  const g=graftOf(scene); if(!g)return;
+  const g=graftOf(scene,theta); if(!g)return;
   if((g.depth|0)!==(phase|0))return;
   const R=g.roles;
   if(R.warp)    graftWarpPass(buf,g,theta);
@@ -1819,7 +1846,7 @@ function renderScene(rgb, scene, theta, corr, grad){
      the artwork's own tone ramp. FLOOR lies it flat on the mirror plane, so
      it perspective-projects and slides as the camera orbits. GOBO puts it in
      front of the LIGHT — the body is lit THROUGH the picture. */
-  const GRs=graftOf(scene);
+  const GRs=graftOf(scene,theta);
   const GRU=(GRs&&GRs.roles.under)?GRs:null;
   const GRF=(GRs&&GRs.roles.floor)?GRs:null;
   const GRG=(GRs&&GRs.roles.gobo)?GRs:null;
@@ -1943,11 +1970,12 @@ function renderScene(rgb, scene, theta, corr, grad){
    render worker, sequential path — is the same image by construction. */
 function renderBase(rgb, scene, t, theta, grad, corr){
   const m=scene.mode;
-  const CORR=(corr!=null?corr:(scene._corr!=null?scene._corr:60));
+  const CORR=(scene.__ver>=6) ? (corr!=null?corr:(scene._corr!=null?scene._corr:60))
+                              : (scene._corr!=null?scene._corr:60);   /* pre-v6 latched it; that is what those pieces are */
   if(m==='IDOL'){
     const field=renderBase._fi||(renderBase._fi=new Float32Array(FW*FW));
     scene._corr=CORR;
-    const GRi=graftOf(scene);
+    const GRi=graftOf(scene,theta);
     const GRNi=(GRi&&GRi.roles.grain)?graftGrain(GRi):null;
     renderIdol(field, scene, theta);
     for(let y=0;y<H;y++){
@@ -2104,23 +2132,28 @@ function faultOf(scene){
 }
 function massField(scene){
   if(scene._mf) return scene._mf;
+  /* THE VERSION GATE. Cards minted before v6 were grown in a 64-body space
+     by a fixed turntable. That output is a record, not a preference, so it
+     is reproduced here exactly — bugs included. v6 and later get the full
+     256 bodies, the modifier organ and the camera organ. */
+  const LEG=!(scene.__ver>=6);
   const rng=mulberry32((scene.seed^0x14CE55)>>>0);
-  let fam=(rng()*256)|0;            // 16 skeletons x 16 vocabularies = 256 bodies
-  if(scene.__wbFam!=null)fam=((scene.__wbFam&15)<<4)|(fam&15);  // workbench: skeleton by hand
-  if(scene.__wbPrim!=null)fam=(fam&240)|(scene.__wbPrim&15);    // workbench: vocabulary by hand
+  let fam=(rng()*(LEG?64:256))|0;   // one draw either way: the rng stream never shifts
+  if(!LEG&&scene.__wbFam!=null)fam=((scene.__wbFam&15)<<4)|(fam&15);  // workbench: skeleton by hand
+  if(!LEG&&scene.__wbPrim!=null)fam=(fam&240)|(scene.__wbPrim&15);    // workbench: vocabulary by hand
   let vf=(scene.voidamt|0)/100;
   if(scene.mode==='MASS'&&vf<=0)vf=0.45;
   vf=Math.max(0.12,Math.min(0.88,vf));
   const target=1-vf;
   const no=scene.noise;
-  const arr=fam>>4, prim=fam&15;         // 16 skeletons x 16 vocabularies = 256 bodies
+  const arr=LEG?(fam>>3):(fam>>4), prim=LEG?(fam&7):(fam&15);
   /* THE FOLD IS RETIRED - but its dice are not. This expression short-circuits,
      so it consumes a VARIABLE number of rng() draws depending on arr, and that
      draw pattern is load-bearing for every parameter rolled after it. Keep the
      expression verbatim, discard the answer. */
   const _foldRoll=(arr===1)||((arr===3||arr===2)&&rng()<0.4)
     ||((arr===9||arr===13||arr===15)&&rng()<0.35);
-  const mirror=false;   /* no bilateral symmetry: no butterflies, no totems */
+  const mirror=LEG?_foldRoll:false;   /* purged for new work; preserved for the record */
   const ph=rng()*90;
   const fbmA=0.02+rng()*0.035, fbmF=4+rng()*5;
   /* ---- primitive vocabulary ---- */
@@ -2128,7 +2161,8 @@ function massField(scene){
   const P=[];    // parts: [type, x,y,z, a,b,c, k(blend), rot]
   const C=[];    // carvings: spheres [x,y,z,r] subtracted
   const F=[];    // fracture planes [nx,ny,off,halfwidth]
-  const pick=(base)=>{ const r=rng(); return r<0.58?base:( (base+1+((r*14)|0))&15 ); };
+  const pick=(base)=>{ const r=rng(); return LEG ? (r<0.62?base:((base+1+((r*6)|0))&7))
+                                                 : (r<0.58?base:((base+1+((r*14)|0))&15)); };
   /* rot may now be given explicitly — a truss bar has to point AT its node.
      Omit it and the old behaviour (a random tilt) is preserved exactly. */
   const addPart=(t,x,y,z,a,b,c,k,rot)=>{ P.push([t,x,y,z,a,b,c,k, rot==null?(rng()*0.9-0.45):rot]); };
@@ -2240,8 +2274,8 @@ function massField(scene){
   const modrng=mulberry32((scene.seed^0x30D1F1)>>>0);
   const MK0=modrng()<0.30?0:1+((modrng()*7)|0);
   const MOD={kind:MK0, amt:0.45+modrng()*1.05, freq:2+modrng()*5, ph:modrng()*TAU};
-  if(scene.__wbMod!=null)MOD.kind=scene.__wbMod&7;
-  const MK=MOD.kind, MA=MOD.amt, MF=MOD.freq, MP=MOD.ph;
+  if(!LEG&&scene.__wbMod!=null)MOD.kind=scene.__wbMod&7;
+  const MK=LEG?0:MOD.kind, MA=MOD.amt, MF=MOD.freq, MP=MOD.ph;
   const MODK=(MK===1||MK===4)?0.55:(MK===2?0.62:(MK===3?0.58:(MK===5?0.72:1)));
   const MCLIP=MK?1.05:0.85, MSTEP=MK?34:22;
   const sm=(a,b,k)=>{const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25;};
@@ -2433,7 +2467,10 @@ function massField(scene){
        range — worm's-eye through high overhead — floored by the mirror. */
     el:    hasFloor?(0.06+crng()*0.80):(-0.26+crng()*1.12),
     lightSpin:0 };
-  if(scene.__wbCam!=null) CAM.motion=scene.__wbCam&7;   /* workbench: gesture by hand */
+  if(!LEG&&scene.__wbCam!=null) CAM.motion=scene.__wbCam&7;   /* workbench: gesture by hand */
+  if(LEG){ CAM.legacy=1; CAM.motion=-1; CAM.spin=1; CAM.a0=lightBase*0.7;
+           CAM.el=0.20+(fam%9)*0.018; CAM.distK=1; CAM.distAmp=0; CAM.roll=0;
+           CAM.lightSpin=0; }   /* motion=-1 so the LOCKED-camera light orbit below cannot fire */
   if(CAM.motion===5) CAM.lightSpin=_lspin;   /* LOCKED camera => the LIGHT orbits instead */
 
   /* frame the body: probe coverage at theta=0 through the REAL camera, so the
@@ -2490,7 +2527,10 @@ function surfTear(px,py,pz,theta,M,amp){
    what keeps the GIF loop seamless: at theta=TAU the camera is back where it
    started, exactly. Do not add a term here that does not close. */
 function camAt(mf, theta){
-  const K=mf.cam; let az=K.a0, el=K.el, dk=K.distK, roll=0;
+  const K=mf.cam;
+  /* the pre-v6 camera: one revolution, fixed elevation and distance, no
+     floor clamp and no elevation clamp — exactly the old inline block. */
+  if(K.legacy) return {az:theta+K.a0, el:K.el, dist:1.25*Math.max(1,mf.S), roll:0}; let az=K.a0, el=K.el, dk=K.distK, roll=0;
   switch(K.motion){
     case 1: az+=K.swing*Math.sin(theta)*K.spin; break;                  /* PENDULUM — rocks, never completes */
     case 2: az+=theta*2*K.spin; break;                                  /* DOUBLE   — two revolutions per loop */
@@ -2681,7 +2721,7 @@ function renderIdol(field, scene, theta){
      in ten. They do now. FLOOR still cannot: an idol has no mirror plane to catch
      a reflection, and faking one would be a lie the rest of the frame contradicts.
      The UI availability readout is what tells you so, rather than a dead slider. */
-  const GRs=graftOf(scene);
+  const GRs=graftOf(scene,theta);
   const GRU=(GRs&&GRs.roles.under)?GRs:null;
   const GRG=(GRs&&GRs.roles.gobo)?GRs:null;
   if(GRU){
@@ -4092,7 +4132,7 @@ function fxMaskComp(buf,scene,theta){
      still decodes to 26 - it just paints nothing.
      This also retires a loop-closure defect: FOIL3, STAR5 and BLOB at k===1
      advance their rotation by a half-integer multiple of TAU and do not close. */
-  if(shape===18||(shape>=21&&shape<=28))return;
+  if(scene.__ver>=6 && (shape===18||(shape>=21&&shape<=28)))return;   /* purged for v6+; pre-v6 cards keep the ornament they were made with */
   const s=M.size*(1+0.12*Math.sin(theta*M.k+M.ph));
   const cx=M.cx*W, cy=M.cy*H, sPix=s*W;
   let edge=null;
@@ -4186,6 +4226,10 @@ function renderSource(rgbA,rgbC,scene,i,theta,grad,fx,corr){
      its CORR_LADDER rung and its DNA bit 32 in CARD_CH all remain exactly
      where they were, because every one of them is positional. Old cards with
      bit 32 set still decode identically; they simply render unfolded. */
+  if(!(scene.__ver>=6) && fx.kaleido){          /* retired for v6+, preserved for the record */
+    const scr=renderSource._k||(renderSource._k=new Uint8Array(W*H*3));
+    fxKaleido(rgbA,scr,scene,theta,Math.min(150,corr*scene.vibe.g.kaleido));
+  }
   graftApply(rgbA, scene, theta, grad, 0);   /* WITHIN — before the void bites */
   voidCarve(rgbA, scene, grad);
   chromaCap(rgbA, scene, grad);
@@ -4334,9 +4378,15 @@ document.addEventListener('visibilitychange',()=>{
   if(document.hidden) stopPlayer();
   else if(PLAYER.args && !PLAYER.raf) startPlayer(...PLAYER.args);
 });
-function startPlayer(frames,pal,dim,N,delayMs){
+function startPlayer(frames,pal,dim,N,delayMs,table){
   stopPlayer();
-  PLAYER.args=[frames,pal,dim,N,delayMs];
+  PLAYER.args=[frames,pal,dim,N,delayMs,table];
+  /* an adopted animation may carry uneven delays, so the player walks a
+     cumulative table rather than dividing by one cadence */
+  let cum=null, span=0;
+  if(table&&table.length===N){ cum=new Float64Array(N+1);
+    for(let i=0;i<N;i++) cum[i+1]=cum[i]+table[i]*10;
+    span=cum[N]; }
   const off=PLAYER.cv||(PLAYER.cv=document.createElement('canvas'));
   off.width=dim; off.height=dim;
   const octx=off.getContext('2d');
@@ -4349,7 +4399,11 @@ function startPlayer(frames,pal,dim,N,delayMs){
     PLAYER.raf=requestAnimationFrame(tick);
     if(st.prevRaf){const g=now-st.prevRaf; st.rafN++; st.rafSum+=g; if(g>st.rafWorst)st.rafWorst=g;}
     st.prevRaf=now;
-    const fi=(((((now-t0)/delayMs)|0)%N)+N)%N;   /* rAF can stamp BEFORE t0: never index backwards */
+    let fi;
+    if(cum){ let e=(now-t0)%span; if(e<0)e+=span;
+      let lo=0,hi=N; while(lo+1<hi){ const mid=(lo+hi)>>1; if(cum[mid]<=e)lo=mid; else hi=mid; }
+      fi=lo; }
+    else fi=(((((now-t0)/delayMs)|0)%N)+N)%N;   /* rAF can stamp BEFORE t0: never index backwards */
     if(fi===last)return;
     if(lastAdv){const d=now-lastAdv; st.n++; st.sum+=d; if(d>st.worst)st.worst=d;
       if(d>delayMs*1.6)st.late++;}
@@ -4376,7 +4430,9 @@ function startPlayer(frames,pal,dim,N,delayMs){
 $('osd').addEventListener('click',()=>{PLAYER.hud=!PLAYER.hud;
   if(!PLAYER.hud&&PLAYER.stats)$('osd').textContent='LOOP';});
 const TAU=6.283185307179586;
-const FPS=25, DELAY=4;                 // 25fps locked  (4 centiseconds = 40ms/frame)
+/* the clock was locked at 25fps. An imported animation is allowed to set it:
+   GDLY, when present, is the per-frame delay table in centiseconds. */
+let FPS=25, DELAY=4, GDLY=null;        // 4 centiseconds = 40ms/frame
 
 /* can this device hand a GIF file to the native share sheet? (iOS -> Save Image -> Photos) */
 const canShareFiles=(()=>{ try{
@@ -4527,11 +4583,11 @@ async function generateSeq(){
     for(let q=0;q<W*H;q++){const c=pal[indices[q]]; const k=q*4; pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
     vctx.putImageData(preview,0,0);
 
-    gifFrame(sink, W, H, indices, DELAY, minCodeSize);   // encode + discard
+    gifFrame(sink, W, H, indices, (GDLY&&GDLY.length===N)?GDLY[i]:DELAY, minCodeSize);   // encode + discard
     for(const xs of XS){const d=xs.d, xi=xs.idx;
       for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W, row=y*d;
         for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
-      gifFrame(xs.sink, d, d, xi, DELAY, xs.mcs);
+      gifFrame(xs.sink, d, d, xi, (GDLY&&GDLY.length===N)?GDLY[i]:DELAY, xs.mcs);
       if(d===540)pvFrames[i]=xi.slice();               // retained for the canvas player
     }
 
@@ -4574,7 +4630,7 @@ async function generateSeq(){
   // play the finished loop right in the monitor. data: URL (not blob:) so an iOS
   // long-press offers "Save to Photos"; blob is kept for share/download.
   lastDataURL=bytesToDataURL(bytes);
-  startPlayer(pvFrames, pal, 540, N, DELAY*10);
+  startPlayer(pvFrames, pal, 540, N, DELAY*10, (GDLY&&GDLY.length===N)?GDLY:null);
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
   $('download').classList.add('ready');   // saving is deliberate on every platform
@@ -4634,6 +4690,7 @@ self.onmessage=function(e){
   if(J&&J.t==='graft'){ GRAFTIMG=J.g; return; }
   try{
     const scene=buildScene(J.seed,J.mode);
+    scene.__ver=J.ver|0;   /* <6 renders on the legacy body space */
     /* seated BEFORE seatWounds — it builds and caches the mass field */
     if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; scene.__wbMod=J.wb.mod; }
     scene.__graft=(J.gr&&J.gr.on&&GRAFTIMG&&GRAFTIMG.id===J.gr.id)?{img:GRAFTIMG,cfg:J.gr}:null;
@@ -4644,6 +4701,8 @@ self.onmessage=function(e){
         if(wbm!=null&&wbm!==100)scene.vibe.g[wbk]=scene.vibe.g[wbk]*wbm/100;} }
     const {grad,pal,near}=buildPalette(J.scheme,scene.vibe);
     const N=J.N, corr=J.corr, fx=J.fx, DELAY=J.DELAY;
+    const DLY=(J.DLY&&J.DLY.length===N)?J.DLY:null;   /* an adopted animation's own timing */
+    const dlyAt=function(i){ return DLY?DLY[i]:DELAY; };
     const dAmt=(14+corr*0.20)*scene.vibe.ditherMul;
     const MV=Object.assign({},scene.rev4.motion,{quant:0,strobes:[]});
     const tEff=function(th){let t=th;
@@ -4730,7 +4789,7 @@ self.onmessage=function(e){
             for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
           src=xi; }
         const cs=new Sink(k2===0?(1<<16):(1<<14));
-        gifFrame(cs,d,d,src,DELAY,MCS[k2]); chunks.push(cs.done().slice());
+        gifFrame(cs,d,d,src,dlyAt(i),MCS[k2]); chunks.push(cs.done().slice());
       }
       const pv=indices.slice();                       // THE RASTER ITSELF: what the player shows is what was drawn
       self.postMessage({t:'frame',i:i,c:chunks,pv:pv},
@@ -4912,6 +4971,9 @@ async function generate(){
   const jobOf=w=>({seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0, chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
     wb:(window.WB?{fam:WB.fam,prim:WB.prim,cam:WB.cam,mod:WB.mod,gain:WB.gain}:null),
+    /* a hand on the skeleton, vocabulary, gesture or modifier IS new work */
+    ver:((typeof wbHasOverrides==='function'&&wbHasOverrides())?6:CARDVER),
+    DLY:(GDLY&&GDLY.length===N)?GDLY:null,
     gr:(window.wbGraftCfg?window.wbGraftCfg():null),
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
 
@@ -5008,7 +5070,7 @@ async function generate(){
   $('osd').textContent='LOOP · '+mainSz;
 
   lastDataURL=bytesToDataURL(bytes);
-  startPlayer(pvFrames, pal, RW, N, DELAY*10);
+  startPlayer(pvFrames, pal, RW, N, DELAY*10, (GDLY&&GDLY.length===N)?GDLY:null);
   $('download').removeAttribute('disabled');
   $('vaultadd').removeAttribute('disabled');
   $('download').classList.add('ready');   // saving is deliberate on every platform
@@ -5263,7 +5325,9 @@ function bindSlider(id,labId,key,fmt){
 }
 bindSlider('corr','v-corr','corr');
 bindSlider('frames','v-frames','frames');
-const updDur=()=>{ $('lab-dur').textContent=(+$('frames').value/FPS).toFixed(2)+'s @ '+FPS+'fps'; };
+const updDur=()=>{ const n=+$('frames').value;
+  const cs=(GDLY&&GDLY.length===n)?GDLY.reduce((a,b)=>a+b,0):n*DELAY;
+  $('lab-dur').textContent=(cs/100).toFixed(2)+'s @ '+(cs?(n/(cs/100)).toFixed(1):FPS)+'fps'; };
 $('frames').addEventListener('input',updDur); updDur();
 $('corr').addEventListener('input',()=>{
   applyCorrFx(state.corr);                       /* existence, not just amplitude */
@@ -5303,26 +5367,32 @@ function crc8(bytes){let c=0;
   for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c&0x80)?((c<<1)^0x07)&0xff:(c<<1)&0xff;}
   return c;}
 const CARD_MOTION=['AUTO','FLOW','STEP'];
+/* THE ENGINE VERSION — identical law to the public box, because the lab is
+   the box's reference: a card must render the same in both. Pre-v6 cards keep
+   the 64-body space and the fixed turntable; fresh work is v6. Touching a WB
+   override is by definition new work, so it promotes to v6 at the job. */
+let CARDVER=6;
 function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
   const si=CARD_SCHEMES.indexOf(schemeKey), mi=MODES.indexOf(modeKey);
   const mo=Math.max(0,CARD_MOTION.indexOf(motion||'AUTO'));
   if(si<0||mi<0)return '';
   const forked=(state.voidamt|0)>0||(state.locality|0)>0||(state.chromacap|0)===1||modeKey==='MASS';
-  const v4=(ovActive()||EPOCH===1)&&!forked;
-  const v5=forked;
+  const v6=(CARDVER>=6);
+  const v4=!v6&&(ovActive()||EPOCH===1)&&!forked;
+  const v5=!v6&&forked;
   let v=0n;
   const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
-  push(v5?5:(v4?4:2),4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
+  push(v6?6:(v5?5:(v4?4:2)),4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
   for(const ch of CARD_CH)push(fx[ch]?1:0,1);          // 98 bits
   let nBytes=13, pad=6n;
-  if(v4||v5){                                          // +36-bit override block -> 134 bits
+  if(v4||v5||v6){                                      // +36-bit override block -> 134 bits
     push(OV.maskType,5); push(OV.maskStyle,5);
     push(OV.cx,5); push(OV.cy,5); push(OV.size,5);
     push(OV.n,6); push(OV.form,5);
     push(EPOCH?1:0,1);                     // epoch bit lives in what was padding
     nBytes=17; pad=1n;
   }
-  if(v5){                                              // fork block: +15 bits -> 149
+  if(v5||v6){                                          // fork block: +15 bits -> 149
     push(Math.min(100,state.voidamt|0),7);
     push(state.chromacap?1:0,1);
     push(Math.min(100,state.locality|0),7);
@@ -5360,7 +5430,7 @@ function unpackCard(str){
   let used=0;
   const pull=bits=>{const r=Number((v>>BigInt(TOT-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
   const ver=pull(4);
-  if(!((ver===1&&sx.length===21)||(ver===2&&sx.length===23)||(ver===3&&sx.length===28)||(ver===4&&sx.length===29)||(ver===5&&sx.length===32)))return null;
+  if(!((ver===1&&sx.length===21)||(ver===2&&sx.length===23)||(ver===3&&sx.length===28)||(ver===4&&sx.length===29)||(ver===5&&sx.length===32)||(ver===6&&sx.length===32)))return null;
   const seed=pull(32), si=pull(5), mi=pull(4), corr=pull(7), frames=pull(7);
   const mo=ver>=2?pull(2):0;
   if(si>=CARD_SCHEMES.length||mi>=MODES.length||corr>100||frames<8||frames>80||mo>2)return null;
@@ -5372,20 +5442,21 @@ function unpackCard(str){
     if(ov.form===3)ov.form=31;                          // old MIX -> new MIX
   }
   let epoch=0;
-  if(ver===4||ver===5){
+  if(ver===4||ver===5||ver===6){
     ov={maskType:pull(5),maskStyle:pull(5),cx:pull(5),cy:pull(5),size:pull(5),n:pull(6),form:pull(5)};
     if(ov.maskType>31||ov.maskStyle>19||(ov.n!==0&&(ov.n<2||ov.n>50))||ov.form>31)return null;
     epoch=pull(1);                         // legacy v4 cards carry 0 here by construction
   }
   let voidamt=0, chromacap=0, locality=0;
-  if(ver===5){
+  if(ver===5||ver===6){
     voidamt=pull(7); chromacap=pull(1); locality=pull(7);
     if(voidamt>100||locality>100)return null;
     if(ov&&ov.maskType===0&&ov.n===0&&ov.form===0&&ov.size===0)ov=null;   // fork cards without an override
   }
-  return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov, epoch, voidamt, chromacap, locality};
+  return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov, epoch, voidamt, chromacap, locality, ver};
 }
 function applyCard(c){
+  CARDVER=(c && c.ver!=null) ? c.ver : 6;
   clearOV();
   EPOCH=c.epoch||0;
   setSeg('epochseg','_epoch',String(EPOCH));
@@ -6600,12 +6671,12 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='E4.0';
+const REV_SELF='E9.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
     const t=await r.text();
-    const m=t.match(/REV (\d+\.\d+[a-z]?)/);
+    const m=t.match(/REV (E?\d+\.\d+[a-z]?)/);   /* the page writes REV E9.0 — the old pattern demanded a bare digit and never matched */
     if(m&&m[1]!==REV_SELF){
       const b=$('revbar');
       b.textContent='A NEWER PANDORA IS LIVE (REV '+m[1]+' — THIS TAB RUNS '+REV_SELF+') · TAP TO RELOAD';
@@ -7341,7 +7412,7 @@ function hideMintedBand(){ const b=document.getElementById('mintedband'); if(b)b
 <script>
 /* ============================================================================
    PUBLIC SHELL WIRING — the shell owns every visible element and drives the
-   headless EIDOLON E8.0 engine by direct calls only. One relocation is
+   headless EIDOLON E9.0 engine by direct calls only. One relocation is
    permitted: the #view canvas moves into the shell's stage. Nothing else is
    adopted, moved, or restyled. State flows one way: engine → paint().
    ========================================================================== */
@@ -7574,9 +7645,10 @@ function release(){ if(gate)return; gate=true; schedule(Math.max(0, 40-(Date.now
 const rgbA=new Uint8Array(W*H*3), rgbB=new Uint8Array(W*H*3), rgbC=new Uint8Array(W*H*3);
 const idx=new Uint8Array(W*H);
 function skey(J){ return JSON.stringify([J.seed,J.mode,J.voidamt,J.locality,J.chromacap,
-  J.epoch,J.ov,J.scheme,J.wb&&J.wb.fam,J.wb&&J.wb.prim,J.wb&&J.wb.cam,J.wb&&J.wb.mod]); }
+  J.epoch,J.ov,J.scheme,J.ver,J.wb&&J.wb.fam,J.wb&&J.wb.prim,J.wb&&J.wb.cam,J.wb&&J.wb.mod]); }
 function buildSC(J){
   const scene=buildScene(J.seed,J.mode);
+  scene.__ver=J.ver|0;
   /* seated BEFORE seatWounds — it builds and caches the mass field */
   if(J.wb){ scene.__wbFam=J.wb.fam; scene.__wbPrim=J.wb.prim; scene.__wbCam=J.wb.cam; scene.__wbMod=J.wb.mod; }
   scene.__graft=(J.gr&&J.gr.on&&GRAFTIMG&&GRAFTIMG.id===J.gr.id)?{img:GRAFTIMG,cfg:J.gr}:null;
@@ -7798,6 +7870,12 @@ const wbPvJob=window.wbPvJob=function(){
   return { seed, mode:state.mode, voidamt:state.voidamt|0, locality:state.locality|0,
     chromacap:state.chromacap|0, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr:state.corr, N:state.frames, fx:{...state.fx}, ov:{...OV}, epoch:EPOCH,
+    /* THE FIDELITY CONTRACT REACHES THE VERSION TOO. The preview and the GIF
+       have to be the same picture, so the preview must be told the same era the
+       render will use — including the promotion a WB override implies. Leave it
+       out and the living preview grows a pre-v6 body while the render grows a
+       v6 one, which is the oldest bug in this project wearing a new hat. */
+    ver:((typeof wbHasOverrides==='function'&&wbHasOverrides())?6:CARDVER),
     wb:{fam:WB.fam,prim:WB.prim,cam:WB.cam,mod:WB.mod,gain:{...WB.gain}},
     gr:(window.wbGraftCfg?window.wbGraftCfg():null) };
 };
@@ -8396,7 +8474,7 @@ function grAdopt(im,name){
   }
   const pk=grPaletteOf(rgb,w*h);
   GRAFT.img={ id:hsh>>>0, name:String(name||'image').slice(0,64),
-    w:w, h:h, rgb:rgb, lum:lum, pal:pk.pal, glitch:pk.glitch };
+    w:w, h:h, n:1, rgb:rgb, lum:lum, pal:pk.pal, glitch:pk.glitch };
   const tc=$('gr-thumb'), tx=tc.getContext('2d');
   tx.fillStyle='#0a080e'; tx.fillRect(0,0,72,72);
   const ts=Math.min(72/w,72/h);
@@ -8409,8 +8487,297 @@ function grAdopt(im,name){
   if(!GRAFT.cfg.on){ GRAFT.cfg.on=true; grOnSync(); }
   grBroadcast(); grTouch();
 }
+/* ============================================================================
+   THE GIF READER — a self-contained GIF87a/89a decoder.
+   The engine has always been able to WRITE a GIF; to graft one it has to read
+   one. No dependency: the box is a single file and stays one. Returns every
+   frame already composited (disposal honoured) as full-canvas RGBA, plus each
+   frame's own delay, because a GIF's timing is not always uniform and the
+   loop is going to inherit it.
+   ========================================================================== */
+function grDecodeGIF(buf){
+  const b=new Uint8Array(buf); let p=0;
+  const u8=()=>b[p++];
+  const u16=()=>{ const v=b[p]|(b[p+1]<<8); p+=2; return v; };
+  const sig=String.fromCharCode(b[0],b[1],b[2],b[3],b[4],b[5]);
+  if(sig!=='GIF87a'&&sig!=='GIF89a')return null;
+  p=6;
+  const W=u16(), H=u16();
+  if(!W||!H||W*H>36e6)return null;
+  const packed=u8(); u8(); u8();                       /* bg index, aspect: unused */
+  let gct=null;
+  if(packed&0x80){ const n=2<<(packed&7); gct=b.subarray(p,p+n*3); p+=n*3; }
+
+  /* sub-block chains appear after every extension and every image */
+  const skipBlocks=()=>{ let s; while((s=u8()))p+=s; };
+  const readBlocks=()=>{ const parts=[]; let s,total=0;
+    while((s=u8())){ parts.push(b.subarray(p,p+s)); p+=s; total+=s; }
+    const out=new Uint8Array(total); let o=0;
+    for(const q of parts){ out.set(q,o); o+=q.length; }
+    return out; };
+
+  /* LZW, the variable-code-width kind GIF uses, cleared by an explicit code */
+  const lzw=(minCode,data,npx)=>{
+    const out=new Uint8Array(npx);
+    const clear=1<<minCode, eoi=clear+1;
+    const prefix=new Int32Array(4096), suffix=new Uint8Array(4096), first=new Uint8Array(4096);
+    let codeSize=minCode+1, next=eoi+1, mask=(1<<codeSize)-1;
+    for(let i=0;i<clear;i++){ prefix[i]=-1; suffix[i]=i; first[i]=i; }
+    let bit=0, prev=-1, oi=0;
+    const stack=new Uint8Array(4096);
+    const nbits=data.length*8;
+    while(oi<npx){
+      if(bit+codeSize>nbits)break;
+      let code=0;
+      for(let i=0;i<codeSize;i++){
+        const by=data[(bit+i)>>3], bv=(by>>((bit+i)&7))&1;
+        code|=bv<<i;
+      }
+      bit+=codeSize;
+      if(code===clear){ codeSize=minCode+1; mask=(1<<codeSize)-1; next=eoi+1; prev=-1; continue; }
+      if(code===eoi)break;
+      let cur=code, sp=0;
+      if(code>=next){                                  /* the KwKwK case */
+        if(prev<0)break;
+        stack[sp++]=first[prev]; cur=prev;
+      }
+      while(cur>=clear){ stack[sp++]=suffix[cur]; cur=prefix[cur]; if(sp>4095)break; }
+      stack[sp++]=suffix[cur]|0;
+      const fc=stack[sp-1];
+      while(sp>0&&oi<npx) out[oi++]=stack[--sp];
+      if(prev>=0&&next<4096){
+        prefix[next]=prev; suffix[next]=fc; first[next]=first[prev]<0?fc:first[prev];
+        next++;
+        if((next&mask)===0&&codeSize<12){ codeSize++; mask=(1<<codeSize)-1; }
+      }
+      prev=code>=next?prev:code;
+      if(code<next) prev=code;
+    }
+    return out;
+  };
+
+  const frames=[], delays=[];
+  const canvas=new Uint8ClampedArray(W*H*4);           /* the composited stage */
+  let saved=null;
+  let delay=0, tIdx=-1, disposal=0;
+  let guard=0;
+  for(;;){
+    if(p>=b.length||++guard>4096)break;
+    const blk=u8();
+    if(blk===0x3B)break;                               /* trailer */
+    if(blk===0x21){                                    /* extension */
+      const label=u8();
+      if(label===0xF9){
+        const sz=u8();                                  /* always 4 */
+        const pk=u8(); delay=u16(); const ti=u8(); u8();
+        disposal=(pk>>2)&7; tIdx=(pk&1)?ti:-1;
+        if(sz!==4)return null;
+      } else skipBlocks();
+      continue;
+    }
+    if(blk!==0x2C)  continue;                          /* only images remain */
+    const ix=u16(), iy=u16(), iw=u16(), ih=u16();
+    const ip=u8();
+    let ct=gct;
+    if(ip&0x80){ const n=2<<(ip&7); ct=b.subarray(p,p+n*3); p+=n*3; }
+    const interlaced=!!(ip&0x40);
+    const minCode=u8();
+    const data=readBlocks();
+    if(!ct||!iw||!ih){ continue; }
+    const idx=lzw(minCode,data,iw*ih);
+
+    /* what the NEXT frame starts from depends on THIS frame's disposal */
+    if(disposal===3) saved=canvas.slice();
+
+    const rows=new Int32Array(ih);
+    if(interlaced){
+      let r=0;
+      for(const [start,step] of [[0,8],[4,8],[2,4],[1,2]])
+        for(let y=start;y<ih;y+=step) rows[r++]=y;
+    } else for(let y=0;y<ih;y++) rows[y]=y;
+
+    for(let sy=0;sy<ih;sy++){
+      const dy=iy+rows[sy]; if(dy<0||dy>=H)continue;
+      for(let sx=0;sx<iw;sx++){
+        const dx=ix+sx; if(dx<0||dx>=W)continue;
+        const v=idx[sy*iw+sx];
+        if(v===tIdx)continue;                          /* transparent: keep what is under */
+        const o=(dy*W+dx)*4, c=v*3;
+        canvas[o]=ct[c]; canvas[o+1]=ct[c+1]; canvas[o+2]=ct[c+2]; canvas[o+3]=255;
+      }
+    }
+    frames.push(canvas.slice());
+    /* GIF delay is centiseconds; 0 and 1 are historically rendered as 10 */
+    delays.push(delay<2?10:delay);
+
+    if(disposal===2){                                  /* restore to background */
+      for(let y=0;y<ih;y++){ const dy=iy+y; if(dy<0||dy>=H)continue;
+        for(let x=0;x<iw;x++){ const dx=ix+x; if(dx<0||dx>=W)continue;
+          const o=(dy*W+dx)*4; canvas[o]=canvas[o+1]=canvas[o+2]=canvas[o+3]=0; } }
+    } else if(disposal===3 && saved){ canvas.set(saved); }
+    delay=0; tIdx=-1; disposal=0;
+    if(frames.length>=512)break;
+  }
+  if(!frames.length)return null;
+  return {w:W, h:H, n:frames.length, delays:delays, frames:frames};
+}
+
+/* ============================================================================
+   THE MOVING GRAFT — importing an animated GIF, and handing it the clock.
+   The imported loop is not stretched to fit ours; ours is rebuilt to fit IT.
+   On import the box takes the GIF's frame count and its per-frame delays for
+   its own, so the composite plays at the source's true fps for the source's
+   true duration, and frame i of the render is frame i of the GIF. Because both
+   cycles are then the SAME cycle, the loop still closes exactly.
+   ========================================================================== */
+const GRANI={ budget:1.2e6, maxFrames:80, minFrames:8, prev:null };
+
+function grFitFrames(n){
+  /* the DNA card carries the frame count in seven bits and the engine accepts
+     8..80. Inside that window the mapping is one to one; outside it, the loop
+     still closes because floor(i*n/N) wraps with i. */
+  if(n<GRANI.minFrames)return GRANI.minFrames;
+  if(n>GRANI.maxFrames)return GRANI.maxFrames;
+  return n;
+}
+/* fold a source with more frames than the loop can carry down to N, summing the
+   delays it swallows so the DURATION survives even when frames do not */
+function grFoldDelays(delays,N){
+  const n=delays.length, out=new Array(N).fill(0);
+  for(let j=0;j<n;j++){ let i=Math.floor(j*N/n); if(i>=N)i=N-1; out[i]+=delays[j]; }
+  for(let i=0;i<N;i++) if(out[i]<1) out[i]=1;
+  return out;
+}
+/* HOW A SOURCE BECOMES A LOOP.
+   The obvious move for a GIF with fewer frames than the loop's floor of eight
+   is to stretch it — but stretching is exactly what breaks the promise. Hold
+   one source frame across two of ours and its 8cs becomes 15cs: the duration
+   still adds up but the CADENCE is a lie. So a short source is not stretched,
+   it is REPEATED: every source frame keeps its own delay, verbatim, and the
+   animation runs whole cycles inside one loop at precisely its own fps. The
+   mapping stays floor(i*n/N), which for N = n*k is just floor(i/k) — uniform,
+   so nothing has to travel to the worker to describe it, and the cycle still
+   lands on frame 0 at TAU. */
+function grLoopPlan(n,delays){
+  if(n>=GRANI.minFrames && n<=GRANI.maxFrames)
+    return {N:n, dly:delays.slice(), cycles:1};       /* one to one, delays and all */
+  if(n<GRANI.minFrames){
+    const k=Math.ceil(GRANI.minFrames/n), N=n*k;
+    const dly=new Array(N);
+    for(let i=0;i<N;i++) dly[i]=delays[i%n];          /* every frame keeps its own time */
+    return {N:N, dly:dly, cycles:k};
+  }
+  /* longer than the card's seven bits can carry: frames go, duration stays */
+  return {N:GRANI.maxFrames, dly:grFoldDelays(delays,GRANI.maxFrames), cycles:1};
+}
+function grLoopAdopt(n,delays){
+  const plan=grLoopPlan(n,delays);
+  const N=plan.N, dly=plan.dly;
+  if(!GRANI.prev) GRANI.prev={frames:state.frames, delay:DELAY, gdly:GDLY};
+  GDLY=dly;
+  DELAY=Math.max(1,Math.round(dly.reduce((a,b)=>a+b,0)/N));
+  FPS=100/DELAY;
+  state.frames=N;
+  const fs=$('frames'); if(fs){ fs.value=N; fs.dispatchEvent(new Event('input')); }
+  return {N:N, total:dly.reduce((a,b)=>a+b,0), dly:dly, cycles:plan.cycles};
+}
+function grLoopRestore(){
+  if(!GRANI.prev)return;
+  state.frames=GRANI.prev.frames; DELAY=GRANI.prev.delay; GDLY=GRANI.prev.gdly;
+  FPS=100/Math.max(1,DELAY);
+  const fs=$('frames'); if(fs){ fs.value=state.frames; fs.dispatchEvent(new Event('input')); }
+  GRANI.prev=null;
+}
+
+function grAdoptAnim(dec,name){
+  const nAll=dec.n;
+  const N=grLoopPlan(nAll,dec.delays).N;
+  /* which source frames survive, and the delays they carry */
+  const keep=[], kd=[];
+  if(N>=nAll){ for(let j=0;j<nAll;j++){ keep.push(j); kd.push(dec.delays[j]); } }
+  else {
+    const folded=grFoldDelays(dec.delays,N);
+    for(let i=0;i<N;i++){ let j=Math.floor(i*nAll/N); if(j>=nAll)j=nAll-1; keep.push(j); kd.push(folded[i]); }
+  }
+  const nk=keep.length;
+  /* a whole animation has to fit in memory AND cross to every worker, so the
+     per-frame size comes out of a total-pixel budget, not a fixed cap */
+  let cap=Math.floor(Math.sqrt(GRANI.budget/nk));
+  cap=Math.max(64,Math.min(384,cap));
+  const s=Math.min(1,cap/Math.max(dec.w,dec.h));
+  const w=Math.max(1,Math.round(dec.w*s)), h=Math.max(1,Math.round(dec.h*s));
+
+  const sc=document.createElement('canvas'); sc.width=dec.w; sc.height=dec.h;
+  const sx2=sc.getContext('2d',{willReadFrequently:true});
+  const tc=document.createElement('canvas'); tc.width=w; tc.height=h;
+  const tx2=tc.getContext('2d',{willReadFrequently:true});
+  tx2.imageSmoothingEnabled=true;
+
+  const px=w*h;
+  const rgb=new Uint8Array(px*3*nk), lum=new Uint8Array(px*nk);
+  let hsh=2166136261;
+  for(let f=0;f<nk;f++){
+    const src=dec.frames[keep[f]];
+    const id=sx2.createImageData(dec.w,dec.h); id.data.set(src);
+    sx2.putImageData(id,0,0);
+    tx2.clearRect(0,0,w,h); tx2.drawImage(sc,0,0,w,h);
+    let d;
+    try{ d=tx2.getImageData(0,0,w,h).data; }
+    catch(e){ $('gr-name').textContent='BLOCKED BY CANVAS SECURITY'; return false; }
+    const lo=f*px, ro=lo*3;
+    for(let i=0;i<px;i++){
+      const o=i*4, a=d[o+3];
+      const r=(d[o]*a/255)|0, g2=(d[o+1]*a/255)|0, b=(d[o+2]*a/255)|0;
+      rgb[ro+i*3]=r; rgb[ro+i*3+1]=g2; rgb[ro+i*3+2]=b;
+      lum[lo+i]=(r*77+g2*151+b*28)>>8;
+      if((i&7)===0){ hsh=Math.imul(hsh^r,16777619); hsh=Math.imul(hsh^g2,16777619); hsh=Math.imul(hsh^b,16777619); }
+    }
+    hsh=Math.imul(hsh^kd[f],16777619);
+  }
+  const pk=grPaletteOf(rgb,px);                    /* the colourway of frame one */
+  GRAFT.img={ id:hsh>>>0, name:String(name||'animation').slice(0,64),
+    w:w, h:h, n:nk, cyc:1, rgb:rgb, lum:lum, pal:pk.pal, glitch:pk.glitch, anim:true };
+
+  const L=grLoopAdopt(nk,kd);
+  GRAFT.img.cyc=L.cycles||1;
+  /* the thumbnail shows the first frame */
+  const th=$('gr-thumb'), thx=th.getContext('2d');
+  thx.fillStyle='#0a080e'; thx.fillRect(0,0,72,72);
+  const ts=Math.min(72/w,72/h);
+  thx.imageSmoothingEnabled=false;
+  thx.drawImage(tc,(72-w*ts)/2,(72-h*ts)/2,w*ts,h*ts);
+  $('gr-thumbwrap').style.display='flex';
+  $('gr-name').textContent=GRAFT.img.name.toUpperCase();
+  const secs=(L.total/100).toFixed(2), fps=(L.N/(L.total/100)).toFixed(1);
+  $('gr-dims').textContent=w+'×'+h+' · '+nk+(nk<dec.n?('/'+dec.n):'')+' frames · '
+    +secs+'s · '+fps+' fps'+(L.cycles>1?(' · '+L.cycles+' cycles per loop'):'')
+    +' · the loop now runs at the source’s clock';
+  if(!GRAFT.cfg.on){ GRAFT.cfg.on=true; grOnSync(); }
+  grBroadcast(); grTouch();
+  return true;
+}
+
 function grIngest(file){
   if(!file||!/^image\//.test(file.type||'')){ $('gr-name').textContent='NOT AN IMAGE'; return; }
+  /* a GIF may be a loop rather than a picture; read the bytes and find out */
+  if(/gif/i.test(file.type)||/\.gif$/i.test(file.name||'')){
+    const br=new FileReader();
+    br.onload=()=>{
+      let dec=null;
+      try{ dec=grDecodeGIF(br.result); }catch(e){ dec=null; }
+      if(dec&&dec.n>1){ $('gr-name').textContent='READING '+dec.n+' FRAMES…';
+        setTimeout(()=>{ try{ grAdoptAnim(dec,file.name); }
+          catch(e){ $('gr-name').textContent='COULD NOT ADOPT THE ANIMATION'; } },0);
+        return; }
+      grIngestStill(file);            /* one frame, or unreadable: an ordinary picture */
+    };
+    br.onerror=()=>grIngestStill(file);
+    br.readAsArrayBuffer(file);
+    return;
+  }
+  grIngestStill(file);
+}
+function grIngestStill(file){
   const fr=new FileReader();
   fr.onload=()=>{ const im=new Image();
     im.onload=()=>grAdopt(im,file.name);
@@ -8436,7 +8803,7 @@ function grOnSync(){
   drop.addEventListener('drop',e=>{
     const dt=e.dataTransfer; if(dt&&dt.files&&dt.files[0])grIngest(dt.files[0]); });
   $('gr-clear').addEventListener('click',()=>{
-    GRAFT.img=null; GRAFT.cfg.on=false; grOnSync();
+    GRAFT.img=null; GRAFT.cfg.on=false; grOnSync(); grLoopRestore();
     $('gr-thumbwrap').style.display='none';
     $('gr-name').textContent='NONE';
     grTouch(); });
@@ -8527,6 +8894,8 @@ function grOnSync(){
 /* the instrument's own hand on the graft — the shell block is wrapped in an
    IIFE, so these have to be handed out explicitly for gates and the console. */
 window.grAdopt=grAdopt; window.grIngest=grIngest; window.grTouch=grTouch;
+window.grDecodeGIF=grDecodeGIF; window.grAdoptAnim=grAdoptAnim;
+window.grLoopPlan=grLoopPlan; window.grLoopAdopt=grLoopAdopt; window.grLoopRestore=grLoopRestore;
 window.grBroadcast=grBroadcast; window.grOnSync=grOnSync; window.grPaletteOf=grPaletteOf;
 
 /* ---- SIGIL GAINS ---- */
