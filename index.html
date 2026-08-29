@@ -6210,7 +6210,11 @@ const CARD_MOTION=['AUTO','FLOW','STEP'];
    version. Fresh work is v6 and gets the whole engine — 256 bodies, the camera
    organ, the modifier. A resurrected old card keeps its own version, so
    re-saving it never silently re-bodies it. */
-let CARDVER=7;
+/* THE ENGINE'S OWN CARD VERSION. Named, not typed as a literal, because the
+   last time it was written as a bare number in the override promotion below,
+   the number went stale and took the entire second vocabulary with it. */
+const ENGINE_CARDVER=7;
+let CARDVER=ENGINE_CARDVER;
 function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
   const si=CARD_SCHEMES.indexOf(schemeKey), mi=MODES.indexOf(modeKey);
   const mo=Math.max(0,CARD_MOTION.indexOf(motion||'AUTO'));

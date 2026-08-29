@@ -349,6 +349,8 @@ sigils and killing three others, learn, then roll 300 times. Kept sigils came up
     animgate.js    the loop adopts the source's clock
     rendergate.js  a real render, DNA, download
     panelgate.js   phone layout: nothing falls under the cut
+    stalegate.js   every control reaches the preview at the value you set, and
+                   an override never demotes the engine
 Gates must be BACKGROUNDED — Bash times out at two minutes. `(setsid nohup
 timeout N … &)` then poll; the HTTP server must live inside the same script and
 must be a `ThreadingTCPServer`. Shell cwd resets between calls: absolute paths
@@ -364,6 +366,31 @@ the workbench seats its gains (the render worker, the preview worker, and
 gain is exactly the hash-derived base — and because the preview and the render
 read the same field, the fidelity contract holds. The panel also stopped
 offering a slider for a sigil with no button.
+
+## TWO BUGS THE CURATOR CAUGHT THAT THE GATES DID NOT
+Reported as one — "the render totally differs from the preview, and toggling a
+sigil renders the loop as it was before the toggle." Two causes:
+
+1. **Every slider was one change behind in the living preview.** The click path
+   was fixed long ago by deferring its push two ticks; the INPUT path never was.
+   It is registered in the capture phase, so it fired BEFORE the slider's own
+   handler had written `state.corr` / `state.voidamt` / `state.locality` /
+   `state.frames` / `WB.gain`. Measured on the shipped build: set CORRUPTION to
+   77, the preview was told 62; VOID to 31, told 34; FRAMES to 10, told 36.
+   RENDER reads state directly and was correct all along — the preview was the
+   one lying. Fixed by giving the input path the same two-tick deferral.
+2. **A workbench override silently demoted the job past the second vocabulary.**
+   "A hand on the skeleton IS new work" promoted the job to `6` — a literal,
+   written when 6 WAS the current engine. Seven is now, and a v6 job cannot see
+   one single sigil of the second vocabulary. So moving one GAINS slider killed
+   all 37 new sigils in the preview and the render alike. Fixed by naming the
+   constant (`ENGINE_CARDVER`) instead of typing the number, in both job
+   builders. **The lesson: an engine version written as a bare literal anywhere
+   outside its own declaration will go stale and take a whole feature with it.**
+
+STALEGATE now guards both, and was written to FAIL on the shipped build first —
+six checks, all six failing there, all six passing on the fix. A gate that has
+never failed on the broken thing is not a gate.
 
 ## STILL OPEN
 - `crush` remains seed-dependent (7 of 8).
