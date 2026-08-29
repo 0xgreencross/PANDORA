@@ -3132,16 +3132,31 @@ function quantize(buf,indices,near,dAmt,tect,quake){
   }
 }
 
+/* CRUSH — one epicentre was a coin toss. The disc is placed at a seeded point
+   in a 135x135 grid; land it in the void and the sigil does nothing at all,
+   which is why it measured live on only 4 seeds of 8. v6 throws three or four
+   and unions them, so at least one reaches the body on every seed while the
+   character — a local quake, not a global filter — is unchanged. The per-frame
+   hash still keys off the quantised theta, so the loop closes as before. */
 function buildQuake(scene,theta,corr){
   const C=corr/100;
   const q=buildQuake._q||(buildQuake._q={m:new Uint8Array(135*135),rx:new Uint8Array(135*135),ry:new Uint8Array(135*135),mul:new Float32Array(135*135)});
   const st=mulberry32((scene.seed^0xD17E)>>>0);         // static epicenter field per seed
   const fk=Math.round(theta/TAU*4096)&4095;
-  const cx=st()*135, cy=st()*135, rad=(18+st()*45)*(0.5+C);
-  const r2=rad*rad;
+  const NEW=(scene.__ver>=6);
+  const nQ=NEW?(3+((st()*2)|0)):1;
+  const EX=[], EY=[], ER=[];
+  for(let e=0;e<nQ;e++){
+    /* the first draw is the pre-v6 pair, verbatim and in the same order */
+    const ex=st()*135, ey=st()*135, er=(18+st()*45)*(0.5+C);
+    EX.push(ex); EY.push(ey); ER.push(er*er);
+  }
   for(let gy=0;gy<135;gy++)for(let gx=0;gx<135;gx++){
-    const t=gy*135+gx, dx=gx-cx, dy=gy-cy, d2=dx*dx+dy*dy;
-    if(d2<r2){
+    const t=gy*135+gx;
+    let hit=0;
+    for(let e=0;e<nQ;e++){ const dx=gx-EX[e], dy=gy-EY[e];
+      if(dx*dx+dy*dy<ER[e]){ hit=1; break; } }
+    if(hit){
       q.m[t]=1;
       const h=((gx*73856093)^(gy*19349663)^(fk*83492791))>>>0;
       q.rx[t]=h&7; q.ry[t]=(h>>>3)&7;
@@ -3944,6 +3959,10 @@ function fxKaleido(buf,snap,scene,theta,corr){
 
 /* 3. PHOSPHOR BLOOM — bright signal physically bleeds light: coarse threshold,
    separable blur, additive recomposite. Neon finally glows. */
+/* BLOOM, VISIBLE AT LAST. The threshold is 140..210 out of 255, which in a
+   dark MASS render almost nothing reaches — measured live on 3 seeds of 8 and
+   two of those moved 0.01% of pixels. Halving it for v6 puts the knee inside
+   the range the body actually occupies. Pre-v6 keeps the old threshold. */
 function fxBloom(buf,scene,theta,corr){
   const B=scene.demi.bloom, C=Math.min(1.5,corr/100);
   const N2=FW*FW;
@@ -3953,7 +3972,7 @@ function fxBloom(buf,scene,theta,corr){
   const tR=fxBloom._tr||(fxBloom._tr=new Float32Array(N2));
   const tG=fxBloom._tg||(fxBloom._tg=new Float32Array(N2));
   const tB=fxBloom._tb||(fxBloom._tb=new Float32Array(N2));
-  const thr=B.thr, inv=1/(255-thr);
+  const thr=(scene.__ver>=6)?(B.thr*0.5):B.thr, inv=1/(255-thr);
   for(let y=0;y<FW;y++){const sy=((y*H/FW)|0)*W;
     for(let x=0;x<FW;x++){const so=(sy+((x*W/FW)|0))*3, i=y*FW+x;
       const L=buf[so]*0.299+buf[so+1]*0.587+buf[so+2]*0.114;
@@ -4550,7 +4569,7 @@ async function generateSeq(){
       compositeTunnel(rgbA, ring2, scene.demi.tunnel, Math.min(150,corr*scene.vibe.g.tunnel));
       const rec=ring2.shift(); ring2.push(coarse2); coarse2=rec;
     }
-    if(false){
+    if(fx.echo&&scene.__ver>=6){
       downsampleCoarse(rgbA, coarseCur);          // capture clean coarse of this frame
       compositeEcho(rgbA, ring, weights, scene);  // feedback recursion on the trails
       const reclaimed=ring.shift(); ring.push(coarseCur); coarseCur=reclaimed; // advance ring (no alloc)
@@ -4587,7 +4606,7 @@ async function generateSeq(){
     }
     quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
              (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-    if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices, pal.length, scene, theta, corr, fx);
+    if(scene.__ver>=6||(scene.mode!=='MASS'&&scene.mode!=='IDOL')) indexPass(indices, pal.length, scene, theta, corr, fx);
     sanctityIdx(indices, scene, i);
 
     // live preview from quantized indices
@@ -4769,7 +4788,10 @@ self.onmessage=function(e){
         compositeTunnel(rgbA,ring2,scene.demi.tunnel,Math.min(150,corr*scene.vibe.g.tunnel));
         const rec=ring2.shift();ring2.push(coarse2);coarse2=rec;
       }
-      if(false){
+      /* ECHO RETURNS. It was disabled with a literal false. The ring state is
+         reconstructed at every chunk boundary by the block above, so a
+         multi-worker render matches a single-worker one exactly. */
+      if(fx.echo&&scene.__ver>=6){
         downsampleCoarse(rgbA,coarseCur);
         compositeEcho(rgbA,ring,weights,scene);
         const rec=ring.shift();ring.push(coarseCur);coarseCur=rec;
@@ -4797,7 +4819,7 @@ self.onmessage=function(e){
       lumenPass(rgbB, scene, theta, grad);
       quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
                (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-      if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices,pal.length,scene,theta,corr,fx);
+      if(scene.__ver>=6||(scene.mode!=='MASS'&&scene.mode!=='IDOL')) indexPass(indices,pal.length,scene,theta,corr,fx);
       sanctityIdx(indices, scene, i);
       const chunks=[];
       for(let k2=0;k2<DIMS.length;k2++){ const d=DIMS[k2]; let src;
@@ -7735,6 +7757,17 @@ function loop(){
       compositeTunnel(rgbA,SC.ring2,T,Math.min(150,J.corr*scene.vibe.g.tunnel));
       const rec=SC.ring2.shift(); SC.ring2.push(SC.coarse2); SC.coarse2=rec;
     } else SC.ring2=null;
+    /* ECHO's ring, carried in the same scene cache as the tunnel's, so the
+       truth pass primes it over its extra lap exactly as the render does. */
+    if(J.fx.echo&&scene.__ver>=6){
+      if(!SC.ring){ SC.ring=[]; SC.weights=[];
+        const ECN=scene.vibe.echoN, ED=scene.vibe.echoDecay;
+        for(let q=0;q<ECN;q++){ SC.weights.push(Math.pow(ED,ECN-q)); SC.ring.push(new Uint8Array(FW*FW*3)); }
+        SC.coarseCur=new Uint8Array(FW*FW*3); }
+      downsampleCoarse(rgbA,SC.coarseCur);
+      compositeEcho(rgbA,SC.ring,SC.weights,scene);
+      const rec=SC.ring.shift(); SC.ring.push(SC.coarseCur); SC.coarseCur=rec;
+    } else { SC.ring=null; SC.weights=null; SC.coarseCur=null; }
     /* THE FIDELITY CONTRACT AGAIN. The render driver runs the corruption stack
        for v6; if the preview kept the stripped path it would show one picture
        and hand you another. Identical branch, identical order, same gate. */
@@ -7755,7 +7788,7 @@ function loop(){
     quantize(rgbB,idx,SC.near,(14+J.corr*0.20)*scene.vibe.ditherMul,
       J.fx.tect?buildTect(scene,theta,J.corr):null,
       (J.fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,J.corr):null);
-    if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(idx,SC.pal.length,scene,theta,J.corr,J.fx);
+    if(scene.__ver>=6||(scene.mode!=='MASS'&&scene.mode!=='IDOL')) indexPass(idx,SC.pal.length,scene,theta,J.corr,J.fx);
     sanctityIdx(idx,scene,i);
     /* BACKPRESSURE. The worker used to free-run: it posted a frame every
        max(40ms, render) regardless of whether the main thread had drawn the
@@ -8090,7 +8123,7 @@ const wbTrRun=window.wbTrRun=function(){
   WBTR.t0=performance.now();
   /* the tunnel carries a ring across frames, so it needs a lap to prime
      before its captures match the render's primed ring */
-  WBTR.laps=job.fx&&job.fx.tunnel?2:1;
+  WBTR.laps=(job.fx&&(job.fx.tunnel||job.fx.echo))?2:1;   /* echo carries a ring too */
   WBTR_D=rasterOf();                   /* the truth IS the raster now */
   if(!WBTR.off||WBTR.off.width!==WBTR_D){ WBTR.off=document.createElement('canvas');
     WBTR.off.width=WBTR.off.height=WBTR_D;
