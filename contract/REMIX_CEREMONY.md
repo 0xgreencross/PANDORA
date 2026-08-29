@@ -48,3 +48,20 @@ compile, zero errors expected. Deployed size must read ~16,619 bytes.
 - addEngine / setCurrentEngine / setImageBase / transferOwnership.
 The owner can never touch funds (none are ever held), never edit minted
 loops, never unlock a seed, never touch listings — only sellers can.
+
+
+---
+
+## THE CARD GOT LONGER (noted 2026-08-29)
+
+When you harvest a genome for the ceremony, expect a longer string than the
+older cards in this document. The engine now writes **v7** cards: 40 characters
+of payload where the old format wrote 32, because the sigil rail went from 37
+channels to 73. With the `PNDR-` prefix and its grouping dashes a fresh card
+runs to 44 characters.
+
+Nothing about the ceremony changes. Older cards still decode, still render on
+the engine they were written for, and are still valid genomes to inscribe.
+The one law that matters here is the one that always mattered: **only a real
+card harvested from the live box enters the ledger.** A made-up string mints a
+ghost with no body.

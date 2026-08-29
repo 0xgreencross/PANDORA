@@ -34,3 +34,23 @@
 - On-chain state verified post-deploy: owner, ARTIST, FEE_UNIQUE 0.01, FEE_EDITION 0.001,
   currentEngine, engineRenderer, imageBase, listings() live
 - nextId = 1 at flip: NO test mint — the first real seed is the artist's, chosen deliberately.
+
+
+---
+
+## A NOTE ON THE ENGINE STRING (added 2026-08-29)
+
+All three deploys above carry the constructor value `"EIDOLON E8.0"`. That
+string is the ledger's record of the era, not a claim about what the site is
+running today — the site now runs **EIDOLON E9.1 NOVA**. The two are meant to
+diverge: registry entries live forever and tokens keep the engine name of their
+era, while the box keeps growing.
+
+The thing that actually protects an older token is not the string but the card
+version gate in the engine: a card minted before v6 renders on the engine it was
+minted under, bit for bit, and all 51 canon bloodlines are re-rendered on both
+engines and compared byte for byte before any build ships. Registry names are
+bookkeeping; the gate is the promise.
+
+See contract/ENGINE_REGISTRY.md for what should be signed before the first
+mainnet mint. Nothing about the E9.x work changes that ceremony.
