@@ -22,4 +22,13 @@ Remix or hardhat. Compiler: solc 0.8.24 · EVM cancun · optimizer on (800 runs)
 Constructor: `(uint256 feeWei, address treasury)` — the fee is the immutable
 ceiling; `lowerFee` can only descend. Verify on Etherscan with identical settings.
 
-The live engine: https://dithervoid.art — GREENCROSS x Claude
+## The DNA the corpus inscribes
+
+A card is versioned, and every version still decodes. Cards written under the
+older engine carry 37 sigil bits and 32 characters; the current format (v7)
+carries 73 and runs to 40. The engine reads the version out of the card and
+renders it on the engine it was written for — nothing inscribed on-chain can
+change under a token holder. Positions in the card are append-only: a retired
+sigil loses its button, never its bit.
+
+The live engine: https://dithervoid.art — EIDOLON E9.1 NOVA — GREENCROSS x Claude
