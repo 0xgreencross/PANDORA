@@ -26,11 +26,24 @@ Tap the size readout to expose playback diagnostics.
   earlier, pre-glitch aesthetic — not an imitation: the original code, proven byte-identical.
   Flick it and the same seed re-renders in the other era.
 
-## SIGILS — 37 corruption channels
-Each sigil arms one channel of destruction: tape tracking, pixel sort, attribute clash,
-ransom stamps, dither quake, tape rot, and the rest of the arsenal. Lit means armed.
-Combinations multiply — the same seed under different sigils is a different ghost.
-**☠ OBLIVION** arms a violent random set and fires.
+## SIGILS — 73 corruption channels
+Each sigil arms one channel of destruction. The first arsenal is the tape: tracking,
+pixel sort, attribute clash, ransom stamps, dither quake, tape rot. The second is the
+vocabulary added in E9.1 — sediment and folds, colour worked at the palette itself,
+whole-frame motion, burnt and frozen and oxidised surfaces, and architecture imposed on
+the picture. Lit means armed. Combinations multiply — the same seed under different
+sigils is a different ghost. **☠ OBLIVION** arms a violent random set and fires.
+
+Every sigil on the rail changes the picture. That is a gated claim, not a hope: each one
+is rendered alone against a clean frame on four seeds before any build ships, and every
+one of them is exactly loop-periodic — the last frame hands the first frame back the
+state it started in, byte for byte.
+
+## GRAFT — bring your own image
+Drop a still or an animated GIF into the box and the engine feeds on it. An animated
+source keeps its own clock: the loop adopts the GIF's frame count and its per-frame
+delays, repeating a short one a whole number of times and folding a long one down, so
+the result still loops seamlessly at the source's own speed.
 
 ## TUNE — surgical control
 Override what the seed decided: **MASK** (30 carving shapes × 20 styles, with size and
@@ -63,8 +76,15 @@ firing it. On desktop, hovering any control shows the same knowledge.
 
 ### THE DOCTRINE
 One file. One seed, one loop, forever. The DNA card is the artwork's soul: the pixels can
-be deleted, the site can burn, and the loop still resurrects from 29 characters.
+be deleted, the site can burn, and the loop still resurrects from its card alone.
 **Everything else is noise.**
+
+Cards are versioned and every version still decodes. A card written before the engine grew
+renders on the engine it was written for, bit for bit — all 51 canon bloodlines are
+re-rendered on both engines and compared byte for byte before any build ships. Nothing
+minted is ever allowed to change.
+
+Engine: **EIDOLON E9.1 NOVA**.
 
 *GREENCROSS × Claude — DITHERVOID, 2026*
 
@@ -73,6 +93,8 @@ be deleted, the site can burn, and the loop still resurrects from 29 characters.
 ## THE REPO IS THE APP
 
     index.html          the entire engine — one file, served as dithervoid.art
+    workbench/v2/       the lab: the same engine with the instrument attached —
+                        KEEP/KILL curation, HARVEST, the taste model, DIGEST
     CNAME               the domain
     og.png / icon.png   link-preview and favicon assets
     lazarus/            the corpus contract (ERC-1155) + 15-test hardhat suite

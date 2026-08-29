@@ -34,3 +34,18 @@ STATE AS OF 2026-07-19 (Fable handoff):
 - /f3/: EIDOLON // PANDORA REV E4.0 TABULA RASA (ground-up 3D scene renderer,
   ten material dialects, mirror floor, Bayer-dithered fine surface)
 See HANDOFF.md for the full succession document.
+
+
+---
+STATE AS OF 2026-08-29:
+- trunk `index.html`: EIDOLON **E9.1 NOVA** — the full engine behind a card
+  version gate, GRAFT (stills and animated GIFs), 73 sigils on the rail.
+- `workbench/v2/index.html`: the same engine with the instrument attached —
+  KEEP/KILL, HARVEST, the taste model, DIGEST. Cores are byte-identical to the
+  trunk's by construction and checked by md5 before every push.
+- `/f1/`, `/f3/`, `/original/`: untouched. They stay untouched unless ordered.
+
+The fork rituals above still hold. What has changed is that the trunk is no
+longer the frozen REV 13.0 baseline — it is the live engine, and the thing that
+protects everything minted before it is the version gate plus CERT, not a
+directory boundary.

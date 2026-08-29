@@ -216,3 +216,159 @@ wounds only; the void is sacred.
   a test fails, suspect the test's sampling before the engine.
 - He will say "negligible change" if the OUTPUT SIGNATURE (resolution, dither,
   palette mapping) stays constant — surface identity dominates perception.
+
+---
+
+# EIDOLON E9.x — THE PORT, THE GRAFT, AND THE SECOND VOCABULARY
+*(2026-08-27 → 2026-08-29. Everything below is gated evidence, not intent.)*
+
+## What happened, in one paragraph
+The public box was running a version of the engine with most of its corruption
+stack switched off. The workbench was running the whole engine. This document
+records the port of the full engine into the public shell behind a card-version
+gate, the arrival of image and animated-GIF grafting, the discovery that 32 of
+37 sigils had been inert since the first public commit, their repair, and the
+doubling of the vocabulary from 37 sigils to 74.
+
+## THE VERSION GATE (the load-bearing idea)
+`scene.__ver` carries the card's version into the engine.
+- `< 6` reproduces the frozen public engine **bit for bit** — 64-body space,
+  locked camera, no corruption stack, index stage closed to MASS and IDOL.
+- `>= 6` is the full engine: 256 bodies, camera organ, modifier organ, the
+  whole corruption stack, index stage open in every mode.
+- `>= 7` additionally sees the second vocabulary (sigils 37–73).
+
+Every legacy path is proved, not assumed: CERT renders all 51 canon cards on
+both engines and demands byte-identical output. It has passed 51/51 at 0.0000%
+after every structural change in this run.
+
+## THE LAWS THAT COST THE MOST TO LEARN
+- **THE FIDELITY CONTRACT.** The live preview and the GIF render must produce
+  byte-identical index buffers. Broken twice in this run — once by a preview job
+  that omitted `ver` (so the preview showed a pre-v6 body while RENDER made a
+  v6 one), once by a preview driver that had no corruption branch at all. Both
+  caught by the engine gate, both restored to 0.0000 across 12 frames.
+- **THE LOOP-CLOSURE LAW.** Any theta-dependent term must be exactly
+  TAU-periodic. `sin(TAU)` is −2.45e−16, not zero, and one unlucky `Math.round`
+  turns that hair into a visible jump at the seam. The whole second vocabulary
+  is therefore built on **folded phase** (`nvPh`, `nvSin`, `nvCos`): at
+  theta = TAU the phase folds onto exactly the zero it started from. Proven, not
+  argued — NOVAUNIT feeds every new sigil a fixed buffer at theta 0 and theta
+  TAU and demands zero bytes of difference. 37 sigils × 24 seeds, 0 bytes.
+- **POSITIONAL WIRE FORMATS ARE APPEND-ONLY.** `CARD_CH` (now 74 entries; 0–36
+  frozen forever, 37–73 appended), `MASK_NAMES`, `MASK_POLAR`, `FAMN`, `PRIMN`,
+  `MODN`, `CAMN`. Reordering or deleting an entry silently invalidates every
+  card ever written.
+- **THE SHARED RNG STREAM.** `buildScene` and `massField` each run one stream;
+  adding or removing a single draw re-rolls every seed downstream. This is why
+  new sigil gains are hash-derived (`nvGain`) rather than taken from
+  `scene.vibe.g`.
+- **A FAILING TEST IS USUALLY THE TEST.** The first loop-closure gate reported
+  ~12% drift on all eight new sigils. The baseline with no new sigils failed the
+  same test by the same amount: the gate was comparing a frame rendered one step
+  past the end, and the per-frame dither (`sanctityRGB`, `sanctityIdx`) takes
+  the frame INDEX, not theta, and never has been TAU-periodic — a frame past the
+  end is not a frame the loop ever plays. Measure where the question is well
+  posed or do not measure at all.
+
+## THE GRAFT
+The box loads a still image or an animated GIF and the loop takes the source's
+clock. `grDecodeGIF` is an inlined GIF87a/89a decoder — LZW, interlace,
+transparency, disposal methods 0–3 — verified pixel-exact against PIL on three
+adversarial files. `grLoopPlan` adopts the source's frame count and per-frame
+delays: a short GIF is repeated a whole number of times (every frame keeping its
+own duration), a long one is folded down to the ceiling. `graftOf` advances the
+graft's frame cursor from the loop phase with the `+1e-9` discipline, so frame
+selection at the seam lands on frame 0 and not on a hair under it.
+
+## THE SIGILS THAT DID NOTHING
+Two constants named `PROT` and `PROT2`, present since the first public commit,
+switched the entire corruption stack off. With them gated on card version, 34 of
+37 sigils moved the picture where 5 had before. Four further dead ones were
+individually traced and repaired: the index stage was closed to MASS and IDOL,
+`echo` was behind an `if(false)`, `bloom`'s threshold was set above anything the
+frame ever reached, and `crush` threw a single epicentre where it needed several.
+
+Found in this run and repaired:
+- **HILB crashed the frame.** `fxHilbert` hard-coded a 135×8 curve — a 1080
+  raster and nothing else. On every other rung it walked off the end of the
+  buffer and threw `RangeError`. The curve is now cut to the canvas; at 1080 the
+  arithmetic yields exactly 135 and 8, so nothing that ever rendered changes.
+- **INVERT's strobe window was narrower than the gap between frames**, so at
+  twelve frames it missed on half the seeds. Widened for v6+ only; pre-v6 keeps
+  the old window because those cards are already minted.
+- **KALEIDO** stays retired by the curator's order: no button on the rail, bit
+  reserved in `CARD_CH` forever so old cards still decode.
+
+## THE SECOND VOCABULARY — 37 NEW SIGILS
+Card format **v7**: 40 characters, 24 payload bytes, pad 5n, `LEN[40]=25`.
+Pre-v7 cards still decode as v5/v6 and still carry exactly 37 bits.
+
+- *Structure of the seed* — STRATA, FOLD, QUARTER, PEEL, DRIP, SHEAR, RIPPLE, SILT
+- *Colour, at the index stage* — BANDSHIFT, POSTERIZE, DUOTONE, SOLARIZE,
+  CONTOUR, STIPPLE, GLYPHSWAP, PALCRAWL
+- *Motion and time* — SPIN, PULSE, BREATHE, TWIST, STRETCH, JITTER, SPLIT, AFTERIMAGE
+- *Light and material* — CHARR, FROST, SEAR, PATINA, EMBOSS2, RIMLIGHT, CAUSTIC, DUST
+- *Architecture* — LATTICE, REBAR, TERRACE, FAULT, SEAM
+
+Two dispatches carry them: `novaPass` on the RGB buffer (after `demiurgePixel`)
+and `nvIndexPass` on the palette indices (after `indexPass`). Both are gated on
+`scene.__ver >= 7`, so a v6 card with all 37 bits lit renders 0.0000% different.
+
+## THE TASTE MODEL, REBUILT FOR AN ENGINE THAT CHANGED UNDER IT
+The 119 verdicts already in the table judged an engine where most sigils were
+inert. Their opinions about sigils are not opinions about this engine.
+- **Recency weighting.** Each verdict's weight halves as you go back through the
+  table — half-life 120 verdicts for mode, palette and the sliders, and 40 for
+  the sigil dimension, because that is the dimension the engine changed under.
+- **A softer prior on sigils** (3 verdicts rather than 6), so a brand-new sigil
+  can say something from its first few verdicts instead of sitting at the house
+  average for a month of harvesting.
+- **The lever works both ways now.** Culling alone could only ever make the
+  rolls quieter. A sigil above the house keep-rate is now *lit* with a
+  probability proportional to the surplus and the confidence, held to a lower
+  ceiling than dropping so a roll is still a roll.
+- **The heavy cap.** Eleven of the new sigils move the whole frame; three or four
+  at once cancel into mush. A roll keeps at most two, chosen by the dice. A sigil
+  set by hand is never touched.
+- **Nova rides quieter.** The rail doubled; the new vocabulary comes up about
+  42% as often as the old on a fresh roll, and taste is what raises it.
+
+STEERGATE proves the loop closes: plant 140 synthetic verdicts keeping three new
+sigils and killing three others, learn, then roll 300 times. Kept sigils came up
+55.2% of the time, killed ones 0.0%, and the heavy cap never exceeded 2.
+
+## THE GATE SUITE (all in /tmp/cert, all headless Chromium)
+    cert.js        51 canon cards, both engines, byte-identical
+    novaunit.js    every new sigil at theta 0 vs TAU — 0 bytes, 24 seeds
+    novagate2.js   end-to-end movement in the finished frame, 3 taps
+    allsigils.js   all 74 buttons, one at a time, does each change the picture
+    steergate.js   do KEEP/KILL verdicts measurably move the dice
+    pubgate.js     card round-trip, v7 length, old cards keep their era
+    graftgate.js   image and GIF grafting
+    animgate.js    the loop adopts the source's clock
+    rendergate.js  a real render, DNA, download
+    panelgate.js   phone layout: nothing falls under the cut
+Gates must be BACKGROUNDED — Bash times out at two minutes. `(setsid nohup
+timeout N … &)` then poll; the HTTP server must live inside the same script and
+must be a `ThreadingTCPServer`. Shell cwd resets between calls: absolute paths
+only.
+
+## THE GAIN SLIDERS
+The workbench's GAINS panel scales `scene.vibe.g`, and the second vocabulary does
+not live there — it derives its own gain from a hash of the seed, because adding
+draws to the shared RNG stream would re-roll every seed. So 37 of the sliders
+moved nothing. They reach now through one field, `scene.__nvG`, seated wherever
+the workbench seats its gains (the render worker, the preview worker, and
+`wbTune`) and read by `nvGain`. The public shell never sets it, so there the
+gain is exactly the hash-derived base — and because the preview and the render
+read the same field, the fidelity contract holds. The panel also stopped
+offering a slider for a sigil with no button.
+
+## STILL OPEN
+- `crush` remains seed-dependent (7 of 8).
+- The vestigial `applyCard` wrapper in the workbench.
+- The `#mode` SOURCE control produces empty DNA.
+- `pixelsort`, `embers` and `bloom` are live but faint on the MASS seeds probed;
+  they are sparse effects by nature, not broken.
+- REVOKE the session PAT.
