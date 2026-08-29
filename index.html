@@ -4507,7 +4507,13 @@ async function generateSeq(){
       compositeEcho(rgbA, ring, weights, scene);  // feedback recursion on the trails
       const reclaimed=ring.shift(); ring.push(coarseCur); coarseCur=reclaimed; // advance ring (no alloc)
     }
-    const PROT=true;
+    /* THE CORRUPTION STACK. Switched off since the first public commit —
+       the engine was literally named TABULA RASA — which left 32 of the 37
+       sigils inert: they lit, they reached the worker, and they moved not one
+       pixel. Every card ever made was rendered that way, so the stack cannot
+       simply come back: it returns for v6 and later only, and pre-v6 cards
+       keep the stripped path exactly as they have always had it. */
+    const PROT=!(scene.__ver>=6);
     if(!PROT){
       analogPass(rgbA, rgbB, scene, theta, corr, fx);
       digitalPass(rgbB, snap, scene, theta, corr, fx);
@@ -4712,7 +4718,13 @@ self.onmessage=function(e){
         compositeEcho(rgbA,ring,weights,scene);
         const rec=ring.shift();ring.push(coarseCur);coarseCur=rec;
       }
-      const PROT2=true;
+      /* THE CORRUPTION STACK. Switched off since the first public commit —
+         the engine was literally named TABULA RASA — which left 32 of the 37
+         sigils inert: they lit, they reached the worker, and they moved not one
+         pixel. Every card ever made was rendered that way, so the stack cannot
+         simply come back: it returns for v6 and later only, and pre-v6 cards
+         keep the stripped path exactly as they have always had it. */
+      const PROT2=!(scene.__ver>=6);
       if(!PROT2){
         analogPass(rgbA,rgbB,scene,theta,corr,fx);
         digitalPass(rgbB,snap,scene,theta,corr,fx);
