@@ -4555,7 +4555,13 @@ async function generateSeq(){
       compositeEcho(rgbA, ring, weights, scene);  // feedback recursion on the trails
       const reclaimed=ring.shift(); ring.push(coarseCur); coarseCur=reclaimed; // advance ring (no alloc)
     }
-    const PROT=true;
+    /* THE CORRUPTION STACK. Switched off since the first public commit —
+       the engine was literally named TABULA RASA — which left 32 of the 37
+       sigils inert: they lit, they reached the worker, and they moved not one
+       pixel. Every card ever made was rendered that way, so the stack cannot
+       simply come back: it returns for v6 and later only, and pre-v6 cards
+       keep the stripped path exactly as they have always had it. */
+    const PROT=!(scene.__ver>=6);
     if(!PROT){
       analogPass(rgbA, rgbB, scene, theta, corr, fx);
       digitalPass(rgbB, snap, scene, theta, corr, fx);
@@ -4768,7 +4774,13 @@ self.onmessage=function(e){
         compositeEcho(rgbA,ring,weights,scene);
         const rec=ring.shift();ring.push(coarseCur);coarseCur=rec;
       }
-      const PROT2=true;
+      /* THE CORRUPTION STACK. Switched off since the first public commit —
+         the engine was literally named TABULA RASA — which left 32 of the 37
+         sigils inert: they lit, they reached the worker, and they moved not one
+         pixel. Every card ever made was rendered that way, so the stack cannot
+         simply come back: it returns for v6 and later only, and pre-v6 cards
+         keep the stripped path exactly as they have always had it. */
+      const PROT2=!(scene.__ver>=6);
       if(!PROT2){
         analogPass(rgbA,rgbB,scene,theta,corr,fx);
         digitalPass(rgbB,snap,scene,theta,corr,fx);
@@ -7649,6 +7661,7 @@ function take(){ return FREE.pop()||new Uint8Array(OW*OW); }
 function schedule(ms){ if(armed)return; armed=true; setTimeout(function(){ armed=false; loop(); }, ms|0); }
 function release(){ if(gate)return; gate=true; schedule(Math.max(0, 40-(Date.now()-lastStart))); }
 const rgbA=new Uint8Array(W*H*3), rgbB=new Uint8Array(W*H*3), rgbC=new Uint8Array(W*H*3);
+const snap=new Uint8Array(W*H*3);   /* the corruption stack reads a clean copy through this */
 const idx=new Uint8Array(W*H);
 function skey(J){ return JSON.stringify([J.seed,J.mode,J.voidamt,J.locality,J.chromacap,
   J.epoch,J.ov,J.scheme,J.ver,J.wb&&J.wb.fam,J.wb&&J.wb.prim,J.wb&&J.wb.cam,J.wb&&J.wb.mod]); }
@@ -7722,8 +7735,22 @@ function loop(){
       compositeTunnel(rgbA,SC.ring2,T,Math.min(150,J.corr*scene.vibe.g.tunnel));
       const rec=SC.ring2.shift(); SC.ring2.push(SC.coarse2); SC.coarse2=rec;
     } else SC.ring2=null;
-    rgbB.set(rgbA);
-    fringePass(rgbB,scene,theta);
+    /* THE FIDELITY CONTRACT AGAIN. The render driver runs the corruption stack
+       for v6; if the preview kept the stripped path it would show one picture
+       and hand you another. Identical branch, identical order, same gate. */
+    if(scene.__ver>=6){
+      analogPass(rgbA,rgbB,scene,theta,J.corr,J.fx);
+      digitalPass(rgbB,snap,scene,theta,J.corr,J.fx);
+      heavyCorruption(rgbB,snap,scene,theta,J.corr,J.fx);
+      oblivionPixel(rgbB,snap,scene,theta,J.corr,J.fx);
+      valhallaPixel(rgbB,snap,scene,theta,J.corr,J.fx);
+      demiurgePixel(rgbB,snap,scene,theta,J.corr,J.fx,SC.grad);
+      sanctityRGB(rgbB,scene,theta,i,SC.grad);
+      seamRip(rgbB,scene,theta,SC.grad);
+    } else {
+      rgbB.set(rgbA);
+      fringePass(rgbB,scene,theta);
+    }
     lumenPass(rgbB,scene,theta,SC.grad);
     quantize(rgbB,idx,SC.near,(14+J.corr*0.20)*scene.vibe.ditherMul,
       J.fx.tect?buildTect(scene,theta,J.corr):null,
