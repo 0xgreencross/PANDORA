@@ -5951,7 +5951,7 @@ async function generate(){
     corr, N, fx, ov:{...OV}, DELAY, epoch:EPOCH,
     wb:(window.WB?{fam:WB.fam,prim:WB.prim,cam:WB.cam,mod:WB.mod,gain:WB.gain}:null),
     /* a hand on the skeleton, vocabulary, gesture or modifier IS new work */
-    ver:((typeof wbHasOverrides==='function'&&wbHasOverrides())?6:CARDVER),
+    ver:((typeof wbHasOverrides==='function'&&wbHasOverrides())?ENGINE_CARDVER:CARDVER),
     DLY:(GDLY&&GDLY.length===N)?GDLY:null,
     gr:(window.wbGraftCfg?window.wbGraftCfg():null),
     i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
@@ -6359,7 +6359,11 @@ const CARD_MOTION=['AUTO','FLOW','STEP'];
    the box's reference: a card must render the same in both. Pre-v6 cards keep
    the 64-body space and the fixed turntable; fresh work is v6. Touching a WB
    override is by definition new work, so it promotes to v6 at the job. */
-let CARDVER=7;
+/* THE ENGINE'S OWN CARD VERSION. Named, not typed as a literal, because the
+   last time it was written as a bare number in the override promotion below,
+   the number went stale and took the entire second vocabulary with it. */
+const ENGINE_CARDVER=7;
+let CARDVER=ENGINE_CARDVER;
 function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
   const si=CARD_SCHEMES.indexOf(schemeKey), mi=MODES.indexOf(modeKey);
   const mo=Math.max(0,CARD_MOTION.indexOf(motion||'AUTO'));
@@ -8953,7 +8957,7 @@ const wbPvJob=window.wbPvJob=function(){
        render will use — including the promotion a WB override implies. Leave it
        out and the living preview grows a pre-v6 body while the render grows a
        v6 one, which is the oldest bug in this project wearing a new hat. */
-    ver:((typeof wbHasOverrides==='function'&&wbHasOverrides())?6:CARDVER),
+    ver:((typeof wbHasOverrides==='function'&&wbHasOverrides())?ENGINE_CARDVER:CARDVER),
     wb:{fam:WB.fam,prim:WB.prim,cam:WB.cam,mod:WB.mod,gain:{...WB.gain}},
     gr:(window.wbGraftCfg?window.wbGraftCfg():null) };
 };
@@ -9181,7 +9185,15 @@ applyCard=function(c){ _wbAC2(c); };
 document.addEventListener('input',e=>{
   const t=e.target; if(!t||!t.matches||!t.matches('input'))return;
   if(t.id==='dna')return;
-  if(t.closest('#p-signal,#p-tune,#p-raster,#p-body,#p-graft,#p-gains')||t.id==='seed')wbPush();
+  if(t.closest('#p-signal,#p-tune,#p-raster,#p-body,#p-graft,#p-gains')||t.id==='seed')
+    /* THE SAME TWO TICKS THE CLICK PATH GOT, AND FOR THE SAME REASON. This
+       listener is in the capture phase, so it ran BEFORE the slider's own
+       handler had written state.corr / state.voidamt / state.locality /
+       state.frames / WB.gain. Every slider push posted the value from a moment
+       ago; RENDER read state directly and produced a picture the curator had
+       never seen. Deferring makes the push read state after every synchronous
+       handler has run, and after any that defers its own write by a timer. */
+    setTimeout(()=>setTimeout(wbPush,0),0);
 },true);
 /* THE PREVIEW WAS ALWAYS ONE CHANGE BEHIND.
    This listener is registered in the CAPTURE phase — the `true` below. Capture
