@@ -8089,7 +8089,17 @@ $g('pub-mint').addEventListener('click',()=>{ const m=$g('mintmodal'); if(m){ m.
        the engine for state; it reads and reflects. */
 const stage=$g('stage');
 function paint(){
-  stage.dataset.state = busy ? 'rendering' : (lastBlob ? 'rendered' : 'standby');
+  /* THE SEALED CAPTION IS AN OVERLAY, NOT A BACKDROP. #caption sits at
+     inset:0 z-index:2 over the monitor and is hidden only while the stage
+     reads 'rendering' or 'rendered'. That state was derived from `busy` and
+     `lastBlob` - both of which belong to the FULL render - so a draft painted
+     a live loop underneath a sign that still said PANDORA SEALED. The draft
+     now counts: it is 'rendering' while it works and 'rendered' once it has
+     put a frame on the glass. */
+  const drafting = (typeof PUBD!=='undefined') && PUBD.busy;
+  const drafted  = (typeof PUBD!=='undefined') && PUBD.seen;
+  stage.dataset.state = (busy||drafting) ? 'rendering'
+                      : ((lastBlob||drafted) ? 'rendered' : 'standby');
   $g('pubosd').textContent = $g('osd').textContent || 'STANDBY';
   $g('pubprog').style.width = $g('prog').style.width || '0%';
   $g('pub-corrval').textContent=$g('v-corr').textContent;
