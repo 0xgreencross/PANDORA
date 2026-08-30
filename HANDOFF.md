@@ -1,5 +1,5 @@
 # HANDOFF — DITHERVOID / PANDORA LINEAGE
-For the next Claude instance. Living document — kept cutoff-ready every session. Last updated 2026-07-19 after feedback cycle 6 (REV E5.0).
+For the next Claude instance. Living document — kept cutoff-ready every session. Last updated 2026-08-30 after the ring-truth repair (preview = render, provably).
 Read this whole file before touching anything.
 
 ## WHO YOU WORK FOR
@@ -482,6 +482,87 @@ top, and it carries the doctrine this box was built on. **Note for whoever comes
 next: it too began running on 29 August and it too has no button.** If the
 curator still does not recognise his box, that is the next lever — and it is
 named here so that pulling it stays a decision rather than a discovery.
+
+## THE RING BELONGED TO THE PLAYBACK, NOT TO THE LOOP (E9.x · 2026-08-30)
+
+The curator: *"when i render on v3 the render differs slightly from the preview
+i was seeing before rendering."* He was right, and the cause had been sitting
+under the fidelity contract since the living preview was written.
+
+ECHO and TUNNEL are the ONLY passes in the engine that carry state across
+frames: a ring of coarse (FW=360) captures of the frames before this one. The
+render defines that ring exactly — it primes from the loop's TAIL before frame
+0 and walks forward — and HYDRA reconstructs it at every block boundary, which
+is the whole reason a 16-worker render is byte-identical to a one-worker one
+(`cleanCoarse` / `postTunnelCoarse` in the pooled path).
+
+The living preview did no such thing. It inherited its ring from whatever it
+happened to have drawn last. That is the same picture ONLY if it has drawn
+every frame, in order, since the scene was built — and it has not:
+
+- the ring starts BLACK, so the first frames after any genome change carry
+  trails the GIF does not have;
+- **the playhead is wall-clock derived** (`(Date.now()-t0)/40|0`), by design, so
+  a device that cannot hold 25fps DROPS frames — and the ring then fills with
+  i-2, i-4, i-6. The trails are spread over twice the time the GIF will show
+  them, permanently, for as long as the device stays slow. It bites hardest on
+  the heavy seeds, which are exactly the seeds that drop frames. That is why it
+  read as *"some seeds are slightly off"* rather than as a clean break.
+
+And then `wbTrArm()` says EXACT: when the fast rung already sits at the render
+raster it skips the settle entirely on the claim that the live preview IS the
+GIF. **DRVDIFF** compiled both drivers at the same raster and measured that
+claim: up to **40.5%** of the pixels differed on the ring frames; with TUNNEL
+forced on, up to **66.4%**.
+
+### The repair
+The preview stops inheriting. Before each frame it asks where its ring stands
+and makes it stand at i-1:
+
+| situation | cost |
+|---|---|
+| continuous (i = last+1) | nothing — the common case |
+| a few frames dropped | one source render per skipped frame, captures only |
+| cold, wrapped at the seam, or a long jump | rebuild from the loop |
+
+The rebuild is the pooled renderer's own split: the **tunnel ring is always
+clean captures**; the **echo ring is clean where the frame falls before 0** (the
+render's tail-priming) **and post-tunnel otherwise** — because the echo capture
+is taken after `compositeTunnel` has already touched `rgbA`. That asymmetry is
+deliberate engine behaviour, not a bug; the preview now reproduces it instead
+of guessing.
+
+One subtlety worth keeping: with a single ring armed the entries are plain
+captures modulo N — a function of *where you are*, not of *how you got there* —
+so playback can cross the loop's seam for free. With BOTH armed the echo ring's
+head-of-loop entries are the clean tail-prime, so the head must be rebuilt each
+lap. `_mod` in the driver is that distinction.
+
+**No rendered pixel changes.** This is the preview learning to tell the truth.
+
+### And the settle got twice as fast
+`WBTR.laps` was 2 whenever a ring was armed, purely to prime the ring by
+walking it. The preview now reconstructs its rings at whatever frame it is
+handed, so lap one already IS the render. `WBTR.laps=1`, proven by SETTLEGATE.
+
+### The gates
+- **`drvdiff.js`** — the diagnosis. Compiles the render driver (reshaped to emit
+  indices) and the preview driver (via the page's own `wbPvSrc`, so it cannot be
+  built differently than the box builds it) at the same raster and field, and
+  compares index buffers frame by frame.
+- **`drvdiff2.js`** — the proof. 8 genomes x 3 fx variants (as-armed,
+  ECHO+TUNNEL forced, TUNNEL only) x 3 playback orders (cold-sequential,
+  every-other, shuffled). Both drivers get the SAME fx object, so forcing is
+  honest. Pre-fix worst 66.4%; post-fix **0% on all 72 combinations**.
+- **`settlegate.js`** — the settle path end to end, through the box's own
+  controls: sets `RCFG.raster` to 288 (off the ladder, so `wbTrArm` really
+  settles), waits for `WBTR.state==='true'`, compares `WBTR.frames` against the
+  render driver at 288. 0% on v3 and on v2.
+
+Shipped to `workbench/v3/index.html` (CHIMERA) and `workbench/v2/index.html`
+(E9.0 — where ECHO is dead behind `if(false)` and only TUNNEL carries a ring,
+so it gets the same repair in its simpler form). The public box does not need
+it: its DRAFT pass runs the RENDER driver, not the preview driver.
 
 ## STILL OPEN
 - `crush` remains seed-dependent (7 of 8).
