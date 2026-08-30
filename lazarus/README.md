@@ -24,11 +24,11 @@ ceiling; `lowerFee` can only descend. Verify on Etherscan with identical setting
 
 ## The DNA the corpus inscribes
 
-A card is versioned, and every version still decodes. Cards written under the
-older engine carry 37 sigil bits and 32 characters; the current format (v7)
-carries 73 and runs to 40. The engine reads the version out of the card and
+A card is versioned, and every version still decodes. Cards carry 37 sigil bits in 32 characters. A wider format (v7, 74 bits in 40
+characters) existed briefly in August 2026 and was withdrawn with the vocabulary
+it carried; the reader still accepts it, so nothing written then is orphaned. The engine reads the version out of the card and
 renders it on the engine it was written for — nothing inscribed on-chain can
 change under a token holder. Positions in the card are append-only: a retired
 sigil loses its button, never its bit.
 
-The live engine: https://dithervoid.art — EIDOLON E9.1 NOVA — GREENCROSS x Claude
+The live engine: https://dithervoid.art — EIDOLON E9.2 CHIMERA — GREENCROSS x Claude
