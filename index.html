@@ -431,6 +431,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
       </details>
 
       <div id="pub-actions">
+        <button id="pub-render">▶ RENDER</button>
         <button id="pub-download" disabled>⤓ DOWNLOAD</button>
         <button id="pub-xpost" disabled>𝕏 POST</button>
         <button id="pub-garden">⚘ GARDEN</button>
@@ -4936,6 +4937,171 @@ async function generate(){
   setTimeout(()=>{$('prog').style.width='0%';},700);
   $('go').disabled=false; $('oblivion').disabled=false; busy=false;
 }
+/* ══ THE DRAFT PASS ════════════════════════════════════════════════════════
+   Instant motion. Same core, same pool discipline, two economies: a low
+   compute raster off an adaptive ladder, and no GIF encoding at all. The
+   render driver writes four GIF streams per frame (the master plus three
+   derived sizes); a draft wants none of them, only the palette indices the
+   player already knows how to run. Nothing here can change the artifact:
+   generate() is untouched and remains the only path that makes a file. ══ */
+const PUBD={ ladder:[432,360,300,240,192], rung:1, pool:null, praster:0,
+             run:0, busy:false, lastMs:0, OUT:540 };
+
+function draftWorkerSrc(R){
+  const M=(n)=>'/*CORE'+n+'*/';
+  const sc=[...document.querySelectorAll('script:not([src])')]
+    .map(el=>el.textContent).find(x=>x.includes(M('-BEGIN')))||'';
+  const core=sc.slice(sc.indexOf(M('-BEGIN')), sc.indexOf(M('-END')));
+  const core2=sc.slice(sc.indexOf(M('2-BEGIN')), sc.indexOf(M('2-END')));
+  /* the driver, with the four GIF encoders lifted out and one index emit put
+     in their place. The frame loop above it is untouched, so the picture is
+     the same picture - only coarser, and never written to a file. */
+  let drv=WORKER_DRIVER;
+  const a=drv.indexOf('const chunks=[];');
+  const b=drv.indexOf("self.postMessage({t:'done'");
+  if(a<0||b<0) return null;
+  drv = drv.slice(0,a)
+      + "{const d=" + PUBD.OUT + ",xi=new Uint8Array(d*d);"
+      + "for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W,row=y*d;"
+      + "for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}"
+      + "self.postMessage({t:'frame',i:i,pv:xi},[xi.buffer]);}\n}\n"
+      + drv.slice(b);
+  return '"use strict";const W='+R+',H='+R+',FW=360;const TAU=6.283185307179586;\n'
+    +core+'\n'+core2+'\n'+drv;
+}
+
+function draftPool(R){
+  if(PUBD.pool && PUBD.praster===R) return true;
+  if(PUBD.pool){ for(const w of PUBD.pool){ try{w.terminate();}catch(e){} } PUBD.pool=null; }
+  try{
+    const src=draftWorkerSrc(R); if(!src) return false;
+    const url=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));
+    PUBD.pool=[];
+    for(let i=0;i<PLAT.workers;i++){ const wk=new Worker(url);
+      if(window.wbGraftPost)window.wbGraftPost(wk);
+      PUBD.pool.push(wk); }
+    PUBD.praster=R; return true;
+  }catch(e){ PUBD.pool=null; return false; }
+}
+
+/* the genome, resolved exactly as generate() resolves it. One function, two
+   callers, so the draft and the render can never drift apart. */
+function pubGenome(){
+  const seed=(parseInt($('seed').value,10)>>>0)||1;
+  let schemeKey = state.scheme;
+  if(schemeKey==='RANDOM'){
+    const rr=mulberry32((seed^0x77aa11)>>>0)();
+    schemeKey = rr<0.4 ? 'GENESIS' : (rr<0.6 ? 'TISGEN' : SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0]);
+  }
+  let scheme = schemeKey==='GENESIS' ? genesisScheme(seed)
+    : schemeKey==='TISGEN' ? tisScheme(seed) : SCHEMES[schemeKey];
+  if(window.graftScheme) scheme=window.graftScheme(scheme);
+  const scene=buildScene(seed, state.mode);
+  scene.__ver=CARDVER|0;
+  if(window.wbGraftScene)window.wbGraftScene(scene);
+  scene.voidamt=state.voidamt|0; scene.locality=state.locality|0;
+  scene.chromacap=state.chromacap|0; seatWounds(scene);
+  scene.epoch=EPOCH;
+  applyOverrides(scene, seed);
+  return {seed, schemeKey, scheme, scene};
+}
+
+async function pubDraft(){
+  if(PUBD.busy) return;
+  if(!PLAT || !WORKER_DRIVER) return;
+  const run=++PUBD.run;
+  PUBD.busy=true;
+  try{
+    const R=PUBD.ladder[PUBD.rung];
+    if(!draftPool(R)){ PUBD.busy=false; return; }
+    const G=pubGenome();
+    reflectTune(G.scene);
+    const {pal}=buildPalette(G.scheme, G.scene.vibe);
+    const N=state.frames, corr=state.corr, fx=state.fx;
+    $('t-sig').textContent=G.schemeKey; $('t-mode').textContent=G.scene.mode;
+    $('t-seed').textContent=G.seed; $('t-size').textContent=W+'²';
+    stopPlayer();
+    let nw=Math.min(PLAT.workers, N);
+    if(fx.echo&&fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/10)));
+    else if(fx.echo||fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/5)));
+    if(nw<1)nw=1;
+    const frames=new Array(N);
+    PUBD.seen=false;
+    const dcv=pubDraft._cv||(pubDraft._cv=document.createElement('canvas'));
+    dcv.width=PUBD.OUT; dcv.height=PUBD.OUT;
+    const dctx=dcv.getContext('2d');
+    const dimg=dctx.createImageData(PUBD.OUT,PUBD.OUT);
+    const t0=performance.now();
+    const jobOf=w=>({seed:G.seed, mode:state.mode, voidamt:state.voidamt|0,
+      locality:state.locality|0, chromacap:state.chromacap|0,
+      scheme:{stops:G.scheme.stops,glitch:G.scheme.glitch},
+      corr, N, fx, ov:{...OV}, DELAY, DLY:(GDLY&&GDLY.length===N)?GDLY:null,
+      epoch:EPOCH, ver:CARDVER,
+      gr:(window.wbGraftCfg?window.wbGraftCfg():null),
+      i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
+    $('pubosd')&&($('pubosd').textContent='DRAFTING');
+    await new Promise(resolve=>{
+      let remaining=nw, settled=false;
+      const fin=()=>{ if(!settled){settled=true;resolve();} };
+      const to=setTimeout(fin, 60000);
+      for(let w=0;w<nw;w++){
+        const wk=PUBD.pool[w];
+        wk.onmessage=e=>{
+          if(run!==PUBD.run){fin();return;}
+          const m=e.data;
+          if(m.t==='frame'){
+            frames[m.i]=m.pv;
+            /* PAINT IT THE MOMENT IT LANDS. Waiting for the whole loop before
+               showing anything is the same sin the full render commits, only
+               shorter. The first frame reaches the glass in a few hundred
+               milliseconds; the locked player takes over when the set is
+               complete. */
+            if(!PUBD.seen){ PUBD.seen=true; $('ph')&&($('ph').style.display='none'); }
+            const pd=dimg.data, pv=m.pv;
+            for(let q=0;q<PUBD.OUT*PUBD.OUT;q++){ const c=pal[pv[q]]||pal[0]||[0,0,0],k=q*4;
+              pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255; }
+            dctx.putImageData(dimg,0,0);
+            vctx.imageSmoothingEnabled=false;
+            vctx.drawImage(dcv,0,0,W,H);
+          }
+          else if(m.t==='done'){ if(--remaining===0){clearTimeout(to);fin();} }
+          else if(m.t==='err'){ clearTimeout(to); fin(); }
+        };
+        wk.onerror=()=>{ clearTimeout(to); fin(); };
+        wk.postMessage(jobOf(w));
+      }
+    });
+    if(run!==PUBD.run){ PUBD.busy=false; return; }
+    let ok=0; for(let i=0;i<N;i++) if(frames[i])ok++;
+    PUBD.lastMs=Math.round(performance.now()-t0);
+    if(ok===N){
+      startPlayer(frames, pal, PUBD.OUT, N, DELAY*10, (GDLY&&GDLY.length===N)?GDLY:null);
+      $('ph')&&($('ph').style.display='none');
+      $('pubosd')&&($('pubosd').textContent='LIVE · 25fps · RENDER TO SAVE');
+      /* THE LADDER. Aim for a draft inside a second and a half: climb when
+         there is room, drop when there is not. The device decides, not me. */
+      if(PUBD.lastMs<900 && PUBD.rung>0) PUBD.rung--;
+      else if(PUBD.lastMs>2200 && PUBD.rung<PUBD.ladder.length-1) PUBD.rung++;
+    }
+  }catch(e){ }
+  PUBD.busy=false;
+}
+
+/* EVERY RITUAL DRAFTS; ONLY RENDER MAKES A FILE. generate() is not modified -
+   it is simply not what a tap calls any more. PUB_FULL is the one door. */
+let PUB_FULL=false;
+const _pubGen=generate;
+generate=function(){
+  if(PUB_FULL){ PUB_FULL=false; return _pubGen.apply(this,arguments); }
+  return pubDraft();
+};
+function pubRender(){
+  if(busy)return;
+  PUB_FULL=true;
+  if(typeof stopPlayer==='function')stopPlayer();
+  generate();
+}
+
 
 /* iOS detection (incl. iPadOS reporting as MacIntel) */
 const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -7811,6 +7977,7 @@ function pubRitual(id){
   const b=$g(id); if(b.disabled)b.disabled=false;
   b.click();
 }
+$g('pub-render').addEventListener('click',()=>{ if(typeof pubRender==='function')pubRender(); });
 $g('pub-dice').addEventListener('click',()=>pubRitual('dice'));
 $g('pub-mutate').addEventListener('click',()=>{ if(busy)return; $g('mutate').click(); });
 $g('pub-oblivion').addEventListener('click',()=>pubRitual('oblivion'));
