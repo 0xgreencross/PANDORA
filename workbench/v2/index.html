@@ -4318,6 +4318,13 @@ function lumenPass(buf, scene, theta, grad){
   }
 }
 function seamRip(buf, scene, theta, grad){
+  /* NOT CALLED, DELIBERATELY. This draws one great jagged tear with a hot
+     fringe on the wound, on about 30% of seeds, and no sigil controls it. It
+     rode in with the v6 corruption branch on 29 August 2026 and the curator
+     caught it in seed 55 the moment he saw it - a zig-zag that had never
+     appeared in the whole history of the box. An effect that cannot be
+     switched off is not a sigil. Kept here because it is a good gesture: give
+     it a bit in CARD_CH and a button on the rail, and then call it. */
   /* NEW BLOOD: one great gesture — a single tear through the image, lips
      displaced apart, hot fringe on the wound. The aperture breathes. */
   const rng=mulberry32((scene.seed^0x5EAA)>>>0);
@@ -4597,7 +4604,7 @@ async function generateSeq(){
       valhallaPixel(rgbB, snap, scene, theta, corr, fx);
       demiurgePixel(rgbB, snap, scene, theta, corr, fx, grad);
       sanctityRGB(rgbB, scene, theta, i, grad);
-      seamRip(rgbB, scene, theta, grad);
+      /* seamRip is NOT called - see the note on the function below. */
     } else {
       rgbB.set(rgbA);
       fringePass(rgbB, scene, theta);
@@ -4819,7 +4826,7 @@ self.onmessage=function(e){
         valhallaPixel(rgbB,snap,scene,theta,corr,fx);
         demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
         sanctityRGB(rgbB, scene, theta, i, grad);
-        seamRip(rgbB, scene, theta, grad);
+        /* seamRip is NOT called - see the note on the function below. */
       } else {
         rgbB.set(rgbA);
         fringePass(rgbB, scene, theta);
@@ -7799,7 +7806,7 @@ function loop(){
       valhallaPixel(rgbB,snap,scene,theta,J.corr,J.fx);
       demiurgePixel(rgbB,snap,scene,theta,J.corr,J.fx,SC.grad);
       sanctityRGB(rgbB,scene,theta,i,SC.grad);
-      seamRip(rgbB,scene,theta,SC.grad);
+      /* seamRip is NOT called - see the note on the function below. */
     } else {
       rgbB.set(rgbA);
       fringePass(rgbB,scene,theta);
