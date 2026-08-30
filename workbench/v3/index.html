@@ -7776,25 +7776,99 @@ function loop(){
     const N=J.N, i=(J.__i!=null)?((((J.__i|0)%N)+N)%N)  /* truth pass: named frame */
       :((((Date.now()-t0)/40)|0)%N+N)%N;                 /* live: the GIF's own clock */
     const raw=i/N*TAU, theta=SC.tEff(raw);
-    renderSource(rgbA,rgbC,scene,i,theta,SC.gradFor(raw),J.fx,J.corr);
-    if(J.fx.tunnel){ const T=scene.demi.tunnel;
-      if(!SC.ring2){ SC.ring2=[]; for(let q=0;q<T.taps;q++)SC.ring2.push(new Uint8Array(FW*FW*3));
-        SC.coarse2=new Uint8Array(FW*FW*3); }
-      downsampleCoarse(rgbA,SC.coarse2);
-      compositeTunnel(rgbA,SC.ring2,T,Math.min(150,J.corr*scene.vibe.g.tunnel));
-      const rec=SC.ring2.shift(); SC.ring2.push(SC.coarse2); SC.coarse2=rec;
+    /* ===================================================================
+       THE RING BELONGS TO THE LOOP, NOT TO THE PLAYBACK.
+       ECHO and TUNNEL carry a ring of captures of the frames before this one.
+       The render defines it exactly - tail-primed before frame 0, then walked
+       forward - and HYDRA rebuilds it at every block boundary. The preview
+       used to inherit its ring from whatever it last drew, which is the same
+       picture only while it draws every frame in order. It does not: the ring
+       starts black, and the playhead is wall-clock derived, so a device that
+       cannot hold 25fps DROPS frames and the ring fills with i-2, i-4, i-6 -
+       trails spread over twice the time the GIF will show them. And then
+       wbTrArm() says EXACT. So the preview asks where its ring stands and
+       makes it stand at i-1 before it draws i. Continuous playback pays
+       nothing; dropped frames pay one source render each; a cold start or a
+       wrap pays a rebuild. The rendered picture is untouched.
+       =================================================================== */
+    const _TN=scene.demi.tunnel, _ECHO=!!(J.fx.echo&&scene.__ver>=6);
+    let _prime=!(SC.__last!=null&&SC.__lastN===N);
+    if(J.fx.tunnel){
+      if(!SC.ring2){ SC.ring2=[]; for(let q=0;q<_TN.taps;q++)SC.ring2.push(new Uint8Array(FW*FW*3));
+        SC.coarse2=new Uint8Array(FW*FW*3); _prime=true; }
     } else SC.ring2=null;
-    /* ECHO's ring, carried in the same scene cache as the tunnel's, so the
-       truth pass primes it over its extra lap exactly as the render does. */
-    if(J.fx.echo&&scene.__ver>=6){
+    if(_ECHO){
+      const ECN=scene.vibe.echoN, ED=scene.vibe.echoDecay;
       if(!SC.ring){ SC.ring=[]; SC.weights=[];
-        const ECN=scene.vibe.echoN, ED=scene.vibe.echoDecay;
         for(let q=0;q<ECN;q++){ SC.weights.push(Math.pow(ED,ECN-q)); SC.ring.push(new Uint8Array(FW*FW*3)); }
-        SC.coarseCur=new Uint8Array(FW*FW*3); }
+        SC.coarseCur=new Uint8Array(FW*FW*3); _prime=true; }
+    } else { SC.ring=null; SC.weights=null; SC.coarseCur=null; }
+    if(J.fx.tunnel||_ECHO){
+      const _ECN=_ECHO?SC.ring.length:0;
+      /* what a rebuild would cost in source renders - past that many skipped
+         frames, rebuilding is the cheaper way home */
+      const _GMAX=Math.max(1,(J.fx.tunnel?_TN.taps:0)
+        +(_ECHO?(J.fx.tunnel?_ECN*(_TN.taps+1):_ECN):0));
+      /* CAN THE RING CROSS THE LOOP'S SEAM? With one ring armed its entries
+         are plain captures of the previous frames, modulo N - it is a function
+         of where you are, not of how you got there, so playing on through
+         frame 0 is fine. With BOTH armed the echo ring's entries are
+         post-tunnel except where they fall before frame 0, where the render
+         tail-primes them clean: that seam is real, and the head of the loop
+         has to be rebuilt every lap. */
+      const _mod=!(J.fx.tunnel&&_ECHO);
+      let _gap=0;
+      if(!_prime){
+        const _d=_mod?(((i-SC.__last-1)%N+N)%N):(i-SC.__last-1);
+        if(_d===0&&(_mod||i>0)) _gap=0;                  /* continuous - free */
+        else if(_d>0&&_d<=_GMAX&&(_mod||i-_d>0)) _gap=_d;
+        else _prime=true;   /* wrapped to the loop's head, jumped back, or far */
+      }
+      const _clean=function(p,out){ const q=((p%N)+N)%N, pth=q/N*TAU;
+        renderSource(rgbA,rgbC,scene,q,SC.tEff(pth),SC.gradFor(pth),J.fx,J.corr);
+        downsampleCoarse(rgbA,out); };
+      if(_prime){
+        if(J.fx.tunnel) for(let e=_TN.taps;e>=1;e--) _clean(i-e,SC.ring2[_TN.taps-e]);
+        if(_ECHO){
+          /* the echo ring's tail-primed entries are clean captures; its steady
+             entries are post-tunnel captures - the same split HYDRA rebuilds */
+          const _postT=function(q,out){
+            if(!J.fx.tunnel){ _clean(q,out); return; }
+            const r2=[]; for(let e=_TN.taps;e>=1;e--){ const t2=new Uint8Array(FW*FW*3);
+              _clean(q-e,t2); r2.push(t2); }
+            const pth=q/N*TAU;
+            renderSource(rgbA,rgbC,scene,q,SC.tEff(pth),SC.gradFor(pth),J.fx,J.corr);
+            compositeTunnel(rgbA,r2,_TN,Math.min(150,J.corr*scene.vibe.g.tunnel));
+            downsampleCoarse(rgbA,out); };
+          for(let e=_ECN;e>=1;e--){ const ef=i-e;
+            if(ef<0) _clean(ef,SC.ring[_ECN-e]); else _postT(ef,SC.ring[_ECN-e]); }
+        }
+      } else if(_gap){
+        /* play the frames the eye never saw, for their captures only.
+           compositeEcho is skipped: the echo ring is captured BEFORE it and
+           reads it, so a skipped frame's echo composite changes nothing. */
+        for(let q=_gap;q>=1;q--){ const f=((i-q)%N+N)%N, pth=f/N*TAU;
+          renderSource(rgbA,rgbC,scene,f,SC.tEff(pth),SC.gradFor(pth),J.fx,J.corr);
+          if(J.fx.tunnel){ downsampleCoarse(rgbA,SC.coarse2);
+            compositeTunnel(rgbA,SC.ring2,_TN,Math.min(150,J.corr*scene.vibe.g.tunnel));
+            const rc=SC.ring2.shift(); SC.ring2.push(SC.coarse2); SC.coarse2=rc; }
+          if(_ECHO){ downsampleCoarse(rgbA,SC.coarseCur);
+            const rc=SC.ring.shift(); SC.ring.push(SC.coarseCur); SC.coarseCur=rc; }
+        }
+      }
+    }
+    SC.__last=i; SC.__lastN=N;
+    renderSource(rgbA,rgbC,scene,i,theta,SC.gradFor(raw),J.fx,J.corr);
+    if(J.fx.tunnel){
+      downsampleCoarse(rgbA,SC.coarse2);
+      compositeTunnel(rgbA,SC.ring2,_TN,Math.min(150,J.corr*scene.vibe.g.tunnel));
+      const rec=SC.ring2.shift(); SC.ring2.push(SC.coarse2); SC.coarse2=rec;
+    }
+    if(_ECHO){
       downsampleCoarse(rgbA,SC.coarseCur);
       compositeEcho(rgbA,SC.ring,SC.weights,scene);
       const rec=SC.ring.shift(); SC.ring.push(SC.coarseCur); SC.coarseCur=rec;
-    } else { SC.ring=null; SC.weights=null; SC.coarseCur=null; }
+    }
     /* THE FIDELITY CONTRACT AGAIN. The render driver runs the corruption stack
        for v6; if the preview kept the stripped path it would show one picture
        and hand you another. Identical branch, identical order, same gate. */
@@ -8150,7 +8224,11 @@ const wbTrRun=window.wbTrRun=function(){
   WBTR.t0=performance.now();
   /* the tunnel carries a ring across frames, so it needs a lap to prime
      before its captures match the render's primed ring */
-  WBTR.laps=(job.fx&&(job.fx.tunnel||job.fx.echo))?2:1;   /* echo carries a ring too */
+  /* ONE LAP IS ENOUGH NOW. The second lap existed only to prime the feedback
+     rings by walking them - which is also why settling took twice as long on
+     every seed that carries one. The preview reconstructs its rings exactly at
+     whatever frame it is handed, so the first lap already IS the render. */
+  WBTR.laps=1;
   WBTR_D=rasterOf();                   /* the truth IS the raster now */
   if(!WBTR.off||WBTR.off.width!==WBTR_D){ WBTR.off=document.createElement('canvas');
     WBTR.off.width=WBTR.off.height=WBTR_D;
