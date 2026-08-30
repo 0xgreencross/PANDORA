@@ -355,6 +355,7 @@ sigils and killing three others, learn, then roll 300 times. Kept sigils came up
                    has to mean
     invertcheck.js XSLAM at the frame counts the box actually uses
     pubgate2.js    v6 cards written, every legacy era read, a v7 card not orphaned
+    uninvited.js   nothing draws on the frame that the rail cannot reach
 Gates must be BACKGROUNDED — Bash times out at two minutes. `(setsid nohup
 timeout N … &)` then poll; the HTTP server must live inside the same script and
 must be a `ThreadingTCPServer`. Shell cwd resets between calls: absolute paths
@@ -448,6 +449,39 @@ and draws on this one.
 all of them now guard the CHIMERA engine. The card format's reserved names stay in
 the register below; if the vocabulary is ever wanted again it is recoverable from
 `4fd0a0a` / `9a73746` in full, gated and working.
+
+## THE ZIG-ZAG — A GESTURE WITH NO BUTTON
+*(2026-08-30. The curator, on a sample I sent him: "if you see on B live 55,
+there's a zig zag line that never appeared on the outputs from the version i'm
+asking you to revert to.")*
+
+He was right, and it was not a matter of taste. `seamRip` draws one jagged tear
+down the frame with a hot fringe on the wound — a piecewise path that jitters
+sideways every few rows. It fires on about 30% of seeds, decided by the first
+draw of `mulberry32(seed^0x5EAA)` against a 0.30 gate: **seed 55 draws 0.2711 and
+fires; 4242 draws 0.6236 and 777 draws 0.4703 and do not.** That is exactly why he
+flagged one of the three samples and not the other two.
+
+**Nothing on the rail could stop it.** `seamRip` sits in the unconditional part of
+the v6 corruption branch, so restoring that branch on 29 August did not only wake
+32 dormant sigils — it switched on a gesture with no button, which had never run
+in the entire history of the box. Removed from all three call sites (render,
+sequential fallback, and the living preview — the last one matters or the
+fidelity contract breaks). The function is kept in the source with a note: give
+it a bit in CARD_CH and a button on the rail before it ever runs again.
+
+**THE GATE THAT SHOULD HAVE EXISTED.** Every gate here asked *does each sigil do
+something*. None asked the opposite. `uninvited.js` now reads the unconditional
+part of the v6 branch and fails on any pass that does not receive `fx` — because
+a pass that cannot see the sigils is a pass no hand can stop. It fails on the
+shipped build and passes on this one, which is the only way to know a gate works.
+
+One pass is allowed by name: `sanctityRGB`, which re-asserts the MASS body over
+the corruption. It is how the figure is composed rather than a mark painted on
+top, and it carries the doctrine this box was built on. **Note for whoever comes
+next: it too began running on 29 August and it too has no button.** If the
+curator still does not recognise his box, that is the next lever — and it is
+named here so that pulling it stays a decision rather than a discovery.
 
 ## STILL OPEN
 - `crush` remains seed-dependent (7 of 8).
