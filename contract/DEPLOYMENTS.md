@@ -42,7 +42,7 @@
 
 All three deploys above carry the constructor value `"EIDOLON E8.0"`. That
 string is the ledger's record of the era, not a claim about what the site is
-running today — the site now runs **EIDOLON E9.1 NOVA**. The two are meant to
+running today — the site now runs **EIDOLON E9.2 CHIMERA**. The two are meant to
 diverge: registry entries live forever and tokens keep the engine name of their
 era, while the box keeps growing.
 

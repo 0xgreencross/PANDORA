@@ -27,9 +27,15 @@ entries live forever: tokens keep the engine name of their era.
 
 ## THE ENGINE HAS MOVED ON (recorded 2026-08-29)
 
-The public box now runs **EIDOLON E9.1 NOVA**: the full corruption stack behind
-a card-version gate, image and animated-GIF grafting, and a vocabulary of 73
-sigils where E4.0 had 37.
+The public box now runs **EIDOLON E9.2 CHIMERA**: the full corruption stack
+behind a card-version gate, image and animated-GIF grafting, and the same 37
+sigil channels E4.0 had — every one of them now actually reaching the picture,
+which most of them did not before.
+
+(E9.1 NOVA briefly doubled that vocabulary to 73. The curator judged the result
+and rejected it, and E9.2 returns to the CHIMERA engine byte for byte. Cards
+written during those hours still decode; they simply render without the sigils
+this engine does not have.)
 
 This does NOT change what the registry should say. Registry entries are for the
 engine a token was minted under, and tokens keep the engine name of their era.

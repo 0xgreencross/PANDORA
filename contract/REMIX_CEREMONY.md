@@ -54,13 +54,14 @@ loops, never unlock a seed, never touch listings — only sellers can.
 
 ## THE CARD GOT LONGER (noted 2026-08-29)
 
-When you harvest a genome for the ceremony, expect a longer string than the
-older cards in this document. The engine now writes **v7** cards: 40 characters
-of payload where the old format wrote 32, because the sigil rail went from 37
-channels to 73. With the `PNDR-` prefix and its grouping dashes a fresh card
-runs to 44 characters.
+For a few hours in August 2026 the engine wrote **v7** cards — 40 characters of
+payload rather than 32, carrying a doubled sigil rail. That vocabulary was judged
+and withdrawn, and the engine writes **v6** cards again: 32 characters of payload,
+36 with the `PNDR-` prefix and its grouping dashes.
 
-Nothing about the ceremony changes. Older cards still decode, still render on
+If you are holding a 44-character card from those hours it still decodes and is
+still a valid genome — it simply renders without the sigils this engine no longer
+has. Nothing about the ceremony changes. Older cards still decode, still render on
 the engine they were written for, and are still valid genomes to inscribe.
 The one law that matters here is the one that always mattered: **only a real
 card harvested from the live box enters the ledger.** A made-up string mints a
