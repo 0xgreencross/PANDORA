@@ -51,7 +51,7 @@ body.embed #view { visibility: visible !important; position: fixed !important;
 <style>
 /* ============================================================================
    DITHERVOID // PANDORA — PUBLIC SHELL v1.0
-   This stylesheet is the ONLY layout authority on the page. The EIDOLON E9.2
+   This stylesheet is the ONLY layout authority on the page. The EIDOLON E9.0
    engine lives headless inside #legacy-root (display:none); the single organ
    relocated out of it is the #view canvas. No transplanted rules, no cascade
    wars, no !important anywhere.
@@ -352,7 +352,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   <header id="topbar">
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
     <div id="topright">
-      <div id="tagline">ENGINE · EIDOLON E9.2 CHIMERA<br>ONE SEED · ONE TOKEN · ONE CHANCE</div>
+      <div id="tagline">ENGINE · EIDOLON E9.0 CHIMERA<br>ONE SEED · ONE TOKEN · ONE CHANCE</div>
       <nav id="shellrooms">
         <a href="gardens.html">GARDENS</a>
         <a href="showcase.html">SHOWCASE</a>
@@ -458,15 +458,15 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   <div class="row"><b>DNA IS THE ARTWORK'S PROOF.</b> The card in the DNA field is the loop's complete genome. Copy it, post it, keep it: RESURRECT rebuilds the exact loop from any card, on any device, forever.</div>
   <div class="row"><b>MINTING CARRIES A SMALL FEE</b> — 0.01 ETH for a 1/1, 0.001 ETH for editions — because this is an art project by <b>GREENCROSS</b> and the fee pays the artist's monthly AI bill. One seed, one token, one chance.</div>
   <div class="row"><b>CC0 — NO RIGHTS RESERVED.</b> Copy it, remix it, sell it, build it into your own work. You are encouraged to. Made something with a loop? <a href="showcase.html#submit">Submit it to the showcase</a>.</div>
-  <div class="row"><a href="gardens.html">GARDENS</a> · <a href="showcase.html">SHOWCASE</a> · <a href="sealed.html">THE SEALED</a> · <a target="_blank" rel="noopener" id="instr-contract" href="#">CONTRACT ↗</a> · ENGINE: EIDOLON E9.2 CHIMERA</div>
+  <div class="row"><a href="gardens.html">GARDENS</a> · <a href="showcase.html">SHOWCASE</a> · <a href="sealed.html">THE SEALED</a> · <a target="_blank" rel="noopener" id="instr-contract" href="#">CONTRACT ↗</a> · ENGINE: EIDOLON E9.0 CHIMERA</div>
 </div></div>
 
-<!-- ==== EIDOLON E9.2 — engine markup, headless ==== -->
+<!-- ==== EIDOLON E9.0 — engine markup, headless ==== -->
 <div id="legacy-root" style="display:none">
 
 <header id="mast">
   <div id="wordmark">EIDO<b>LON</b> <span class="pnd">// PANDORA</span></div>
-  <div id="mastrev">REV E9.2 · EIDOLON<br>CHIMERA</div>
+  <div id="mastrev">REV E9.0 · EIDOLON<br>CHIMERA</div>
 </header>
 <div id="cockpit">
   <section id="bay-engine" class="bay">
@@ -495,7 +495,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
 <div id="app">
   <header>
     <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
-    <div class="ver">REV E9.2 · EIDOLON<br>CHIMERA</div>
+    <div class="ver">REV E9.0 · EIDOLON<br>CHIMERA</div>
   </header>
 
   <div class="colL">
@@ -525,7 +525,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   <div class="colR">
   <nav class="tabs">
     <button class="tab" data-p="p-signal" aria-selected="true">SIGNAL</button>
-    <button class="tab" data-p="p-sigils" aria-selected="false">SIGILS·36</button>
+    <button class="tab" data-p="p-sigils" aria-selected="false">SIGILS·37</button>
     <button class="tab" data-p="p-tune" aria-selected="false">TUNE</button>
     <button class="tab" data-p="p-lab" aria-selected="false">LAB</button>
     <button id="infobtn" title="INFO MODE: tap this, then tap anything to learn what it does">?</button>
@@ -600,10 +600,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
           <div class="tg gv" data-fx="braid"><span>BRAID</span><i class="dot"></i></div>
           <div class="tg gv" data-fx="lungs"><span>LUNGS</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="tunnel"><span>TUNNEL</span><i class="dot"></i></div>
-          <!-- KALEIDO: retired by the curator. The button goes; the DNA bit at
-               position 32 of CARD_CH stays exactly where it is, because that
-               table is positional and an old card carrying the bit must still
-               decode to the same genome. state.fx keeps the key too. -->
+          <div class="tg gd" data-fx="kaleido"><span>KALEID</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="bloom"><span>BLOOM</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="embers"><span>EMBERS</span><i class="dot"></i></div>
           <div class="tg gd" data-fx="runes"><span>RUNES</span><i class="dot"></i></div>
@@ -3093,31 +3090,16 @@ function quantize(buf,indices,near,dAmt,tect,quake){
   }
 }
 
-/* CRUSH — one epicentre was a coin toss. The disc is placed at a seeded point
-   in a 135x135 grid; land it in the void and the sigil does nothing at all,
-   which is why it measured live on only 4 seeds of 8. v6 throws three or four
-   and unions them, so at least one reaches the body on every seed while the
-   character — a local quake, not a global filter — is unchanged. The per-frame
-   hash still keys off the quantised theta, so the loop closes as before. */
 function buildQuake(scene,theta,corr){
   const C=corr/100;
   const q=buildQuake._q||(buildQuake._q={m:new Uint8Array(135*135),rx:new Uint8Array(135*135),ry:new Uint8Array(135*135),mul:new Float32Array(135*135)});
   const st=mulberry32((scene.seed^0xD17E)>>>0);         // static epicenter field per seed
   const fk=Math.round(theta/TAU*4096)&4095;
-  const NEW=(scene.__ver>=6);
-  const nQ=NEW?(3+((st()*2)|0)):1;
-  const EX=[], EY=[], ER=[];
-  for(let e=0;e<nQ;e++){
-    /* the first draw is the pre-v6 pair, verbatim and in the same order */
-    const ex=st()*135, ey=st()*135, er=(18+st()*45)*(0.5+C);
-    EX.push(ex); EY.push(ey); ER.push(er*er);
-  }
+  const cx=st()*135, cy=st()*135, rad=(18+st()*45)*(0.5+C);
+  const r2=rad*rad;
   for(let gy=0;gy<135;gy++)for(let gx=0;gx<135;gx++){
-    const t=gy*135+gx;
-    let hit=0;
-    for(let e=0;e<nQ;e++){ const dx=gx-EX[e], dy=gy-EY[e];
-      if(dx*dx+dy*dy<ER[e]){ hit=1; break; } }
-    if(hit){
+    const t=gy*135+gx, dx=gx-cx, dy=gy-cy, d2=dx*dx+dy*dy;
+    if(d2<r2){
       q.m[t]=1;
       const h=((gx*73856093)^(gy*19349663)^(fk*83492791))>>>0;
       q.rx[t]=h&7; q.ry[t]=(h>>>3)&7;
@@ -3728,18 +3710,10 @@ function gilbertOrder(w,h){
   if(w>=h) gen(0,0,w,0,0,h); else gen(0,0,0,h,w,0);
   return Int32Array.from(order);
 }
-let HILB=null, HILB_T=-1;
+let HILB=null;
 function fxHilbert(buf,snap,scene,theta,corr){
-  const C=corr/100, p=scene.valhalla.hilb;
-  /* THE CURVE MUST FIT THE CANVAS. This was pinned to T=135, TS=8 — a 1080
-     raster and nothing else. On every other rung it walked off the end of the
-     buffer and threw RangeError, which is why HILB was a button that killed the
-     frame instead of drawing on it. At 1080 the numbers below come out to
-     exactly 135 and 8, so nothing that ever rendered changes. */
-  const S=Math.min(W,H);
-  let TS=(S/135)|0; if(TS<1)TS=1;
-  const T=(S/TS)|0;
-  if(!HILB||HILB_T!==T){ HILB=gilbertOrder(T,T); HILB_T=T; }
+  const C=corr/100, p=scene.valhalla.hilb, T=135, TS=8;
+  if(!HILB)HILB=gilbertOrder(T,T);
   const L=HILB.length;
   const s=Math.round(shp(Math.sin(theta*p.k+p.ph),p.shape)*p.dir*C*L*0.10);
   if(!s)return;
@@ -3928,10 +3902,6 @@ function fxKaleido(buf,snap,scene,theta,corr){
 
 /* 3. PHOSPHOR BLOOM — bright signal physically bleeds light: coarse threshold,
    separable blur, additive recomposite. Neon finally glows. */
-/* BLOOM, VISIBLE AT LAST. The threshold is 140..210 out of 255, which in a
-   dark MASS render almost nothing reaches — measured live on 3 seeds of 8 and
-   two of those moved 0.01% of pixels. Halving it for v6 puts the knee inside
-   the range the body actually occupies. Pre-v6 keeps the old threshold. */
 function fxBloom(buf,scene,theta,corr){
   const B=scene.demi.bloom, C=Math.min(1.5,corr/100);
   const N2=FW*FW;
@@ -3941,7 +3911,7 @@ function fxBloom(buf,scene,theta,corr){
   const tR=fxBloom._tr||(fxBloom._tr=new Float32Array(N2));
   const tG=fxBloom._tg||(fxBloom._tg=new Float32Array(N2));
   const tB=fxBloom._tb||(fxBloom._tb=new Float32Array(N2));
-  const thr=(scene.__ver>=6)?(B.thr*0.5):B.thr, inv=1/(255-thr);
+  const thr=B.thr, inv=1/(255-thr);
   for(let y=0;y<FW;y++){const sy=((y*H/FW)|0)*W;
     for(let x=0;x<FW;x++){const so=(sy+((x*W/FW)|0))*3, i=y*FW+x;
       const L=buf[so]*0.299+buf[so+1]*0.587+buf[so+2]*0.114;
@@ -4279,13 +4249,6 @@ function lumenPass(buf, scene, theta, grad){
   }
 }
 function seamRip(buf, scene, theta, grad){
-  /* NOT CALLED, DELIBERATELY. This draws one great jagged tear with a hot
-     fringe on the wound, on about 30% of seeds, and no sigil controls it. It
-     rode in with the v6 corruption branch on 29 August 2026 and the curator
-     caught it in seed 55 the moment he saw it - a zig-zag that had never
-     appeared in the whole history of the box. An effect that cannot be
-     switched off is not a sigil. Kept here because it is a good gesture: give
-     it a bit in CARD_CH and a button on the rail, and then call it. */
   /* NEW BLOOD: one great gesture — a single tear through the image, lips
      displaced apart, hot fringe on the wound. The aperture breathes. */
   const rng=mulberry32((scene.seed^0x5EAA)>>>0);
@@ -4539,18 +4502,12 @@ async function generateSeq(){
       compositeTunnel(rgbA, ring2, scene.demi.tunnel, Math.min(150,corr*scene.vibe.g.tunnel));
       const rec=ring2.shift(); ring2.push(coarse2); coarse2=rec;
     }
-    if(fx.echo&&scene.__ver>=6){
+    if(false){
       downsampleCoarse(rgbA, coarseCur);          // capture clean coarse of this frame
       compositeEcho(rgbA, ring, weights, scene);  // feedback recursion on the trails
       const reclaimed=ring.shift(); ring.push(coarseCur); coarseCur=reclaimed; // advance ring (no alloc)
     }
-    /* THE CORRUPTION STACK. Switched off since the first public commit —
-       the engine was literally named TABULA RASA — which left 32 of the 37
-       sigils inert: they lit, they reached the worker, and they moved not one
-       pixel. Every card ever made was rendered that way, so the stack cannot
-       simply come back: it returns for v6 and later only, and pre-v6 cards
-       keep the stripped path exactly as they have always had it. */
-    const PROT=!(scene.__ver>=6);
+    const PROT=true;
     if(!PROT){
       analogPass(rgbA, rgbB, scene, theta, corr, fx);
       digitalPass(rgbB, snap, scene, theta, corr, fx);
@@ -4559,7 +4516,7 @@ async function generateSeq(){
       valhallaPixel(rgbB, snap, scene, theta, corr, fx);
       demiurgePixel(rgbB, snap, scene, theta, corr, fx, grad);
       sanctityRGB(rgbB, scene, theta, i, grad);
-      /* seamRip is NOT called - see the note on the function below. */
+      seamRip(rgbB, scene, theta, grad);
     } else {
       rgbB.set(rgbA);
       fringePass(rgbB, scene, theta);
@@ -4576,7 +4533,7 @@ async function generateSeq(){
     }
     quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
              (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-    if(scene.__ver>=6||(scene.mode!=='MASS'&&scene.mode!=='IDOL')) indexPass(indices, pal.length, scene, theta, corr, fx);
+    if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices, pal.length, scene, theta, corr, fx);
     sanctityIdx(indices, scene, i);
 
     // live preview from quantized indices
@@ -4750,21 +4707,12 @@ self.onmessage=function(e){
         compositeTunnel(rgbA,ring2,scene.demi.tunnel,Math.min(150,corr*scene.vibe.g.tunnel));
         const rec=ring2.shift();ring2.push(coarse2);coarse2=rec;
       }
-      /* ECHO RETURNS. It was disabled with a literal false. The ring state is
-         reconstructed at every chunk boundary by the block above, so a
-         multi-worker render matches a single-worker one exactly. */
-      if(fx.echo&&scene.__ver>=6){
+      if(false){
         downsampleCoarse(rgbA,coarseCur);
         compositeEcho(rgbA,ring,weights,scene);
         const rec=ring.shift();ring.push(coarseCur);coarseCur=rec;
       }
-      /* THE CORRUPTION STACK. Switched off since the first public commit —
-         the engine was literally named TABULA RASA — which left 32 of the 37
-         sigils inert: they lit, they reached the worker, and they moved not one
-         pixel. Every card ever made was rendered that way, so the stack cannot
-         simply come back: it returns for v6 and later only, and pre-v6 cards
-         keep the stripped path exactly as they have always had it. */
-      const PROT2=!(scene.__ver>=6);
+      const PROT2=true;
       if(!PROT2){
         analogPass(rgbA,rgbB,scene,theta,corr,fx);
         digitalPass(rgbB,snap,scene,theta,corr,fx);
@@ -4773,7 +4721,7 @@ self.onmessage=function(e){
         valhallaPixel(rgbB,snap,scene,theta,corr,fx);
         demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
         sanctityRGB(rgbB, scene, theta, i, grad);
-        /* seamRip is NOT called - see the note on the function below. */
+        seamRip(rgbB, scene, theta, grad);
       } else {
         rgbB.set(rgbA);
         fringePass(rgbB, scene, theta);
@@ -4781,7 +4729,7 @@ self.onmessage=function(e){
       lumenPass(rgbB, scene, theta, grad);
       quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
                (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
-      if(scene.__ver>=6||(scene.mode!=='MASS'&&scene.mode!=='IDOL')) indexPass(indices,pal.length,scene,theta,corr,fx);
+      if(scene.mode!=='MASS'&&scene.mode!=='IDOL') indexPass(indices,pal.length,scene,theta,corr,fx);
       sanctityIdx(indices, scene, i);
       const chunks=[];
       { const cs=new Sink(1<<16); gifFrame(cs,W,H,indices,dlyAt(i),MCS[0]); chunks.push(cs.done().slice()); }
@@ -5278,11 +5226,7 @@ const CARD_MOTION=['AUTO','FLOW','STEP'];
    version. Fresh work is v6 and gets the whole engine — 256 bodies, the camera
    organ, the modifier. A resurrected old card keeps its own version, so
    re-saving it never silently re-bodies it. */
-/* THE ENGINE'S OWN CARD VERSION. Named, not typed as a literal wherever it is
-   needed — the last time it was a bare number in the override promotion, the
-   number went stale and took an entire feature with it. */
-const ENGINE_CARDVER=6;
-let CARDVER=ENGINE_CARDVER;
+let CARDVER=6;
 function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
   const si=CARD_SCHEMES.indexOf(schemeKey), mi=MODES.indexOf(modeKey);
   const mo=Math.max(0,CARD_MOTION.indexOf(motion||'AUTO'));
@@ -5325,10 +5269,7 @@ function unpackCard(str){
   let sx=String(str||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
   if(sx.startsWith('PNDR'))sx=sx.slice(4);
   sx=sx.replace(/I|L/g,'1').replace(/O/g,'0').replace(/U/g,'V');
-  /* 40:25 is the NOVA-era card. This engine has no second vocabulary, so those
-     bits are read past and dropped rather than refused — a card written during
-     those hours still resurrects, as the v6 card it now is. */
-  const LEN={21:13,23:14,28:17,29:18,32:20,40:25};     // v1 / v2 / v3 / v4 / v5-fork / v7-nova
+  const LEN={21:13,23:14,28:17,29:18,32:20};           // v1 / v2 / v3 / v4 / v5-fork
   if(!(sx.length in LEN))return null;
   let bv=0n;
   for(const c of sx){const d=B32.indexOf(c); if(d<0)return null; bv=(bv<<5n)|BigInt(d);}
@@ -5343,14 +5284,11 @@ function unpackCard(str){
   let used=0;
   const pull=bits=>{const r=Number((v>>BigInt(TOT-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
   const ver=pull(4);
-  if(!((ver===1&&sx.length===21)||(ver===2&&sx.length===23)||(ver===3&&sx.length===28)||(ver===4&&sx.length===29)||(ver===5&&sx.length===32)||(ver===6&&sx.length===32)||(ver===7&&sx.length===40)))return null;
+  if(!((ver===1&&sx.length===21)||(ver===2&&sx.length===23)||(ver===3&&sx.length===28)||(ver===4&&sx.length===29)||(ver===5&&sx.length===32)||(ver===6&&sx.length===32)))return null;
   const seed=pull(32), si=pull(5), mi=pull(4), corr=pull(7), frames=pull(7);
   const mo=ver>=2?pull(2):0;
   if(si>=CARD_SCHEMES.length||mi>=MODES.length||corr>100||frames<8||frames>80||mo>2)return null;
   const fx={}; for(const ch of CARD_CH)fx[ch]=pull(1)===1;
-  /* a NOVA card carries 74 sigil bits where this engine has 37. Walk past the
-     rest so everything after them stays on its bit, and let them go. */
-  if(ver>=7) for(let i=CARD_CH.length;i<74;i++)pull(1);
   let ov=null;
   if(ver===3){  // legacy narrow block — map into the new space
     ov={maskType:pull(3),maskStyle:pull(1),cx:pull(5),cy:pull(5),size:pull(5),n:pull(3),form:pull(2)};
@@ -5358,13 +5296,13 @@ function unpackCard(str){
     if(ov.form===3)ov.form=31;                          // old MIX -> new MIX
   }
   let epoch=0;
-  if(ver===4||ver===5||ver===6||ver===7){
+  if(ver===4||ver===5||ver===6){
     ov={maskType:pull(5),maskStyle:pull(5),cx:pull(5),cy:pull(5),size:pull(5),n:pull(6),form:pull(5)};
     if(ov.maskType>31||ov.maskStyle>19||(ov.n!==0&&(ov.n<2||ov.n>50))||ov.form>31)return null;
     epoch=pull(1);                         // legacy v4 cards carry 0 here by construction
   }
   let voidamt=0, chromacap=0, locality=0;
-  if(ver===5||ver===6||ver===7){
+  if(ver===5||ver===6){
     voidamt=pull(7); chromacap=pull(1); locality=pull(7);
     if(voidamt>100||locality>100)return null;
     if(ov&&ov.maskType===0&&ov.n===0&&ov.form===0&&ov.size===0)ov=null;   // fork cards without an override
@@ -5372,9 +5310,7 @@ function unpackCard(str){
   return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov, epoch, voidamt, chromacap, locality, ver};
 }
 function applyCard(c){
-  /* a decoded card keeps its era — but never an era this engine does not have.
-     A NOVA card lands here as the v6 card it now is, and resaves as one. */
-  CARDVER=Math.min(ENGINE_CARDVER, (c && c.ver!=null) ? c.ver : ENGINE_CARDVER);   /* a decoded card keeps its era; a fresh roll is new work */
+  CARDVER=(c && c.ver!=null) ? c.ver : 6;   /* a decoded card keeps its era; a fresh roll is new work */
   clearOV();
   EPOCH=c.epoch||0;
   setSeg('epochseg','_epoch',String(EPOCH));
@@ -6589,7 +6525,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='E9.2';
+const REV_SELF='E9.0';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -7846,7 +7782,7 @@ function hideMintedBand(){ const b=document.getElementById('mintedband'); if(b)b
 <script>
 /* ============================================================================
    PUBLIC SHELL WIRING — the shell owns every visible element and drives the
-   headless EIDOLON E9.2 engine by direct calls only. One relocation is
+   headless EIDOLON E9.0 engine by direct calls only. One relocation is
    permitted: the #view canvas moves into the shell's stage. Nothing else is
    adopted, moved, or restyled. State flows one way: engine → paint().
    ========================================================================== */
