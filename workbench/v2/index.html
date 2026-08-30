@@ -303,7 +303,6 @@ input[type=text],input[type=number]{
   border:1px solid var(--line);border-radius:4px;background:#08080e;min-height:0;}
 #collections{display:grid;gap:var(--gap);}
 #c-vault,#c-gardens{display:grid;gap:var(--gap);}
-.tg.nova span{color:#8fe3ff;}
 #gr-drop{border:1px dashed #4a3a5c;border-radius:6px;padding:12px 8px;text-align:center;
   font-size:9px;letter-spacing:.1em;color:#8b7ba0;cursor:pointer;user-select:none;min-height:var(--tap);}
 #gr-thumbwrap{display:none;align-items:center;gap:var(--gap);}
@@ -483,7 +482,7 @@ body.artmax #ui{
 <div id="ui">
 
   <header id="topline">
-    <span class="wbb-id">&#9874; WORKBENCH V2 &middot; EIDOLON E9.1 NOVA</span>
+    <span class="wbb-id">&#9874; WORKBENCH V2 &middot; EIDOLON E9.2 CHIMERA</span>
     <span id="wb-livestat"></span>
     <nav id="shellrooms" aria-label="rooms"><a href="/">PUBLIC BOX</a><a href="/gardens.html">GARDENS</a><a href="/showcase.html">SHOWCASE</a><a href="/sealed.html">SEALED</a></nav>
     <button type="button" id="wb-artmax" class="vio" aria-pressed="false" title="give the whole deck to the artwork">&#9974; ART</button>
@@ -600,46 +599,6 @@ body.artmax #ui{
         <div class="tg gd" data-fx="embers"><span>EMBERS</span><i class="dot"></i></div>
         <div class="tg gd" data-fx="runes"><span>RUNES</span><i class="dot"></i></div>
         <div class="tg gd" data-fx="chimera"><span>CHIMERA</span><i class="dot"></i></div>
-        <!-- ── NOVA, the second vocabulary. Reserved 37, implemented 8;
-             the rest arrive in later batches and their bits are already
-             held in CARD_CH so no card written today is invalidated. ── -->
-        <div class="tg gd nova" data-fx="strata"><span>STRATA</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="fold"><span>FOLD</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="quarter"><span>QUARTER</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="peel"><span>PEEL</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="drip"><span>DRIP</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="shear"><span>SHEAR</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="ripple"><span>RIPPLE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="silt"><span>SILT</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="bandshift"><span>BANDSHIFT</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="posterize"><span>POSTERIZE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="duotone"><span>DUOTONE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="solarize"><span>SOLARIZE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="contour"><span>CONTOUR</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="stipple"><span>STIPPLE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="glyphswap"><span>GLYPHSWAP</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="palcrawl"><span>PALCRAWL</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="spin"><span>SPIN</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="pulse"><span>PULSE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="breathe"><span>BREATHE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="twist"><span>TWIST</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="stretch"><span>STRETCH</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="jitter"><span>JITTER</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="split"><span>SPLIT</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="afterimage"><span>AFTERIMAGE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="charr"><span>CHARR</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="frost"><span>FROST</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="sear"><span>SEAR</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="patina"><span>PATINA</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="emboss2"><span>EMBOSS2</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="rimlight"><span>RIMLIGHT</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="caustic"><span>CAUSTIC</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="dust"><span>DUST</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="lattice"><span>LATTICE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="rebar"><span>REBAR</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="terrace"><span>TERRACE</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="fault"><span>FAULT</span><i class="dot"></i></div>
-        <div class="tg gd nova" data-fx="seam"><span>SEAM</span><i class="dot"></i></div>
       </div>
     </section>
 
@@ -3284,10 +3243,7 @@ function indexPass(ind,P,scene,theta,corr,fx){
     for(let i=0;i<nS;i++){
       const pos=sl()*TAU, jx=Math.round((sl()-0.5)*24), jy=Math.round((sl()-0.5)*16);
       let d=Math.abs(theta-pos); if(d>TAU/2)d=TAU-d;
-      /* the window was PI/28 — narrower than the gap between frames, so the
-         strobe fell between them and the sigil did nothing on half the seeds.
-         Pre-v6 keeps the old window: those cards are already minted. */
-      if(d<((scene.__ver>=6)?(Math.PI/12):(Math.PI/28))){
+      if(d<Math.PI/28){
         for(let q=0;q<ind.length;q++)ind[q]=P-1-ind[q];
         if(jx||jy){
           const tmp=indexPass._t&&indexPass._t.length===ind.length?indexPass._t:(indexPass._t=new Uint8Array(ind.length));
@@ -3816,8 +3772,8 @@ function fxHilbert(buf,snap,scene,theta,corr){
   const C=corr/100, p=scene.valhalla.hilb;
   /* THE CURVE MUST FIT THE CANVAS. This was pinned to T=135, TS=8 — a 1080
      raster and nothing else. On every other rung it walked off the end of the
-     buffer and threw RangeError, which is why HILB was a button that killed
-     the frame instead of drawing on it. At 1080 the numbers below come out to
+     buffer and threw RangeError, which is why HILB was a button that killed the
+     frame instead of drawing on it. At 1080 the numbers below come out to
      exactly 135 and 8, so nothing that ever rendered changes. */
   const S=Math.min(W,H);
   let TS=(S/135)|0; if(TS<1)TS=1;
@@ -4171,882 +4127,6 @@ function fxChimera(buf,snap,scene,theta,corr,grad){
   }
 }
 
-
-/* ============================================================================
-   NOVA — THE SECOND VOCABULARY.
-   Thirty-seven names are reserved here in one go and implemented in batches.
-   Reserving them all at once is the point: CARD_CH is positional, so the wire
-   format must reach its final width in a single step or every batch would
-   invalidate the cards of the batch before it. Names with no pass yet simply
-   paint nothing; their bit rides in the card and costs one bit.
-
-   THE CHOICE OF NAMES is not arbitrary. The curator's 119 verdicts say mirror
-   .83, SEDIMENT .89, flay .77, melt .78, GRID .80, slice .75 and wave .75 —
-   folding, layering, peeling, dripping, cutting and rippling. They say TISGEN
-   .10, ENGRAVED .33, chrono .47 and SATELLITE .44 — smear and haze are out.
-   The first batch is drawn entirely from the first list.
-
-   GAIN WITHOUT DRIFT. scene.vibe.g is built inside buildScene from the shared
-   rng stream; adding keys there would add draws and re-roll every seed that
-   ever existed. These carry a gain hashed from the seed and the name instead —
-   deterministic, per-seed, and costing not one draw.
-   ========================================================================== */
-function nvGain(scene,k){
-  let h=(scene.seed^0x9E3779B9)>>>0;
-  for(let i=0;i<k.length;i++)h=Math.imul(h^k.charCodeAt(i),16777619)>>>0;
-  const base=0.6+((h>>>9)&1023)/1023;                 /* 0.60 .. 1.60 */
-  /* the workbench's per-sigil gain, when there is a workbench. The public box
-     never sets __nvG, so this is exactly base there — and the preview and the
-     render read the same field, which is what keeps them byte-identical. */
-  const m=scene.__nvG?scene.__nvG[k]:null;
-  return (m==null)?base:(base*m/100);
-}
-
-/* EXACT LOOP PHASE. Motion built on raw theta closes only to within a rounding
-   hair: sin(TAU) is -2.45e-16, not zero, and one unlucky Math.round turns that
-   hair into a visible jump at the seam. Folding the phase first makes theta=TAU
-   land on exactly the zero it started from, for every seed, forever. */
-function nvPh(theta){ let p=(theta||0)/TAU; p-=Math.floor(p); return p<0?p+1:p; }
-function nvSin(theta,h,ph){ return Math.sin(TAU*(nvPh(theta)*h)+ph); }
-function nvCos(theta,h,ph){ return Math.cos(TAU*(nvPh(theta)*h)+ph); }
-
-
-/* STRATA — the seed cut into sedimentary bands, each sliding on its own phase.
-   Every band's offset is sin of an INTEGER multiple of theta, so the whole
-   stack returns to rest at TAU exactly. */
-function nvStrata(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x57A47A)>>>0);
-  const nB=6+((st()*10)|0), edges=[0,H];
-  for(let i=0;i<nB;i++)edges.push((st()*H)|0);
-  edges.sort((a,b)=>a-b);
-  for(let b=0;b<edges.length-1;b++){
-    const y0=edges[b], y1=edges[b+1];
-    const k=1+((st()*3)|0), ph=st()*TAU, amp=(4+st()*70)*A;
-    if(y1<=y0)continue;
-    const off=Math.round(nvSin(theta,k,ph)*amp);
-    if(!off)continue;
-    for(let y=y0;y<y1;y++){ const row=y*W*3;
-      for(let x=0;x<W;x++){ let sx=(x+off)%W; if(sx<0)sx+=W;
-        const so=row+sx*3, d=row+x*3;
-        buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-  }
-}
-
-/* FOLD — one vertical axis, the picture folded back on itself. The seam drifts
-   on an integer harmonic; rectilinear, never radial, because the rosettes were
-   purged and this is the fold the curator kept. */
-function nvFold(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0xF01DED)>>>0);
-  const base=0.34+st()*0.32, k=1+((st()*2)|0), ph=st()*TAU;
-  let seam=Math.round((base+nvSin(theta,k,ph)*0.10*A)*W);
-  if(seam<2)seam=2; else if(seam>W-3)seam=W-3;
-  const mix=Math.min(1,0.40+A*0.60);
-  for(let y=0;y<H;y++){ const row=y*W*3;
-    for(let x=seam;x<W;x++){
-      let sx=2*seam-x; if(sx<0)sx=0; else if(sx>=W)sx=W-1;
-      const so=row+sx*3, d=row+x*3;
-      buf[d]  =buf[d]  +(snap[so]  -buf[d]  )*mix;
-      buf[d+1]=buf[d+1]+(snap[so+1]-buf[d+1])*mix;
-      buf[d+2]=buf[d+2]+(snap[so+2]-buf[d+2])*mix; } }
-}
-
-/* QUARTER — the same fold on both axes at once. Four-square symmetry, which is
-   the grid's logic rather than the mandala's. */
-function nvQuarter(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x40A27E)>>>0);
-  const kx=1+((st()*2)|0), ky=1+((st()*2)|0), px=st()*TAU, py=st()*TAU;
-  let sx0=Math.round((0.42+nvSin(theta,kx,px)*0.08*A)*W);
-  let sy0=Math.round((0.42+nvCos(theta,ky,py)*0.08*A)*H);
-  if(sx0<2)sx0=2; else if(sx0>W-3)sx0=W-3;
-  if(sy0<2)sy0=2; else if(sy0>H-3)sy0=H-3;
-  const mix=Math.min(1,0.38+A*0.62);
-  for(let y=0;y<H;y++){
-    let ry=y>sy0?(2*sy0-y):y; if(ry<0)ry=0; else if(ry>=H)ry=H-1;
-    for(let x=0;x<W;x++){
-      let rx=x>sx0?(2*sx0-x):x; if(rx<0)rx=0; else if(rx>=W)rx=W-1;
-      if(rx===x&&ry===y)continue;
-      const so=(ry*W+rx)*3, d=(y*W+x)*3;
-      buf[d]  =buf[d]  +(snap[so]  -buf[d]  )*mix;
-      buf[d+1]=buf[d+1]+(snap[so+1]-buf[d+1])*mix;
-      buf[d+2]=buf[d+2]+(snap[so+2]-buf[d+2])*mix; } }
-}
-
-/* PEEL — the flay instinct at the pixel scale: wherever the picture has a hard
-   horizontal edge, the edge lifts and slides in the direction it faces. The
-   lift breathes on sin(theta), zero-crossing at 0 and TAU. */
-function nvPeel(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const grow=(1-nvCos(theta,1,0))*0.5;                /* exactly 0 at 0 and at TAU */
-  const L=(3+A*34*grow)|0; if(L<1)return;
-  const thr=6+(((1-A)*14)|0);
-  for(let y=0;y<H;y++){ const row=y*W*3;
-    for(let x=1;x<W-1;x++){
-      const o=row+x*3, gx=snap[o+3]-snap[o-3];
-      if(gx>-thr&&gx<thr)continue;
-      const dir=gx>0?1:-1, r=snap[o], g=snap[o+1], b=snap[o+2];
-      for(let s=1;s<=L;s++){
-        const ax=x+dir*s; if(ax<0||ax>=W)break;
-        const d=row+ax*3, w=1-(s-1)/L;              /* the lifted edge fades as it goes */
-        buf[d]  =buf[d]  +(r-buf[d]  )*w;
-        buf[d+1]=buf[d+1]+(g-buf[d+1])*w;
-        buf[d+2]=buf[d+2]+(b-buf[d+2])*w; } } }
-}
-
-/* DRIP — melt, but obeying gravity. Each column carries its own viscosity from
-   two seeded spatial frequencies; the run grows from nothing at theta 0 to its
-   full length at pi and back, so the loop closes on a dry frame. */
-function nvDrip(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0xD819C7)>>>0);
-  const f1=0.004+st()*0.010, p1=st()*TAU, f2=0.021+st()*0.030, p2=st()*TAU;
-  const grow=(1-nvCos(theta,1,0))*0.5;                /* exactly 0 at 0 and at TAU */
-  const maxL=(8+A*130)*grow;
-  if(maxL<1)return;
-  for(let x=0;x<W;x++){
-    const n=(Math.sin(x*f1+p1)*0.6+Math.sin(x*f2+p2)*0.4)*0.5+0.5;
-    const Lx=(n*maxL)|0; if(Lx<1)continue;
-    const a=Math.min(0.9,Lx/60);
-    for(let y=H-1;y>=Lx;y--){
-      const so=((y-Lx)*W+x)*3, d=(y*W+x)*3;
-      buf[d]  =buf[d]  +(snap[so]  -buf[d]  )*a;
-      buf[d+1]=buf[d+1]+(snap[so+1]-buf[d+1])*a;
-      buf[d+2]=buf[d+2]+(snap[so+2]-buf[d+2])*a; } }
-}
-
-/* SHEAR — the slice instinct with hard edges: bands re-rolled every frame and
-   thrown sideways. Loop-exact because the dice are keyed to the quantised
-   phase, so frame i always rolls frame i's numbers. */
-function nvShear(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const R=fkRng(scene,theta,0x5EA21D);
-  const n=2+((A*11)|0);
-  for(let i=0;i<n;i++){
-    const y0=(R()*H)|0, h=4+(R()*72)|0;
-    const off=Math.round((R()-0.5)*2*(10+A*150));
-    if(!off)continue;
-    for(let yy=0;yy<h;yy++){ const ay=y0+yy; if(ay>=H)break; const row=ay*W*3;
-      for(let x=0;x<W;x++){ let sx=(x+off)%W; if(sx<0)sx+=W;
-        const so=row+sx*3, d=row+x*3;
-        buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-  }
-}
-
-/* RIPPLE — the wave the curator kept, made radial and given a real travelling
-   front. The phase term is an integer multiple of theta, so the wavefront
-   arrives back where it started. */
-function nvRipple(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x81BB0C)>>>0);
-  const cx=(0.25+st()*0.5)*W, cy=(0.25+st()*0.5)*H;
-  const k=2+((st()*4)|0), wl=18+st()*70, amp=2+A*24;
-  for(let y=0;y<H;y++){ const dy=y-cy, row=y*W;
-    for(let x=0;x<W;x++){
-      const dx=x-cx, r=Math.sqrt(dx*dx+dy*dy);
-      if(r<1)continue;
-      const d=Math.sin(r/wl-TAU*(nvPh(theta)*k))*amp;
-      let sx=(x+dx/r*d)|0, sy=(y+dy/r*d)|0;
-      if(sx<0)sx=0; else if(sx>=W)sx=W-1;
-      if(sy<0)sy=0; else if(sy>=H)sy=H-1;
-      const so=(sy*W+sx)*3, o=(row+x)*3;
-      buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; } }
-}
-
-/* SILT — the sediment that has not settled yet. Bright grains detach and fall
-   a distance that breathes on an integer harmonic, so the last frame hands the
-   first frame a bed in exactly the state it started in. */
-function nvSilt(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const R=fkRng(scene,theta,0x511704);
-  /* the bed is measured against the frame's own brightness, so a dark seed
-     still sheds grains instead of standing there doing nothing */
-  let acc=0,cnt=0;
-  for(let o=0;o<snap.length;o+=21){ acc+=(snap[o]*77+snap[o+1]*151+snap[o+2]*28)>>8; cnt++; }
-  const thr=(cnt?acc/cnt:0)*0.85;
-  const dens=0.18+A*0.55;
-  const fall=((4+A*26)*(0.5+0.5*nvSin(theta,2,0)))|0;
-  if(fall<1)return;
-  for(let y=H-1-fall;y>=0;y--){ const row=y*W;
-    for(let x=0;x<W;x++){
-      const o=(row+x)*3;
-      const L=(snap[o]*77+snap[o+1]*151+snap[o+2]*28)>>8;
-      if(L<thr)continue;
-      if(R()>dens)continue;
-      const d=((y+fall)*W+x)*3;
-      buf[d]=snap[o]; buf[d+1]=snap[o+1]; buf[d+2]=snap[o+2];
-      buf[o]=(snap[o]*5)>>3; buf[o+1]=(snap[o+1]*5)>>3; buf[o+2]=(snap[o+2]*5)>>3; } }
-}
-
-/* the whole second vocabulary rides one dispatch, gated on the card version so
-   nothing before v7 can ever see it */
-function novaPass(buf,snap,scene,theta,corr,fx){
-  if(!(scene.__ver>=7))return;
-  const C=corr/100;
-  const A=k=>Math.min(1.7,C*nvGain(scene,k));
-  if(fx.strata)  nvStrata (buf,snap,scene,theta,A('strata'));
-  if(fx.fold)    nvFold   (buf,snap,scene,theta,A('fold'));
-  if(fx.quarter) nvQuarter(buf,snap,scene,theta,A('quarter'));
-  if(fx.peel)    nvPeel   (buf,snap,scene,theta,A('peel'));
-  if(fx.drip)    nvDrip   (buf,snap,scene,theta,A('drip'));
-  if(fx.shear)   nvShear  (buf,snap,scene,theta,A('shear'));
-  if(fx.ripple)  nvRipple (buf,snap,scene,theta,A('ripple'));
-  if(fx.silt)    nvSilt   (buf,snap,scene,theta,A('silt'));
-  if(fx.spin)       nvSpin      (buf,snap,scene,theta,A('spin'));
-  if(fx.pulse)      nvPulse     (buf,snap,scene,theta,A('pulse'));
-  if(fx.breathe)    nvBreathe   (buf,snap,scene,theta,A('breathe'));
-  if(fx.twist)      nvTwist     (buf,snap,scene,theta,A('twist'));
-  if(fx.stretch)    nvStretch   (buf,snap,scene,theta,A('stretch'));
-  if(fx.jitter)     nvJitter    (buf,snap,scene,theta,A('jitter'));
-  if(fx.split)      nvSplit     (buf,snap,scene,theta,A('split'));
-  if(fx.afterimage) nvAfterimage(buf,snap,scene,theta,A('afterimage'));
-  if(fx.charr)      nvCharr     (buf,snap,scene,theta,A('charr'));
-  if(fx.frost)      nvFrost     (buf,snap,scene,theta,A('frost'));
-  if(fx.sear)       nvSear      (buf,snap,scene,theta,A('sear'));
-  if(fx.patina)     nvPatina    (buf,snap,scene,theta,A('patina'));
-  if(fx.emboss2)    nvEmboss2   (buf,snap,scene,theta,A('emboss2'));
-  if(fx.rimlight)   nvRimlight  (buf,snap,scene,theta,A('rimlight'));
-  if(fx.caustic)    nvCaustic   (buf,snap,scene,theta,A('caustic'));
-  if(fx.dust)       nvDust      (buf,snap,scene,theta,A('dust'));
-  if(fx.lattice)    nvLattice   (buf,snap,scene,theta,A('lattice'));
-  if(fx.rebar)      nvRebar     (buf,snap,scene,theta,A('rebar'));
-  if(fx.terrace)    nvTerrace   (buf,snap,scene,theta,A('terrace'));
-  if(fx.fault)      nvFault     (buf,snap,scene,theta,A('fault'));
-  if(fx.seam)       nvSeam      (buf,snap,scene,theta,A('seam'));
-}
-
-/* ── the index-stage half of the second vocabulary ──────────────────────────
-   Everything below works on palette INDICES, after quantisation. That is where
-   the machine's own colour logic lives, so damage done here reads as a broken
-   display rather than as paint — which is the register this box has been
-   keeping since the first card. All eight are exactly TAU-periodic: they move
-   on folded phase, or on dice keyed to the quantised frame. ── */
-
-/* BANDSHIFT — the palette cut into bands; each band's indices rotate inside
-   their own band, on their own harmonic. Colour slides without the shapes
-   moving at all. */
-function nvBandshift(ind,P,scene,theta,A){
-  const st=mulberry32((scene.seed^0xBA4D51)>>>0);
-  const nB=2+((st()*4)|0), bw=P/nB;
-  const k=new Int32Array(nB);
-  for(let b=0;b<nB;b++){ const h=1+((st()*3)|0), ph=st()*TAU;
-    k[b]=Math.round(nvSin(theta,h,ph)*bw*0.9*A); }
-  for(let q=0;q<ind.length;q++){
-    const v=ind[q]; let b=(v/bw)|0; if(b>=nB)b=nB-1;
-    if(!k[b])continue;
-    const lo=(b*bw)|0, hi=Math.min(P,((b+1)*bw)|0), span=hi-lo;
-    if(span<2)continue;
-    let r=v-lo+k[b]; r=((r%span)+span)%span;
-    ind[q]=lo+r;
-  }
-}
-
-/* POSTERIZE — the palette collapsed to a coarser ladder that breathes. Fewer
-   steps means bigger flat plates, which is the same instinct as the plates the
-   curator has been keeping in MASS. */
-function nvPosterize(ind,P,scene,theta,A){
-  const st=mulberry32((scene.seed^0x905732)>>>0);
-  const h=1+((st()*3)|0), ph=st()*TAU;
-  const maxStep=Math.max(2,(P*0.34)|0);
-  const t=0.35+0.65*(nvSin(theta,h,ph)*0.5+0.5);
-  const step=1+Math.round(maxStep*Math.min(1,A)*t);
-  if(step<2)return;
-  const half=step>>1;
-  for(let q=0;q<ind.length;q++){
-    let v=(((ind[q]+half)/step)|0)*step;
-    if(v>=P)v=P-1;
-    ind[q]=v;
-  }
-}
-
-/* DUOTONE — every index dragged toward the nearer of two anchors that slide
-   along the ramp. Two-colour propaganda-print flatness, never a wash. */
-function nvDuotone(ind,P,scene,theta,A){
-  const st=mulberry32((scene.seed^0xD407E0)>>>0);
-  const ha=1+((st()*2)|0), pa=st()*TAU, hb=1+((st()*2)|0), pb=st()*TAU;
-  let a=Math.round(P*0.18+nvSin(theta,ha,pa)*P*0.15*A);
-  let b=Math.round(P*0.78+nvCos(theta,hb,pb)*P*0.15*A);
-  if(a<0)a=0; else if(a>=P)a=P-1;
-  if(b<0)b=0; else if(b>=P)b=P-1;
-  const mid=(a+b)>>1, mix=Math.min(1,0.45+A*0.55);
-  for(let q=0;q<ind.length;q++){
-    const v=ind[q], t=(v<=mid)?a:b;
-    ind[q]=v+Math.round((t-v)*mix);
-  }
-}
-
-/* SOLARIZE — everything past a moving threshold folds back down the ramp. The
-   Sabattier reversal, done in index space so it lands as a hard flip. */
-function nvSolarize(ind,P,scene,theta,A){
-  const st=mulberry32((scene.seed^0x501A21)>>>0);
-  const h=1+((st()*3)|0), ph=st()*TAU;
-  /* the fold point is a percentile of the frame's OWN histogram, not a fixed
-     place on the ramp. A picture that lives in the bottom of its palette still
-     reverses, which a fixed threshold could not manage. */
-  const hist=nvSolarize._h||(nvSolarize._h=new Uint32Array(256));
-  hist.fill(0);
-  for(let q=0;q<ind.length;q++)hist[ind[q]]++;
-  const b=nvSin(theta,h,ph)*0.5+0.5;
-  const frac=0.72-0.50*Math.min(1,A)*(0.35+0.65*b);
-  const want=ind.length*frac;
-  let acc=0, thr=0;
-  for(let i=0;i<P;i++){ thr=i; acc+=hist[i]; if(acc>=want)break; }
-  if(thr<1)thr=1; else if(thr>P-2)thr=P-2;
-  for(let q=0;q<ind.length;q++){ const v=ind[q]; if(v>thr) ind[q]=P-1-(v-thr); }
-}
-
-/* CONTOUR — the seams between plates drawn as a hard line in one fixed index.
-   Where the picture changes, it now says so. */
-function nvContour(ind,P,scene,theta,A){
-  const src=(nvContour._s&&nvContour._s.length===ind.length)?nvContour._s:(nvContour._s=new Uint8Array(ind.length));
-  src.set(ind);
-  const st=mulberry32((scene.seed^0xC0470B)>>>0);
-  const h=1+((st()*2)|0), ph=st()*TAU, line=(st()*P)|0;
-  let thr=Math.round(1+(1-Math.min(1,A))*7+nvSin(theta,h,ph)*2);
-  if(thr<1)thr=1;
-  for(let y=1;y<H-1;y++){ const row=y*W;
-    for(let x=1;x<W-1;x++){ const o=row+x, v=src[o];
-      let dx=src[o+1]-v, dy=src[o+W]-v;
-      if(dx<0)dx=-dx; if(dy<0)dy=-dy;
-      if(dx+dy>thr) ind[o]=line; } }
-}
-
-/* STIPPLE — an ordered dither applied in index space, its matrix marching a
-   whole number of cells over the loop. Print-screen texture, not noise. */
-function nvStipple(ind,P,scene,theta,A){
-  const st=mulberry32((scene.seed^0x571997)>>>0);
-  const B=nvStipple._b||(nvStipple._b=new Int8Array([0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5]));
-  const cells=8, march=Math.floor(nvPh(theta)*cells+1e-9)%cells;
-  const amp=1+((A*(P*0.24))|0);
-  const ox=(st()*4)|0, oy=(st()*4)|0;
-  for(let y=0;y<H;y++){ const row=y*W, by=((y+oy+march)&3)*4;
-    for(let x=0;x<W;x++){ const o=row+x;
-      let v=(ind[o]+((B[by+((x+ox+march)&3)]-7.5)/8)*amp)|0;
-      if(v<0)v=0; else if(v>=P)v=P-1;
-      ind[o]=v; } }
-}
-
-/* GLYPHSWAP — 8x8 cells overwritten with a seeded glyph in two indices, the
-   cells re-rolled every single frame. Character-cell corruption: the machine
-   typing over its own picture. */
-function nvGlyphswap(ind,P,scene,theta,A){
-  const R=fkRng(scene,theta,0x61794F);
-  const st=mulberry32((scene.seed^0x61794F)>>>0);
-  const NG=12, G=(nvGlyphswap._g&&nvGlyphswap._sd===scene.seed)?nvGlyphswap._g:null;
-  let gl=G;
-  if(!gl){ gl=new Uint8Array(NG*8);
-    for(let i=0;i<NG*8;i++)gl[i]=(st()*256)|0;
-    nvGlyphswap._g=gl; nvGlyphswap._sd=scene.seed; }
-  const cov=Math.min(0.9,0.05+A*0.45);
-  for(let cy=0;cy+8<=H;cy+=8){
-    for(let cx=0;cx+8<=W;cx+=8){
-      if(R()>=cov)continue;
-      const g=((R()*NG)|0)*8, a=(R()*P)|0, b=(R()*P)|0;
-      for(let y=0;y<8;y++){ const bits=gl[g+y], row=(cy+y)*W+cx;
-        for(let x=0;x<8;x++) ind[row+x]=((bits>>(7-x))&1)?a:b; } } }
-}
-
-/* PALCRAWL — the whole index field walks the palette a whole number of laps
-   per loop and arrives home exactly. The colour cycles; nothing else moves. */
-function nvPalcrawl(ind,P,scene,theta,A){
-  const st=mulberry32((scene.seed^0x9A1C24)>>>0);
-  const laps=1+((st()*3)|0), dir=st()<0.5?1:-1;
-  const span=Math.max(1,Math.round(P*Math.min(1,A)));
-  let k=Math.floor(nvPh(theta)*span*laps+1e-9)%span;
-  if(k<0)k+=span;
-  k*=dir;
-  if(!k)return;
-  for(let q=0;q<ind.length;q++){ let v=(ind[q]+k)%P; if(v<0)v+=P; ind[q]=v; }
-}
-
-/* one dispatch for the index half, gated on the card version exactly as the
-   pixel half is: nothing written before v7 can see any of it */
-/* ── motion and time ───────────────────────────────────────────────────────
-   These move the entire frame. That makes loop closure the whole problem, so
-   nothing here is allowed to touch raw theta: every one of them turns a whole
-   number of laps, or breathes on an integer harmonic of folded phase, or rolls
-   dice keyed to the quantised frame. ── */
-
-/* SPIN — the frame turning a whole number of laps per loop, wrapping at the
-   edges because this box has never believed in borders. */
-function nvSpin(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x5217A0)>>>0);
-  const laps=(st()<0.55?1:2)*(st()<0.5?1:-1);
-  const ang=TAU*nvPh(theta)*laps;
-  const ca=Math.cos(ang), sa=Math.sin(ang);
-  const cx=W*0.5, cy=H*0.5, mix=Math.min(1,0.40+A*0.60);
-  for(let y=0;y<H;y++){ const dy=y-cy, row=y*W;
-    for(let x=0;x<W;x++){ const dx=x-cx;
-      let sx=Math.round(cx+dx*ca-dy*sa), sy=Math.round(cy+dx*sa+dy*ca);
-      sx=((sx%W)+W)%W; sy=((sy%H)+H)%H;
-      const so=(sy*W+sx)*3, d=(row+x)*3;
-      buf[d]  =buf[d]  +(snap[so]  -buf[d]  )*mix;
-      buf[d+1]=buf[d+1]+(snap[so+1]-buf[d+1])*mix;
-      buf[d+2]=buf[d+2]+(snap[so+2]-buf[d+2])*mix; } }
-}
-
-/* PULSE — uniform zoom on an integer harmonic. The frame breathing in and out
-   of its own edges. */
-function nvPulse(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x901532)>>>0);
-  const k=1+((st()*3)|0), ph=st()*TAU;
-  const s=1+nvSin(theta,k,ph)*0.30*Math.min(1,A);
-  const cx=W*0.5, cy=H*0.5, inv=1/s;
-  for(let y=0;y<H;y++){ const dy=(y-cy)*inv, row=y*W;
-    for(let x=0;x<W;x++){
-      let sx=Math.round(cx+(x-cx)*inv), sy=Math.round(cy+dy);
-      sx=((sx%W)+W)%W; sy=((sy%H)+H)%H;
-      const so=(sy*W+sx)*3, d=(row+x)*3;
-      buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-}
-
-/* BREATHE — barrel and pincushion trading places. The lens itself is unwell. */
-function nvBreathe(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0xB2EA7E)>>>0);
-  const k=1+((st()*2)|0), ph=st()*TAU;
-  const amt=nvSin(theta,k,ph)*0.42*Math.min(1,A);
-  const cx=W*0.5, cy=H*0.5, rm=Math.sqrt(cx*cx+cy*cy);
-  for(let y=0;y<H;y++){ const dy=y-cy, row=y*W;
-    for(let x=0;x<W;x++){ const dx=x-cx;
-      const r=Math.sqrt(dx*dx+dy*dy)/rm, f=1+amt*r*r;
-      let sx=Math.round(cx+dx*f), sy=Math.round(cy+dy*f);
-      sx=((sx%W)+W)%W; sy=((sy%H)+H)%H;
-      const so=(sy*W+sx)*3, d=(row+x)*3;
-      buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-}
-
-/* TWIST — a swirl that dies at the rim, so the frame's edges stay honest while
-   its middle wrings itself out. */
-function nvTwist(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x741521)>>>0);
-  const k=1+((st()*3)|0), ph=st()*TAU;
-  const amt=nvSin(theta,k,ph)*(0.7+A*2.4);
-  const cx=W*0.5, cy=H*0.5, rm=Math.sqrt(cx*cx+cy*cy);
-  for(let y=0;y<H;y++){ const dy=y-cy, row=y*W;
-    for(let x=0;x<W;x++){ const dx=x-cx;
-      const r=Math.sqrt(dx*dx+dy*dy);
-      const t=Math.atan2(dy,dx)+amt*(1-r/rm);
-      let sx=Math.round(cx+Math.cos(t)*r), sy=Math.round(cy+Math.sin(t)*r);
-      sx=((sx%W)+W)%W; sy=((sy%H)+H)%H;
-      const so=(sy*W+sx)*3, d=(row+x)*3;
-      buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-}
-
-/* STRETCH — the two axes scaling on different harmonics, so the frame is never
-   square with itself. */
-function nvStretch(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x572E7C)>>>0);
-  const kx=1+((st()*3)|0), px=st()*TAU, ky=1+((st()*3)|0), py=st()*TAU;
-  const sx0=1+nvSin(theta,kx,px)*0.34*Math.min(1,A);
-  const sy0=1+nvCos(theta,ky,py)*0.34*Math.min(1,A);
-  const cx=W*0.5, cy=H*0.5, ix=1/sx0, iy=1/sy0;
-  for(let y=0;y<H;y++){ const dy=(y-cy)*iy, row=y*W;
-    for(let x=0;x<W;x++){
-      let sx=Math.round(cx+(x-cx)*ix), sy=Math.round(cy+dy);
-      sx=((sx%W)+W)%W; sy=((sy%H)+H)%H;
-      const so=(sy*W+sx)*3, d=(row+x)*3;
-      buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-}
-
-/* JITTER — the whole frame kicked to a new offset every single frame. Loop-exact
-   because frame i always rolls frame i's dice. */
-function nvJitter(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const R=fkRng(scene,theta,0x117732);
-  const m=(2+A*24)|0;
-  const jx=Math.round((R()-0.5)*2*m), jy=Math.round((R()-0.5)*2*m);
-  if(!jx&&!jy)return;
-  for(let y=0;y<H;y++){ let sy=(y+jy)%H; if(sy<0)sy+=H;
-    const row=y*W, srow=sy*W;
-    for(let x=0;x<W;x++){ let sx=(x+jx)%W; if(sx<0)sx+=W;
-      const so=(srow+sx)*3, d=(row+x)*3;
-      buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-}
-
-/* SPLIT — one seam, the two sides driven in opposite directions. The tear this
-   box keeps coming back to, done cleanly for once. */
-function nvSplit(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x5911A7)>>>0);
-  const vert=st()<0.5, k=1+((st()*3)|0), ph=st()*TAU, seamF=0.30+st()*0.40;
-  const off=Math.round(nvSin(theta,k,ph)*(8+A*95));
-  if(!off)return;
-  if(vert){
-    const seam=(seamF*H)|0;
-    for(let y=0;y<H;y++){ const o=(y<seam)?off:-off, row=y*W;
-      for(let x=0;x<W;x++){ let sx=(x+o)%W; if(sx<0)sx+=W;
-        const so=(row+sx)*3, d=(row+x)*3;
-        buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-  } else {
-    const seam=(seamF*W)|0;
-    for(let y=0;y<H;y++){ const row=y*W;
-      for(let x=0;x<W;x++){ const o=(x<seam)?off:-off;
-        let sy=(y+o)%H; if(sy<0)sy+=H;
-        const so=(sy*W+x)*3, d=(row+x)*3;
-        buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-  }
-}
-
-/* AFTERIMAGE — the frame smeared along a direction that itself turns a whole
-   number of laps. Persistence of vision on a screen that has none. */
-function nvAfterimage(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0xA47E21)>>>0);
-  const laps=(st()<0.5?1:2)*(st()<0.5?1:-1), base=st()*TAU;
-  const ang=TAU*nvPh(theta)*laps+base;
-  let len=(3+A*13)|0; if(len<1)return; if(len>16)len=16;
-  const ux=Math.cos(ang), uy=Math.sin(ang);
-  for(let y=0;y<H;y++){ const row=y*W;
-    for(let x=0;x<W;x++){ const d=(row+x)*3;
-      let r=snap[d], g=snap[d+1], b=snap[d+2], ws=1;
-      for(let s=1;s<=len;s++){
-        const w=1-s/(len+1);
-        let sx=Math.round(x-ux*s), sy=Math.round(y-uy*s);
-        sx=((sx%W)+W)%W; sy=((sy%H)+H)%H;
-        const so=(sy*W+sx)*3;
-        r+=snap[so]*w; g+=snap[so+1]*w; b+=snap[so+2]*w; ws+=w; }
-      buf[d]=r/ws; buf[d+1]=g/ws; buf[d+2]=b/ws; } }
-}
-
-/* ── light and material ────────────────────────────────────────────────────
-   These do not move the picture, they weather it. Every animated term is an
-   integer harmonic of folded phase or a die keyed to the quantised frame, so
-   the surface returns to exactly the state it started in. ── */
-
-/* CHARR — the picture burning from its bright places outward, soot creeping
-   along a seeded grain. */
-function nvCharr(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0xC4A882)>>>0);
-  const f1=0.011+st()*0.030, p1=st()*TAU, f2=0.017+st()*0.040, p2=st()*TAU;
-  const k=1+((st()*2)|0), pk=st()*TAU;
-  const adv=0.42+0.58*nvSin(theta,k,pk);
-  const reach=(0.34+0.62*Math.min(1,A))*adv;
-  if(reach<=0.01)return;
-  for(let y=0;y<H;y++){ const row=y*W;
-    for(let x=0;x<W;x++){ const o=(row+x)*3;
-      const L=(snap[o]*77+snap[o+1]*151+snap[o+2]*28)/65280;
-      const n=(Math.sin(x*f1+p1)+Math.sin(y*f2+p2)+Math.sin((x+y)*f1*0.7+p2))/6+0.5;
-      const burn=(L*0.65+n*0.35)-(1-reach);
-      if(burn<=0)continue;
-      const b=Math.min(1,burn*2.3);
-      buf[o]  =snap[o]  *(1-b)+8*b;
-      buf[o+1]=snap[o+1]*(1-b)+4*b;
-      buf[o+2]=snap[o+2]*(1-b)+6*b; } }
-}
-
-/* FROST — glass between the eye and the picture: cells displaced a little and
-   cooled, re-rolled every frame. */
-function nvFrost(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const R=fkRng(scene,theta,0xF20517);
-  const cell=3+((A*7)|0), jit=1+((A*7)|0);
-  for(let cy=0;cy<H;cy+=cell){
-    for(let cx=0;cx<W;cx+=cell){
-      const ox=Math.round((R()-0.5)*2*jit), oy=Math.round((R()-0.5)*2*jit);
-      for(let y=cy;y<cy+cell&&y<H;y++){
-        let sy=y+oy; if(sy<0)sy=0; else if(sy>=H)sy=H-1;
-        const row=y*W, srow=sy*W;
-        for(let x=cx;x<cx+cell&&x<W;x++){
-          let sx=x+ox; if(sx<0)sx=0; else if(sx>=W)sx=W-1;
-          const so=(srow+sx)*3, d=(row+x)*3;
-          buf[d]  =snap[so]*0.86;
-          buf[d+1]=snap[so+1]*0.95+7;
-          const bl=snap[so+2]*1.07+15; buf[d+2]=bl>255?255:bl; } } } }
-}
-
-/* SEAR — the opposite hand: everything past a breathing threshold blows out
-   toward white-hot and takes its neighbours with it. */
-function nvSear(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x5EA123)>>>0);
-  const k=1+((st()*3)|0), ph=st()*TAU;
-  const thr=(0.44-0.30*Math.min(1,A))*(0.72+0.28*(nvSin(theta,k,ph)*0.5+0.5));
-  const den=Math.max(0.02,1-thr);
-  for(let q=0;q<buf.length;q+=3){
-    const L=(snap[q]*77+snap[q+1]*151+snap[q+2]*28)/65280;
-    if(L<thr)continue;
-    const h=Math.min(1,(L-thr)/den);
-    let r=snap[q]  +h*(255-snap[q])  *0.95;
-    let g=snap[q+1]+h*(232-snap[q+1])*0.78;
-    let b=snap[q+2]+h*(140-snap[q+2])*0.50;
-    buf[q]  =r<0?0:(r>255?255:r);
-    buf[q+1]=g<0?0:(g>255?255:g);
-    buf[q+2]=b<0?0:(b>255?255:b); }
-}
-
-/* PATINA — oxidation crawling across the surface on a slow drifting field.
-   Copper gone green, and the colour it eats never comes back the same. */
-function nvPatina(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0xA71A44)>>>0);
-  const f1=0.006+st()*0.013, p1=st()*TAU, f2=0.009+st()*0.017, p2=st()*TAU;
-  const k1=1+((st()*2)|0), k2=1+((st()*2)|0);
-  const dx=nvSin(theta,k1,p1)*26, dy=nvCos(theta,k2,p2)*26;
-  const amt=Math.min(1,0.35+A*0.65);
-  for(let y=0;y<H;y++){ const row=y*W;
-    for(let x=0;x<W;x++){ const o=(row+x)*3;
-      let n=(Math.sin((x+dx)*f1+p1)*0.6+Math.sin((y+dy)*f2+p2)*0.4)*0.5+0.5;
-      const t=(0.25+0.75*n*n)*amt*0.9;   /* a floor, so the oxide always takes */
-      if(t<=0.004)continue;
-      const L=(snap[o]*77+snap[o+1]*151+snap[o+2]*28)/256;
-      buf[o]  =snap[o]  +((L*0.30)   -snap[o]  )*t;
-      buf[o+1]=snap[o+1]+((L*0.62+40)-snap[o+1])*t;
-      buf[o+2]=snap[o+2]+((L*0.55+30)-snap[o+2])*t; } }
-}
-
-/* EMBOSS2 — the picture pressed into metal and lit from an angle that turns a
-   whole number of laps. Relief, not outline. */
-function nvEmboss2(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0xE0B055)>>>0);
-  const laps=(st()<0.5?1:2)*(st()<0.5?1:-1), base=st()*TAU;
-  const ang=TAU*nvPh(theta)*laps+base;
-  let ux=Math.round(Math.cos(ang)*2), uy=Math.round(Math.sin(ang)*2);
-  if(!ux&&!uy)ux=1;
-  const g=0.7+A*1.5, keep=Math.max(0,1-Math.min(1,A)*0.60);
-  const grey=128*(1-keep);
-  for(let y=0;y<H;y++){
-    let sy=y+uy; if(sy<0)sy=0; else if(sy>=H)sy=H-1;
-    const row=y*W, srow=sy*W;
-    for(let x=0;x<W;x++){
-      let sx=x+ux; if(sx<0)sx=0; else if(sx>=W)sx=W-1;
-      const o=(row+x)*3, so=(srow+sx)*3;
-      for(let c=0;c<3;c++){
-        const v=snap[o+c]*keep+grey+(snap[o+c]-snap[so+c])*g;
-        buf[o+c]=v<0?0:(v>255?255:v); } } }
-}
-
-/* RIMLIGHT — a hard light that only catches the edges facing it, and the light
-   walks all the way around before the loop is out. */
-function nvRimlight(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x21A117)>>>0);
-  const laps=(st()<0.5?1:2)*(st()<0.5?1:-1), base=st()*TAU;
-  const ang=TAU*nvPh(theta)*laps+base;
-  const lx=Math.cos(ang), ly=Math.sin(ang);
-  const g=0.8+A*2.4, W3=W*3;
-  for(let y=1;y<H-1;y++){ const row=y*W;
-    for(let x=1;x<W-1;x++){ const o=(row+x)*3;
-      const lr=(snap[o+3]*77+snap[o+4]*151+snap[o+5]*28)/256;
-      const ll=(snap[o-3]*77+snap[o-2]*151+snap[o-1]*28)/256;
-      const ld=(snap[o+W3]*77+snap[o+W3+1]*151+snap[o+W3+2]*28)/256;
-      const lu=(snap[o-W3]*77+snap[o-W3+1]*151+snap[o-W3+2]*28)/256;
-      const d=(lr-ll)*lx+(ld-lu)*ly;
-      if(d<=2)continue;
-      const a=Math.min(1,(d-2)/26*g);
-      buf[o]  =snap[o]  +a*(255-snap[o])  *0.92;
-      buf[o+1]=snap[o+1]+a*(255-snap[o+1])*0.92;
-      buf[o+2]=snap[o+2]+a*(250-snap[o+2])*0.92; } }
-}
-
-/* CAUSTIC — three gratings crossing, their crests sharpened into the bright
-   veins light makes on the bottom of a pool. Multiplied in, never painted. */
-function nvCaustic(buf,snap,scene,theta,A){
-  const st=mulberry32((scene.seed^0xCA0571)>>>0);
-  const a1=st()*TAU, a2=st()*TAU, a3=st()*TAU;
-  const w1=0.04+st()*0.08, w2=0.05+st()*0.09, w3=0.03+st()*0.07;
-  const k1=1+((st()*3)|0), k2=1+((st()*3)|0), k3=1+((st()*3)|0);
-  const p=nvPh(theta);
-  const ph1=TAU*p*k1, ph2=TAU*p*k2, ph3=TAU*p*k3;
-  const c1=Math.cos(a1),s1=Math.sin(a1),c2=Math.cos(a2),s2=Math.sin(a2),c3=Math.cos(a3),s3=Math.sin(a3);
-  const amt=Math.min(1.2,0.30+A*0.95);
-  for(let y=0;y<H;y++){ const row=y*W;
-    for(let x=0;x<W;x++){ const o=(row+x)*3;
-      let t=(Math.sin((x*c1+y*s1)*w1+ph1)+Math.sin((x*c2+y*s2)*w2+ph2)+Math.sin((x*c3+y*s3)*w3+ph3))/3;
-      t=t*t*t;
-      const f=1+t*amt;
-      for(let c=0;c<3;c++){ const q=buf[o+c]*f; buf[o+c]=q<0?0:(q>255?255:q); } } }
-}
-
-/* DUST — the print is old. Specks and the occasional hair, re-rolled every
-   frame, which is exactly how film dirt behaves and exactly why it loops. */
-function nvDust(buf,snap,scene,theta,A){
-  const R=fkRng(scene,theta,0xD05721);
-  const n=((W*H)*(0.0030+Math.min(1,A)*0.0220))|0;
-  for(let i=0;i<n;i++){
-    const x=(R()*W)|0, y=(R()*H)|0;
-    const bright=R()<0.62, s=1+((R()*3)|0);
-    for(let dy=0;dy<s;dy++){ const ay=y+dy; if(ay>=H)break;
-      for(let dx=0;dx<s;dx++){ const ax=x+dx; if(ax>=W)break;
-        const q=(ay*W+ax)*3;
-        if(bright){buf[q]=250;buf[q+1]=248;buf[q+2]=242;}
-        else{buf[q]=6;buf[q+1]=5;buf[q+2]=8;} } } }
-  const nh=2+((Math.min(1,A)*5)|0);
-  for(let i=0;i<nh;i++){
-    if(R()>0.55)continue;
-    const x=(R()*W)|0, y0=(R()*H)|0, h=(H*0.2+R()*H*0.7)|0, dark=R()<0.5;
-    for(let y=y0;y<y0+h&&y<H;y++){
-      let ax=x+((R()*3)|0)-1; if(ax<0)ax=0; else if(ax>=W)ax=W-1;
-      const q=(y*W+ax)*3;
-      if(dark){buf[q]*=0.35;buf[q+1]*=0.35;buf[q+2]*=0.35;}
-      else{ const a=buf[q]+90,b=buf[q+1]+90,c=buf[q+2]+90;
-            buf[q]=a>255?255:a; buf[q+1]=b>255?255:b; buf[q+2]=c>255?255:c; } } }
-}
-
-/* ── structure ─────────────────────────────────────────────────────────────
-   Architecture imposed on the picture rather than damage done to it. The last
-   five of the second vocabulary. ── */
-
-/* LATTICE — the frame snapped onto a grid of cells, each cell flattened to its
-   own average, and the grid itself drawn. Order asserted over a picture that
-   did not ask for any. */
-function nvLattice(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x1A771C)>>>0);
-  const k=1+((st()*2)|0), ph=st()*TAU;
-  const base=4+((st()*10)|0);
-  let cell=Math.round(base+nvSin(theta,k,ph)*base*0.45*Math.min(1,A));
-  if(cell<2)cell=2;
-  const rule=Math.min(1,0.30+A*0.70);
-  const flat=Math.min(1,0.45+A*0.55);
-  for(let cy=0;cy<H;cy+=cell){
-    const yh=Math.min(cell,H-cy);
-    for(let cx=0;cx<W;cx+=cell){
-      const xw=Math.min(cell,W-cx);
-      let r=0,g=0,b=0,n=0;
-      for(let y=0;y<yh;y++){ const row=(cy+y)*W+cx;
-        for(let x=0;x<xw;x++){ const o=(row+x)*3; r+=snap[o];g+=snap[o+1];b+=snap[o+2];n++; } }
-      if(!n)continue;
-      r/=n;g/=n;b/=n;
-      for(let y=0;y<yh;y++){ const row=(cy+y)*W+cx, edgeY=(y===0);
-        for(let x=0;x<xw;x++){ const o=(row+x)*3, edge=edgeY||(x===0);
-          let R=snap[o]+(r-snap[o])*flat, G=snap[o+1]+(g-snap[o+1])*flat, B=snap[o+2]+(b-snap[o+2])*flat;
-          if(edge){ R*=1-rule*0.75; G*=1-rule*0.75; B*=1-rule*0.75; }
-          buf[o]=R;buf[o+1]=G;buf[o+2]=B; } } } }
-}
-
-/* REBAR — bars of the picture held at a fixed offset while everything around
-   them moves on. The reinforcement showing through the render. */
-function nvRebar(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x2EBA21)>>>0);
-  const vert=st()<0.6;
-  const n=2+((st()*6)|0);
-  const k=1+((st()*3)|0), ph=st()*TAU;
-  const drift=Math.round(nvSin(theta,k,ph)*(6+A*70));
-  for(let i=0;i<n;i++){
-    const pos=st(), wid=(4+st()*26)|0, hold=Math.round((st()-0.5)*2*(10+A*80));
-    if(vert){
-      const x0=(pos*(W-wid))|0;
-      for(let y=0;y<H;y++){ const row=y*W;
-        let sy=(y+hold)%H; if(sy<0)sy+=H;
-        const srow=sy*W;
-        for(let x=x0;x<x0+wid&&x<W;x++){
-          let sx=(x+drift)%W; if(sx<0)sx+=W;
-          const so=(srow+sx)*3, d=(row+x)*3;
-          buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-    } else {
-      const y0=(pos*(H-wid))|0;
-      for(let y=y0;y<y0+wid&&y<H;y++){ const row=y*W;
-        let sy=(y+drift)%H; if(sy<0)sy+=H;
-        const srow=sy*W;
-        for(let x=0;x<W;x++){
-          let sx=(x+hold)%W; if(sx<0)sx+=W;
-          const so=(srow+sx)*3, d=(row+x)*3;
-          buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-    } }
-}
-
-/* TERRACE — luminance cut into level steps with the risers drawn, so the frame
-   reads as a contour map of its own light. */
-function nvTerrace(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x7E88AC)>>>0);
-  const k=1+((st()*3)|0), ph=st()*TAU;
-  let lv=Math.round(3+(1-Math.min(1,A))*9+nvSin(theta,k,ph)*3);
-  if(lv<2)lv=2;
-  const step=255/lv, W3=W*3;
-  const lum=(o)=>(snap[o]*77+snap[o+1]*151+snap[o+2]*28)/256;
-  const band=(o)=>Math.round(lum(o)/step);
-  for(let y=0;y<H;y++){ const row=y*W;
-    for(let x=0;x<W;x++){ const o=(row+x)*3;
-      const b=band(o), L=lum(o), t=b*step;
-      const g=L>1?t/L:1;                       /* re-light to the terrace level, hue kept */
-      let R=snap[o]*g, G=snap[o+1]*g, B=snap[o+2]*g;
-      let riser=false;
-      if(x<W-1&&band(o+3)!==b)riser=true;
-      else if(y<H-1&&band(o+W3)!==b)riser=true;
-      if(riser){ R*=0.22; G*=0.22; B*=0.22; }
-      buf[o]  =R>255?255:R;
-      buf[o+1]=G>255?255:G;
-      buf[o+2]=B>255?255:B; } }
-}
-
-/* FAULT — one straight break across the frame at a seeded angle; everything on
-   the far side slides along it and back. Geology, not glitch. */
-function nvFault(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0xFA0177)>>>0);
-  const ang=st()*Math.PI, k=1+((st()*3)|0), ph=st()*TAU;
-  const nx=Math.cos(ang), ny=Math.sin(ang);
-  const cx=W*0.5, cy=H*0.5, c=(st()-0.5)*W*0.4;
-  const slide=nvSin(theta,k,ph)*(8+A*90);
-  const dxs=Math.round(-ny*slide), dys=Math.round(nx*slide);
-  if(!dxs&&!dys)return;
-  for(let y=0;y<H;y++){ const row=y*W, dy=y-cy;
-    for(let x=0;x<W;x++){
-      if((x-cx)*nx+dy*ny<c)continue;
-      let sx=(x+dxs)%W; if(sx<0)sx+=W;
-      let sy=(y+dys)%H; if(sy<0)sy+=H;
-      const so=(sy*W+sx)*3, d=(row+x)*3;
-      buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2]; } }
-}
-
-/* SEAM — the join where the tape was spliced: a narrow strip that repeats what
-   is beside it, with a bright weld down the middle. It travels a whole number
-   of laps across the frame and comes back. */
-function nvSeam(buf,snap,scene,theta,A){
-  snap.set(buf);
-  const st=mulberry32((scene.seed^0x5EA111)>>>0);
-  const vert=st()<0.65, laps=(st()<0.6?1:2)*(st()<0.5?1:-1);
-  const wid=3+((4+A*26)|0);
-  const p=nvPh(theta);
-  if(vert){
-    let sx0=Math.round(((p*laps)%1+1)%1*W);
-    for(let y=0;y<H;y++){ const row=y*W;
-      for(let i=0;i<wid;i++){
-        let x=(sx0+i)%W; if(x<0)x+=W;
-        let src=(sx0-1-i)%W; if(src<0)src+=W;
-        const so=(row+src)*3, d=(row+x)*3;
-        buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2];
-        if(i===0){ const a=buf[d]+140,b=buf[d+1]+140,c2=buf[d+2]+140;
-          buf[d]=a>255?255:a; buf[d+1]=b>255?255:b; buf[d+2]=c2>255?255:c2; } } }
-  } else {
-    let sy0=Math.round(((p*laps)%1+1)%1*H);
-    for(let i=0;i<wid;i++){
-      let y=(sy0+i)%H; if(y<0)y+=H;
-      let src=(sy0-1-i)%H; if(src<0)src+=H;
-      const row=y*W, srow=src*W;
-      for(let x=0;x<W;x++){
-        const so=(srow+x)*3, d=(row+x)*3;
-        buf[d]=snap[so];buf[d+1]=snap[so+1];buf[d+2]=snap[so+2];
-        if(i===0){ const a=buf[d]+140,b=buf[d+1]+140,c2=buf[d+2]+140;
-          buf[d]=a>255?255:a; buf[d+1]=b>255?255:b; buf[d+2]=c2>255?255:c2; } } } }
-}
-
-function nvIndexPass(ind,P,scene,theta,corr,fx){
-  if(!(scene.__ver>=7))return;
-  if(!P||P<2)return;
-  const C=corr/100;
-  const A=k=>Math.min(1.7,C*nvGain(scene,k));
-  if(fx.bandshift) nvBandshift(ind,P,scene,theta,A('bandshift'));
-  if(fx.posterize) nvPosterize(ind,P,scene,theta,A('posterize'));
-  if(fx.duotone)   nvDuotone  (ind,P,scene,theta,A('duotone'));
-  if(fx.solarize)  nvSolarize (ind,P,scene,theta,A('solarize'));
-  if(fx.contour)   nvContour  (ind,P,scene,theta,A('contour'));
-  if(fx.stipple)   nvStipple  (ind,P,scene,theta,A('stipple'));
-  if(fx.glyphswap) nvGlyphswap(ind,P,scene,theta,A('glyphswap'));
-  if(fx.palcrawl)  nvPalcrawl (ind,P,scene,theta,A('palcrawl'));
-}
-
-
 function demiurgePixel(buf,snap,scene,theta,corr,fx,grad){
   const g=scene.vibe.g, cc=ch=>Math.min(150,corr*g[ch]);
   if(fx.chimera)fxChimera(buf,snap,scene,theta,cc('chimera'),grad);
@@ -5312,13 +4392,7 @@ const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36, voidamt:34
       wave:false,slice:false,vroll:false,mosh:false,ghost:false,melt:false,bleed:false,invert:false,crush:false,dropout:false,
       chrono:false,mirror:false,flay:false,autoph:false,weave:false,entropy:false,meta:false,tect:false,
       panes:false,hilb:false,splice:false,moire:false,braid:false,lungs:false,
-      tunnel:false,kaleido:false,bloom:false,embers:false,runes:false,chimera:false,
-      strata:false,fold:false,quarter:false,peel:false,drip:false,shear:false,ripple:false,silt:false,
-      bandshift:false,posterize:false,duotone:false,solarize:false,contour:false,stipple:false,glyphswap:false,palcrawl:false,
-      spin:false,pulse:false,breathe:false,twist:false,stretch:false,jitter:false,split:false,afterimage:false,
-      charr:false,frost:false,sear:false,patina:false,emboss2:false,rimlight:false,caustic:false,dust:false,
-      lattice:false,rebar:false,terrace:false,fault:false,seam:false} };
-
+      tunnel:false,kaleido:false,bloom:false,embers:false,runes:false,chimera:false} };
 let EPOCH=0;   // 0 = DEATH SIGNAL era · 1 = CLASSIC era (pre index-space corruption)
 let busy=false, RUN=0, lastURL=null, lastBlob=null, lastBytes=null, lastName='', lastDataURL='';
 /* the size of the master that was actually delivered. Derived from the raster,
@@ -5522,7 +4596,6 @@ async function generateSeq(){
       oblivionPixel(rgbB, snap, scene, theta, corr, fx);
       valhallaPixel(rgbB, snap, scene, theta, corr, fx);
       demiurgePixel(rgbB, snap, scene, theta, corr, fx, grad);
-      novaPass(rgbB, snap, scene, theta, corr, fx);
       sanctityRGB(rgbB, scene, theta, i, grad);
       seamRip(rgbB, scene, theta, grad);
     } else {
@@ -5542,7 +4615,6 @@ async function generateSeq(){
     quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null,
              (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
     if(scene.__ver>=6||(scene.mode!=='MASS'&&scene.mode!=='IDOL')) indexPass(indices, pal.length, scene, theta, corr, fx);
-    nvIndexPass(indices, pal.length, scene, theta, corr, fx);
     sanctityIdx(indices, scene, i);
 
     // live preview from quantized indices
@@ -5666,7 +4738,6 @@ self.onmessage=function(e){
     applyOverridesPure(scene,J.seed,J.ov);
     if(J.wb && J.wb.gain){ for(var wbk in scene.vibe.g){var wbm=J.wb.gain[wbk];
         if(wbm!=null&&wbm!==100)scene.vibe.g[wbk]=scene.vibe.g[wbk]*wbm/100;} }
-    scene.__nvG=(J.wb&&J.wb.gain)?J.wb.gain:null;
     const {grad,pal,near}=buildPalette(J.scheme,scene.vibe);
     const N=J.N, corr=J.corr, fx=J.fx, DELAY=J.DELAY;
     const DLY=(J.DLY&&J.DLY.length===N)?J.DLY:null;   /* an adopted animation's own timing */
@@ -5747,7 +4818,6 @@ self.onmessage=function(e){
         oblivionPixel(rgbB,snap,scene,theta,corr,fx);
         valhallaPixel(rgbB,snap,scene,theta,corr,fx);
         demiurgePixel(rgbB,snap,scene,theta,corr,fx,grad);
-      novaPass(rgbB,snap,scene,theta,corr,fx);
         sanctityRGB(rgbB, scene, theta, i, grad);
         seamRip(rgbB, scene, theta, grad);
       } else {
@@ -5758,7 +4828,6 @@ self.onmessage=function(e){
       quantize(rgbB,indices,near,dAmt,fx.tect?buildTect(scene,theta,corr):null,
                (fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,corr):null);
       if(scene.__ver>=6||(scene.mode!=='MASS'&&scene.mode!=='IDOL')) indexPass(indices,pal.length,scene,theta,corr,fx);
-      nvIndexPass(indices,pal.length,scene,theta,corr,fx);
       sanctityIdx(indices, scene, i);
       const chunks=[];
       for(let k2=0;k2<DIMS.length;k2++){ const d=DIMS[k2]; let src;
@@ -6339,16 +5408,7 @@ const CARD_CH=['chroma','tracking','pixelsort','grain','blocks','scanlines','ech
   'wave','slice','vroll','mosh','ghost','melt','bleed','invert','crush','dropout',
   'chrono','mirror','flay','autoph','weave','entropy','meta','tect',
   'panes','hilb','splice','moire','braid','lungs',
-  'tunnel','kaleido','bloom','embers','runes','chimera',
-  /* ── NOVA, positions 37-73. Appended, never inserted: the first 37 keep
-     the bit they have always had, so every card ever written still decodes.
-     Only a v7 card carries these bits at all. ── */
-  'strata','fold','quarter','peel','drip','shear','ripple','silt',
-  'bandshift','posterize','duotone','solarize','contour','stipple','glyphswap','palcrawl',
-  'spin','pulse','breathe','twist','stretch','jitter','split','afterimage',
-  'charr','frost','sear','patina','emboss2','rimlight','caustic','dust',
-  'lattice','rebar','terrace','fault','seam'];
-const CARD_CH_V5=37;                 /* how many bits a pre-v7 card carries */
+  'tunnel','kaleido','bloom','embers','runes','chimera'];
 const CARD_SCHEMES=[...SCHEME_KEYS.slice(0,14),'GENESIS',...SCHEME_KEYS.slice(14),'TISGEN']; // 0-13 originals, 14 GENESIS, 15-25 TIS fixed, 26 TIS∞
 const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 function crc8(bytes){let c=0;
@@ -6359,43 +5419,36 @@ const CARD_MOTION=['AUTO','FLOW','STEP'];
    the box's reference: a card must render the same in both. Pre-v6 cards keep
    the 64-body space and the fixed turntable; fresh work is v6. Touching a WB
    override is by definition new work, so it promotes to v6 at the job. */
-/* THE ENGINE'S OWN CARD VERSION. Named, not typed as a literal, because the
-   last time it was written as a bare number in the override promotion below,
-   the number went stale and took the entire second vocabulary with it. */
-const ENGINE_CARDVER=7;
+/* THE ENGINE'S OWN CARD VERSION. Named, not typed as a literal wherever it is
+   needed — the last time it was a bare number in the override promotion, the
+   number went stale and took an entire feature with it. */
+const ENGINE_CARDVER=6;
 let CARDVER=ENGINE_CARDVER;
 function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
   const si=CARD_SCHEMES.indexOf(schemeKey), mi=MODES.indexOf(modeKey);
   const mo=Math.max(0,CARD_MOTION.indexOf(motion||'AUTO'));
   if(si<0||mi<0)return '';
   const forked=(state.voidamt|0)>0||(state.locality|0)>0||(state.chromacap|0)===1||modeKey==='MASS';
-  /* v7 is v6's layout with the second vocabulary appended: 74 sigil bits
-     instead of 37, so 24 payload bytes and a 40-character card. v6 keeps
-     its 32 characters and decodes exactly as it did, which matters because
-     v6 cards were already being written before this. */
-  const v7=(CARDVER>=7);
-  const v6=!v7&&(CARDVER>=6);
-  const v4=!v6&&!v7&&(ovActive()||EPOCH===1)&&!forked;
-  const v5=!v6&&!v7&&forked;
+  const v6=(CARDVER>=6);
+  const v4=!v6&&(ovActive()||EPOCH===1)&&!forked;
+  const v5=!v6&&forked;
   let v=0n;
   const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
-  push(v7?7:(v6?6:(v5?5:(v4?4:2))),4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
-  const CHW=v7?CARD_CH:CARD_CH.slice(0,CARD_CH_V5);
-  for(const ch of CHW)push(fx[ch]?1:0,1);              // 37 bits, or 74 at v7
+  push(v6?6:(v5?5:(v4?4:2)),4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
+  for(const ch of CARD_CH)push(fx[ch]?1:0,1);          // 98 bits
   let nBytes=13, pad=6n;
-  if(v4||v5||v6||v7){                                  // +36-bit override block
+  if(v4||v5||v6){                                      // +36-bit override block -> 134 bits
     push(OV.maskType,5); push(OV.maskStyle,5);
     push(OV.cx,5); push(OV.cy,5); push(OV.size,5);
     push(OV.n,6); push(OV.form,5);
     push(EPOCH?1:0,1);                     // epoch bit lives in what was padding
     nBytes=17; pad=1n;
   }
-  if(v5||v6||v7){                                      // fork block: +15 bits
+  if(v5||v6){                                          // fork block: +15 bits -> 149
     push(Math.min(100,state.voidamt|0),7);
     push(state.chromacap?1:0,1);
     push(Math.min(100,state.locality|0),7);
     nBytes=19; pad=2n;   // 150 bits into 152: two, not three
-    if(v7){ nBytes=24; pad=5n; }   // 187 bits into 192
   }
   v<<=pad;
   const bytes=[];
@@ -6414,7 +5467,10 @@ function unpackCard(str){
   let sx=String(str||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
   if(sx.startsWith('PNDR'))sx=sx.slice(4);
   sx=sx.replace(/I|L/g,'1').replace(/O/g,'0').replace(/U/g,'V');
-  const LEN={21:13,23:14,28:17,29:18,32:20,40:25};           // v1 / v2 / v3 / v4 / v5-fork
+  /* 40:25 is the NOVA-era card. This engine has no second vocabulary, so those
+     bits are read past and dropped rather than refused — a card written during
+     those hours still resurrects, as the v6 card it now is. */
+  const LEN={21:13,23:14,28:17,29:18,32:20,40:25};     // v1 / v2 / v3 / v4 / v5-fork / v7-nova
   if(!(sx.length in LEN))return null;
   let bv=0n;
   for(const c of sx){const d=B32.indexOf(c); if(d<0)return null; bv=(bv<<5n)|BigInt(d);}
@@ -6433,10 +5489,10 @@ function unpackCard(str){
   const seed=pull(32), si=pull(5), mi=pull(4), corr=pull(7), frames=pull(7);
   const mo=ver>=2?pull(2):0;
   if(si>=CARD_SCHEMES.length||mi>=MODES.length||corr>100||frames<8||frames>80||mo>2)return null;
-  /* a pre-v7 card carries only the first 37 bits; the rest are simply off */
-  const fx={}; for(const ch of CARD_CH)fx[ch]=false;
-  const CHR=(ver>=7)?CARD_CH:CARD_CH.slice(0,CARD_CH_V5);
-  for(const ch of CHR)fx[ch]=pull(1)===1;
+  const fx={}; for(const ch of CARD_CH)fx[ch]=pull(1)===1;
+  /* a NOVA card carries 74 sigil bits where this engine has 37. Walk past the
+     rest so everything after them stays on its bit, and let them go. */
+  if(ver>=7) for(let i=CARD_CH.length;i<74;i++)pull(1);
   let ov=null;
   if(ver===3){  // legacy narrow block — map into the new space
     ov={maskType:pull(3),maskStyle:pull(1),cx:pull(5),cy:pull(5),size:pull(5),n:pull(3),form:pull(2)};
@@ -6458,7 +5514,9 @@ function unpackCard(str){
   return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo], ov, epoch, voidamt, chromacap, locality, ver};
 }
 function applyCard(c){
-  CARDVER=(c && c.ver!=null) ? c.ver : 7;
+  /* a decoded card keeps its era — but never an era this engine does not have.
+     A NOVA card lands here as the v6 card it now is, and resaves as one. */
+  CARDVER=Math.min(ENGINE_CARDVER, (c && c.ver!=null) ? c.ver : ENGINE_CARDVER);
   clearOV();
   EPOCH=c.epoch||0;
   setSeg('epochseg','_epoch',String(EPOCH));
@@ -7535,43 +6593,6 @@ const TIP_SIG={
   lungs:'LUNGS \u2014 the image breathes: rhythmic radial expansion and contraction synced to the loop. Respiration for machines.',
   tunnel:'TUNNEL \u2014 recursive zoom feedback: the frame falling into itself forever. Video-feedback vertigo.',
   kaleido:'KALEIDO \u2014 mirrored wedge symmetry: the corruption folded into rotational mandala order.',
-  strata:'STRATA \u2014 the seed cut into sedimentary bands, each one sliding on its own phase. The layering instinct, made literal.',
-  fold:'FOLD \u2014 one vertical axis; the picture folded back onto itself. The seam drifts on an integer harmonic so the fold returns to rest.',
-  quarter:'QUARTER \u2014 the fold on both axes at once. Four-square symmetry, which is the grid\u2019s logic rather than the mandala\u2019s.',
-  peel:'PEEL \u2014 wherever the picture has a hard edge, that edge lifts and slides in the direction it faces. Flay at the pixel scale.',
-  drip:'DRIP \u2014 melt obeying gravity. Each column has its own viscosity; the run grows to full length at half a turn and dries by the end.',
-  shear:'SHEAR \u2014 bands re-rolled every single frame and thrown sideways. Hard cuts, never a smooth wave.',
-  ripple:'RIPPLE \u2014 a travelling wavefront from a seeded centre, displacing the picture radially. The front arrives back where it started.',
-  silt:'SILT \u2014 the sediment that has not settled yet. Bright grains detach and fall into a bed that breathes with the loop.',
-  bandshift:'BANDSHIFT \u2014 the palette cut into bands; each band\u2019s colours rotate inside their own band. The picture holds still while its colour slides.',
-  posterize:'POSTERIZE \u2014 the colour ladder collapsed to a coarser one that breathes. Fewer steps, bigger flat plates.',
-  duotone:'DUOTONE \u2014 every colour dragged to the nearer of two anchors that slide along the ramp. Two-colour print flatness.',
-  solarize:'SOLARIZE \u2014 everything past a moving threshold folds back down the ramp. The Sabattier reversal, done as a hard flip.',
-  contour:'CONTOUR \u2014 the seams between plates drawn as a hard line. Where the picture changes, it now says so.',
-  stipple:'STIPPLE \u2014 an ordered dither in colour space, its matrix marching a whole number of cells per loop. Print-screen texture, not noise.',
-  glyphswap:'GLYPHSWAP \u2014 character cells overwritten with glyphs that never existed, re-rolled every frame. The machine typing over its own picture.',
-  palcrawl:'PALCRAWL \u2014 the whole picture walks the palette a whole number of laps and arrives home exactly. Colour cycling, nothing else moves.',
-  spin:'SPIN \u2014 the whole frame turning a whole number of laps per loop, wrapping at the edges. No borders, ever.',
-  pulse:'PULSE \u2014 uniform zoom on an integer harmonic. The frame breathing in and out of its own edges.',
-  breathe:'BREATHE \u2014 barrel and pincushion trading places. The lens itself is unwell.',
-  twist:'TWIST \u2014 a swirl that dies at the rim, so the edges stay honest while the middle wrings itself out.',
-  stretch:'STRETCH \u2014 the two axes scaling on different harmonics. The frame is never square with itself.',
-  jitter:'JITTER \u2014 the whole frame kicked to a new offset every single frame, and still loop-exact.',
-  split:'SPLIT \u2014 one seam, the two sides driven in opposite directions. The tear, done cleanly for once.',
-  afterimage:'AFTERIMAGE \u2014 the frame smeared along a direction that turns a whole number of laps. Persistence of vision on a screen that has none.',
-  charr:'CHARR \u2014 the picture burning from its bright places outward, soot creeping along a seeded grain.',
-  frost:'FROST \u2014 glass between the eye and the picture: cells displaced a little and cooled, re-rolled every frame.',
-  sear:'SEAR \u2014 everything past a breathing threshold blows out to white-hot and takes its neighbours with it.',
-  patina:'PATINA \u2014 oxidation crawling across the surface on a slow drifting field. Copper gone green.',
-  emboss2:'EMBOSS2 \u2014 the picture pressed into metal and lit from an angle that turns a whole number of laps. Relief, not outline.',
-  rimlight:'RIMLIGHT \u2014 a hard light that only catches the edges facing it, and it walks all the way around before the loop is out.',
-  caustic:'CAUSTIC \u2014 three gratings crossing, their crests sharpened into the veins light makes on the bottom of a pool.',
-  dust:'DUST \u2014 the print is old. Specks and the occasional hair, re-rolled every frame, which is exactly why it loops.',
-  lattice:'LATTICE \u2014 the frame snapped onto a grid of cells, each flattened to its own average, and the grid drawn. Order asserted over a picture that did not ask for any.',
-  rebar:'REBAR \u2014 bars of the picture held at a fixed offset while everything around them moves on. The reinforcement showing through.',
-  terrace:'TERRACE \u2014 light cut into level steps with the risers drawn. The frame as a contour map of itself.',
-  fault:'FAULT \u2014 one straight break at a seeded angle; everything on the far side slides along it and back. Geology, not glitch.',
-  seam:'SEAM \u2014 the join where the tape was spliced, travelling a whole number of laps across the frame with a bright weld down its middle.',
   bloom:'BLOOM \u2014 bright regions overflow their borders in phosphor glow, light behaving like liquid.',
   embers:'EMBERS \u2014 hot particles rise from the brightest zones and cool as they climb. The image on fire, politely.',
   runes:'RUNES \u2014 glyph strata: bands of corrupted symbols cut into the signal, language that never existed.',
@@ -7710,7 +6731,7 @@ if(DESKTOP_MQ&&DESKTOP_MQ.addEventListener)DESKTOP_MQ.addEventListener('change',
    REVISION SENTINEL — the box notices when the tab it lives in has gone
    stale (CDN + browser caches) and offers the cure where you can see it.
    ========================================================================== */
-const REV_SELF='E9.1';
+const REV_SELF='E9.2';
 async function revCheck(){
   try{
     const r=await fetch(location.pathname+'?rc='+Date.now(),{cache:'no-store'});
@@ -7863,25 +6884,12 @@ function machineRoll(opts){
   const wpick=(pairs)=>{ let t=0; for(const q of pairs)t+=q[1]; let r=R()*t;
     for(const q of pairs){ r-=q[1]; if(r<=0)return q[0]; } return pairs[0][0]; };
   const rollFx2=(pill,fav,oth,rad)=>{
-    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes','meta','entropy','chimera','kaleido','hilb','tunnel','chrono',
-    /* the second vocabulary's own favourites, read off what the curator has
-       been keeping: layering, hard cuts, index-space damage, dirt, plates */
-                       'strata','shear','stipple','glyphswap','palcrawl','bandshift','contour','dust','charr','lattice','terrace','jitter']);
-    /* NOVA RIDES QUIETER. The rail doubled; if every key kept its old odds a
-       fresh roll would light fifteen sigils at once and the picture would be
-       nothing but corruption. The new vocabulary comes up about a third as
-       often as the old, and taste is what raises it from there. */
-    const NOVA=new Set(CARD_CH.slice(CARD_CH_V5));
+    const FAV=new Set(['embers','bloom','panes','melt','ghost','invert','lungs','runes','meta','entropy','chimera','kaleido','hilb','tunnel','chrono']);
+    const PILL=new Set(['chroma','tracking','pixelsort','grain','blocks','scanlines','echo']);
     const fx={};
-    for(const k of CARD_CH){
-      const nv=NOVA.has(k);
-      fx[k]= rad ? R()<(nv?0.14:0.30)
-           : PILL_SET.has(k) ? R()<pill
-           : R()<((FAV.has(k)?fav:oth)*(nv?0.42:1));
-    }
+    for(const k of CARD_CH) fx[k]= rad?R()<0.30 : PILL.has(k)?R()<pill : R()<(FAV.has(k)?fav:oth);
     return fx;
   };
-  const PILL_SET=new Set(['chroma','tracking','pixelsort','grain','blocks','scanlines','echo']);
   let tag;
   if(allFree && R()<0.60 && R()<0.35 && typeof ORACLE_CANON!=='undefined'){
     const ia=(R()*ORACLE_CANON.length)|0; let ib=(R()*ORACLE_CANON.length)|0; if(ib===ia)ib=(ib+1)%ORACLE_CANON.length;
@@ -8464,7 +7472,7 @@ function hideMintedBand(){ const b=document.getElementById('mintedband'); if(b)b
 <script>
 /* ============================================================================
    PUBLIC SHELL WIRING — the shell owns every visible element and drives the
-   headless EIDOLON E9.1 engine by direct calls only. One relocation is
+   headless EIDOLON E9.2 engine by direct calls only. One relocation is
    permitted: the #view canvas moves into the shell's stage. Nothing else is
    adopted, moved, or restyled. State flows one way: engine → paint().
    ========================================================================== */
@@ -8663,7 +7671,6 @@ const wbTune=window.wbTune=function(scene){
   if(!scene.__gBase)scene.__gBase=Object.assign({},scene.vibe.g);
   for(const k in scene.__gBase){ const m=WB.gain[k];
     scene.vibe.g[k]=scene.__gBase[k]*((m==null?100:m)/100); }
-  scene.__nvG=WB.gain;
 };
 /* ============================================================================
    THE LIVING ENGINE — real-time by construction.
@@ -8758,7 +7765,6 @@ function loop(){
     scene.__graft=(J.gr&&J.gr.on&&GRAFTIMG&&GRAFTIMG.id===J.gr.id)?{img:GRAFTIMG,cfg:J.gr}:null;
     for(const g in SC.gBase){ const m=J.wb&&J.wb.gain?J.wb.gain[g]:null;
       scene.vibe.g[g]=SC.gBase[g]*((m==null?100:m)/100); }
-    scene.__nvG=(J.wb&&J.wb.gain)?J.wb.gain:null;
     scene._corr=J.corr;
     const N=J.N, i=(J.__i!=null)?((((J.__i|0)%N)+N)%N)  /* truth pass: named frame */
       :((((Date.now()-t0)/40)|0)%N+N)%N;                 /* live: the GIF's own clock */
@@ -8792,7 +7798,6 @@ function loop(){
       oblivionPixel(rgbB,snap,scene,theta,J.corr,J.fx);
       valhallaPixel(rgbB,snap,scene,theta,J.corr,J.fx);
       demiurgePixel(rgbB,snap,scene,theta,J.corr,J.fx,SC.grad);
-      novaPass(rgbB,snap,scene,theta,J.corr,J.fx);
       sanctityRGB(rgbB,scene,theta,i,SC.grad);
       seamRip(rgbB,scene,theta,SC.grad);
     } else {
@@ -8804,7 +7809,6 @@ function loop(){
       J.fx.tect?buildTect(scene,theta,J.corr):null,
       (J.fx.crush&&scene.epoch!==1)?buildQuake(scene,theta,J.corr):null);
     if(scene.__ver>=6||(scene.mode!=='MASS'&&scene.mode!=='IDOL')) indexPass(idx,SC.pal.length,scene,theta,J.corr,J.fx);
-    nvIndexPass(idx,SC.pal.length,scene,theta,J.corr,J.fx);
     sanctityIdx(idx,scene,i);
     /* BACKPRESSURE. The worker used to free-run: it posted a frame every
        max(40ms, render) regardless of whether the main thread had drawn the
@@ -10005,9 +9009,7 @@ window.grBroadcast=grBroadcast; window.grOnSync=grOnSync; window.grPaletteOf=grP
 /* ---- SIGIL GAINS ---- */
 (function(){
   const host=$('wb-gains');
-  /* one row per sigil that is actually on the rail: kaleido keeps its card bit
-     forever but has no button, so it gets no slider either */
-  const KEYS=Object.keys(state.fx).filter(k=>document.querySelector('.tg[data-fx="'+k+'"]'));
+  const KEYS=Object.keys(state.fx);
   for(const k of KEYS){
     const row=document.createElement('div'); row.className='wbrow';
     row.innerHTML='<label>'+k.toUpperCase()+'</label><input type="range" min="0" max="300" value="100"><span class="v">100%</span>';
@@ -10199,7 +9201,7 @@ $('wbdx').addEventListener('click',()=>{$('wbdigest').style.display='none';});
    than cached in localStorage, so taste learned on the desktop is the same
    taste the phone rolls with. The verdicts are the store; no new table.
    ══════════════════════════════════════════════════════════════════════ */
-const WBT=window.WBT={on:true, strength:1, K:6, model:null, raw:null, halfLife:120, halfLifeFx:40, rows:0,
+const WBT=window.WBT={on:true, strength:1, K:6, model:null, raw:null,
                       p0:0.5, n:0, ts:0, learning:false};
 
 const wbtBand=(v,w)=>Math.min(9,((v||0)/w)|0)*w;
@@ -10227,37 +9229,16 @@ async function wbtLearn(){
     if(r.ok){ const j=await r.json(); if(Array.isArray(j))rows=j; }
   }catch(e){}
   try{ rows=rows.concat(wbLocal()||[]); }catch(e){}
-  /* RECENCY. The rows arrive newest first, and the oldest of them judged an
-     engine where 32 of 37 sigils were inert — a verdict cast on a picture the
-     box can no longer make is not evidence about the box that exists now. So
-     each row carries a weight that halves as you go back through the table,
-     and it halves faster for the sigil dimension than for anything else,
-     because that is the dimension the engine actually changed under. Mode,
-     palette and the sliders meant the same thing then as now, so their memory
-     is allowed to be longer. */
-  const HL=WBT.halfLife||120, HLFX=WBT.halfLifeFx||40;
   const m={}; let K=0,N=0;
-  for(let i=0;i<rows.length;i++){
-    const row=rows[i];
-    const keep=row.verdict==='KEEP'?1:0;
-    const w=Math.pow(0.5, i/HL), wf=Math.pow(0.5, i/HLFX);
-    K+=keep*w; N+=w;
+  for(const row of rows){
+    const keep=row.verdict==='KEEP'?1:0; K+=keep; N++;
     const dims=wbtDims(row.snapshot);
-    for(const d of dims){
-      const ww=(d.charCodeAt(0)===102&&d.charCodeAt(1)===120&&d.charCodeAt(2)===58)?wf:w;  /* 'fx:' */
-      const q=m[d]||(m[d]={k:0,n:0}); q.n+=ww; q.k+=keep*ww; }
+    for(const d of dims){ const q=m[d]||(m[d]={k:0,n:0}); q.n++; q.k+=keep; }
   }
-  WBT.p0=N?K/N:0.5; WBT.n=N; WBT.rows=rows.length; WBT.raw=m;
-  /* A SOFTER PRIOR ON SIGILS. Everything in the second vocabulary starts with
-     no history at all; a prior of six verdicts would hold it at the house
-     average for a month of harvesting. Three lets the first few verdicts on a
-     new sigil actually say something, while the other dimensions — which have
-     hundreds of rows behind them — keep the steadier prior. */
+  WBT.p0=N?K/N:0.5; WBT.n=N; WBT.raw=m;
+  const A=6;                                  /* prior strength, in verdicts */
   WBT.model={};
-  for(const kk in m){
-    const A=(kk.slice(0,3)==='fx:')?3:6;
-    WBT.model[kk]=(m[kk].k + A*WBT.p0)/(m[kk].n + A);
-  }
+  for(const kk in m) WBT.model[kk]=(m[kk].k + A*WBT.p0)/(m[kk].n + A);
   WBT.ts=Date.now(); WBT.learning=false;
   wbtPaint();
   return WBT;
@@ -10300,49 +9281,24 @@ machineRoll=function(opts){
     let sc=0; try{ sc=wbtScore(wbSnapshot().st); }catch(e){ break; }
     if(wbtAccept(sc))break;
   }
-  /* THE DIRECT LEVER, NOW BOTH WAYS. Culling alone could only ever make the
-     rolls quieter: the model knew which sigils the curator keeps and did
-     nothing with it. A sigil below the house keep-rate is dropped, a sigil
-     above it is lit, each with a probability proportional to the size of the
-     gap AND to how much evidence stands behind it — so two unlucky verdicts
-     barely register and two hundred are close to law. Lighting is held to a
-     lower ceiling than dropping, because a roll that adds everything the
-     curator has ever liked is not a roll. */
-  const _fxSet=(k2,v)=>{ state.fx[k2]=v;
-    const tg=document.querySelector('.tg[data-fx="'+k2+'"]'); if(tg)tg.dataset.on=v?1:0; };
+  /* the direct lever kept alongside the scoring: a sigil you reliably kill is
+     culled outright, with a probability proportional to the deficit AND to how
+     much evidence stands behind it — so two unlucky verdicts barely register */
   if(steer)try{
-    for(const k2 of CARD_CH){
-      if(!(k2 in state.fx))continue;
+    for(const k2 in state.fx){
+      if(!state.fx[k2])continue;
       const r=WBT.model['fx:'+k2], q=WBT.raw['fx:'+k2];
       if(r==null||!q)continue;
-      const conf=q.n/(q.n+6);
-      if(state.fx[k2]){
-        const deficit=Math.max(0,(WBT.p0-r)/Math.max(1e-3,WBT.p0));
-        if(Math.random() < Math.min(0.85, deficit*conf*WBT.strength)) _fxSet(k2,false);
-      } else {
-        const surplus=Math.max(0,(r-WBT.p0)/Math.max(1e-3,1-WBT.p0));
-        if(Math.random() < Math.min(0.45, surplus*conf*WBT.strength*0.75)) _fxSet(k2,true);
+      const conf=q.n/(q.n+8), deficit=Math.max(0,(WBT.p0-r)/Math.max(1e-3,WBT.p0));
+      if(Math.random() < Math.min(0.85, deficit*conf*WBT.strength)){
+        state.fx[k2]=false;
+        const tg=document.querySelector('.tg[data-fx="'+k2+'"]'); if(tg)tg.dataset.on=0;
       }
     }
-    wbHeavyCap(_fxSet);
     setFxPref();
   }catch(e){}
   return tag;
 };
-
-/* THE HEAVY CAP. Eleven of the new sigils move the whole frame rather than
-   marking it, and three or four of them at once do not compound into anything
-   — they cancel into mush. Two is the most the picture survives, and which two
-   is left to the dice. Nothing is pinned: a sigil you set by hand is yours,
-   this only trims what the roll threw. */
-const WB_HEAVY=['spin','pulse','breathe','twist','stretch','split','quarter','fold','fault','rebar','seam','ripple'];
-function wbHeavyCap(setter){
-  const lit=WB_HEAVY.filter(k=>state.fx[k]);
-  if(lit.length<=2)return;
-  /* shuffle, keep two, drop the rest */
-  for(let i=lit.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=lit[i]; lit[i]=lit[j]; lit[j]=t; }
-  for(let i=2;i<lit.length;i++) setter(lit[i],false);
-}
 
 /* ═══ HARVEST ═════════════════════════════════════════════════════════════
    The corpus is 23 keeps to 5 kills, and a taste model learns almost entirely
