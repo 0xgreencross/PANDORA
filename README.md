@@ -26,18 +26,19 @@ Tap the size readout to expose playback diagnostics.
   earlier, pre-glitch aesthetic — not an imitation: the original code, proven byte-identical.
   Flick it and the same seed re-renders in the other era.
 
-## SIGILS — 73 corruption channels
-Each sigil arms one channel of destruction. The first arsenal is the tape: tracking,
-pixel sort, attribute clash, ransom stamps, dither quake, tape rot. The second is the
-vocabulary added in E9.1 — sediment and folds, colour worked at the palette itself,
-whole-frame motion, burnt and frozen and oxidised surfaces, and architecture imposed on
-the picture. Lit means armed. Combinations multiply — the same seed under different
-sigils is a different ghost. **☠ OBLIVION** arms a violent random set and fires.
+## SIGILS — 36 corruption channels
+Each sigil arms one channel of destruction: tape tracking, pixel sort, attribute clash,
+ransom stamps, dither quake, tape rot, and the rest of the arsenal. Lit means armed.
+Combinations multiply — the same seed under different sigils is a different ghost.
+**☠ OBLIVION** arms a violent random set and fires.
 
 Every sigil on the rail changes the picture. That is a gated claim, not a hope: each one
-is rendered alone against a clean frame on four seeds before any build ships, and every
-one of them is exactly loop-periodic — the last frame hands the first frame back the
-state it started in, byte for byte.
+is rendered alone against a clean frame on four seeds before any build ships.
+
+A larger vocabulary was built and judged in August 2026 — thirty-seven more channels,
+all of them working — and the curator's eye rejected it: more was not better. The box
+kept the vocabulary it had. The bits stay reserved in the card format so that nothing
+written during those hours is orphaned.
 
 ## GRAFT — bring your own image
 Drop a still or an animated GIF into the box and the engine feeds on it. An animated
@@ -84,7 +85,7 @@ renders on the engine it was written for, bit for bit — all 51 canon bloodline
 re-rendered on both engines and compared byte for byte before any build ships. Nothing
 minted is ever allowed to change.
 
-Engine: **EIDOLON E9.1 NOVA**.
+Engine: **EIDOLON E9.2 CHIMERA**.
 
 *GREENCROSS × Claude — DITHERVOID, 2026*
 

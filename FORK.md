@@ -38,8 +38,10 @@ See HANDOFF.md for the full succession document.
 
 ---
 STATE AS OF 2026-08-29:
-- trunk `index.html`: EIDOLON **E9.1 NOVA** — the full engine behind a card
-  version gate, GRAFT (stills and animated GIFs), 73 sigils on the rail.
+- trunk `index.html`: EIDOLON **E9.2 CHIMERA** — the full engine behind a card
+  version gate, GRAFT (stills and animated GIFs), 36 sigils on the rail. E9.1
+  doubled that to 73 and the curator rejected it; E9.2 is the CHIMERA engine
+  back, byte for byte, with only the pixel-neutral repairs carried forward.
 - `workbench/v2/index.html`: the same engine with the instrument attached —
   KEEP/KILL, HARVEST, the taste model, DIGEST. Cores are byte-identical to the
   trunk's by construction and checked by md5 before every push.

@@ -351,6 +351,10 @@ sigils and killing three others, learn, then roll 300 times. Kept sigils came up
     panelgate.js   phone layout: nothing falls under the cut
     stalegate.js   every control reaches the preview at the value you set, and
                    an override never demotes the engine
+    revertgate.js  the same genome on two builds, byte for byte — what a revert
+                   has to mean
+    invertcheck.js XSLAM at the frame counts the box actually uses
+    pubgate2.js    v6 cards written, every legacy era read, a v7 card not orphaned
 Gates must be BACKGROUNDED — Bash times out at two minutes. `(setsid nohup
 timeout N … &)` then poll; the HTTP server must live inside the same script and
 must be a `ThreadingTCPServer`. Shell cwd resets between calls: absolute paths
@@ -391,6 +395,59 @@ sigil renders the loop as it was before the toggle." Two causes:
 STALEGATE now guards both, and was written to FAIL on the shipped build first —
 six checks, all six failing there, all six passing on the fix. A gate that has
 never failed on the broken thing is not a gate.
+
+## E9.2 — THE SECOND VOCABULARY WAS JUDGED AND IT LOST
+*(2026-08-30. The curator: "i don't like this new engine's additions... I think
+we lost the essence of the nice outputs we were getting before.")*
+
+Thirty-seven new sigils, all of them working, all of them gated, and the eye said
+no. That is the loop working, not failing — it is the same KEEP/KILL judgement at
+the scale of a whole vocabulary, and it is the only judgement that counts.
+
+**HOW THE REVERT WAS DONE, AND WHY THAT WAY.** Not by stripping NOVA out of the
+current build — that leaves residue, and residue is exactly what would have
+changed the character he was asking to get back. Instead: take the published
+CHIMERA bytes (`62aa120` / `becbd22`) verbatim, and re-apply only the repairs
+that provably move no pixel.
+
+CARRIED FORWARD (three):
+- `fxHilbert` fitted to the canvas. It hard-coded a 135x8 curve — a 1080 raster
+  and nothing else — and threw RangeError on every other rung, so HILBRT was a
+  button that killed the frame. At 1080 the new arithmetic yields exactly 135 and
+  8, so nothing that ever rendered changes.
+- The living preview's input path deferred like its click path. Every slider was
+  posting the value from a moment ago; the preview showed one thing and RENDER
+  made another. No pixel changes — the preview simply stops lying.
+- The card version given a name (`ENGINE_CARDVER`) instead of being typed as a
+  literal wherever needed.
+
+Plus one courtesy: the reader tolerates a v7 card, so nothing written during the
+NOVA hours is orphaned. It decodes, renders without the sigils this engine does
+not have, and resaves as the v6 card it now is.
+
+**NOT CARRIED FORWARD — AND THIS IS THE LESSON.** I widened XSLAM's strobe window
+during NOVA, calling it a bug because it "missed on half the seeds". It did not.
+The window is 0.224 rad wide; at the box's own default of 36 frames the gap
+between frames is 0.175 rad, so a frame ALWAYS lands inside it. At the twelve
+frames my test used, the gap is 0.524 and it often does not. Measured across
+8 seeds: 3/8 at N=12, 7/8 at N=24, **8/8 at N=36 and N=48** (`invertcheck.js`).
+My sampling was at fault, for the second time in one session — the first was the
+loop-closure gate that "failed" a baseline with no new sigils in it. Widening the
+window would have changed the look of every existing card with INVERT lit, for a
+defect that did not exist.
+
+**THE PROOF THAT IT IS THE SAME ENGINE.** `revertgate.js` renders 40 genomes —
+8 seeds x 4 modes x 5 settings (bare / everything-but-HILBRT / the shipped seven /
+a v5 era / the classic epoch) — on the published CHIMERA build and on this one and
+demands byte-identical index buffers. Worst difference: **0%**. HILBRT is asserted
+separately in both directions: it throws on the published build at a 192 raster
+and draws on this one.
+
+**WHAT SURVIVES FROM THE NOVA WORK.** The gates. `revertgate.js`, `stalegate.js`,
+`invertcheck.js`, `allsigils.js` and `pubgate2.js` all came out of those hours and
+all of them now guard the CHIMERA engine. The card format's reserved names stay in
+the register below; if the vocabulary is ever wanted again it is recoverable from
+`4fd0a0a` / `9a73746` in full, gated and working.
 
 ## STILL OPEN
 - `crush` remains seed-dependent (7 of 8).

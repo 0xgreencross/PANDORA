@@ -88,14 +88,19 @@ the v2 contract and awakens on deployment. Likes attach to LOOPS everywhere.
 
 ## Current mission order
 1. DONE: public shell rebuilt (d076b15), X share f3-port (05e51e9),
-   rooms + contract v2, the engine port + graft (E9.0), the second vocabulary
-   and the taste rebuild (E9.1 NOVA).
+   rooms + contract v2, the engine port + graft (E9.0 CHIMERA).
+   E9.1 NOVA doubled the vocabulary to 73 sigils; the curator judged it and it
+   lost — "we lost the essence of the nice outputs". E9.2 returns to the CHIMERA
+   engine byte for byte, carrying forward only repairs that move no pixels.
 2. Sepolia rehearsal of PANDORA.sol v2 (Remix ceremony, user signs), then
    flip W3.contract in index.html + sealed.html to the v2 address.
 3. PROMPT B (docs/PROMPT_B_MAINNET.md): mainnet ceremony ON V2.
-4. Harvest on the new vocabulary: the taste model now weights recent verdicts
-   over old, because the 119 verdicts in the table judged an engine where most
-   sigils were inert.
+4. A REVERT IS A REVERT TO BYTES, NOT TO INTENT. When the curator rejects a
+   direction, go back to the published build's exact bytes and re-apply only the
+   fixes that provably change no pixel — then prove it: render the same genomes
+   on both engines and demand zero difference (revertgate.js, 40 genomes across
+   8 seeds, 4 modes and 5 eras). Stripping a feature out of the current build
+   leaves residue; starting from the old bytes cannot.
 5. Feedback cycles on the renderer continue forever.
 
 Read repo HANDOFF.md for full history and named root causes of past defects.
