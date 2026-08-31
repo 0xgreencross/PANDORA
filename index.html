@@ -399,7 +399,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
         <div id="pub-palette"></div>
       </div>
       <details id="grwrap">
-        <summary>GRAFT <span class="v" id="gr-onlab">OFF</span></summary>
+        <summary id="gr-summary">GRAFT <span class="v" id="gr-onlab">OFF</span></summary>
         <div id="grbody">
           <div class="field"><label>SOURCE <span class="v" id="gr-name">NONE</span></label>
             <div id="gr-drop">DROP AN IMAGE HERE &middot; OR TAP TO CHOOSE</div>
@@ -455,7 +455,9 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   <button id="ix">✕</button>
   <h3>DITHERVOID // PANDORA</h3>
   <div class="row"><b>TAP THE BOX.</b> Every tap generates a loop no one has seen and no one will see again. CORRUPTION is the violence dial, VOID is how much darkness the body keeps, CHROMA caps the spectrum, the PALETTE grid picks the colorway. SPLICE re-renders the current genome.</div>
-  <div class="row"><b>ROLLING, SAVING AND USING LOOPS IS FREE.</b> Open the box as many times as you like. Download the GIFs. Use them anywhere.</div>
+  <div class="row"><b>HOW A LOOP IS MADE.</b> Every loop begins as a single number. That seed grows an entire world through one seeded sequence: a form, a camera, a light, a colorway, a way of moving. The form is mathematics rather than modelling, a solid with no polygons and no textures, and the box finds it by marching rays into it and gathering what comes back, mirror floor and reflections and contact shadow included. One loop is one revolution: thirty-six frames, each a position on a circle, every motion built to arrive exactly where it left so the seam never shows. The finished frame is then crushed into sixty-four colours by an ordered dither, and the sigils chew it on the way through. Nothing is fetched, nothing is trained, no model and no hand draws any of it. The same seed with the same dials gives the same loop, forever, on any device.</div>
+  <div class="row"><b>ROLLING, SAVING AND USING LOOPS IS FREE.</b> Open the box as many times as you like. Download the GIFs. Use them anywhere. What plays on screen is a live draft, built small and played at true speed so nothing stutters on any device; RENDER builds the same loop at full size, and that is what DOWNLOAD saves.</div>
+  <div class="row"><b>FIVE WAYS TO ROLL.</b> TAP opens the box on a loop nobody has seen. SPLICE re-renders the genome on the dials, so the same settings give the same picture every time. DICE is the trained roll: most of it serves the shapes the curator has kept, the rest hunts the frontier those make plausible. MUTATE holds the seed and changes three to six sigils, lurches the corruption and shifts the void, for when you almost love a loop and want its siblings. OBLIVION is the ritual of maximum hunger, corruption 68 to 96, where the dense chaos lives.</div>
   <div class="row"><b>GRAFT PUTS YOUR OWN IMAGE INSIDE THE LOOP.</b> Drop a picture or an animated GIF into GRAFT and it enters the transmission <i>before</i> the dither, so it is never a layer sitting on top: the artwork's own 64 colours quantize it, the void carves it, the corruption chews it. Arm any number of ROLES at once and the line beneath them tells you which surfaces this seed actually has. BLEND offers twelve ways to marry the graphic to the picture, from NORMAL and MULTIPLY through DIFFERENCE, XOR and SOFTLIGHT, and the OPACITY slider sets how far that blend carries; AMOUNT, SCALE, OFFSET, ROTATION, GAMMA and THRESHOLD shape the rest. Your image is read in this browser and never uploaded anywhere. The DNA card records the loop, not the graft, so keep the picture if you want to build it again.</div>
   <div class="row"><b>DNA IS THE ARTWORK'S PROOF.</b> The card in the DNA field is the loop's complete genome. Copy it, post it, keep it: RESURRECT rebuilds the exact loop from any card, on any device, forever.</div>
   <div class="row"><b>MINTING CARRIES A SMALL FEE</b> — 0.01 ETH for a 1/1, 0.001 ETH for editions — because this is an art project by <b>GREENCROSS</b> and the fee pays the artist's monthly AI bill. One seed, one token, one chance.</div>
@@ -8228,6 +8230,12 @@ $g('mseal').addEventListener('click', doMint);
   T('pub-seed',TIP_ID.seed);
   T('pub-dna',TIP_ID.dna);
   T('pub-resurrect',TIP_ID.dnago);
+  /* THE THREE CONTROLS THE AUDIT FOUND NAKED. RENDER is a primary action and
+     had no line at all; the drawer header never said what a graft is; CLEAR
+     appears only once a picture is loaded and never said what it removes. */
+  T('pub-render','RENDER \u2014 builds this loop at full size. What you are watching is a live draft, made small so it plays at true speed on any device; this makes the real thing, and it is what DOWNLOAD saves. Nothing is charged and nothing is sealed by rendering.');
+  T('gr-summary','GRAFT \u2014 put your own picture inside the loop. It enters before the dither, so the artwork own colours quantize it and its own corruption chews it: never a layer on top. Drop a still or an animated GIF, arm the roles you want, and the loop redraws as you move every control.');
+  T('gr-clear','CLEAR \u2014 forgets the loaded picture and returns the loop to the seed alone. The settings in this drawer are kept, so the next image you drop in arrives configured the same way.');
   /* THE GRAFT DRAWER. Eleven roles, twelve blends, two depths, four fits and
      eight sliders shipped with no tooltip on any of them. Every one gets a
      line, in the same canon voice as the rest of the rail. */
