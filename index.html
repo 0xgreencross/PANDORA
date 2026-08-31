@@ -4947,6 +4947,8 @@ async function generate(){
    derived sizes); a draft wants none of them, only the palette indices the
    player already knows how to run. Nothing here can change the artifact:
    generate() is untouched and remains the only path that makes a file. ══ */
+/* what the SHELL wants the readout to say; empty means the engine owns it */
+let PUBSAY='';
 const PUBD={ ladder:[432,360,300,240,192], rung:1, pool:null, praster:0,
              run:0, busy:false, lastMs:0, OUT:540 };
 
@@ -5014,6 +5016,7 @@ async function pubDraft(){
   if(!PLAT || !WORKER_DRIVER) return;
   const run=++PUBD.run;
   PUBD.busy=true;
+  pubTruthStop();          /* whatever was settling is about a picture nobody wants now */
   try{
     const R=PUBD.ladder[PUBD.rung];
     if(!draftPool(R)){ PUBD.busy=false; return; }
@@ -5042,7 +5045,7 @@ async function pubDraft(){
       epoch:EPOCH, ver:CARDVER,
       gr:(window.wbGraftCfg?window.wbGraftCfg():null),
       i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
-    $('pubosd')&&($('pubosd').textContent='DRAFTING');
+    PUBSAY='DRAFTING'; $('pubosd')&&($('pubosd').textContent=PUBSAY);
     await new Promise(resolve=>{
       let remaining=nw, settled=false;
       const fin=()=>{ if(!settled){settled=true;resolve();} };
@@ -5080,7 +5083,8 @@ async function pubDraft(){
     if(ok===N){
       startPlayer(frames, pal, PUBD.OUT, N, DELAY*10, (GDLY&&GDLY.length===N)?GDLY:null);
       $('ph')&&($('ph').style.display='none');
-      $('pubosd')&&($('pubosd').textContent='LIVE · 25fps · RENDER TO SAVE');
+      PUBSAY='LIVE · 25fps · DRAFT — SETTLING…'; $('pubosd')&&($('pubosd').textContent=PUBSAY);
+      pubTruthArm();       /* and now go and make it the actual GIF */
       /* THE LADDER. Aim for a draft inside a second and a half: climb when
          there is room, drop when there is not. The device decides, not me. */
       if(PUBD.lastMs<900 && PUBD.rung>0) PUBD.rung--;
@@ -5088,6 +5092,101 @@ async function pubDraft(){
     }
   }catch(e){ }
   PUBD.busy=false;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE TRUTH PASS. The draft is built at a ladder rung and point-sampled up to
+   540; the render is built at 1080 and sampled down. The dither is
+   screen-space and so is every pass with pixel-scale features, so a coarser
+   grid is a DIFFERENT picture, not a smaller one - measured at 31.54% of the
+   pixels on seed 696969. The workbench has settled its preview to the render
+   raster for a long time; the public box never did. Now it does: the fast
+   draft still lands first so nothing stalls, and then, only after the box has
+   been quiet, the same loop is rebuilt at the render raster in the background
+   and the player is swapped onto it. Anything the curator does cancels it.
+   ═══════════════════════════════════════════════════════════════════════ */
+const PUBT={ pool:null, praster:0, run:0, busy:false, timer:0, ms:0, exact:false };
+function truthRaster(){ return 1080; }          /* what the encoder writes */
+function pubTruthStop(){
+  PUBT.run++; PUBT.exact=false;
+  if(PUBT.timer){ clearTimeout(PUBT.timer); PUBT.timer=0; }
+}
+function truthPool(R){
+  if(PUBT.pool && PUBT.praster===R) return true;
+  if(PUBT.pool){ for(const w of PUBT.pool){ try{w.terminate();}catch(e){} } PUBT.pool=null; }
+  try{
+    const src=draftWorkerSrc(R); if(!src) return false;
+    const url=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));
+    PUBT.pool=[];
+    for(let i=0;i<PLAT.workers;i++){ const wk=new Worker(url);
+      if(window.wbGraftPost)window.wbGraftPost(wk);
+      PUBT.pool.push(wk); }
+    PUBT.praster=R; return true;
+  }catch(e){ PUBT.pool=null; return false; }
+}
+async function pubTruth(){
+  if(PUBT.busy||PUBD.busy) return;
+  if(typeof busy!=='undefined'&&busy) return;         /* a real render owns the box */
+  const R=truthRaster();
+  if(!PLAT||!WORKER_DRIVER) return;
+  const run=++PUBT.run;
+  PUBT.busy=true;
+  try{
+    if(!truthPool(R)){ PUBT.busy=false; return; }
+    const G=pubGenome();
+    reflectTune(G.scene);
+    const {pal}=buildPalette(G.scheme, G.scene.vibe);
+    const N=state.frames, corr=state.corr, fx=state.fx;
+    let nw=Math.min(PLAT.workers, N);
+    if(fx.echo&&fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/10)));
+    else if(fx.echo||fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/5)));
+    if(nw<1)nw=1;
+    const frames=new Array(N);
+    const t0=performance.now();
+    const jobOf=w=>({seed:G.seed, mode:state.mode, voidamt:state.voidamt|0,
+      locality:state.locality|0, chromacap:state.chromacap|0,
+      scheme:{stops:G.scheme.stops,glitch:G.scheme.glitch},
+      corr, N, fx, ov:{...OV}, DELAY, DLY:(GDLY&&GDLY.length===N)?GDLY:null,
+      epoch:EPOCH, ver:CARDVER,
+      gr:(window.wbGraftCfg?window.wbGraftCfg():null),
+      i0:Math.floor(w*N/nw), i1:Math.floor((w+1)*N/nw)});
+    await new Promise(resolve=>{
+      let remaining=nw, settled=false;
+      const fin=()=>{ if(!settled){settled=true;resolve();} };
+      const to=setTimeout(fin, 180000);
+      for(let w=0;w<nw;w++){
+        const wk=PUBT.pool[w];
+        wk.onmessage=e=>{
+          if(run!==PUBT.run){fin();return;}
+          const m=e.data;
+          /* NOTHING IS PAINTED WHILE IT BUILDS. The draft is already on the
+             glass and it is honest about being a draft; a half-settled loop
+             flickering between two rasters would be worse than either. */
+          if(m.t==='frame'){ frames[m.i]=m.pv; }
+          else if(m.t==='done'){ if(--remaining===0){clearTimeout(to);fin();} }
+          else if(m.t==='err'){ clearTimeout(to); fin(); }
+        };
+        wk.onerror=()=>{ clearTimeout(to); fin(); };
+        wk.postMessage(jobOf(w));
+      }
+    });
+    if(run!==PUBT.run){ PUBT.busy=false; return; }
+    if(typeof busy!=='undefined'&&busy){ PUBT.busy=false; return; }
+    let ok=0; for(let i=0;i<N;i++) if(frames[i])ok++;
+    PUBT.ms=Math.round(performance.now()-t0);
+    if(ok===N){
+      startPlayer(frames, pal, PUBD.OUT, N, DELAY*10, (GDLY&&GDLY.length===N)?GDLY:null);
+      PUBT.exact=true;
+      PUBSAY='LIVE · 25fps · EXACT — THIS IS THE GIF'; $('pubosd')&&($('pubosd').textContent=PUBSAY);
+    }
+  }catch(e){ }
+  PUBT.busy=false;
+}
+/* armed only when the box goes quiet, so a curator rolling fast never pays
+   for a settle he is about to throw away */
+function pubTruthArm(){
+  pubTruthStop();
+  PUBT.timer=setTimeout(()=>{ PUBT.timer=0; pubTruth(); }, 700);
 }
 
 /* EVERY RITUAL DRAFTS; ONLY RENDER MAKES A FILE. generate() is not modified -
@@ -5100,6 +5199,8 @@ generate=function(){
 };
 function pubRender(){
   if(busy)return;
+  pubTruthStop();
+  PUBSAY='';                 /* the engine narrates its own render */
   PUB_FULL=true;
   if(typeof stopPlayer==='function')stopPlayer();
   generate();
@@ -8141,7 +8242,13 @@ function paint(){
   const drafted  = (typeof PUBD!=='undefined') && PUBD.seen;
   stage.dataset.state = (busy||drafting) ? 'rendering'
                       : ((lastBlob||drafted) ? 'rendered' : 'standby');
-  $g('pubosd').textContent = $g('osd').textContent || 'STANDBY';
+  /* THE READOUT BELONGS TO WHATEVER IS ACTUALLY HAPPENING. This mirrored the
+     engine's own osd, which knows nothing about the draft or the settle, so it
+     overwrote both and the box narrated STANDBY while it was busy telling the
+     truth about texture. The shell's line wins while the shell is working; the
+     engine takes the readout back the moment a real render starts. */
+  $g('pubosd').textContent = (!busy && typeof PUBSAY!=='undefined' && PUBSAY)
+    ? PUBSAY : ($g('osd').textContent || 'STANDBY');
   $g('pubprog').style.width = $g('prog').style.width || '0%';
   $g('pub-corrval').textContent=$g('v-corr').textContent;
   $g('pub-corrtag').textContent=$g('lab-corr').textContent;
