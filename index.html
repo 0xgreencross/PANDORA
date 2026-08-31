@@ -6926,6 +6926,30 @@ function grBroadcast(){
   /* POOL is a top-level `let` in the engine block — a global LEXICAL binding,
      never a window property. Reach it by name or it is never reached at all. */
   try{ if(POOL&&POOL.workers)for(const w of POOL.workers)window.wbGraftPost(w); }catch(e){}
+  /* THE DRAFT POOL IS THE ONE THE CURATOR IS WATCHING. draftPool() hands the
+     graphic to each worker it creates, but a picture dropped in AFTER the pool
+     was built never reached it — so the live loop kept rendering ungrafted
+     while the render pool knew all about it. */
+  try{ if(PUBD&&PUBD.pool)for(const w of PUBD.pool)window.wbGraftPost(w); }catch(e){}
+}
+/* THE LIVE REDRAFT. Debounced, because a slider drag fires on every pixel of
+   travel; patient rather than dropping, because PUBD.busy would otherwise
+   discard exactly the last change you made; and refusing in the two cases
+   where redrawing would be wrong - a full render owns the canvas, or the box
+   has never been opened and a graft tweak must not perform the STANDBY rite
+   on a visitor's behalf. */
+let _grLiveT=0;
+function grLive(){
+  clearTimeout(_grLiveT);
+  _grLiveT=setTimeout(function again(){
+    try{
+      if(typeof busy!=='undefined'&&busy)return;             /* the render has the floor */
+      const st=$('stage'); if(st&&st.dataset.state==='standby')return;   /* still sealed */
+      if(typeof PUBD==='undefined'||!PUBD)return;
+      if(PUBD.busy){ _grLiveT=setTimeout(again,120); return; }  /* the last word wins */
+      pubDraft();
+    }catch(e){}
+  },160);
 }
 window.graftScheme=function(s){
   if(!GRAFT.img||!GRAFT.cfg.on||!GRAFT.cfg.roles.palette)return s;
@@ -6940,7 +6964,9 @@ window.graftScheme=function(s){
 /* no living preview in the box: a change bumps the revision and re-arms the
    button, so the next RENDER is the picture you just set up. */
 function grTouch(){ GRAFT.cfg.rev=(GRAFT.cfg.rev+1)|0; grBroadcast();
-  try{ if(typeof markStale==='function')markStale(); }catch(e){} }
+  try{ if(typeof markStale==='function')markStale(); }catch(e){}
+  /* and the loop on screen redraws, which is the whole point of a control */
+  try{ grLive(); }catch(e){} }
 
 function grPaletteOf(rgb,n){
   const bins=new Map();
