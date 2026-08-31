@@ -456,6 +456,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   <h3>DITHERVOID // PANDORA</h3>
   <div class="row"><b>TAP THE BOX.</b> Every tap generates a loop no one has seen and no one will see again. CORRUPTION is the violence dial, VOID is how much darkness the body keeps, CHROMA caps the spectrum, the PALETTE grid picks the colorway. SPLICE re-renders the current genome.</div>
   <div class="row"><b>ROLLING, SAVING AND USING LOOPS IS FREE.</b> Open the box as many times as you like. Download the GIFs. Use them anywhere.</div>
+  <div class="row"><b>GRAFT PUTS YOUR OWN IMAGE INSIDE THE LOOP.</b> Drop a picture or an animated GIF into GRAFT and it enters the transmission <i>before</i> the dither, so it is never a layer sitting on top: the artwork's own 64 colours quantize it, the void carves it, the corruption chews it. Arm any number of ROLES at once and the line beneath them tells you which surfaces this seed actually has. BLEND offers twelve ways to marry the graphic to the picture, from NORMAL and MULTIPLY through DIFFERENCE, XOR and SOFTLIGHT, and the OPACITY slider sets how far that blend carries; AMOUNT, SCALE, OFFSET, ROTATION, GAMMA and THRESHOLD shape the rest. Your image is read in this browser and never uploaded anywhere. The DNA card records the loop, not the graft, so keep the picture if you want to build it again.</div>
   <div class="row"><b>DNA IS THE ARTWORK'S PROOF.</b> The card in the DNA field is the loop's complete genome. Copy it, post it, keep it: RESURRECT rebuilds the exact loop from any card, on any device, forever.</div>
   <div class="row"><b>MINTING CARRIES A SMALL FEE</b> — 0.01 ETH for a 1/1, 0.001 ETH for editions — because this is an art project by <b>GREENCROSS</b> and the fee pays the artist's monthly AI bill. One seed, one token, one chance.</div>
   <div class="row"><b>CC0 — NO RIGHTS RESERVED.</b> Copy it, remix it, sell it, build it into your own work. You are encouraged to. Made something with a loop? <a href="showcase.html#submit">Submit it to the showcase</a>.</div>
@@ -7393,9 +7394,21 @@ function grOnSync(){
     ['scale','SCALE',5,400,'%'],['offx','OFFSET X',-100,100,'%'],
     ['offy','OFFSET Y',-100,100,'%'],['rot','ROTATION',-180,180,'°'],
     ['gamma','GAMMA',10,400,'%'],['thresh','THRESHOLD',0,100,'%']];
+  /* every dial says what it does, like every other dial in the shell */
+  const SLTIP={
+    opacity:'OPACITY \u2014 how far the chosen BLEND carries. At 100 the blend lands in full; at 0 the graphic is present in the maths and invisible on the picture. This is the dial to reach for first when a graft is shouting.',
+    amt:'AMOUNT \u2014 the strength of the role itself, not of the blend. It drives how wide STENCIL cuts, how deep EMBOSS bevels, how tall the SLICE band stands. Above 100 it overdrives.',
+    scale:'SCALE \u2014 the size of the graphic against the frame. Small values with TILE make a repeating field; large values crop into one detail.',
+    offx:'OFFSET X \u2014 slides the graphic sideways across the frame, as a percentage of the frame.',
+    offy:'OFFSET Y \u2014 slides the graphic up and down the frame, as a percentage of the frame.',
+    rot:'ROTATION \u2014 turns the graphic within the frame. Under TILE the whole repeating field turns with it.',
+    gamma:'GAMMA \u2014 bends the graphic tone curve before any role reads it. Below 100 lifts the shadows, above 100 crushes them. This is how you make a photograph behave like a mask.',
+    thresh:'THRESHOLD \u2014 above zero the graphic goes pure black and white at this level, with nothing in between. Turns any picture into a hard stencil.'
+  };
   const host=$('gr-sliders');
   for(const [k,lab,lo,hi,suf] of SL){
     const row=document.createElement('div'); row.className='wbrow';
+    if(SLTIP[k])row.title=SLTIP[k];
     row.innerHTML='<label>'+lab+'</label><input type="range" min="'+lo+'" max="'+hi
       +'" value="'+GRAFT.cfg[k]+'"><span class="v">'+GRAFT.cfg[k]+suf+'</span>';
     const r=row.querySelector('input'), v=row.querySelector('.v'), l=row.querySelector('label');
@@ -8189,6 +8202,17 @@ $g('mseal').addEventListener('click', doMint);
   T('pub-seed',TIP_ID.seed);
   T('pub-dna',TIP_ID.dna);
   T('pub-resurrect',TIP_ID.dnago);
+  /* THE GRAFT DRAWER. Eleven roles, twelve blends, two depths, four fits and
+     eight sliders shipped with no tooltip on any of them. Every one gets a
+     line, in the same canon voice as the rest of the rail. */
+  T('gr-drop','SOURCE \u2014 drop a still or an animated GIF, or tap to choose one. An animated graft brings its own clock: the imported loop becomes the timing. The picture is read here in your browser and never uploaded anywhere.');
+  T('gr-on','GRAFT \u2014 arms the graphic. Switched off, the image stays loaded and the loop renders without it, so you can compare in one tap.');
+  T('gr-block','SAMPLING \u2014 SMOOTH interpolates between the source pixels; BLOCK takes the nearest one. Block keeps hard edges and reads as deliberate pixel art rather than a photograph.');
+  T('gr-invert','INVERT \u2014 flips the graphic tone before anything else reads it, so every armed role and every blend sees the inverted image.');
+  T('gr-roles','ROLES \u2014 where the graphic enters the picture. Any number at once. The readout below names the surfaces this seed does not have: a role with no surface is not broken, it is waiting for a seed that has one.');
+  T('gr-blend','BLEND \u2014 twelve ways to marry the graphic to the picture. NORMAL replaces it. MULTIPLY and DARKEN sink it into the shadows. SCREEN, ADD and LIGHTEN burn it into the light. OVERLAY, HARDLIGHT and SOFTLIGHT keep the art own contrast and let the graphic ride it. DIFFERENCE, SUBTRACT and XOR fight it, and are where the violence lives. OPACITY decides how far whichever you pick actually carries.');
+  T('gr-depth','DEPTH \u2014 WITHIN puts the graphic in before the void carves and the chroma cap crushes, so the seed own darkness eats into it. ABOVE puts it in after those, so it keeps its own tone. Either way the corruption stack and the dither still reach it.');
+  T('gr-fit','FIT \u2014 how the graphic meets a square frame. COVER fills it and crops the overflow, CONTAIN fits the whole picture inside, STRETCH distorts it to the square, TILE repeats it forever in both directions.');
   T('instrbtn','INSTRUCTIONS — what the box is, what is free, what sealing costs, and where the rooms are.');
   T('pubosd','THE READOUT — the machine narrates its state here: STANDBY, RENDERING, or the finished loop and its weight.');
   document.querySelectorAll('#shellrooms a').forEach(a=>{
