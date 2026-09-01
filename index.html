@@ -5083,8 +5083,10 @@ async function pubDraft(){
     if(ok===N){
       startPlayer(frames, pal, PUBD.OUT, N, DELAY*10, (GDLY&&GDLY.length===N)?GDLY:null);
       $('ph')&&($('ph').style.display='none');
-      PUBSAY='LIVE · 25fps · DRAFT — SETTLING…'; $('pubosd')&&($('pubosd').textContent=PUBSAY);
-      pubTruthArm();       /* and now go and make it the actual GIF */
+      PUBSAY='LIVE · 25fps · RENDER SEALS THIS'; $('pubosd')&&($('pubosd').textContent=PUBSAY);
+      /* NO SETTLE. RENDER now seals these very frames, so there is nothing
+         left to reconcile and no reason to spend a minute of a phone's
+         battery re-deriving a picture the curator never asked for. */
       /* THE LADDER. Aim for a draft inside a second and a half: climb when
          there is room, drop when there is not. The device decides, not me. */
       if(PUBD.lastMs<900 && PUBD.rung>0) PUBD.rung--;
@@ -5197,13 +5199,51 @@ generate=function(){
   if(PUB_FULL){ PUB_FULL=false; return _pubGen.apply(this,arguments); }
   return pubDraft();
 };
+/* ══════════════════════════════════════════════════════════════════════════
+   RENDER SEALS WHAT IS ON THE GLASS.
+   The old button re-derived the loop at 1080 and handed back a different
+   picture: the corruption features are sized in absolute pixels, so a block
+   that spans a 300 draft covers a quarter of a 1080 frame. Two computations
+   can only be argued into agreement; one computation cannot disagree with
+   itself. The player is already holding the exact palette indices of the loop
+   on screen, so that is what gets written - replicated up to the master size
+   by integer nearest neighbour, which is the pixel doctrine this box uses
+   everywhere else. The file IS the preview. Equal by construction, on any
+   device, at any speed, with no settling and no waiting.
+   ═══════════════════════════════════════════════════════════════════════ */
+const PUB_MASTER=1080;
 function pubRender(){
   if(busy)return;
   pubTruthStop();
-  PUBSAY='';                 /* the engine narrates its own render */
-  PUB_FULL=true;
-  if(typeof stopPlayer==='function')stopPlayer();
-  generate();
+  if(typeof PLAYER==='undefined'||!PLAYER||!PLAYER.args){
+    PUBSAY='NOTHING TO SEAL — OPEN THE BOX FIRST';
+    $('pubosd')&&($('pubosd').textContent=PUBSAY); return; }
+  const args=PLAYER.args, frames=args[0], pal=args[1], dim=args[2], N=args[3];
+  for(let i=0;i<N;i++) if(!frames[i]){
+    PUBSAY='THE LOOP IS STILL BUILDING — ONE MOMENT';
+    $('pubosd')&&($('pubosd').textContent=PUBSAY); return; }
+  /* an integer multiple keeps every source pixel a perfect square block; a
+     fractional one would smear the grid the whole box is built on */
+  let k=Math.max(1,Math.round(PUB_MASTER/dim)), out=dim*k;
+  PUBSAY='SEALING · '+out+'²'; $('pubosd')&&($('pubosd').textContent=PUBSAY);
+  setTimeout(()=>{
+    try{
+      const bytes=new Uint8Array(pvGifEncode(frames, pal, dim, out, DELAY));
+      if(lastURL){ try{URL.revokeObjectURL(lastURL);}catch(e){} }
+      lastBytes=bytes;
+      lastBlob=new Blob([bytes],{type:'image/gif'});
+      lastURL=URL.createObjectURL(lastBlob);
+      lastName='dithervoid-'+(($('seed').value||'0').trim())+'.gif';
+      lastDataURL='';
+      $('download')&&$('download').removeAttribute('disabled');
+      PUBSAY='SEALED · '+out+'² · '+Math.round(bytes.length/1024)+'KB · THIS IS THE LOOP YOU SAW';
+      $('pubosd')&&($('pubosd').textContent=PUBSAY);
+      if(typeof paint==='function')paint();
+    }catch(e){
+      PUBSAY='SEAL FAILED — '+String(e&&e.message||e).slice(0,40);
+      $('pubosd')&&($('pubosd').textContent=PUBSAY);
+    }
+  },30);
 }
 
 
