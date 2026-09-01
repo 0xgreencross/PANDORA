@@ -101,6 +101,20 @@ input{font:inherit;color:inherit;}
   width:min(100%,calc(100dvh - 52px - 32px - var(--sat) - var(--sab)));max-height:100%;}
 #artframe{position:absolute;inset:0;}
 #artframe canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;}
+/* FULL SCREEN. The stage goes to the whole display and the artwork holds a
+   square in the middle of it. image-rendering is restated on every layer that
+   the fullscreen element introduces, because a browser that drops it smears a
+   540 loop across a 4K panel and undoes the entire point of the box. */
+#stage:fullscreen, #stage:-webkit-full-screen{
+  background:#000;width:100vw;height:100vh;border:none;border-radius:0;}
+#stage:fullscreen #artframe, #stage:-webkit-full-screen #artframe{
+  position:absolute;inset:0;margin:auto;
+  width:min(100vw,100vh);height:min(100vw,100vh);}
+#stage:fullscreen #artframe canvas, #stage:-webkit-full-screen #artframe canvas{
+  image-rendering:pixelated;image-rendering:crisp-edges;}
+#stage:fullscreen #caption, #stage:fullscreen #pubosd, #stage:fullscreen #pubprog,
+#stage:-webkit-full-screen #caption, #stage:-webkit-full-screen #pubosd,
+#stage:-webkit-full-screen #pubprog{display:none;}
 .reg{position:absolute;width:12px;height:12px;border:1px solid var(--faint);z-index:3;}
 .reg.tl{top:6px;left:6px;border-width:1px 0 0 1px;}
 .reg.tr{top:6px;right:6px;border-width:1px 1px 0 0;}
@@ -431,6 +445,7 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
       </details>
 
       <div id="pub-actions">
+        <button id="pub-full" title="FULL SCREEN — the loop alone, blown up by whole pixels. Nothing is interpolated: one pixel of the loop becomes one exact square, however large the screen.">⛶ FULL</button>
         <button id="pub-render">▶ RENDER</button>
         <button id="pub-download" disabled>⤓ DOWNLOAD</button>
         <button id="pub-xpost" disabled>𝕏 POST</button>
@@ -5228,7 +5243,22 @@ function pubRender(){
   PUBSAY='SEALING · '+out+'²'; $('pubosd')&&($('pubosd').textContent=PUBSAY);
   setTimeout(()=>{
     try{
-      const bytes=new Uint8Array(pvGifEncode(frames, pal, dim, out, DELAY));
+      /* THE ENGINE'S OWN WRITER, not the thumbnail one. gifBegin sizes the
+         colour table and the code width to the loop's real depth - 6 bits for
+         a 64-colour palette, where pvGifEncode always wrote 8 - which is the
+         whole of the file-size difference. Same pixels either way. */
+      const k2=out/dim, sink=new Sink(1<<21);
+      const mcs=gifBegin(sink, out, out, pal, 0);
+      const px=new Uint8Array(out*out);
+      for(let fi=0;fi<N;fi++){
+        const src=frames[fi]; let q=0;
+        /* NEAREST NEIGHBOUR, INTEGER: every source pixel becomes one exact
+           square block. No interpolation touches this anywhere in the box. */
+        for(let y=0;y<out;y++){ const sy=((y/k2)|0)*dim;
+          for(let x=0;x<out;x++) px[q++]=src[sy+((x/k2)|0)]; }
+        gifFrame(sink, out, out, px, (GDLY&&GDLY.length===N)?GDLY[fi]:DELAY, mcs);
+      }
+      const bytes=new Uint8Array(gifEnd(sink));
       if(lastURL){ try{URL.revokeObjectURL(lastURL);}catch(e){} }
       lastBytes=bytes;
       lastBlob=new Blob([bytes],{type:'image/gif'});
@@ -8259,6 +8289,21 @@ $g('pub-copydna').addEventListener('click',async()=>{
 });
 
 /* 7 · actions row */
+/* FULL SCREEN — the loop alone, at whatever size the display has, still made
+   of whole square pixels. The public box never had a way to reach this; the
+   workbench has had one for a long time. */
+$g('pub-full').addEventListener('click',()=>{
+  const st=$g('stage'); if(!st)return;
+  const on=document.fullscreenElement||document.webkitFullscreenElement;
+  try{
+    if(on){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
+    else{ (st.requestFullscreen||st.webkitRequestFullscreen).call(st); }
+  }catch(e){}
+});
+document.addEventListener('fullscreenchange',()=>{
+  const on=!!document.fullscreenElement;
+  const b=$g('pub-full'); if(b)b.textContent = on ? '⛶ EXIT' : '⛶ FULL';
+});
 $g('pub-download').addEventListener('click',()=>{
   if($g('download').hasAttribute('disabled'))return;
   saveLoop();
