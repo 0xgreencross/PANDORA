@@ -267,6 +267,11 @@ input[type=range]::-moz-range-thumb{width:11px;height:11px;border-radius:50%;
   font-size:12px;letter-spacing:.2em;}
 #mseal:disabled{opacity:.4;}
 #mstat{margin-top:10px;font-size:9px;color:var(--mut);letter-spacing:.1em;min-height:14px;}
+#mgraft{display:none;border:1px solid var(--mag);background:rgba(255,31,156,.07);
+  padding:10px 11px;margin:0 0 14px;font-size:9px;line-height:1.65;
+  letter-spacing:.06em;color:var(--mut);}
+#mgraft.on{display:block;}
+#mgraft b{display:block;color:var(--mag);letter-spacing:.14em;margin-bottom:6px;}
 #mfee{font-size:9px;color:var(--mut);margin-top:12px;line-height:1.7;}
 .pubhide{display:none;}
 
@@ -8164,11 +8169,31 @@ async function uploadPoster(seed){
 /* ---- mint ---- */
 function mintStat(t){ const m=document.getElementById('mstat'); if(m)m.textContent=t; }
 let MKIND='UNIQUE';
+/* ---- THE GRAFT NOTICE. A grafted loop mints as the loop WITHOUT the graft:
+   animation_url is the card, and the card has no room for a picture. The
+   poster keeps it, the animation does not. Nobody should find that out after
+   paying, so the box says it plainly and asks for a second, deliberate tap. */
+let MGRAFT_OK=false;
+function graftArmed(){ try{ return !!(window.wbGraftCfg && window.wbGraftCfg()); }catch(e){ return false; } }
+function mintGraftSync(){
+  const on=graftArmed(), n=document.getElementById('mgraft'), b=document.getElementById('mseal');
+  MGRAFT_OK=false;
+  if(n) n.classList.toggle('on', on);
+  if(b) b.textContent='SEAL IT';
+}
 async function doMint(){
   try{
     const card=(document.getElementById('dna')||{}).value;
     if(!card){ mintStat((typeof PUBD!=='undefined'&&PUBD.busy)?'THE LOOP IS STILL BUILDING \u2014 ONE MOMENT':'OPEN THE BOX FIRST'); return; }
     const c=unpackCard(card); if(!c){ mintStat('BAD DNA'); return; }
+    if(graftArmed() && !MGRAFT_OK){
+      MGRAFT_OK=true;
+      const b2=document.getElementById('mseal');
+      if(b2) b2.textContent='SEAL IT WITHOUT THE GRAFT';
+      const n=document.getElementById('mgraft'); if(n) n.classList.add('on');
+      mintStat('READ THE NOTICE ABOVE \u2014 TAP AGAIN TO SEAL THIS LOOP WITHOUT YOUR IMAGE');
+      return;
+    }
     const seed=c.seed>>>0;
     const tok=await seedToken(seed);
     if(tok>0){ showMintedBand(tok); mintStat('SEED ALREADY MINTED \u2014 LOOP #'+tok); return; }
@@ -8378,7 +8403,7 @@ $g('pub-download').addEventListener('click',()=>{
 });
 $g('pub-xpost').addEventListener('click',()=>openXModal());   /* f3 behavior, verbatim */
 $g('pub-garden').addEventListener('click',saveToGarden);
-$g('pub-mint').addEventListener('click',()=>{ const m=$g('mintmodal'); if(m){ m.classList.add('on'); mintStat(''); } });
+$g('pub-mint').addEventListener('click',()=>{ const m=$g('mintmodal'); if(m){ m.classList.add('on'); mintStat(''); try{mintGraftSync();}catch(e){} } });
 
 /* 8 · paint(): one-way sync, engine → shell, 4×/s. The shell never fights
        the engine for state; it reads and reflects. */
@@ -8447,6 +8472,8 @@ document.body.insertAdjacentHTML('beforeend',
  +'<button id="mx">✕</button>'
  +'<h3>SEAL THIS LOOP</h3>'
  +'<div class="sub">One seed, one token, one chance. Once sealed, this DNA can never be minted again — by anyone.</div>'
+ +'<div id="mgraft"><b>YOUR GRAFT DOES NOT TRAVEL WITH THE TOKEN.</b>'
+ +'The DNA card records the loop, not the picture you grafted into it. The still image sealed at mint keeps your graphic — but the token\'s animation is rebuilt from the card alone, so it will play <b style="display:inline;letter-spacing:.06em">without your image</b>. Keep the original file.</div>'
  +'<div class="mkind">'
  +'<button data-k="UNIQUE" aria-pressed="true">1/1 — UNIQUE · 0.01 ETH<small>a single copy, forever. yours to keep or sell anywhere.</small></button>'
  +'<button data-k="LIMITED" aria-pressed="false">LIMITED EDITION · 0.001 ETH<small>you set the supply (2+) and your price. the contract sells copies for you; every sale pays you instantly.</small></button>'
@@ -8461,7 +8488,7 @@ document.body.insertAdjacentHTML('beforeend',
  +'<div id="mstat"></div>'
  +'<div id="mfee">The creation fee (1/1 · 0.01 ETH, editions · 0.001 ETH) goes straight to the artist and pays the monthly AI bill that keeps this machine alive. The work itself is CC0.</div>'
  +'</div></div>');
-$g('mx').addEventListener('click',()=>$g('mintmodal').classList.remove('on'));
+$g('mx').addEventListener('click',()=>{ $g('mintmodal').classList.remove('on'); try{mintGraftSync();}catch(e){} });
 $g('mintmodal').addEventListener('click',e=>{ if(e.target.id==='mintmodal')$g('mintmodal').classList.remove('on'); });
 document.querySelectorAll('.mkind button').forEach(b=>b.addEventListener('click',()=>{
   MKIND=b.dataset.k;
