@@ -4983,7 +4983,7 @@ async function generate(){
 /* what the SHELL wants the readout to say; empty means the engine owns it */
 let PUBSAY='';
 const PUBD={ ladder:[432,360,300,240,192], rung:1, pool:null, praster:0,
-             run:0, busy:false, lastMs:0, OUT:540 };
+             run:0, busy:false, lastMs:0, OUT:540, card:'' };
 
 function draftWorkerSrc(R){
   const M=(n)=>'/*CORE'+n+'*/';
@@ -5060,6 +5060,15 @@ async function pubDraft(){
     $('t-sig').textContent=G.schemeKey; $('t-mode').textContent=G.scene.mode;
     $('t-seed').textContent=G.seed; $('t-size').textContent=W+'²';
     stopPlayer();
+    /* THE DNA BELONGS TO THE LOOP ON THE GLASS. It used to be written only at
+       the very end of the full render; when RENDER stopped re-deriving the loop
+       and started sealing the player's own frames, nothing wrote it at all, and
+       every DNA-keyed rite (MINT, PLANT, VAULT, MUTATE, SELL, the X text) has
+       been answering OPEN THE BOX FIRST ever since. It is blanked while the set
+       builds, so a tap mid-build can never mint the loop that was here before,
+       and stamped the instant the set is complete. */
+    PUBD.card='';
+    $('dna').value='';
     let nw=Math.min(PLAT.workers, N);
     if(fx.echo&&fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/10)));
     else if(fx.echo||fx.tunnel) nw=Math.max(1,Math.min(nw,Math.floor(N/5)));
@@ -5116,6 +5125,12 @@ async function pubDraft(){
     if(ok===N){
       startPlayer(frames, pal, PUBD.OUT, N, DELAY*10, (GDLY&&GDLY.length===N)?GDLY:null);
       $('ph')&&($('ph').style.display='none');
+      /* the same call the full render made, on the same genome, so the card is
+         byte-for-byte the card the old path wrote */
+      PUBD.card=packCard(G.seed, G.schemeKey, G.scene.mode, corr, N, fx, 'FLOW');
+      $('dna').value=PUBD.card;
+      try{ const _pd=document.getElementById('pub-dna');
+           if(_pd && document.activeElement!==_pd) _pd.value=PUBD.card; }catch(e){}
       PUBSAY='LIVE · 25fps · RENDER SEALS THIS'; $('pubosd')&&($('pubosd').textContent=PUBSAY);
       /* NO SETTLE. RENDER now seals these very frames, so there is nothing
          left to reconcile and no reason to spend a minute of a phone's
@@ -5283,6 +5298,7 @@ function pubRender(){
       lastURL=URL.createObjectURL(lastBlob);
       lastName='dithervoid-'+(($('seed').value||'0').trim())+'.gif';
       lastDataURL='';
+      if(!$('dna').value && PUBD.card) $('dna').value=PUBD.card;
       $('download')&&$('download').removeAttribute('disabled');
       /* ── THE X-SAFE VERSION. pub-xpost mirrors #xsave, and #xsave lives or
          dies by xBytes: when RENDER stopped re-deriving the loop it stopped
@@ -8104,7 +8120,7 @@ async function gardenAuth(){
 function pubThumb(){ const c=document.getElementById('view'); const t=document.createElement('canvas'); t.width=t.height=128; t.getContext('2d').drawImage(c,0,0,128,128); return t.toDataURL('image/jpeg',0.72); }
 async function saveToGarden(){
   const card=(document.getElementById('dna')||{}).value;
-  if(!card){ pubOsd('OPEN THE BOX FIRST'); return; }
+  if(!card){ pubOsd((typeof PUBD!=='undefined'&&PUBD.busy)?'THE LOOP IS STILL BUILDING \u2014 ONE MOMENT':'OPEN THE BOX FIRST'); return; }
   WC_INTENT='garden';
   pubOsd('CALLING YOUR WALLET\u2026');
   try{
@@ -8151,7 +8167,7 @@ let MKIND='UNIQUE';
 async function doMint(){
   try{
     const card=(document.getElementById('dna')||{}).value;
-    if(!card){ mintStat('OPEN THE BOX FIRST'); return; }
+    if(!card){ mintStat((typeof PUBD!=='undefined'&&PUBD.busy)?'THE LOOP IS STILL BUILDING \u2014 ONE MOMENT':'OPEN THE BOX FIRST'); return; }
     const c=unpackCard(card); if(!c){ mintStat('BAD DNA'); return; }
     const seed=c.seed>>>0;
     const tok=await seedToken(seed);
