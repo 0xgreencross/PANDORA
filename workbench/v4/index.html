@@ -10318,6 +10318,16 @@ async function uploadPreview(seed){
     try{ setFxPref(); }catch(e){}
   }
   window.v4Curate=curate;
+  /* WHICH loops the curator is allowed to touch. A roll is fate and may be
+     edited; a recalled card is a record and may not - override its sigils and
+     the DNA stops reproducing, which is the one thing this box must never do.
+     The flag is set in the CAPTURE phase, because the dice runs its whole roll
+     and calls generate() inside its own listener, long before a bubbling
+     listener would ever hear about it. */
+  V4C.pending=false;
+  ['dice','stage','tap'].forEach(function(id){
+    var el=$g(id); if(el) el.addEventListener('click',function(){ V4C.pending=true; },{capture:true});
+  });
 
   /* ---- THE GATE --------------------------------------------------------
      Not every seed is a picture, and no amount of steering will make it one.
@@ -10386,7 +10396,7 @@ async function uploadPreview(seed){
   }
   /* buffers are allocated once per shape and written in place: a lab that
      churns ten megabytes a lap spends its afternoon in the garbage collector */
-  var F=window.V4F={buf:null,N:0,dim:0,seen:null,have:0,err:''};
+  var F=window.V4F={buf:null,N:0,dim:0,seen:null,have:0,err:'',lastI:-1};
   window.v4Keep=function(i,N,b,dim){
     try{
       if(F.N!==N||F.dim!==dim||!F.buf){
@@ -10397,11 +10407,16 @@ async function uploadPreview(seed){
          whole point of its governor - so a gate that waits for a perfect set
          waits forever. Judge on the wrap, on whatever the lap actually
          delivered, provided it delivered enough to have an opinion. */
-      if(i===0&&F.have){
-        if(F.have>=Math.max(8,Math.floor(N*0.62))) window.v4Gate();
+      /* THERE IS NO WRAP TO WAIT FOR. Several workers each own a slice of the
+         loop and their messages interleave, so the index does not climb and
+         frame zero is dropped as readily as any other. Count DISTINCT frames
+         instead: when enough of the loop is in hand to have an opinion, form
+         one, and start the next collection. */
+      if(!F.seen[i]){ F.buf[i].set(b); F.seen[i]=1; F.have++; }
+      if(F.have>=Math.max(8,Math.floor(N*0.55))){
+        window.v4Gate();
         F.seen.fill(0); F.have=0;
       }
-      if(!F.seen[i]){ F.buf[i].set(b); F.seen[i]=1; F.have++; }
     }catch(e){ F.err=String(e&&e.message||e).slice(0,80); }
   };
   window.v4Gate=function(){
@@ -10412,7 +10427,7 @@ async function uploadPreview(seed){
         for(var i=0;i<N;i++) if(!WBTR.frames[i])ok=false;
         if(ok){ src=WBTR.frames; dim=WBTR_D; }
       }
-      if(!src && F.buf && F.N && F.have>=Math.max(8,Math.floor(F.N*0.62))){
+      if(!src && F.buf && F.N && F.have>=Math.max(8,Math.floor(F.N*0.55))){
         src=[]; var gaps=[], prev=-1;
         for(var q=0;q<F.N;q++) if(F.seen[q]){ src.push(F.buf[q]); gaps.push(prev<0?0:q-prev); prev=q; }
         N=src.length; dim=F.dim;
@@ -10489,10 +10504,25 @@ async function uploadPreview(seed){
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount);
   else mount();
 
-  /* the curator has the last word on every roll */
+  /* every road to a new loop goes through generate(), so that is where the
+     curator gets its word - once, and only when a roll asked for it */
+  try{
+    var _gen=generate;
+    generate=function(){
+      if(V4C.pending){ V4C.pending=false; curate(); }
+      try{ if(F){ F.seen&&F.seen.fill(0); F.have=0; } }catch(e){}   /* a new loop, a new judgement */
+      return _gen.apply(this,arguments);
+    };
+  }catch(e){}
   try{
     var _mr=machineRoll;
-    machineRoll=function(o){ var t=_mr.apply(this,arguments); curate(); return t; };
+    machineRoll=function(o){ V4C.pending=true; return _mr.apply(this,arguments); };
+  }catch(e){}
+  /* and a recalled card cancels any roll the finger had already asked for -
+     a record is a record, and the curator does not get to edit it */
+  try{
+    var _ac=applyCard;
+    applyCard=function(c){ V4C.pending=false; return _ac.apply(this,arguments); };
   }catch(e){}
 })();
 </script>
