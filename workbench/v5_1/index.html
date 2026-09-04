@@ -54,6 +54,7 @@
     <div class="row"><label>WEATHER</label><select id="weather"></select></div>
     <div class="row"><label>CAMERA</label><select id="cam"></select></div>
     <div class="row"><label>SCREEN LOOP</label><input id="tex" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AUTO · a random PANDORA roll — or paste a PNDR card"></div>
+    <div class="row"><label>PRINT AT</label><select id="raster"><option value="135">135² · 8 px grain</option><option value="270">270² · 4 px grain</option><option value="540" selected>540² · 2 px grain</option></select></div>
     <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
     <div id="acts">
       <button id="new" class="prime">&#9860; NEW PLATE</button>
@@ -1216,7 +1217,7 @@ function pool(){
 }
 
 /* ---- state ---- */
-const S={ seed:696969, subject:-1, scheme:-1, hour:-1, ground:-1, dither:-1, frames:36, weather:-1, cam:-1, tex:'' };
+const S={ seed:696969, subject:-1, scheme:-1, hour:-1, ground:-1, dither:-1, frames:36, weather:-1, cam:-1, tex:'', raster:540 };
 let JOB=0, RUN={ frames:null, N:0, W:0, pal:null, P:null, key:'', rung:0, have:0 };
 let PLAY={ raf:0, frames:null, N:0, W:0, pal:null, t0:0 };
 let LAST={ frames:null, N:0, W:0, pal:null, card:'' };
@@ -1238,11 +1239,13 @@ function readUI(){
   S.subject=+$('subject').value; S.scheme=+$('scheme').value; S.hour=+$('hour').value;
   S.ground=+$('ground').value; S.dither=+$('dither').value; S.frames=+$('frames').value;
   S.weather=+$('weather').value; S.cam=+$('cam').value; S.tex=($('tex').value||'').trim();
+  S.raster=+$('raster').value||540;
 }
 function writeUI(){
   $('seed').value=S.seed; $('subject').value=S.subject; $('scheme').value=S.scheme; $('hour').value=S.hour;
   $('ground').value=S.ground; $('dither').value=S.dither; $('frames').value=S.frames;
   $('weather').value=S.weather; $('cam').value=S.cam; $('tex').value=S.tex||'';
+  $('raster').value=S.raster;
 }
 /* the resolved plate: AUTO is the seed's own choice */
 function resolve(){
@@ -1281,7 +1284,10 @@ function draw(){
   texLoop(job, R, N, texCard, function(tex){
     if(job!==JOB) return;
     const pal=buildInks(P,R.scheme,tex.pal);
-    RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0, tex:{frames:tex.frames, W:tex.W, N:tex.N} };
+    /* THE PRINT RASTER is the curator's. Every rung divides 1080, so the file
+       is the chosen rung doubled, quadrupled or octupled by nearest neighbour
+       - a 2, 4 or 8 pixel grain - and the ladder simply stops there. */
+    RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0, tex:{frames:tex.frames, W:tex.W, N:tex.N}, ladder:LADDER.filter(r=>r<=S.raster) };
     rung(job);
   });
 }
@@ -1333,7 +1339,7 @@ function texLoop(job,R,N,texCard,done){
 }
 function rung(job){
   if(job!==JOB) return;
-  const W=LADDER[RUN.rung];
+  const W=RUN.ladder[RUN.rung];
   RUN.W=W; RUN.frames=new Array(RUN.N); RUN.have=0;
   $('osd').textContent='DRAWING '+W+'² · '+RUN.N+' FRAMES';
   $('prog').style.width='0%';
@@ -1362,8 +1368,9 @@ function rungDone(job){
   if(job!==JOB) return;
   const W=RUN.W;
   play(RUN.frames,RUN.N,W,RUN.pal);
-  $('osd').textContent=(W===LADDER[LADDER.length-1]?'PRINT ':'DRAFT ')+W+'² · 25FPS';
-  if(RUN.rung<LADDER.length-1){ RUN.rung++; setTimeout(()=>rung(job),30); }
+  const last=RUN.ladder[RUN.ladder.length-1];
+  $('osd').textContent=(W===last?'PRINT ':'DRAFT ')+W+'² · 25FPS';
+  if(RUN.rung<RUN.ladder.length-1){ RUN.rung++; setTimeout(()=>rung(job),30); }
   else{
     LAST={ frames:RUN.frames, N:RUN.N, W, pal:RUN.pal, card:RUN.card, P:RUN.P, blob:null, bytes:null, name:'' };
     $('prog').style.width='0%';
@@ -1372,7 +1379,7 @@ function rungDone(job){
     const me=job;
     setTimeout(()=>{ if(me!==JOB) return; encodePrint();
       $('save').removeAttribute('disabled');
-      $('stat').textContent='THE PRINT IS READY \u00b7 '+(LAST.bytes.length/1024|0)+'KB \u00b7 '+(isDesktop?'SAVE downloads it':'SAVE puts it in PHOTOS'); },30);
+      $('stat').textContent='THE PRINT IS READY \u00b7 '+LAST.W+'\u00b2 \u00d7 '+(MASTER/LAST.W)+' \u00b7 '+(LAST.bytes.length/1024|0)+'KB \u00b7 '+(isDesktop?'SAVE downloads it':'SAVE puts it in PHOTOS'); },30);
   }
 }
 
@@ -1476,7 +1483,7 @@ $('draw').addEventListener('click',draw);
 $('save').addEventListener('click',saveGif);
 $('recall').addEventListener('click',recall);
 $('copy').addEventListener('click',()=>{ const v=$('dna').value; if(!v)return; try{ navigator.clipboard.writeText(v); $('stat').textContent='DNA COPIED'; }catch(e){ $('dna').select(); } });
-['subject','scheme','hour','ground','dither','frames','weather','cam','tex'].forEach(id=>$(id).addEventListener('change',draw));
+['subject','scheme','hour','ground','dither','frames','weather','cam','tex','raster'].forEach(id=>$(id).addEventListener('change',draw));
 $('seed').addEventListener('change',draw);
 
 fillSelects();
