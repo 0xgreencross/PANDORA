@@ -58,7 +58,7 @@
     <div id="acts">
       <button id="new" class="prime">&#9860; NEW PLATE</button>
       <button id="draw">&#9654; DRAW</button>
-      <button id="save" disabled>&#10515; SAVE GIF</button>
+      <button id="save" disabled>&#10515; SAVE</button>
       <button id="copy">&#10697; COPY DNA</button>
     </div>
     <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PLATE-…"></div>
@@ -1246,10 +1246,14 @@ function rungDone(job){
   $('osd').textContent=(W===LADDER[LADDER.length-1]?'PRINT ':'DRAFT ')+W+'² · 25FPS';
   if(RUN.rung<LADDER.length-1){ RUN.rung++; setTimeout(()=>rung(job),30); }
   else{
-    LAST={ frames:RUN.frames, N:RUN.N, W, pal:RUN.pal, card:RUN.card };
-    $('save').removeAttribute('disabled');
+    LAST={ frames:RUN.frames, N:RUN.N, W, pal:RUN.pal, card:RUN.card, P:RUN.P, blob:null, bytes:null, name:'' };
     $('prog').style.width='0%';
-    $('stat').textContent='THE PRINT IS READY — SAVE writes it at '+MASTER+'².';
+    $('stat').textContent='WRITING THE PRINT\u2026';
+    /* encode now, off the tap, so SAVE can open the share sheet inside the gesture */
+    const me=job;
+    setTimeout(()=>{ if(me!==JOB) return; encodePrint();
+      $('save').removeAttribute('disabled');
+      $('stat').textContent='THE PRINT IS READY \u00b7 '+(LAST.bytes.length/1024|0)+'KB \u00b7 '+(isDesktop?'SAVE downloads it':'SAVE puts it in PHOTOS'); },30);
   }
 }
 
@@ -1280,30 +1284,57 @@ function play(frames,N,W,pal){
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&PLAY.raf){cancelAnimationFrame(PLAY.raf);PLAY.raf=0;} else if(PLAY.frames&&!PLAY.raf) play(PLAY.frames,PLAY.N,PLAY.W,PLAY.pal); });
 
 /* ---- the print: 1080², nearest-neighbour from the 540 frames, the box's own writer ---- */
-function saveGif(){
-  if(!LAST.frames) return;
-  const {frames,N,W,pal,card}=LAST;
+function encodePrint(){
+  const {frames,N,W,pal}=LAST;
   const k=MASTER/W, out=MASTER;
-  $('stat').textContent='WRITING '+out+'²…';
-  setTimeout(()=>{
-    const sink=new Sink(1<<20);
-    const palN=pal.slice(0,256);
-    const mcs=gifBegin(sink,out,out,palN,0);
-    const px=new Uint8Array(out*out);
-    for(let f=0;f<N;f++){
-      const src=frames[f]; let o=0;
-      for(let y=0;y<out;y++){ const sy=((y/k)|0)*W; for(let x=0;x<out;x++) px[o++]=src[sy+((x/k)|0)]; }
-      gifFrame(sink,out,out,px,DELAY_CS,mcs);
-    }
-    const bytes=new Uint8Array(gifEnd(sink));
-    const blob=new Blob([bytes],{type:'image/gif'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download='PLATE_'+SUBJECTS[LAST_P().subject]+'_'+S.seed+'.gif'; document.body.appendChild(a); a.click();
-    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000);
-    $('stat').textContent='SAVED · '+(bytes.length/1024|0)+'KB · '+card;
-  },20);
+  const sink=new Sink(1<<20);
+  const mcs=gifBegin(sink,out,out,pal.slice(0,256),0);
+  const px=new Uint8Array(out*out);
+  for(let f=0;f<N;f++){
+    const src=frames[f]; let o=0;
+    for(let y=0;y<out;y++){ const sy=((y/k)|0)*W; for(let x=0;x<out;x++) px[o++]=src[sy+((x/k)|0)]; }
+    gifFrame(sink,out,out,px,DELAY_CS,mcs);
+  }
+  const bytes=new Uint8Array(gifEnd(sink));
+  LAST.bytes=bytes; LAST.blob=new Blob([bytes],{type:'image/gif'});
+  LAST.name='PLATE_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+'.gif';
+  return LAST.blob;
 }
-function LAST_P(){ return RUN.P; }
+/* SAVE, TIERED — the same doctrine as the public box. On a phone the file
+   goes to PHOTOS through the native share sheet (Save Image), which only
+   opens inside a user gesture, so the print is encoded the moment it is
+   ready and SAVE has the bytes in hand when the finger lands. If a webview
+   refuses the sheet, a full-screen view of the image lets a long-press do
+   it. On a desktop it is a plain download. */
+const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isDesktop=!isIOS && !/android/i.test(navigator.userAgent);
+function downloadBlob(blob,name){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000);
+}
+function openSaveView(blob){
+  const v=document.createElement('div');
+  v.style.cssText='position:fixed;inset:0;background:#000;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;';
+  const img=document.createElement('img'); img.src=URL.createObjectURL(blob);
+  img.style.cssText='max-width:100vw;max-height:80vh;image-rendering:pixelated;';
+  const n=document.createElement('div'); n.textContent='PRESS AND HOLD THE IMAGE \u2192 SAVE TO PHOTOS';
+  n.style.cssText='font:11px ui-monospace,monospace;letter-spacing:.16em;color:#e8ff2e;';
+  const x=document.createElement('button'); x.textContent='CLOSE'; x.addEventListener('click',()=>v.remove());
+  v.appendChild(img); v.appendChild(n); v.appendChild(x); document.body.appendChild(v);
+}
+async function saveGif(){
+  if(!LAST.frames) return;
+  const blob=LAST.blob||encodePrint(), name=LAST.name;
+  $('stat').textContent='SAVING · '+(LAST.bytes.length/1024|0)+'KB · '+LAST.card;
+  if(isDesktop){ downloadBlob(blob,name); return; }
+  if(navigator.share){
+    try{
+      const file=new File([blob],name,{type:'image/gif'});
+      if(!navigator.canShare || navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:name}); return; }
+    }catch(err){ if(err && err.name==='AbortError') return; }
+  }
+  if(isIOS) openSaveView(blob); else downloadBlob(blob,name);
+}
 
 /* ---- rolls, recalls ---- */
 function newPlate(){
