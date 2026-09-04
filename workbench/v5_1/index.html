@@ -53,7 +53,7 @@
     <div class="row"><label>SCREEN</label><select id="dither"></select></div>
     <div class="row"><label>WEATHER</label><select id="weather"></select></div>
     <div class="row"><label>CAMERA</label><select id="cam"></select></div>
-    <div class="row"><label>SCREEN LOOP</label><input id="tex" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AUTO — or paste a v3 PNDR card"></div>
+    <div class="row"><label>SCREEN LOOP</label><input id="tex" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AUTO · a random PANDORA roll — or paste a PNDR card"></div>
     <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
     <div id="acts">
       <button id="new" class="prime">&#9860; NEW PLATE</button>
@@ -64,7 +64,7 @@
     <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PLATE-…"></div>
     <button id="recall" class="wide">&#8635; RECALL DNA</button>
     <div id="stat"></div>
-    <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Now with weather (a fog bank the monument rises out of, printed rain), a camera that sways, dollies, cranes or orbits, four more subjects, a second light, and THE SCREEN: one monument that wears a v3 CHIMERA loop as its face. It chooses that loop by itself from the v3 canon — the curator's own keeps — and paste any PNDR card to overrule it; a pasted card always gets its screen, whatever subject the seed had in mind.</div>
+    <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Now with weather (a fog bank the monument rises out of, printed rain), a camera that sways, dollies, cranes or orbits, four more subjects, a second light, and a PANDORA loop on every plate: one part of every monument — the part that moves — wears a v3 CHIMERA loop, rolled at random by the seed with nothing steered. Paste any PNDR card to make it wear that one instead. THE SCREEN is the subject that wears it as its whole face.</div>
   </div>
 </div>
 <script>
@@ -714,18 +714,27 @@ function renderLum(P,W,th,lum,mat,dep,texbuf){
       let hx=C.cx+dx*t, hy2=C.cy+dy*t, hz=C.cz+dz*t;
       let m=HIT_M, nx,ny,nz, texIdx=-1;
       if(m===3){ lum[i]=1; mat[i]=3; dep[i]=t; continue; }   /* the lamp's own body: pure accent */
-      if(m===5){
-        /* the front face of the screen: local coordinates on the slab */
-        const c0=FR.c[0], s0=FR.s[0];
-        const lx=c0*hx+s0*hz;
-        let u=(lx+1.7)/3.4, v=1-((hy2-1.95)+1.7)/3.4;
-        if(TEX.frames && TEX.frames[TEX.i]){
-          const tw=TEX.W; let tx=(u*tw)|0, ty=(v*tw)|0;
+      /* THE LOOP ON THE MONUMENT. One part of every sculpture - the part that
+         moves, the accent - wears the other engine's loop. The screen wears it
+         on its face by the slab's own coordinates; everything else wears it as
+         a decal projected from the camera, so a bead, a bob or a block reads
+         as painted with it from where you stand. */
+      if(TEX.frames && TEX.frames[TEX.i]){
+        const tw=TEX.W; let u=-1, v=-1;
+        if(m===5){
+          const c0=FR.c[0], s0=FR.s[0]; const lx=c0*hx+s0*hz;
+          u=(lx+1.7)/3.4; v=1-((hy2-1.95)+1.7)/3.4;
+        } else if(m===2 || (m===1 && P.subject===7)){
+          const rx=hx-BCX, ry=hy2-BCY, rz=hz-BCZ, R=BR*0.62;
+          u=(rx*C.rx+ry*C.ry+rz*C.rz)/(2*R)+0.5; v=0.5-(rx*C.ux+ry*C.uy+rz*C.uz)/(2*R);
+        }
+        if(u>=0){
+          let tx=(u*tw)|0, ty=(v*tw)|0;
           if(tx<0)tx=0; if(tx>=tw)tx=tw-1; if(ty<0)ty=0; if(ty>=tw)ty=tw-1;
           texIdx=TEX.frames[TEX.i][ty*tw+tx];
-        } else m=1;
-      }
-      if(texIdx>=0){ lum[i]=0.5; mat[i]=6; dep[i]=t; texbuf[i]=texIdx; continue; }
+        }
+      } else if(m===5) m=1;
+      if(m===5) m=1;
       if(m===0){ nx=0; ny=1; nz=0; hy2=0; }
       else { normalAt(P,hx,hy2,hz,th); nx=NRM[0]; ny=NRM[1]; nz=NRM[2]; }
       let L;
@@ -783,6 +792,7 @@ function renderLum(P,W,th,lum,mat,dep,texbuf){
       const f=1-Math.exp(-t*fogK);
       L=L*(1-f)+0.60*f;
       if(bank){ const fb=fogBank(P,C.cy,dy,t); L=L*(1-fb)+0.66*fb; }
+      if(texIdx>=0){ lum[i]=L; mat[i]=6; dep[i]=t; texbuf[i]=texIdx; continue; }
       lum[i]=L; mat[i]=m; dep[i]=t;
     }
   }
@@ -849,7 +859,10 @@ function inkFrame(P,W,lum,mat,line,out,texbuf,th){
     const i=y*W+x;
     if(line[i]){ out[i]=0; continue; }
     if(mat[i]===3){ out[i]=K; continue; }     /* the sun disc */
-    if(mat[i]===6){ out[i]=K+1+texbuf[i]; continue; }   /* the screen, in the loop's own inks */
+    if(mat[i]===6){                              /* the loop, in its own inks, shadowed by the plate's sun */
+      const Ls=lum[i]<0?0:lum[i];
+      out[i]= (Ls<0.34 && ditherThreshold(P,x,y)>Ls/0.34) ? 0 : K+1+texbuf[i];
+      continue; }
     let L=lum[i]; if(L<0)L=0; if(L>1)L=1;
     L=Math.pow(L,g);
     const v=L*(K-1);
@@ -1129,29 +1142,23 @@ function draw(){
   readUI();
   const R=resolve();
   const N=S.frames, P=R.P;
-  /* a pasted card always gets its screen: it overrules the seed's subject */
+  /* EVERY plate wears a PANDORA loop on one part of its monument. The loop is
+     the seed's own random roll of the v3 engine - everything random - unless a
+     card was pasted, which always wins. Either way the DNA carries it. */
   const pasted=unpackV3Card(S.tex)?S.tex.toUpperCase():'';
-  if(pasted && P.subject!==12){ P.subject=12; P.camDx*=0.4; }
   const isScreen=(P.subject===12);
   let card=packPlate(S.seed,R.si,P.subject,P.hour,P.ground,P.dither,N,P.weather,P.cam);
-  /* the screen chooses its own loop from the v3 canon - the curator's keeps -
-     unless a card was pasted; either way the card is written into the DNA */
-  const texCard=isScreen ? (pasted || V3_CANON[(mulberry32((S.seed^0x5C4E)>>>0)()*V3_CANON.length)|0]) : '';
+  const texCard=pasted;
   if(texCard) card+=' '+texCard;
   $('dna').value=card;
-  $('tex').placeholder = isScreen&&!pasted ? 'AUTO · '+texCard : 'AUTO — or paste a v3 PNDR card';
-  $('p-sub').textContent=SUBJECTS[P.subject]+(isScreen?' · '+(pasted?'PASTED':'CANON'):''); $('p-sch').textContent=R.key; $('p-hour').textContent=HOURS[P.hour]+'°';
+  $('tex').placeholder = pasted ? '' : 'AUTO · a random PANDORA roll — or paste a PNDR card';
+  $('p-sub').textContent=SUBJECTS[P.subject]+' · LOOP '+(pasted?'PASTED':'RANDOM'); $('p-sch').textContent=R.key; $('p-hour').textContent=HOURS[P.hour]+'°';
   $('p-gnd').textContent=GROUNDS[P.ground]+' · '+WEATHERS[P.weather]+' · '+CAMS[P.cam]; $('p-dit').textContent=DITHERS[P.dither]; $('p-ink').textContent=P.inks;
   const job=++JOB;
   $('save').setAttribute('disabled',''); LAST.frames=null;
-  if(!isScreen){
-    const pal=buildInks(P,R.scheme,null);
-    RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0, tex:null };
-    rung(job); return;
-  }
-  /* THE SCREEN: the other engine draws its loop first, at the screen's own
-     raster, and the plate is drawn around it */
-  $('osd').textContent='DRAWING THE SCREEN\u2019S LOOP\u2026';
+  /* the other engine draws its loop first, at the decal's raster, and the
+     plate is drawn around it */
+  $('osd').textContent='ROLLING THE PANDORA LOOP\u2026';
   texLoop(job, R, N, texCard, function(tex){
     if(job!==JOB) return;
     const pal=buildInks(P,R.scheme,tex.pal);
@@ -1169,15 +1176,18 @@ function v3JobFor(R,N,texCard){
     seed=c.seed; mode=c.mode; corr=c.corr; fx=c.fx; voidamt=c.voidamt|0; locality=c.locality|0; chromacap=c.chromacap|0; if(c.ov)ov=c.ov; epoch=c.epoch|0; ver=Math.max(6,c.ver|0);
     scheme = c.scheme==='GENESIS'?genesisScheme(seed) : c.scheme==='TISGEN'?tisScheme(seed) : (SCHEMES[c.scheme]||R.scheme);
   } else {
-    /* the seed's own loop, in the plate's own scheme */
+    /* the seed's own roll of the box, and nothing steered: any source, any
+       scheme, any corruption, any sigils */
     const rng=mulberry32((seed^0xC41E)>>>0);
-    mode=MODES[(rng()*8)|0];                                 /* the flat sources; the bodies are v5's job */
-    corr=45+((rng()*40)|0);
+    mode=MODES[(rng()*MODES.length)|0];
+    const si=(rng()*(SCHEME_KEYS.length+2))|0;
+    scheme = si<SCHEME_KEYS.length ? SCHEMES[SCHEME_KEYS[si]] : (si===SCHEME_KEYS.length ? genesisScheme(seed) : tisScheme(seed));
+    corr=20+((rng()*75)|0);
     const FAV={embers:1,bloom:1,panes:1,melt:1,ghost:1,invert:1,lungs:1,runes:1,meta:1,entropy:1,chimera:1,hilb:1,tunnel:1,chrono:1};
     const PILL={chroma:1,tracking:1,pixelsort:1,grain:1,blocks:1,scanlines:1,echo:1};
     for(const k of CARD_CH) fx[k]= PILL[k]?rng()<0.55 : FAV[k]?rng()<0.30 : rng()<0.10;
     fx.kaleido=false;
-    voidamt=(rng()*35)|0; locality=(rng()*60)|0;
+    voidamt=(rng()*60)|0; locality=(rng()*100)|0; chromacap=rng()<0.15?1:0;
   }
   return { seed, mode, voidamt, locality, chromacap, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov, epoch, ver, wb:{fam:null,prim:null,cam:null,mod:null,gain:{}}, gr:null };
