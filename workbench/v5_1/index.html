@@ -64,7 +64,7 @@
     <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PLATE-…"></div>
     <button id="recall" class="wide">&#8635; RECALL DNA</button>
     <div id="stat"></div>
-    <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Now with weather (a fog bank the monument rises out of, printed rain), a camera that sways, dollies, cranes or orbits, four more subjects, a second light, and a PANDORA loop on every plate: one part of every monument — the part that moves — wears a v3 CHIMERA loop, rolled at random by the seed with nothing steered. Paste any PNDR card to make it wear that one instead. THE SCREEN is the subject that wears it as its whole face.</div>
+    <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Most plates are ASSEMBLIES — monuments composed on the spot from a grammar of primitives, arrangements and whole-number motions, so no two come round twice; the named subjects are the rest. Weather (a fog bank, printed rain), a camera that sways, dollies, cranes or orbits, a second light, and a PANDORA loop on every plate: the largest part of every monument wears a v3 CHIMERA loop, wrapped to the form and modelled by the plate's light, rolled at random by the seed with nothing steered. Paste any PNDR card to make it wear that one instead.</div>
   </div>
 </div>
 <script>
@@ -278,7 +278,7 @@ function sdConeY(px,py,pz,r,h){
 function smin(a,b,k){ const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25; }
 
 /* ───────────────────────────── the plate (per seed) ─────────────────────── */
-const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','HELIX','SUNDIAL','BREATHER','TWINS','WHEEL','STELAE','LANTERN','SCREEN'];
+const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','HELIX','SUNDIAL','BREATHER','TWINS','WHEEL','STELAE','LANTERN','SCREEN','ASSEMBLY'];
 const WEATHERS=['CLEAR','FOG','RAIN','FOG+RAIN'];
 const CAMS=['STILL','SWAY','DOLLY','CRANE','ORBIT'];
 const GROUNDS=['PLAIN','TILES','WATER'];
@@ -289,7 +289,11 @@ function buildPlate(seed, o){
   o=o||{};
   const rng=mulberry32(seed^0x9E3779B9);
   const P={ seed:seed>>>0 };
-  P.subject = (o.subject!=null)? o.subject : (rng()*SUBJECTS.length)|0;
+  /* most plates are ASSEMBLIES - monuments composed on the spot from a grammar,
+     so no two are alike; the named subjects are the rest */
+  const rs=rng();
+  P.subject = (o.subject!=null)? o.subject : (rs<0.62 ? 13 : (rng()*13)|0);
+  if(P.subject===13) P.asm=buildAssembly(rng);
   const r1=rng(), r2=rng();
   P.weather = (o.weather!=null)? o.weather : (r1<0.50?0:(r1<0.74?1:(r1<0.92?2:3)));
   P.cam     = (o.cam!=null)?     o.cam     : (r2<0.42?0:(r2<0.66?1:(r2<0.82?2:(r2<0.92?3:4))));
@@ -300,6 +304,7 @@ function buildPlate(seed, o){
   P.fogH = 0.5+rng()*1.1; P.fogD = 0.35+rng()*0.5;
   P.rainA = 0.5+rng()*0.4; P.rainSp = 2+((rng()*3)|0);
   P.camA = 0.06+rng()*0.10;
+  P.texTile = 1.6+rng()*2.2;                   /* how many world units one loop covers on the form */
   P.hour    = (o.hour!=null)?    o.hour    : (rng()*HOURS.length)|0;
   P.ground  = (o.ground!=null)?  o.ground  : (rng()*GROUNDS.length)|0;
   P.dither  = (o.dither!=null)?  o.dither  : (rng()*DITHERS.length)|0;
@@ -336,13 +341,107 @@ function buildPlate(seed, o){
   /* every subject sits inside roughly a 4-unit sphere; the camera distance
      puts that sphere at a chosen share of the frame */
   /* each subject's real extent, so every plate fills its frame the same way */
-  const EXT=[3.6,3.9,4.2,5.0,3.4,3.8,6.2,2.8,4.0,4.4,6.0,4.6,4.2];
+  const EXT=[3.6,3.9,4.2,5.0,3.4,3.8,6.2,2.8,4.0,4.4,6.0,4.6,4.2,4.6];
   const fill = 0.55+rng()*0.22;                /* how much of the frame the subject takes */
-  P.camDist = EXT[P.subject]/(2*P.fov*fill);
-  P.camTargetY = [1.7,1.9,1.9,1.8,1.7,1.8,1.7,1.6,1.9,2.0,1.6,1.9,1.9][P.subject];
+  const ext = P.subject===13 ? P.asm.ext : EXT[P.subject];
+  P.camDist = ext/(2*P.fov*fill);
+  P.camTargetY = P.subject===13 ? P.asm.ty : [1.7,1.9,1.9,1.8,1.7,1.8,1.7,1.6,1.9,2.0,1.6,1.9,1.9,1.9][P.subject];
   P.camDx = (rng()-0.5)*(P.subject===2||P.subject===5||P.subject===0||P.subject===12 ? 0.35 : 0.9);   /* off the centre line, less so for the tall ones */
   P.border = rng()<0.4;                        /* a plate's rule */
   return P;
+}
+
+/* ───────────────────────────── the assembly ─────────────────────────────── */
+/* A monument composed from a grammar. Two to four MODULES, each an
+   ARRANGEMENT of one PRIMITIVE - a stack, a ring, a row, an orbit, a helix,
+   a cluster, a colonnade, an arch - with its own whole-number MOTION: a spin
+   at one to three turns a loop, an orbit, a bob, a swing, a screw. The
+   biggest module wears the loop. The parameter space is continuous, so the
+   same plate does not come round twice. */
+const PRIMS=['BOX','SPHERE','TORUS','CYL','CONE','SLAB'];
+const ARRS=['STACK','RING','ROW','ORBIT','HELIX','CLUSTER','COLONNADE','ARCH'];
+const MOTS=['NONE','SPIN','ORBIT','BOB','SWING','SCREW','COUNTER'];
+function buildAssembly(rng){
+  const n=2+((rng()*3)|0), mods=[];
+  let biggest=0, bigVol=-1;
+  for(let i=0;i<n;i++){
+    const M={
+      prim:(rng()*PRIMS.length)|0, arr:(rng()*ARRS.length)|0, mot:(rng()*MOTS.length)|0,
+      rate:1+((rng()*3)|0), sign:rng()<0.5?-1:1,
+      cnt:2+((rng()*6)|0), size:0.18+rng()*0.55, aspect:0.4+rng()*2.2,
+      radius:0.6+rng()*1.4, height:0.3+rng()*2.4, rise:0.15+rng()*0.35,
+      ox:(rng()-0.5)*1.6, oz:(rng()-0.5)*1.6, tilt:(rng()-0.5)*0.5, phase:rng()*TAU,
+      amp:0.15+rng()*0.4 };
+    if(M.arr===0){ M.cnt=2+((rng()*4)|0); M.size=0.35+rng()*0.5; }       /* a stack is few and large */
+    if(M.arr===6){ M.cnt=3+((rng()*5)|0); M.size=0.12+rng()*0.14; M.height=1.6+rng()*1.6; }
+    if(M.arr===7){ M.cnt=1; M.size=0.12+rng()*0.1; M.radius=1.0+rng()*1.0; }
+    const vol=M.size*M.size*(M.arr===0?M.cnt*1.6:(M.arr===7?M.radius*4:M.cnt*0.5));
+    if(vol>bigVol){ bigVol=vol; biggest=i; }
+    mods.push(M);
+  }
+  mods[biggest].wears=true;
+  /* the assembly's own extent, so the camera frames it like any named subject */
+  let wx=0, hy=0;
+  for(const M of mods){
+    const r=(M.arr===0?M.size:(M.arr===7?M.radius:M.radius+M.size))+Math.hypot(M.ox,M.oz);
+    const h=(M.arr===0?M.cnt*(M.size*M.aspect*2+0.04):(M.arr===4?0.4+M.cnt*M.rise+M.size*M.aspect:(M.arr===7?M.radius*2+0.2:(M.arr===6?M.height:M.height+M.size*M.aspect+M.amp+1.2))));
+    if(r>wx)wx=r; if(h>hy)hy=h;
+  }
+  return {mods, ext:Math.max(2.6,Math.min(7.5,Math.max(wx*2.2,hy*1.25))), ty:Math.max(1.0,Math.min(2.6,hy*0.48))};
+}
+/* instances are laid out once per frame into FR.a: x,y,z, cos,sin (yaw), sx,sy,sz per instance */
+const ASM={ n:0, a:new Float64Array(8*64), mod:new Uint8Array(64), wears:new Uint8Array(64) };
+function prepAssembly(P,th){
+  let q=0; const a=ASM.a;
+  for(let mi=0;mi<P.asm.mods.length;mi++){
+    const M=P.asm.mods[mi];
+    const ph=th*M.rate*M.sign+M.phase;
+    let yaw=0, bob=0;
+    if(M.mot===1||M.mot===6) yaw=th*M.rate*M.sign;              /* spin, and counter-spin per instance */
+    if(M.mot===3) bob=Math.sin(ph)*M.amp;
+    const swing=(M.mot===4)?Math.sin(th*M.rate)*M.amp:0;
+    const screw=(M.mot===5)?(th/TAU):0;
+    for(let k=0;k<M.cnt && q<64;k++){
+      let x=M.ox, y=0, z=M.oz, s=M.size, cy=1, sy=M.size*M.aspect, yw=yaw;
+      const t=k/Math.max(1,M.cnt-1);
+      switch(M.arr){
+        case 0:{ /* STACK */ y=0.02+k*(sy*2+0.04)+sy; s=M.size*(1-0.12*k); sy=M.size*M.aspect*(1-0.08*k); yw+=k*0.5*(M.mot===6?-1:1)*(M.mot===6?(th*M.rate):0)+ (M.mot===1?0:k*0.3); break; }
+        case 1:{ /* RING */ const ang=k/M.cnt*TAU+(M.mot===2?th*M.rate*M.sign:0)+M.phase; x+=Math.cos(ang)*M.radius; z+=Math.sin(ang)*M.radius; y=M.height+bob; yw+=ang; break; }
+        case 2:{ /* ROW */ x+=(t-0.5)*M.radius*2.2; y=sy+0.02+(M.mot===3?Math.sin(ph+k*0.9)*M.amp:0); z+=swing*(k%2?1:-1); break; }
+        case 3:{ /* ORBIT */ const ang=k/M.cnt*TAU+th*M.rate*M.sign; const el=M.tilt; x+=Math.cos(ang)*M.radius; z+=Math.sin(ang)*M.radius*Math.cos(el); y=M.height+Math.sin(ang)*M.radius*Math.sin(el)+1.2; break; }
+        case 4:{ /* HELIX */ const kk=k-screw; const ang=kk*TAU/Math.max(3,M.cnt*0.7)+M.phase; x+=Math.cos(ang)*M.radius; z+=Math.sin(ang)*M.radius; y=0.4+kk*M.rise+sy; yw+=ang; break; }
+        case 5:{ /* CLUSTER */ const r1=mulberry32((k*7919+mi*104729)>>>0); x+=(r1()-0.5)*M.radius*1.6; z+=(r1()-0.5)*M.radius*1.6; y=M.height*0.5+r1()*M.height+bob*(k%2?1:-1); s=M.size*(0.6+r1()*0.8); sy=s*M.aspect; break; }
+        case 6:{ /* COLONNADE */ x+=(t-0.5)*M.radius*2.4; y=M.height*0.5; s=M.size; sy=M.height*0.5; z+=(k%2?0.3:-0.3)*swing*2; break; }
+        default:{ /* ARCH: a standing ring */ y=M.radius+0.2; s=M.radius; sy=M.size; yw+=(M.mot===1?th*M.rate*M.sign:0); }
+      }
+      if(M.mot===3 && M.arr!==2 && M.arr!==5) y+=bob;
+      a[q*8]=x; a[q*8+1]=y; a[q*8+2]=z; a[q*8+3]=Math.cos(yw); a[q*8+4]=Math.sin(yw); a[q*8+5]=s; a[q*8+6]=sy; a[q*8+7]=M.arr;
+      ASM.mod[q]=mi; ASM.wears[q]=M.wears?1:0; q++;
+    }
+  }
+  ASM.n=q;
+}
+function assemblySDF(P,x,y,z){
+  let d=1e9, m=1; const a=ASM.a;
+  for(let q=0;q<ASM.n;q++){
+    const o=q*8, cx=a[o], cy=a[o+1], cz=a[o+2], s=a[o+5], sy=a[o+6];
+    const dx=x-cx, dy=y-cy, dz=z-cz;
+    const rr=Math.max(s,sy)*1.6; if(Math.abs(dy)-sy*1.2>d || dx*dx+dz*dz>(rr+d)*(rr+d)) continue;   /* pruned by a cheap bound */
+    const c=a[o+3], sn=a[o+4];
+    const lx=c*dx+sn*dz, lz=-sn*dx+c*dz;
+    const M=P.asm.mods[ASM.mod[q]]; let dd;
+    if(a[o+7]===7){ dd=sdTorusZ(lx,dy,lz,s,sy); }
+    else switch(M.prim){
+      case 0: dd=sdBox(lx,dy,lz,s,sy,s*0.7); break;
+      case 1: dd=sdSphere(lx,dy,lz,s); break;
+      case 2: dd=sdTorusY(lx,dy,lz,s,Math.min(s*0.35,sy*0.5)); break;
+      case 3: dd=sdCylY(lx,dy,lz,s*0.7,sy); break;
+      case 4: dd=sdConeY(lx,dy+sy,lz,s,sy*2); break;
+      default: dd=sdBox(lx,dy,lz,s*1.3,sy,s*0.18);
+    }
+    if(dd<d){ d=dd; m=ASM.wears[q]?7:((ASM.mod[q]&1)?2:1); }
+  }
+  MAT=m; return d;
 }
 
 /* ───────────────────────────── the scenes ───────────────────────────────── */
@@ -356,6 +455,7 @@ const FR={ th:0, c:new Float64Array(64), s:new Float64Array(64), v:new Float64Ar
 function prepFrame(P,th){
   FR.th=th;
   const c=FR.c, s=FR.s, v=FR.v;
+  if(P.subject===13){ prepAssembly(P,th); }
   if(P.lamp && P.subject!==11){ v[60]=Math.cos(P.lampAz)*P.lampR; v[61]=P.lampY; v[62]=Math.sin(P.lampAz)*P.lampR; }
   switch(P.subject){
     case 0:{ const tilt=(P.a-0.5)*0.16; c[0]=Math.cos(tilt); s[0]=Math.sin(tilt);
@@ -383,7 +483,7 @@ function prepFrame(P,th){
     case 8:{ c[0]=Math.cos(0.12); s[0]=Math.sin(0.12); c[1]=Math.cos(th); s[1]=Math.sin(th); break; }
     case 9:{ /* WHEEL — eight spokes; one eighth of a turn per loop is seamless and slow */
       const a=th/8; for(let k=0;k<8;k++){ const b=a+k*TAU/8; c[k]=Math.cos(b); s[k]=Math.sin(b); } break; }
-    case 10:{ v[0]=2.6+Math.sin(th)*0.35; c[0]=Math.cos(th*0.5+P.a); s[0]=Math.sin(th*0.5+P.a); break; }
+    case 10:{ v[0]=2.6+Math.sin(th)*0.35; c[0]=Math.cos(th+P.a*TAU); s[0]=Math.sin(th+P.a*TAU); break; }   /* a whole turn, or the seam shows */
     case 11:{ /* LANTERN — the lamp swings, and it is the second light */
       const A=0.30+P.c*0.30, L=1.5, ang=A*Math.sin(th);
       v[0]=Math.sin(ang)*L; v[1]=3.4-Math.cos(ang)*L; v[2]=ang; break; }
@@ -395,16 +495,22 @@ function prepFrame(P,th){
 function sceneSDF(P,x,y,z){
   let d=1e9, m=1;
   const c=FR.c, s=FR.s, v=FR.v;
+  if(P.subject===13){
+    d=assemblySDF(P,x,y,z); m=MAT;
+    if(P.lamp){ const dl=sdSphere(x-v[60],y-v[61],z-v[62],0.13); if(dl<d){ d=dl; m=3; } }
+    MAT=m; return d;
+  }
   switch(P.subject){
     case 0:{ /* MONOLITH — a leaning slab, and a small moon that circles it */
       const lx= c[0]*x + s[0]*(y-1.7), ly=-s[0]*x + c[0]*(y-1.7);
-      d=sdBox(lx,ly,z,0.42,1.7,0.22);
+      d=sdBox(lx,ly,z,0.42,1.7,0.22); m=7;                    /* the slab wears the loop; the moon stays a moon */
       const ds=sdSphere(x-v[0],y-v[1],z-v[2],0.22);
       if(ds<d){ d=ds; m=2; }
       break; }
     case 1:{ /* ORRERY — a sphere on a stem, rings that turn, beads that ride them */
       const cy=1.9;
-      d=Math.min(sdSphere(x,y-cy,z,0.55), sdCylY(x,y-cy*0.5,z,0.06,cy*0.5));
+      d=sdSphere(x,y-cy,z,0.55); m=7;                          /* the planet wears the loop */
+      const dst=sdCylY(x,y-cy*0.5,z,0.06,cy*0.5); if(dst<d){ d=dst; m=1; }
       let rx=x, ry=(y-cy)*c[0] - z*s[0], rz=(y-cy)*s[0] + z*c[0];
       let dr=sdTorusY(rx,ry,rz,1.25,0.035);
       for(let k=0;k<3;k++){ const db=sdSphere(rx-v[k*2],ry,rz-v[k*2+1],0.13); if(db<dr)dr=db; }
@@ -421,12 +527,14 @@ function sceneSDF(P,x,y,z){
         const ay=Math.abs(y-yc)-h; if(ay>d) continue;          /* cannot be nearer than d */
         const lx=c[k]*x+s[k]*z, lz=-s[k]*x+c[k]*z;
         const db=sdBox(lx,y-yc,lz,w,h,v[k*4+3]);
-        if(db<d){ d=db; m=(k&1)?2:1; }
+        if(db<d){ d=db; m=(k&1)?1:7; }                          /* every other block wears it */
       }
       break; }
     case 3:{ /* PENDULA — five bobs on a beam, swinging in a chord */
       const top=3.3;
       d=Math.min(sdBox(x,y-top,z,2.4,0.08,0.12), sdBox(x-2.3,y-top*0.5,z,0.08,top*0.5,0.08), sdBox(x+2.3,y-top*0.5,z,0.08,top*0.5,0.08));
+      const dback=sdBox(x,y-1.5,z+0.9,2.6,1.5,0.06);           /* a wall behind the pendula wears the loop */
+      if(dback<d){ d=dback; m=7; }
       for(let k=0;k<5;k++){
         const px=v[k*4], bx=v[k*4+1], by=v[k*4+2];
         if(Math.abs(x-px)-2.2>d) continue;
@@ -441,19 +549,19 @@ function sceneSDF(P,x,y,z){
       break; }
     case 4:{ /* GATE — a standing ring, and a sphere that threads it, twice a loop */
       const cy=1.7;
-      d=sdTorusZ(x,y-cy,z,1.45,0.13);
+      d=sdTorusZ(x,y-cy,z,1.45,0.13); m=7;                     /* the ring wears the loop */
       const ds=sdSphere(x,y-v[0],z-v[1],0.34);
       if(ds<d){ d=ds; m=2; }
       const dp=sdBox(x,y-0.12,z,0.5,0.12,0.5); if(dp<d){ d=dp; m=1; }
       break; }
     case 5:{ /* HELIX — a stair that climbs forever: one step of screw per loop */
-      d=sdCylY(x,y-1.7,z,0.16,1.9);
+      d=sdCylY(x,y-1.7,z,0.16,1.9); m=1;
       for(let k=0;k<11;k++){
         const yy=v[k];
         const ay=Math.abs(y-yy)-0.05; if(ay>d) continue;       /* pruned by height first */
         const lx=c[k]*x+s[k]*z, lz=-s[k]*x+c[k]*z;
         const db=sdBox(lx-0.62,y-yy,lz,0.5,0.045,0.19);
-        if(db<d){ d=db; m=(k&1)?2:1; }
+        if(db<d){ d=db; m=7; }                                  /* one material: the stair advances a step per loop, and alternating inks would swap at the seam */
       }
       break; }
     case 6:{ /* SUNDIAL — a colonnade; the light itself walks around it */
@@ -465,24 +573,24 @@ function sceneSDF(P,x,y,z){
         const dcap=sdBox(x-px,y-3.05,z-pz,0.24,0.05,0.24);
         if(dcap<d){ d=dcap; m=2; }
       }
-      const db=sdBox(x,y-3.18,z,3.0,0.07,0.55); if(db<d){ d=db; m=1; }
+      const db=sdBox(x,y-3.18,z,3.0,0.07,0.55); if(db<d){ d=db; m=7; }   /* the roof wears the loop */
       break; }
     case 7:{ /* BREATHER — four bodies melting into one, breathing in turn */
       for(let k=0;k<4;k++){
         const ds=sdSphere(x-v[k*4],y-v[k*4+1],z-v[k*4+2],v[k*4+3]);
         d=(k===0)?ds:smin(d,ds,0.45);
       }
-      m=1;
+      m=7;
       break; }
     case 9:{ /* WHEEL — a standing wheel on two legs, turning */
       const cy=2.4;
-      d=sdTorusZ(x,y-cy,z,1.8,0.12);
+      d=sdTorusZ(x,y-cy,z,1.8,0.12); m=7;                      /* the rim wears the loop */
       const dh=sdSphere(x,y-cy,z,0.22); if(dh<d){ d=dh; m=2; }
       for(let k=0;k<8;k++){
         const lx=c[k]*x+s[k]*(y-cy), ly=-s[k]*x+c[k]*(y-cy);
         if(Math.abs(ly)-0.1>d) continue;
         const ds=sdBox(lx-0.9,ly,z,0.9,0.035,0.035);
-        if(ds<d){ d=ds; m=(k&1)?2:1; }
+        if(ds<d){ d=ds; m=2; }                                  /* same reason: the wheel turns a spoke per loop */
       }
       const dl=Math.min(sdBox(x-0.9,y-cy*0.5,z-0.4,0.06,cy*0.5,0.06), sdBox(x+0.9,y-cy*0.5,z-0.4,0.06,cy*0.5,0.06), sdBox(x-0.9,y-cy*0.5,z+0.4,0.06,cy*0.5,0.06), sdBox(x+0.9,y-cy*0.5,z+0.4,0.06,cy*0.5,0.06));
       if(dl<d){ d=dl; m=1; }
@@ -492,7 +600,7 @@ function sceneSDF(P,x,y,z){
         const px=-2.7+k*0.9, h=1.2+((k*7)%5)*0.35, pz=((k*3)%4-1.5)*0.35;
         if(Math.abs(x-px)-0.4>d) continue;
         const ds=sdBox(x-px,y-h,z-pz,0.26,h,0.16);
-        if(ds<d){ d=ds; m=1; }
+        if(ds<d){ d=ds; m=7; }                                  /* the stones wear the loop */
       }
       const lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
       const df=sdBox(lx,y-v[0],lz,0.32,0.32,0.32);
@@ -500,6 +608,7 @@ function sceneSDF(P,x,y,z){
       break; }
     case 11:{ /* LANTERN — a post, an arm, and a lamp on a chain */
       d=Math.min(sdCylY(x+0.9,y-1.7,z,0.09,1.7), sdBox(x-0.05,y-3.4,z,1.0,0.06,0.06));
+      const dwall=sdBox(x-0.6,y-1.4,z-1.1,1.6,1.4,0.08); if(dwall<d){ d=dwall; m=7; }   /* a wall the lamp lights wears the loop */
       const bx=0.9+v[0], by=v[1];
       const vx=bx-0.9, vy=by-3.4, ex=x-0.9, ey=y-3.4;
       let t=(ex*vx+ey*vy)/(vx*vx+vy*vy); t=t<0?0:(t>1?1:t);
@@ -520,7 +629,7 @@ function sceneSDF(P,x,y,z){
         const ox=x-sgn*1.3;
         const lx=c[0]*ox+sgn*s[0]*y, ly=-sgn*s[0]*ox+c[0]*y;
         const dc=sdConeY(lx,ly,z,0.42,3.6);
-        if(dc<d){ d=dc; m=1; }
+        if(dc<d){ d=dc; m=7; }                                  /* the obelisks wear the loop */
       }
       const lx=c[1]*x+s[1]*z, lz=-s[1]*x+c[1]*z;
       const db=sdBox(lx,y-2.35,lz,1.05,0.05,0.05);
@@ -724,9 +833,16 @@ function renderLum(P,W,th,lum,mat,dep,texbuf){
         if(m===5){
           const c0=FR.c[0], s0=FR.s[0]; const lx=c0*hx+s0*hz;
           u=(lx+1.7)/3.4; v=1-((hy2-1.95)+1.7)/3.4;
-        } else if(m===2 || (m===1 && P.subject===7)){
-          const rx=hx-BCX, ry=hy2-BCY, rz=hz-BCZ, R=BR*0.62;
-          u=(rx*C.rx+ry*C.ry+rz*C.rz)/(2*R)+0.5; v=0.5-(rx*C.ux+ry*C.uy+rz*C.uz)/(2*R);
+        } else if(m===7){
+          /* triplanar: the face of the form that the surface mostly faces
+             chooses the plane, so the loop wraps a sphere and tiles a wall
+             instead of hanging in front of either like a poster */
+          normalAt(P,hx,hy2,hz,th); const ax=Math.abs(NRM[0]), ay=Math.abs(NRM[1]), az=Math.abs(NRM[2]);
+          const T=P.texTile;
+          if(ax>=ay&&ax>=az){ u=(hz*(NRM[0]>0?1:-1))/T; v=-hy2/T; }
+          else if(ay>=az){ u=hx/T; v=hz/T; }
+          else { u=(hx*(NRM[2]>0?-1:1))/T; v=-hy2/T; }
+          u=((u%1)+1)%1; v=((v%1)+1)%1;
         }
         if(u>=0){
           let tx=(u*tw)|0, ty=(v*tw)|0;
@@ -734,7 +850,7 @@ function renderLum(P,W,th,lum,mat,dep,texbuf){
           texIdx=TEX.frames[TEX.i][ty*tw+tx];
         }
       } else if(m===5) m=1;
-      if(m===5) m=1;
+      if(m===5||m===7) m=1;
       if(m===0){ nx=0; ny=1; nz=0; hy2=0; }
       else { normalAt(P,hx,hy2,hz,th); nx=NRM[0]; ny=NRM[1]; nz=NRM[2]; }
       let L;
@@ -859,9 +975,12 @@ function inkFrame(P,W,lum,mat,line,out,texbuf,th){
     const i=y*W+x;
     if(line[i]){ out[i]=0; continue; }
     if(mat[i]===3){ out[i]=K; continue; }     /* the sun disc */
-    if(mat[i]===6){                              /* the loop, in its own inks, shadowed by the plate's sun */
+    if(mat[i]===6){                              /* the loop, in its own inks, MODELLED by the plate's light */
       const Ls=lum[i]<0?0:lum[i];
-      out[i]= (Ls<0.34 && ditherThreshold(P,x,y)>Ls/0.34) ? 0 : K+1+texbuf[i];
+      const d=ditherThreshold(P,x,y);
+      if(Ls<0.09) out[i]=0;                                   /* deep shadow: ink */
+      else if(Ls<0.42) out[i]= d>(Ls-0.09)/0.33 ? 0 : K+1+texbuf[i];   /* the turn of the form: dithered into ink */
+      else out[i]=K+1+texbuf[i];
       continue; }
     let L=lum[i]; if(L<0)L=0; if(L>1)L=1;
     L=Math.pow(L,g);
