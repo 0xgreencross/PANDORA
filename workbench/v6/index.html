@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DITHERVOID // SPECIMENS · V6</title>
+<style>
+  :root{ --bg:#08080a; --ink:#e9e9f0; --mut:#8a8a9c; --hair:#232330; --acc:#e8ff2e; --mag:#ff1f9c; --cyan:#19f0ff; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font:12px/1.45 ui-monospace,Menlo,Consolas,monospace; -webkit-text-size-adjust:100%; }
+  #wrap{ max-width:1180px; margin:0 auto; padding:14px 14px 40px; display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px; align-items:start; }
+  @media (max-width:820px){ #wrap{ grid-template-columns:1fr; padding:8px 8px 40px; gap:12px; } }
+  header{ grid-column:1/-1; display:flex; align-items:baseline; justify-content:space-between; gap:12px; border-bottom:1px solid var(--hair); padding-bottom:8px; }
+  header b{ letter-spacing:.22em; font-weight:600; }
+  header span{ color:var(--mut); letter-spacing:.1em; font-size:10px; }
+  #stagecol{ min-width:0; }
+  #stage{ position:relative; width:100%; aspect-ratio:1/1; background:#000; border:1px solid var(--hair); overflow:hidden; }
+  #view{ width:100%; height:100%; display:block; image-rendering:pixelated; image-rendering:crisp-edges; }
+  #osd{ position:absolute; left:10px; bottom:8px; font-size:10px; letter-spacing:.14em; color:var(--ink); background:rgba(0,0,0,.55); padding:3px 7px; pointer-events:none; }
+  #prog{ position:absolute; left:0; top:0; height:2px; width:0; background:var(--acc); transition:width .12s linear; }
+  #plate{ margin-top:8px; font-size:10px; letter-spacing:.12em; color:var(--mut); display:flex; flex-wrap:wrap; gap:6px 16px; }
+  #plate b{ color:var(--ink); font-weight:500; }
+  #rail{ display:flex; flex-direction:column; gap:10px; }
+  .row{ display:grid; grid-template-columns:78px 1fr; align-items:center; gap:8px; }
+  .row label{ font-size:9.5px; letter-spacing:.16em; color:var(--mut); }
+  select,input[type=text],input[type=number]{ width:100%; background:#0e0e12; color:var(--ink); border:1px solid var(--hair); padding:7px 8px; font:inherit; letter-spacing:.06em; border-radius:0; -webkit-appearance:none; appearance:none; }
+  select:focus,input:focus{ outline:none; border-color:var(--cyan); }
+  #acts{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px; }
+  button{ background:#0e0e12; color:var(--ink); border:1px solid var(--hair); padding:11px 8px; font:inherit; letter-spacing:.16em; font-size:11px; cursor:pointer; border-radius:0; }
+  button:hover{ border-color:var(--ink); }
+  button[disabled]{ color:#4a4a58; border-color:#1a1a22; cursor:default; }
+  button.prime{ border-color:var(--acc); color:var(--acc); }
+  button.wide{ grid-column:1/-1; }
+  #dna{ font-size:11px; letter-spacing:.12em; }
+  #note{ font-size:10px; line-height:1.6; color:var(--mut); letter-spacing:.04em; border-top:1px solid var(--hair); padding-top:10px; }
+  #note b{ color:var(--ink); font-weight:500; letter-spacing:.14em; }
+  #stat{ font-size:10px; letter-spacing:.12em; color:var(--mut); min-height:14px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header><b>DITHERVOID // SPECIMENS</b><span>WORKBENCH V6 · A NATURAL HISTORY</span></header>
+  <div id="stagecol">
+    <div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div></div>
+    <div id="plate"><span>ORDER <b id="p-sub">—</b></span><span>SCHEME <b id="p-sch">—</b></span><span>GROUND <b id="p-gnd">—</b></span><span>SCREEN <b id="p-dit">—</b></span><span>INKS <b id="p-ink">—</b></span><span>NAMED <b id="p-name">—</b></span></div>
+  </div>
+  <div id="rail">
+    <div class="row"><label>SEED</label><input id="seed" type="number" min="1" max="4294967295" step="1" value="696969"></div>
+    <div class="row"><label>ORDER</label><select id="order"></select></div>
+    <div class="row"><label>SCHEME</label><select id="scheme"></select></div>
+    <div class="row"><label>GROUND</label><select id="paper"></select></div>
+    <div class="row"><label>SCREEN</label><select id="screen"></select></div>
+    <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
+    <div id="acts">
+      <button id="new" class="prime">&#9860; NEW SPECIMEN</button>
+      <button id="draw">&#9654; DRAW</button>
+      <button id="save" disabled>&#10515; SAVE GIF</button>
+      <button id="copy">&#10697; COPY DNA</button>
+    </div>
+    <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SPEC-…"></div>
+    <button id="recall" class="wide">&#8635; RECALL DNA</button>
+    <div id="stat"></div>
+    <div id="note"><b>THE SPECIMEN.</b> No landscape, no sun, no third dimension. A specimen lies on the page the way a beetle lies in a Victorian folio — bilateral, segmented, seen from above — except that it is alive: the legs walk, the antennae feel, the abdomen breathes, and all of it on a whole-number count so the loop closes. Ten orders, each part shaded as a small dome under a lamp from the upper left, contoured where part meets part, outlined, and printed in three to six inks on PAPER or on VELVET. Every specimen gets a Latin name it has never had before. Only the palettes and the GIF writer survive from the old engines.</div>
+  </div>
+</div>
+<script>
+/*CORE-BEGIN*/
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const TAU=Math.PI*2;
+const hex = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+/* ══════════════════════════════════════════════════════════════════════════
+   DITHERVOID · V6 · "SPECIMENS"
+   Invented arthropods, pinned to natural-history plates, alive.
+
+   No landscape, no sun, no three dimensions. A specimen lies on the page the
+   way a beetle lies in a Victorian folio - bilateral, segmented, seen from
+   above - except that it is alive: the legs walk, the antennae feel, the
+   abdomen breathes, and it does all of it on a whole-number count so the
+   loop closes. It is built from two-dimensional distance fields, shaded as
+   if each part were a small dome under a lamp, contoured where part meets
+   part, outlined, and printed. Every specimen gets a Latin name it has never
+   had before. Only the palettes and the GIF writer survive from before.
+*/
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function hsv2rgb(h,s,v){
+  h=((h%1)+1)%1; const i=(h*6)|0, f=h*6-i;
+  const p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s);
+  let r,g,b;
+  switch(i%6){case 0:r=v;g=t;b=p;break;case 1:r=q;g=v;b=p;break;case 2:r=p;g=v;b=t;break;
+    case 3:r=p;g=q;b=v;break;case 4:r=t;g=p;b=v;break;default:r=v;g=p;b=q;}
+  return [(r*255)|0,(g*255)|0,(b*255)|0];
+}
+const toHex=c=>'#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+function genesisScheme(seed){
+  const r=mulberry32((seed^0x5EEDC01A)>>>0);
+  const GOLD=0.61803398875;
+  let h=r();
+  const nA=2+(r()*3|0);                        // 2-4 fluorescent anchors
+  const anchors=[];
+  for(let i=0;i<nA;i++){
+    anchors.push(hsv2rgb(h, 0.86+r()*0.14, 0.9+r()*0.1));
+    h+=GOLD+(r()-0.5)*0.12;                    // golden-ratio hue walk + jitter
+  }
+  const baseHue=r();
+  const stops=[ toHex(hsv2rgb(baseHue,0.5+r()*0.4,0.02+r()*0.03)) ];   // tinted void
+  stops.push( toHex(hsv2rgb(anchors.length?baseHue:0, 0.8, 0.10+r()*0.10)) );
+  for(let i=0;i<nA;i++) stops.push(toHex(anchors[i]));
+  if(r()<0.55) stops.push(toHex(hsv2rgb(h,0.55+r()*0.35,1)));           // saturated hot tip (no white)
+  const glitch=anchors.map(toHex); glitch.push(toHex(hsv2rgb(h+GOLD,0.9,1))); glitch.push(stops[0]);
+  return {stops, glitch, genesis:true, fam:(anchors.length?((Math.atan2(anchors[0][1]-128,anchors[0][0]-128)+4)%6|0):0)};
+}
+/* ============================================================================
+   TIS∞ — the TIME IS SCAM generative palette rules, ported verbatim from
+   timeisscam.art buildPalette(). Five families: MONO+ALARM, NEON DUO,
+   SPLIT TRIO, TRIADIC ACID, ANALOGOUS RUSH. Roles: bg ink dim acc1 acc2
+   alarm shade. Deterministic per seed; family = the seed's own roll.
+   ========================================================================== */
+function hslToRgb(h,s,l){
+  h=((h%360)+360)%360; s/=100; l/=100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs(((h/60)%2)-1)), m=l-c/2;
+  let r,g,b;
+  if(h<60){r=c;g=x;b=0;}else if(h<120){r=x;g=c;b=0;}
+  else if(h<180){r=0;g=c;b=x;}else if(h<240){r=0;g=x;b=c;}
+  else if(h<300){r=x;g=0;b=c;}else{r=c;g=0;b=x;}
+  return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];
+}
+const TIS_FAMILIES=['MONO+ALARM','NEON DUO','SPLIT TRIO','TRIADIC ACID','ANALOGOUS RUSH'];
+function tisScheme(seed){
+  const rr=mulberry32((seed^0x715C0DE5)>>>0);
+  const n=x=>(rr()*x)|0, chance=p=>rr()*100<p;
+  const fam=n(5);
+  const B=n(360);
+  const neon=h=>[((h%360)+360)%360, 92+n(9), 53+n(8)];
+  const bone=[36+n(12), 12+n(8), 78+n(8)];
+  const alarmHue=n(26);                                 // red..orange
+  let acc1, acc2, alarm=neon(alarmHue);
+  if(fam===0){ acc1=neon(alarmHue); acc2=[alarmHue,88,38]; }
+  else if(fam===1){ acc1=neon(B); acc2=neon(B+180); }
+  else if(fam===2){ acc1=neon(B); acc2=neon(B+150); alarm=neon(B+210); }
+  else if(fam===3){ acc1=neon(B); acc2=neon(B+120); alarm=neon(B+240); }
+  else { acc1=neon(B); acc2=neon(B+30); }
+  const bg=chance(55)?[B,16,3+n(3)]:[240,10,3+n(2)];
+  const dim=[bone[0],10,34+n(10)];
+  const shade=[bg[0],Math.min(40,bg[1]+10),bg[2]+6];
+  const roles=[bg,bone,dim,acc1,acc2,alarm,shade].map(c=>hslToRgb(c[0],c[1],c[2]));
+  const lum=c=>0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
+  /* doctrine gate: same sanitizer every fixed scheme passes at load — TIS's
+     near-white bone ink gets pulled to its saturated identity, rules intact */
+  let stops=roles.slice().sort((a,b)=>lum(a)-lum(b)).map(toHex);
+  stops=stops.map((st,i)=>deWhiteHex(st, i?stops[i-1]:null));
+  const glitch=[roles[3],roles[4],roles[5],roles[1],roles[0]].map(toHex)
+    .map(st=>deWhiteHex(st, stops[stops.length-1]));
+  return {stops, glitch, genesis:true, fam:'T'+fam, famName:TIS_FAMILIES[fam]};
+}
+const SCHEMES = {
+  DITHERVOID:{ stops:['#050507','#0b0030','#7a0050','#ff1f9c','#19f0ff','#e8ff2e','#fbfff0'],
+               glitch:['#ff1f9c','#19f0ff','#e8ff2e','#ffffff','#04030a'] },
+  TOXIC:     { stops:['#02050a','#06210f','#0a5d2b','#39ff14','#b6ff3a','#eaffea'],
+               glitch:['#39ff14','#b6ff3a','#00ffd5','#ffffff','#02060a'] },
+  INFRARED:  { stops:['#070202','#2a0306','#7a0410','#ff2a1a','#ff7a00','#ffe08a','#fff6e8'],
+               glitch:['#ff2a1a','#ff7a00','#ffd000','#ffffff','#0a0202'] },
+  VAPOR:     { stops:['#0a0418','#2a0a4a','#7a1f8c','#ff5fc8','#5fd0ff','#aeffff','#fff2ff'],
+               glitch:['#ff5fc8','#5fd0ff','#c08bff','#ffffff','#0a0418'] },
+  ULTRAVIO:  { stops:['#030212','#170a52','#3a1fb0','#6a5cff','#19c6ff','#9bffff','#f4f0ff'],
+               glitch:['#6a5cff','#19c6ff','#c64bff','#ffffff','#030212'] },
+  BONE:      { stops:['#040406','#1c1c22','#42424c','#8a8a96','#c8c8d0','#ffffff'],
+               glitch:['#ffffff','#c8c8d0','#000000','#9a9aa6','#1c1c22'] },
+  ACIDBURN:  { stops:['#020602','#0a3300','#3fbf00','#aaff00','#eaff00','#ffff8a','#ffffe8'],
+               glitch:['#aaff00','#eaff00','#39ff14','#ffffff','#020602'] },
+  HOTLINE:   { stops:['#0c0212','#3a005a','#b3009c','#ff2fd6','#ff71ce','#ffb3f6','#fff0fc'],
+               glitch:['#ff2fd6','#ff71ce','#b967ff','#ffffff','#0c0212'] },
+  LAZER:     { stops:['#02040c','#001a66','#0044ff','#00aaff','#00ffee','#8affff','#eaffff'],
+               glitch:['#00aaff','#00ffee','#0044ff','#ffffff','#02040c'] },
+  NUKEGLOW:  { stops:['#060402','#4a2a00','#c66a00','#ff9500','#ffd000','#ffff2e','#fffbe0'],
+               glitch:['#ff9500','#ffd000','#ffff2e','#ffffff','#060402'] },
+  POISONFROG:{ stops:['#020208','#003a4a','#00c2a0','#2eff9e','#c8ff2e','#ff2fd6','#fff2ff'],
+               glitch:['#2eff9e','#ff2fd6','#c8ff2e','#ffffff','#020208'] },
+  BLACKLIGHT:{ stops:['#050008','#20004a','#6a00e0','#b400ff','#ff2fff','#ff9eff','#ffeaff'],
+               glitch:['#b400ff','#ff2fff','#6a00e0','#ffffff','#050008'] },
+  EMBERGRID: { stops:['#080202','#4a0010','#e00040','#ff2e6a','#ff7a2e','#ffe02e','#fff6e0'],
+               glitch:['#ff2e6a','#ff7a2e','#ffe02e','#ffffff','#080202'] },
+  CATHODE:   { stops:['#010401','#003300','#00aa00','#00ff41','#7aff9e','#e0ffe8'],
+               glitch:['#00ff41','#7aff9e','#00aa00','#ffffff','#010401'] },
+
+  /* TIME IS SCAM colorways — imported from timeisscam.art */
+  KENNE:{ stops:['#000000','#1d1f2e','#690999','#e3058c','#f8057a','#4ab144'],
+               glitch:['#f8057a','#e3058c','#690999','#4ab144','#000000'] },
+  AIRNEON:{ stops:['#101010','#7100d9','#ff00c8','#0ea1f0','#00ff00','#5dffff'],
+               glitch:['#00ff00','#ff00c8','#0ea1f0','#7100d9','#101010'] },
+  DES:{ stops:['#091020','#510087','#ff00e0','#00fa00','#86ffff'],
+               glitch:['#ff00e0','#00fa00','#510087','#86ffff','#091020'] },
+  NEONMONY:{ stops:['#050508','#212121','#441cf4','#644aaa','#e613aa','#3ec819','#0ff107','#0dffff'],
+               glitch:['#0dffff','#0ff107','#441cf4','#e613aa','#050508'] },
+  MGC:{ stops:['#050508','#212121','#ff00c8','#00ff00','#5dffff'],
+               glitch:['#00ff00','#ff00c8','#5dffff','#212121','#050508'] },
+  POLE:{ stops:['#000000','#0926ee','#ff00ff','#ff7700','#00ff74'],
+               glitch:['#00ff74','#ff7700','#ff00ff','#0926ee','#000000'] },
+  FAUXRGB:{ stops:['#000000','#8700ff','#ff0085','#ff00ff','#00ff00','#00ffff'],
+               glitch:['#00ffff','#00ff00','#ff00ff','#ff0085','#000000'] },
+  TRUERGB:{ stops:['#060606','#0000ff','#ff0000','#00ff00'],
+               glitch:['#00ff00','#ff0000','#0000ff','#060606','#060606'] },
+  XPASTE:{ stops:['#020210','#09081a','#1e152b','#722fcd','#f93e9e','#99f8b5'],
+               glitch:['#f93e9e','#722fcd','#99f8b5','#1e152b','#020210'] },
+  DOE:{ stops:['#000000','#222c33','#c200a2','#0994ee','#00c374'],
+               glitch:['#0994ee','#00c374','#c200a2','#222c33','#000000'] },
+  TISNUKE:{ stops:['#050508','#292629','#5529ed','#ef472b','#f2882f','#f1da2e'],
+               glitch:['#ef472b','#5529ed','#f1da2e','#f2882f','#050508'] },
+};
+/* NO-WHITE DOCTRINE: strip the white component from any pale stop and
+   renormalize its residual hue to full saturation — ramp tops go HOT, not pale.
+   (Pure greys inherit the previous stop's hue; last resort is brand magenta.) */
+function deWhiteHex(h6, prevH6){
+  const c=hex(h6); const m=Math.min(c[0],c[1],c[2]);
+  if(m<=160)return h6;
+  let sat=[c[0]-m,c[1]-m,c[2]-m];
+  let mx=Math.max(sat[0],sat[1],sat[2]);
+  if(mx<12&&prevH6){ const p=hex(prevH6); const pm=Math.min(p[0],p[1],p[2]);
+    sat=[p[0]-pm,p[1]-pm,p[2]-pm]; mx=Math.max(sat[0],sat[1],sat[2]); }
+  if(mx<12){ sat=[255,31,156]; mx=255; }
+  const k=255/mx;
+  return toHex(sat.map(v=>{v=(v*k)|0; return v>255?255:v;}));
+}
+for(const key in SCHEMES){ const sc=SCHEMES[key];
+  sc.stops=sc.stops.map((st,i)=>deWhiteHex(st, i?sc.stops[i-1]:null));
+  sc.glitch=sc.glitch.map(st=>deWhiteHex(st, sc.stops[sc.stops.length-1]));
+}
+const SCHEME_KEYS = Object.keys(SCHEMES);
+const MODES = ['MOLTEN','LATHE','ENGRAVED','BROADCAST','GRID','SATELLITE','SEDIMENT','VEINED','MASS','IDOL'];
+
+/* build a 256-entry smooth gradient LUT from stops */
+function buildGradient(stops){
+  const cols = stops.map(hex);
+  const lut = new Uint8Array(256*3);
+  const seg = cols.length-1;
+  for(let i=0;i<256;i++){
+    const f=i/255*seg; let a=Math.floor(f); if(a>=seg)a=seg-1; const t=f-a;
+    const c0=cols[a], c1=cols[a+1];
+    lut[i*3]  = (c0[0]+(c1[0]-c0[0])*t)|0;
+    lut[i*3+1]= (c0[1]+(c1[1]-c0[1])*t)|0;
+    lut[i*3+2]= (c0[2]+(c1[2]-c0[2])*t)|0;
+  }
+  return lut;
+}
+/* build a small power-of-two palette (gradient samples + glitch extremes) + nearest LUT */
+
+/* ───────────────────────────── 2D distance fields ───────────────────────── */
+function sdCap(px,py,ax,ay,bx,by,r){
+  const vx=bx-ax, vy=by-ay, ex=px-ax, ey=py-ay;
+  const l2=vx*vx+vy*vy||1e-9; let t=(ex*vx+ey*vy)/l2; t=t<0?0:(t>1?1:t);
+  const dx=ex-vx*t, dy=ey-vy*t; return Math.sqrt(dx*dx+dy*dy)-r;
+}
+/* an ellipse, by the scaled-circle approximation, which is exact enough for
+   a drawing and cheap enough for a pixel */
+function sdEll(px,py,cx,cy,rx,ry){
+  const qx=(px-cx)/rx, qy=(py-cy)/ry; const k=Math.sqrt(qx*qx+qy*qy);
+  return (k-1)*Math.min(rx,ry);
+}
+/* an ellipse whose top and bottom halves have different heights: a shield */
+function sdShield(px,py,cx,cy,rx,ryTop,ryBot){
+  const ry=(py<cy)?ryTop:ryBot; return sdEll(px,py,cx,cy,rx,ry);
+}
+function sdCircle(px,py,cx,cy,r){ const dx=px-cx, dy=py-cy; return Math.sqrt(dx*dx+dy*dy)-r; }
+
+/* ───────────────────────────── the specimen (per seed) ──────────────────── */
+const ORDERS=['BEETLE','LONGHORN','STAG','WEEVIL','SCARAB','ANT','SPIDER','MILLIPEDE','TRILOBITE','MOTH'];
+const PAPERS=['PAPER','VELVET'];
+const SCREENS=['FINE','COARSE','LINE','STIPPLE'];
+const SYL_A=['chry','pha','ne','lu','cor','ta','myr','ar','ox','peri','sca','dor','ce','pla','tri','ni','xen','ere','bo','ka'];
+const SYL_B=['so','ra','li','mo','nu','pi','the','do','ga','ve','lo','ci','ba','ty','ma','ro','ze','ku','fe','wi'];
+const SYL_C=['lina','ptera','ceros','morpha','nella','cephala','stoma','soma','tarsus','notus','dera','laris','oides','phora','ura','gnatha'];
+const SPEC_A=['dither','void','umbra','glitch','noct','pandor','sulph','magenta','cyan','acid','ferr','argent','lumin','tenebr','vitre','chrom'];
+const SPEC_B=['ensis','aria','oides','icola','ifera','atus','ella','osa','ulum','ipes','iventris','ocellata','virens','nigra','rubra','lucida'];
+const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI','XXII','XXIII','XXIV'];
+
+function buildSpecimen(seed,o){
+  o=o||{};
+  const rng=mulberry32(seed^0xA5C11D);
+  const P={ seed:seed>>>0 };
+  P.order  = (o.order!=null)?  o.order  : (rng()*ORDERS.length)|0;
+  P.paper  = (o.paper!=null)?  o.paper  : (rng()<0.55?0:1);
+  P.screen = (o.screen!=null)? o.screen : (rng()*SCREENS.length)|0;
+  P.inks   = [3,4,5,6][(rng()*4)|0];
+  P.gamma  = 0.85+rng()*0.5;
+  P.lineW  = 0.0032+rng()*0.0022;             /* outline, as a share of the frame */
+  /* the light: from the upper left, as every engraving has it */
+  const la=(-0.75+ (rng()-0.5)*0.5); P.lx=Math.cos(la); P.ly=Math.sin(la); P.lz=0.75+rng()*0.4;
+  /* the body */
+  P.scale  = 0.62+rng()*0.20;                 /* how much of the plate the specimen takes */
+  P.bodyW  = 0.13+rng()*0.09;
+  P.headR  = 0.055+rng()*0.03;
+  P.thorW  = 0.09+rng()*0.05;
+  P.abdL   = 0.22+rng()*0.14;
+  P.abdPoint = rng()<0.5;                     /* a pointed abdomen */
+  P.antL   = 0.10+rng()*0.10; P.antSeg=2+((rng()*2)|0); P.antBend=0.3+rng()*0.9; P.antFeather=rng()<0.3;
+  P.mandL  = 0.03+rng()*0.05;
+  P.legL   = 0.12+rng()*0.08; P.legT=0.010+rng()*0.006;
+  P.legPairs = P.order===6 ? 4 : (P.order===7 ? 9+((rng()*8)|0) : (P.order===8 ? 0 : 3));
+  P.gaitA  = 0.18+rng()*0.22;                 /* how far the legs swing */
+  P.gaitCyc = 1+((rng()*2)|0);                /* whole cycles per loop */
+  P.pattern = (rng()*5)|0;                    /* 0 plain 1 stripes 2 spots 3 chevrons 4 bands */
+  P.patK   = 6+((rng()*10)|0);
+  P.patS   = 0.25+rng()*0.35;                 /* how strongly the pattern prints */
+  P.eyeR   = 0.010+rng()*0.010;
+  P.horn   = rng()<0.5;
+  P.breath = 0.010+rng()*0.014;
+  P.tilt   = (rng()-0.5)*0.10;                /* the specimen is never pinned perfectly straight */
+  P.cx     = 0.5+(rng()-0.5)*0.05; P.cy=0.5+(rng()-0.5)*0.05;
+  /* the plate */
+  P.border = rng()<0.85; P.rule2=rng()<0.5;
+  P.plateNo = ROMAN[(rng()*ROMAN.length)|0];
+  P.figNo  = 1+((rng()*9)|0);
+  P.genus  = SYL_A[(rng()*SYL_A.length)|0]+SYL_B[(rng()*SYL_B.length)|0]+SYL_C[(rng()*SYL_C.length)|0];
+  P.species= SPEC_A[(rng()*SPEC_A.length)|0]+SPEC_B[(rng()*SPEC_B.length)|0];
+  P.genus  = P.genus.charAt(0).toUpperCase()+P.genus.slice(1);
+  P.scaleBar = rng()<0.7;
+  P.a=rng(); P.b=rng(); P.c=rng(); P.d=rng();
+  return P;
+}
+
+/* ───────────────────────────── anatomy, per frame ───────────────────────── */
+/* PARTS is a flat list rebuilt every frame: type, geometry, thickness,
+   priority (what lies on top), material (1 body, 2 accent, 3 dark) and a
+   pattern flag. Coordinates are plate-normalised, y down, the specimen's
+   head at the top. */
+const PARTS=[];
+function addCap(ax,ay,bx,by,r,thick,pri,mat,pat){ PARTS.push({t:0,ax,ay,bx,by,r,th:thick,pri,mat,pat:pat|0}); }
+function addEll(cx,cy,rx,ry,thick,pri,mat,pat){ PARTS.push({t:1,cx,cy,rx,ry,th:thick,pri,mat,pat:pat|0}); }
+function addShield(cx,cy,rx,ryT,ryB,thick,pri,mat,pat){ PARTS.push({t:2,cx,cy,rx,ryT,ryB,th:thick,pri,mat,pat:pat|0}); }
+function addDot(cx,cy,r,thick,pri,mat){ PARTS.push({t:3,cx,cy,r,th:thick,pri,mat,pat:0}); }
+
+function leg(P,side,x0,y0,baseAng,swing,len,pri){
+  /* femur out and slightly forward, tibia bent back, tarsus a little tail */
+  const a1=baseAng+swing, L1=len*0.55, L2=len*0.65, L3=len*0.22;
+  const x1=x0+side*Math.cos(a1)*L1, y1=y0+Math.sin(a1)*L1;
+  const a2=a1+0.95*side*side*(0.6+P.b*0.5);
+  const x2=x1+side*Math.cos(a2)*L2, y2=y1+Math.sin(a2)*L2;
+  const a3=a2+0.5;
+  const x3=x2+side*Math.cos(a3)*L3, y3=y2+Math.sin(a3)*L3;
+  addCap(x0,y0,x1,y1,P.legT*1.15,P.legT*1.15,pri,1,0);
+  addCap(x1,y1,x2,y2,P.legT,P.legT,pri,1,0);
+  addCap(x2,y2,x3,y3,P.legT*0.7,P.legT*0.7,pri,1,0);
+  addDot(x1,y1,P.legT*1.25,P.legT,pri+1,1);
+}
+function antenna(P,side,x0,y0,baseAng,wave,len,segs,bend,pri){
+  let x=x0,y=y0,a=baseAng+wave;
+  for(let k=0;k<segs;k++){
+    const L=len/segs*(1-k*0.1);
+    const nx=x+side*Math.cos(a)*L, ny=y+Math.sin(a)*L;
+    addCap(x,y,nx,ny,P.legT*(0.8-k*0.12),P.legT*0.8,pri,1,0);
+    if(P.antFeather){ for(let q=1;q<=3;q++){ const t=q/4, fx=x+(nx-x)*t, fy=y+(ny-y)*t;
+      addCap(fx,fy,fx+side*Math.cos(a+1.3)*L*0.35,fy+Math.sin(a+1.3)*L*0.35,P.legT*0.35,P.legT*0.35,pri,1,0);
+      addCap(fx,fy,fx+side*Math.cos(a-1.3)*L*0.35,fy+Math.sin(a-1.3)*L*0.35,P.legT*0.35,P.legT*0.35,pri,1,0); } }
+    x=nx; y=ny; a+=bend*side*side*(k%2?-0.5:1);
+  }
+  addDot(x,y,P.legT*0.9,P.legT*0.6,pri,1);
+}
+function buildParts(P,th){
+  PARTS.length=0;
+  const S=P.scale, cx=P.cx, cy=P.cy;
+  const br=1+P.breath*Math.sin(th);
+  const gait=th*P.gaitCyc;
+  const O=P.order;
+  /* the body axis runs from the head (top) down; sizes are plate shares */
+  const headR=P.headR*S, thorW=P.thorW*S, abdW=P.bodyW*S, abdL=P.abdL*S;
+  const headY=cy-(abdL*0.5+thorW*0.9+headR*0.9);
+  const thorY=cy-(abdL*0.5+thorW*0.45);
+  const abdY=cy+abdL*0.15;
+  if(O===7){ /* MILLIPEDE — a long train of segments, and a wave of legs */
+    const n=P.legPairs, segL=abdL*2.2/n, w=abdW*0.55;
+    for(let k=0;k<n;k++){
+      const y=cy-abdL*1.1+segL*(k+0.5), ww=w*(1-0.35*Math.abs((k/(n-1))-0.5)*2)*br;
+      addEll(cx,y,ww,segL*0.62,ww*0.9,10,1,(k&1)?1:0);
+      const ph=gait*2 - k*0.55;
+      for(let side=-1;side<=1;side+=2){
+        const sw=Math.sin(ph)*P.gaitA*0.9;
+        leg(P,side,cx+side*ww*0.85,y,0.25+sw*0.6,sw,P.legL*S*0.55,5);
+      }
+    }
+    addEll(cx,cy-abdL*1.1-segL*0.4,w*0.9,segL*0.7,w*0.8,11,1,0);
+    for(let side=-1;side<=1;side+=2) antenna(P,side,cx+side*w*0.4,cy-abdL*1.1-segL*0.7,-1.4,Math.sin(th+side)*0.25,P.antL*S*0.7,2,0.5,12);
+    addDot(cx-w*0.3,cy-abdL*1.1-segL*0.45,P.eyeR*S*0.8,0.004,13,2); addDot(cx+w*0.3,cy-abdL*1.1-segL*0.45,P.eyeR*S*0.8,0.004,13,2);
+    return;
+  }
+  if(O===8){ /* TRILOBITE — three lobes, many segments, a wide head shield */
+    const n=8+((P.a*5)|0), segL=abdL*1.6/n;
+    addShield(cx,headY+headR*0.6,abdW*1.35,headR*1.6,headR*0.9,abdW*0.5,12,1,0);
+    for(let k=0;k<n;k++){
+      const y=cy-abdL*0.55+segL*(k+0.5), ww=abdW*1.3*(1-0.55*k/n)*br;
+      addEll(cx,y,ww,segL*0.66,abdW*0.35,10,1,0);
+      addEll(cx,y,ww*0.36,segL*0.64,abdW*0.4,11,1,3);            /* the axial lobe rides higher */
+    }
+    addEll(cx,cy+abdL*1.05,abdW*0.55,abdL*0.18,abdW*0.3,10,1,0);
+    addDot(cx-abdW*0.7,headY+headR*0.5,P.eyeR*S*1.3,0.005,13,2); addDot(cx+abdW*0.7,headY+headR*0.5,P.eyeR*S*1.3,0.005,13,2);
+    for(let side=-1;side<=1;side+=2) for(let k=0;k<5;k++){ const y=cy-abdL*0.4+k*segL*1.5; const sw=Math.sin(gait*2-k*0.8)*P.gaitA*0.5;
+      addCap(cx+side*abdW*1.25,y,cx+side*(abdW*1.25+P.legL*S*0.35),y+sw*0.05,P.legT*0.6,P.legT*0.5,5,1,0); }
+    return;
+  }
+  /* the six-legged orders and the spider: head, thorax, abdomen */
+  const spider=(O===6), ant=(O===5), moth=(O===9);
+  const legPairs=P.legPairs;
+  /* legs first, so they lie under the body */
+  for(let k=0;k<legPairs;k++){
+    const t=(legPairs===1)?0.5:k/(legPairs-1);
+    const ly=thorY-thorW*0.6+t*(thorW*1.3+(spider?abdL*0.2:0));
+    const base=-0.9+t*1.5+(spider?0.15:0);
+    /* a tripod gait: alternate legs swing in opposite phase */
+    for(let side=-1;side<=1;side+=2){
+      const ph=gait+(k%2?Math.PI:0)+(side<0?Math.PI*0.5*(k%2?1:0):0);
+      const sw=Math.sin(ph)*P.gaitA;
+      leg(P,side,cx+side*thorW*0.75,ly,base,sw*(spider?0.55:1),P.legL*S*(spider?1.6:1)*(1+0.15*t),5);
+    }
+  }
+  /* the abdomen / elytra */
+  const aw=abdW*(moth?0.55:1)*br, al=abdL*br;
+  if(P.abdPoint) addShield(cx,abdY,aw,al*0.9,al*1.25,aw*0.9,10,1,1);
+  else addEll(cx,abdY,aw,al,aw*0.9,10,1,1);
+  if(ant){ /* the waist */ addCap(cx,thorY+thorW*0.5,cx,abdY-al*0.85,thorW*0.18,thorW*0.18,9,1,0); }
+  /* the thorax */
+  addShield(cx,thorY,thorW*(spider?1.3:1),thorW*0.7,thorW*0.75,thorW*0.8,11,1,0);
+  if(P.horn&&(O===4||O===0)) addCap(cx,thorY-thorW*0.3,cx,headY-headR*1.6,thorW*0.16,thorW*0.16,13,1,0);
+  /* the head */
+  if(!spider) addEll(cx,headY,headR*(O===3?0.8:1),headR*(O===3?1.7:1),headR*0.85,12,1,0);
+  if(O===3){ /* the weevil's snout */ addCap(cx,headY,cx,headY-headR*2.4,headR*0.28,headR*0.28,12,1,0); }
+  if(O===2){ /* the stag's mandibles */
+    const ml=P.mandL*S*2.2, open=0.35+0.15*Math.sin(th*2);
+    for(let side=-1;side<=1;side+=2){
+      const x1=cx+side*headR*0.8, y1=headY-headR*0.3;
+      const x2=x1+side*Math.sin(open)*ml*0.6, y2=y1-Math.cos(open)*ml*0.6;
+      const x3=x2-side*Math.sin(open*0.4)*ml*0.5, y3=y2-Math.cos(open*0.4)*ml*0.5;
+      addCap(x1,y1,x2,y2,headR*0.22,headR*0.2,13,1,0); addCap(x2,y2,x3,y3,headR*0.16,headR*0.16,13,1,0);
+      addCap(x2,y2,x2-side*ml*0.2,y2+ml*0.05,headR*0.1,headR*0.1,13,1,0);
+    }
+  } else if(!spider && !moth){ /* small mandibles */
+    for(let side=-1;side<=1;side+=2) addCap(cx+side*headR*0.5,headY-headR*0.6,cx+side*headR*0.25,headY-headR*1.15-P.mandL*S,headR*0.16,headR*0.14,13,1,0);
+  }
+  /* eyes */
+  const ey=spider?thorY-thorW*0.35:headY-headR*0.1, ex=spider?thorW*0.35:headR*0.62;
+  addDot(cx-ex,ey,P.eyeR*S,0.004,14,2); addDot(cx+ex,ey,P.eyeR*S,0.004,14,2);
+  if(spider){ addDot(cx-ex*0.45,ey-thorW*0.2,P.eyeR*S*0.6,0.003,14,2); addDot(cx+ex*0.45,ey-thorW*0.2,P.eyeR*S*0.6,0.003,14,2); }
+  /* antennae */
+  if(!spider){
+    const L=P.antL*S*(O===1?2.4:1), segs=O===1?4:P.antSeg;
+    for(let side=-1;side<=1;side+=2){
+      const wave=Math.sin(th+side*0.8)*0.28;
+      antenna(P,side,cx+side*headR*0.55,headY-headR*0.55,-1.25,wave,L,segs,P.antBend,13);
+    }
+  }
+  if(moth){ /* wings, spread and pinned; the pattern breathes */
+    const ww=abdW*3.2, wl=abdL*1.1;
+    for(let side=-1;side<=1;side+=2){
+      addShield(cx+side*ww*0.55,thorY+wl*0.15,ww*0.62,wl*0.55,wl*0.85,aw*0.6,8,1,2);   /* forewing */
+      addEll(cx+side*ww*0.42,abdY+wl*0.45,ww*0.42,wl*0.5,aw*0.5,7,1,4);            /* hindwing */
+    }
+  }
+}
+
+/* ───────────────────────────── one frame ────────────────────────────────── */
+/* For every pixel: which part it lies in (top priority wins), how deep, the
+   nearest edge for the outline, and the shading of a small dome under the
+   lamp. Writes lum (0..1), id (part index or 255), and edge distance. */
+function partDist(q,x,y){
+  switch(q.t){
+    case 0: return sdCap(x,y,q.ax,q.ay,q.bx,q.by,q.r);
+    case 1: return sdEll(x,y,q.cx,q.cy,q.rx,q.ry);
+    case 2: return sdShield(x,y,q.cx,q.cy,q.rx,q.ryT,q.ryB);
+    default: return sdCircle(x,y,q.cx,q.cy,q.r);
+  }
+}
+function patternAt(P,q,x,y,th){
+  const u=(x-(q.cx!=null?q.cx:0)), v=(y-(q.cy!=null?q.cy:0));
+  const k=P.patK*40;
+  switch(q.pat===2?(P.pattern||1):(q.pat===4?2:P.pattern)){
+    case 1: return 0.5+0.5*Math.sign(Math.sin(v*k+u*k*0.3));
+    case 2:{ const gx=(u*k*0.55)%3.14, gy=(v*k*0.55)%3.14; const r=Math.hypot(((gx+3.14)%3.14)-1.57,((gy+3.14)%3.14)-1.57); return r<0.85?0:1; }
+    case 3: return 0.5+0.5*Math.sign(Math.sin((v+Math.abs(u)*0.8)*k));
+    case 4: return 0.5+0.5*Math.sign(Math.sin(v*k*0.6+Math.sin(th)*0.6));
+    default: return 1;
+  }
+}
+function renderSpecimen(P,W,th,lum,id,edge){
+  buildParts(P,th);
+  const n=PARTS.length;
+  const ct=Math.cos(P.tilt), st=Math.sin(P.tilt);
+  const lx=P.lx, ly=P.ly, lz=P.lz, ll=Math.sqrt(lx*lx+ly*ly+lz*lz);
+  const LX=lx/ll, LY=ly/ll, LZ=lz/ll;
+  for(let py=0;py<W;py++){
+    for(let px=0;px<W;px++){
+      const i=py*W+px;
+      /* plate coordinates, with the specimen's tilt about its centre */
+      const ux=(px+0.5)/W-P.cx, uy=(py+0.5)/W-P.cy;
+      const x=P.cx+ux*ct-uy*st, y=P.cy+ux*st+uy*ct;
+      let best=-1, bestPri=-1, bestD=0, minAbs=1e9;
+      for(let k=0;k<n;k++){
+        const q=PARTS[k];
+        /* a cheap reject: the part's bounding circle */
+        const d=partDist(q,x,y);
+        const ad=d<0?-d:d; if(ad<minAbs)minAbs=ad;
+        if(d<0 && q.pri>bestPri){ bestPri=q.pri; best=k; bestD=d; }
+      }
+      edge[i]=minAbs;
+      if(best<0){ lum[i]=-1; id[i]=255; continue; }
+      const q=PARTS[best];
+      /* the dome: depth into the part, over its thickness, gives a height;
+         the gradient of the field gives the slope */
+      const t=Math.min(1,-bestD/Math.max(1e-4,q.th));
+      const z=Math.sqrt(1-(1-t)*(1-t));
+      const e=0.0015;
+      const gx=(partDist(q,x+e,y)-partDist(q,x-e,y))/(2*e), gy=(partDist(q,x,y+e)-partDist(q,x,y-e))/(2*e);
+      const s=1-z;
+      let nx=gx*s, ny=gy*s, nz=z; const nl=Math.sqrt(nx*nx+ny*ny+nz*nz)||1; nx/=nl; ny/=nl; nz/=nl;
+      let L=0.22+0.78*Math.max(0,nx*LX+ny*LY+nz*LZ);
+      if(q.pat) L*= (1-P.patS)+P.patS*patternAt(P,q,x,y,th);
+      if(q.mat===2) L=1.4;                                          /* the eyes: accent */
+      lum[i]=L; id[i]=best&255;
+    }
+  }
+}
+
+/* ───────────────────────────── the type ─────────────────────────────────── */
+/* A 3x5 capital face, drawn by hand, because a plate has a caption. */
+const FONT={
+ A:[2,5,7,5,5],B:[6,5,6,5,6],C:[3,4,4,4,3],D:[6,5,5,5,6],E:[7,4,6,4,7],F:[7,4,6,4,4],G:[3,4,5,5,3],H:[5,5,7,5,5],I:[7,2,2,2,7],
+ J:[1,1,1,5,2],K:[5,5,6,5,5],L:[4,4,4,4,7],M:[5,7,7,5,5],N:[6,5,5,5,5],O:[2,5,5,5,2],P:[6,5,6,4,4],Q:[2,5,5,6,3],R:[6,5,6,5,5],
+ S:[3,4,2,1,6],T:[7,2,2,2,2],U:[5,5,5,5,7],V:[5,5,5,5,2],W:[5,5,7,7,5],X:[5,5,2,5,5],Y:[5,5,2,2,2],Z:[7,1,2,4,7],
+ '0':[7,5,5,5,7],'1':[2,6,2,2,7],'2':[7,1,7,4,7],'3':[7,1,3,1,7],'4':[5,5,7,1,1],'5':[7,4,7,1,7],'6':[7,4,7,5,7],'7':[7,1,1,1,1],'8':[7,5,7,5,7],'9':[7,5,7,1,7],
+ '.':[0,0,0,0,2],'-':[0,0,7,0,0],' ':[0,0,0,0,0],'/':[1,1,2,4,4]
+};
+function drawText(out,W,str,x0,y0,scale,ink){
+  str=String(str).toUpperCase();
+  let x=x0;
+  for(const ch of str){
+    const g=FONT[ch]||FONT[' '];
+    for(let r=0;r<5;r++)for(let c=0;c<3;c++){
+      if(!((g[r]>>(2-c))&1)) continue;
+      for(let yy=0;yy<scale;yy++)for(let xx=0;xx<scale;xx++){
+        const X=x+c*scale+xx, Y=y0+r*scale+yy;
+        if(X>=0&&X<W&&Y>=0&&Y<W) out[Y*W+X]=ink;
+      }
+    }
+    x+=4*scale;
+  }
+  return x;
+}
+
+/* ───────────────────────────── the ink ──────────────────────────────────── */
+const BAYER8=[0,32,8,40,2,34,10,42,48,16,56,24,50,18,58,26,12,44,4,36,14,46,6,38,60,28,52,20,62,30,54,22,
+  3,35,11,43,1,33,9,41,51,19,59,27,49,17,57,25,15,47,7,39,13,45,5,37,63,31,55,23,61,29,53,21];
+const BAYER4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+function screenAt(P,x,y){
+  switch(P.screen){
+    case 0: return (BAYER4[(y&3)*4+(x&3)]+0.5)/16;
+    case 1: return (BAYER8[(y&7)*8+(x&7)]+0.5)/64;
+    case 2:{ const q=(x*0.42+y*0.91)/5; return ((q%1)+1)%1; }
+    default:{ /* stipple: a hashed threshold, the engraver's dots */
+      let h=(x*374761393+y*668265263)|0; h=(h^(h>>>13))*1274126177|0; return ((h>>>0)%1000)/1000; }
+  }
+}
+/* the plate's inks: on PAPER the ground is the scheme's palest stop and the
+   ink its darkest; on VELVET the reverse. K steps between, one accent. */
+function buildInks(P,scheme){
+  const grad=buildGradient(scheme.stops);
+  const K=P.inks, pal=[];
+  for(let k=0;k<K;k++){
+    const g=Math.round((k/(K-1))*255);
+    pal.push([grad[g*3],grad[g*3+1],grad[g*3+2]]);
+  }
+  if(P.paper===0) pal.reverse();                       /* index 0 = ground (pale), K-1 = ink (dark) */
+  else { pal[0]=[Math.round(pal[0][0]*0.5),Math.round(pal[0][1]*0.5),Math.round(pal[0][2]*0.5)]; }
+  const acc=hex(scheme.glitch[0]); pal.push(acc);      /* index K: accent */
+  while(pal.length<8) pal.push(pal[pal.length-1]);
+  return pal;
+}
+/* lum/id/edge -> palette indices. On paper, more light means LESS ink, so the
+   ramp is read backwards; the outline is always the full ink. */
+function inkSpecimen(P,W,th,lum,id,edge,out){
+  const K=P.inks, g=P.gamma, paper=(P.paper===0);
+  const GROUND=0, lw=P.lineW;                        /* index 0 is the page in both modes; edge is in plate units */
+  const lineIdx = paper ? K-1 : K-1;                   /* the line: darkest on paper, LIGHTEST on velvet */
+  for(let y=0;y<W;y++)for(let x=0;x<W;x++){
+    const i=y*W+x;
+    const L=lum[i];
+    if(L<0){                                            /* the page */
+      out[i]=GROUND; continue;
+    }
+    if(edge[i]<lw){ out[i]=K-1; continue; }             /* the outline: full ink on paper, full light on velvet */
+    if(L>1.2){ out[i]=K; continue; }                    /* the eyes */
+    let v=Math.pow(Math.min(1,Math.max(0,L)),g);        /* 1 = fully lit */
+    /* on paper: lit = little ink = ground-ish index low; on velvet: lit = light ink = high index */
+    const ramp = paper ? (1-v) : v;
+    const r=ramp*(K-1); const base=Math.floor(r), frac=r-base;
+    let idx=base+(frac>screenAt(P,x,y)?1:0); if(idx>K-1)idx=K-1;
+    out[i]=idx;
+  }
+  /* contour lines where one part lies over another */
+  for(let y=1;y<W-1;y++)for(let x=1;x<W-1;x++){
+    const i=y*W+x, a=id[i]; if(a===255) continue;
+    if((id[i-1]!==a&&id[i-1]!==255)||(id[i-W]!==a&&id[i-W]!==255)) out[i]=K-1;
+  }
+  /* the plate: rules, caption, number, a scale bar */
+  const ink=K-1, sc=Math.max(2,Math.round(W/180));
+  if(P.border){
+    const m=Math.round(W*0.045), b=Math.max(1,Math.round(W*0.004));
+    for(let y=0;y<W;y++)for(let x=0;x<W;x++){
+      const e=Math.min(Math.min(x,W-1-x),Math.min(y,W-1-y));
+      if((e>=m&&e<m+b)||(P.rule2&&e>=m+b*3&&e<m+b*4)) out[y*W+x]=ink;
+    }
+  }
+  const m2=Math.round(W*0.07);
+  drawText(out,W,'PL. '+P.plateNo,m2,m2,sc,ink);
+  const fig='FIG. '+P.figNo; drawText(out,W,fig,W-m2-fig.length*4*sc,m2,sc,ink);
+  const name=P.genus+' '+P.species;
+  const nw=name.length*4*sc; drawText(out,W,name,Math.round((W-nw)/2),W-m2-5*sc,sc,ink);
+  if(P.scaleBar){
+    const bx=m2, by=W-m2-5*sc-4*sc, bl=Math.round(W*0.12);   /* above the caption, not through it */
+    for(let x=bx;x<bx+bl;x++){ out[by*W+x]=ink; }
+    for(let y=by-sc;y<=by+sc;y++){ out[y*W+bx]=ink; out[y*W+bx+bl]=ink; }
+  }
+}
+
+/* ───────────────────────────── the card ─────────────────────────────────── */
+const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+function crc8(bytes){let c=0; for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c&0x80)?((c<<1)^0x07)&0xff:(c<<1)&0xff;} return c;}
+/* ver(4) seed(32) scheme(5) order(4) paper(1) screen(2) frames(7) = 55 -> 64 */
+function packSpec(seed,schemeIdx,order,paper,screen,frames){
+  let v=0n; const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
+  push(1,4); push(seed>>>0,32); push(schemeIdx,5); push(order,4); push(paper,1); push(screen,2); push(frames,7);
+  v<<=9n;
+  const bytes=[]; for(let i=7;i>=0;i--)bytes.push(Number((v>>BigInt(i*8))&0xffn));
+  bytes.push(crc8(bytes));
+  let bv=0n; for(const b of bytes)bv=(bv<<8n)|BigInt(b);
+  bv<<=3n;
+  let out=''; for(let i=14;i>=0;i--)out+=B32[Number((bv>>BigInt(i*5))&31n)];
+  return 'SPEC-'+out.slice(0,5)+'-'+out.slice(5,10)+'-'+out.slice(10,15);
+}
+function unpackSpec(str){
+  let sx=String(str||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
+  if(sx.startsWith('SPEC'))sx=sx.slice(4);
+  sx=sx.replace(/I|L/g,'1').replace(/O/g,'0').replace(/U/g,'V');
+  if(sx.length!==15) return null;
+  let bv=0n; for(const c of sx){const d=B32.indexOf(c); if(d<0)return null; bv=(bv<<5n)|BigInt(d);}
+  bv>>=3n;
+  const bytes=[]; for(let i=8;i>=0;i--)bytes.push(Number((bv>>BigInt(i*8))&0xffn));
+  const crc=bytes.pop(); if(crc8(bytes)!==crc)return null;
+  let v=0n; for(const b of bytes)v=(v<<8n)|BigInt(b);
+  let used=0; const pull=bits=>{const r=Number((v>>BigInt(64-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
+  const ver=pull(4); if(ver!==1)return null;
+  const seed=pull(32), scheme=pull(5), order=pull(4), paper=pull(1), screen=pull(2), frames=pull(7);
+  if(scheme>=SCHEME_KEYS.length+2||order>=ORDERS.length||frames<8||frames>80)return null;
+  return {seed,scheme,order,paper,screen,frames};
+}
+function schemeOf(idx,seed){
+  if(idx<SCHEME_KEYS.length) return {key:SCHEME_KEYS[idx], scheme:SCHEMES[SCHEME_KEYS[idx]]};
+  if(idx===SCHEME_KEYS.length) return {key:'GENESIS', scheme:genesisScheme(seed)};
+  return {key:'TISGEN', scheme:tisScheme(seed)};
+}
+/*CORE-END*/
+function Sink(cap){ this.b=new Uint8Array(cap||65536); this.n=0; }
+Sink.prototype.u8=function(v){ if(this.n>=this.b.length){const g=new Uint8Array(this.b.length*2);g.set(this.b);this.b=g;} this.b[this.n++]=v&0xff; };
+Sink.prototype.u16=function(v){ this.u8(v); this.u8(v>>8); };
+Sink.prototype.str=function(s){ for(let i=0;i<s.length;i++)this.u8(s.charCodeAt(i)); };
+Sink.prototype.done=function(){ return this.b.subarray(0,this.n); };
+
+function lzwEncode(minCodeSize, data){
+  const clearCode=1<<minCodeSize, eoiCode=clearCode+1;
+  let codeSize=minCodeSize+1, nextCode=clearCode+2;
+  const dict=new Map(); const out=new Sink(1<<16); let cur=0,curBits=0;
+  const emit=code=>{ cur|=code<<curBits; curBits+=codeSize; while(curBits>=8){out.u8(cur&0xff);cur>>>=8;curBits-=8;} };
+  emit(clearCode);
+  if(data.length===0){ emit(eoiCode); if(curBits>0)out.u8(cur&0xff); return out.done(); }
+  let prefix=data[0];
+  for(let i=1;i<data.length;i++){
+    const c=data[i], key=(prefix<<8)|c, v=dict.get(key);
+    if(v!==undefined){ prefix=v; }
+    else{
+      emit(prefix);
+      if(nextCode===4096){ emit(clearCode); dict.clear(); nextCode=clearCode+2; codeSize=minCodeSize+1; }
+      else{ if(nextCode>=(1<<codeSize)&&codeSize<12)codeSize++; dict.set(key,nextCode); nextCode++; }
+      prefix=c;
+    }
+  }
+  emit(prefix); emit(eoiCode); if(curBits>0)out.u8(cur&0xff); return out.done();
+}
+function gifBegin(sink,width,height,palette,loop){
+  let bits=Math.max(1,Math.ceil(Math.log2(palette.length)));
+  const size=1<<bits, pal=palette.slice(); while(pal.length<size)pal.push([0,0,0]);
+  sink.str('GIF89a'); sink.u16(width); sink.u16(height);
+  sink.u8(0x80|((bits-1)<<4)|(bits-1)); sink.u8(0); sink.u8(0);
+  for(let i=0;i<size;i++){ sink.u8(pal[i][0]); sink.u8(pal[i][1]); sink.u8(pal[i][2]); }
+  sink.u8(0x21);sink.u8(0xFF);sink.u8(0x0B);sink.str('NETSCAPE2.0');sink.u8(0x03);sink.u8(0x01);sink.u16(loop|0);sink.u8(0x00);
+  return Math.max(2,bits); // minCodeSize
+}
+function gifFrame(sink,width,height,indices,delay,minCodeSize){
+  sink.u8(0x21);sink.u8(0xF9);sink.u8(0x04);sink.u8(0x00);sink.u16(delay|0);sink.u8(0x00);sink.u8(0x00);
+  sink.u8(0x2C);sink.u16(0);sink.u16(0);sink.u16(width);sink.u16(height);sink.u8(0x00);
+  sink.u8(minCodeSize);
+  const lzw=lzwEncode(minCodeSize,indices); let p=0;
+  while(p<lzw.length){const len=Math.min(255,lzw.length-p);sink.u8(len);for(let i=0;i<len;i++)sink.u8(lzw[p+i]);p+=len;}
+  sink.u8(0x00);
+}
+function gifEnd(sink){ sink.u8(0x3B); return sink.done(); }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE LAB. The engine above is sliced verbatim into workers by its markers;
+   nothing draws on the main thread but the player.
+   ═══════════════════════════════════════════════════════════════════════ */
+const $=id=>document.getElementById(id);
+const LADDER=[135,270,540];                /* every rung divides 1080: the draft is the print, smaller */
+const MASTER=1080;
+const DELAY_CS=4;                          /* 25fps */
+const NW=Math.max(2,Math.min(8,(navigator.hardwareConcurrency||4)));
+
+function coreSrc(){
+  const t=[...document.querySelectorAll('script:not([src])')].map(e=>e.textContent).find(x=>x.includes('/*CORE-BEGIN*/'))||'';
+  return t.slice(t.indexOf('/*CORE-BEGIN*/'), t.indexOf('/*CORE-END*/'));
+}
+const WORKER_DRIVER=`
+self.onmessage=function(e){
+  const J=e.data;
+  const W=J.W, P=J.P, N=J.N;
+  const lum=new Float32Array(W*W), id=new Uint8Array(W*W), edge=new Float32Array(W*W);
+  for(let q=0;q<J.frames.length;q++){
+    const i=J.frames[q], th=i/N*TAU;
+    const idx=new Uint8Array(W*W);
+    renderSpecimen(P,W,th,lum,id,edge);
+    inkSpecimen(P,W,th,lum,id,edge,idx);
+    self.postMessage({t:'frame',i:i,W:W,job:J.job,buf:idx.buffer},[idx.buffer]);
+  }
+  self.postMessage({t:'done',job:J.job,W:W});
+};`;
+let POOL=null;
+function pool(){
+  if(POOL) return POOL;
+  const url=URL.createObjectURL(new Blob([coreSrc()+'\n'+WORKER_DRIVER],{type:'text/javascript'}));
+  POOL=[]; for(let i=0;i<NW;i++) POOL.push(new Worker(url));
+  return POOL;
+}
+
+/* ---- state ---- */
+const S={ seed:696969, order:-1, scheme:-1, paper:-1, screen:-1, frames:36 };
+let JOB=0, RUN={ frames:null, N:0, W:0, pal:null, P:null, key:'', rung:0, have:0 };
+let PLAY={ raf:0, frames:null, N:0, W:0, pal:null, t0:0 };
+let LAST={ frames:null, N:0, W:0, pal:null, card:'' };
+
+function fillSelects(){
+  const opt=(sel,list,auto)=>{ const el=$(sel); el.innerHTML='';
+    if(auto){ const o=document.createElement('option'); o.value=-1; o.textContent='AUTO'; el.appendChild(o); }
+    list.forEach((n,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=n; el.appendChild(o); }); };
+  opt('order',ORDERS,true);
+  opt('scheme',[...SCHEME_KEYS,'GENESIS','TISGEN'],true);
+  opt('paper',PAPERS,true);
+  opt('screen',SCREENS,true);
+}
+function readUI(){
+  S.seed=(parseInt($('seed').value,10)>>>0)||1;
+  S.order=+$('order').value; S.scheme=+$('scheme').value; S.paper=+$('paper').value; S.screen=+$('screen').value; S.frames=+$('frames').value;
+}
+function writeUI(){
+  $('seed').value=S.seed; $('order').value=S.order; $('scheme').value=S.scheme; $('paper').value=S.paper; $('screen').value=S.screen; $('frames').value=S.frames;
+}
+/* the resolved plate: AUTO is the seed's own choice */
+function resolve(){
+  const rng=mulberry32((S.seed^0x51CE)>>>0);
+  const o={};
+  if(S.order>=0)o.order=S.order; if(S.paper>=0)o.paper=S.paper; if(S.screen>=0)o.screen=S.screen;
+  const P=buildSpecimen(S.seed,o);
+  const si = S.scheme>=0 ? S.scheme : (rng()*(SCHEME_KEYS.length+2))|0;
+  const {key,scheme}=schemeOf(si,S.seed);
+  return {P, si, key, scheme};
+}
+
+/* ---- drawing: the ladder ---- */
+function draw(){
+  readUI();
+  const R=resolve();
+  const N=S.frames, P=R.P;
+  const card=packSpec(S.seed,R.si,P.order,P.paper,P.screen,N);
+  $('dna').value=card;
+  $('p-sub').textContent=ORDERS[P.order]; $('p-sch').textContent=R.key;
+  $('p-gnd').textContent=PAPERS[P.paper]; $('p-dit').textContent=SCREENS[P.screen]; $('p-ink').textContent=P.inks; $('p-name').textContent=P.genus+' '+P.species;
+  const pal=buildInks(P,R.scheme);
+  const job=++JOB;
+  RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0 };
+  $('save').setAttribute('disabled',''); LAST.frames=null;
+  rung(job);
+}
+function rung(job){
+  if(job!==JOB) return;
+  const W=LADDER[RUN.rung];
+  RUN.W=W; RUN.frames=new Array(RUN.N); RUN.have=0;
+  $('osd').textContent='DRAWING '+W+'² · '+RUN.N+' FRAMES';
+  $('prog').style.width='0%';
+  const ws=pool(), N=RUN.N;
+  /* interleave, so every worker carries an even share of the loop */
+  const lists=ws.map(()=>[]); for(let i=0;i<N;i++) lists[i%ws.length].push(i);
+  let done=0;
+  ws.forEach((w,k)=>{
+    w.onmessage=e=>{
+      const m=e.data; if(m.job!==job) return;
+      if(m.t==='frame'){
+        RUN.frames[m.i]=new Uint8Array(m.buf); RUN.have++;
+        $('prog').style.width=Math.round(RUN.have/N*100)+'%';
+        /* the first frame of the first rung goes on the glass immediately */
+        if(RUN.rung===0 && RUN.have===1) paintOne(RUN.frames[m.i],W,RUN.pal);
+      } else if(m.t==='done'){
+        if(++done===ws.length) rungDone(job);
+      }
+    };
+    w.postMessage({job, P:RUN.P, N, W, frames:lists[k]});
+  });
+}
+function rungDone(job){
+  if(job!==JOB) return;
+  const W=RUN.W;
+  play(RUN.frames,RUN.N,W,RUN.pal);
+  $('osd').textContent=(W===LADDER[LADDER.length-1]?'PRINT ':'DRAFT ')+W+'² · 25FPS';
+  if(RUN.rung<LADDER.length-1){ RUN.rung++; setTimeout(()=>rung(job),30); }
+  else{
+    LAST={ frames:RUN.frames, N:RUN.N, W, pal:RUN.pal, card:RUN.card };
+    $('save').removeAttribute('disabled');
+    $('prog').style.width='0%';
+    $('stat').textContent='THE PLATE IS READY — SAVE writes it at '+MASTER+'².';
+  }
+}
+
+/* ---- the player ---- */
+const view=$('view'), vctx=view.getContext('2d');
+const off=document.createElement('canvas'), octx=off.getContext('2d');
+let img=null, u32=null;
+function paintOne(fr,W,pal){
+  if(off.width!==W){ off.width=off.height=W; img=octx.createImageData(W,W); u32=new Uint32Array(img.data.buffer); }
+  const L=new Uint32Array(16);
+  for(let q=0;q<16;q++){ const c=pal[q]||pal[pal.length-1]; L[q]=(255<<24)|(c[2]<<16)|(c[1]<<8)|c[0]; }
+  for(let q=0;q<W*W;q++) u32[q]=L[fr[q]];
+  octx.putImageData(img,0,0);
+  vctx.imageSmoothingEnabled=false;
+  vctx.drawImage(off,0,0,view.width,view.height);
+}
+function play(frames,N,W,pal){
+  if(PLAY.raf) cancelAnimationFrame(PLAY.raf);
+  PLAY={ raf:0, frames, N, W, pal, t0:performance.now(), shown:-1 };
+  const step=()=>{
+    PLAY.raf=requestAnimationFrame(step);
+    const i=Math.floor((performance.now()-PLAY.t0)/(DELAY_CS*10))%N;
+    if(i===PLAY.shown) return; PLAY.shown=i;
+    paintOne(frames[i],W,pal);
+  };
+  PLAY.raf=requestAnimationFrame(step);
+}
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&PLAY.raf){cancelAnimationFrame(PLAY.raf);PLAY.raf=0;} else if(PLAY.frames&&!PLAY.raf) play(PLAY.frames,PLAY.N,PLAY.W,PLAY.pal); });
+
+/* ---- the print: 1080², nearest-neighbour from the 540 frames, the box's own writer ---- */
+function saveGif(){
+  if(!LAST.frames) return;
+  const {frames,N,W,pal,card}=LAST;
+  const k=MASTER/W, out=MASTER;
+  $('stat').textContent='WRITING '+out+'²…';
+  setTimeout(()=>{
+    const sink=new Sink(1<<20);
+    const pal16=[]; for(let q=0;q<16;q++) pal16.push(pal[q]||pal[pal.length-1]);
+    const mcs=gifBegin(sink,out,out,pal16,0);
+    const px=new Uint8Array(out*out);
+    for(let f=0;f<N;f++){
+      const src=frames[f]; let o=0;
+      for(let y=0;y<out;y++){ const sy=((y/k)|0)*W; for(let x=0;x<out;x++) px[o++]=src[sy+((x/k)|0)]; }
+      gifFrame(sink,out,out,px,DELAY_CS,mcs);
+    }
+    const bytes=new Uint8Array(gifEnd(sink));
+    const blob=new Blob([bytes],{type:'image/gif'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='SPECIMEN_'+(LAST_P().genus+'_'+LAST_P().species).toUpperCase()+'_'+S.seed+'.gif'; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000);
+    $('stat').textContent='SAVED · '+(bytes.length/1024|0)+'KB · '+card;
+  },20);
+}
+function LAST_P(){ return RUN.P; }
+
+/* ---- rolls, recalls ---- */
+function newPlate(){
+  S.seed=(Math.random()*0xFFFFFFFF)>>>0;
+  $('seed').value=S.seed;
+  draw();
+}
+function recall(){
+  const c=unpackSpec($('dna').value);
+  if(!c){ $('stat').textContent='THAT IS NOT A SPECIMEN.'; return; }
+  S.seed=c.seed; S.scheme=c.scheme; S.order=c.order; S.paper=c.paper; S.screen=c.screen; S.frames=c.frames;
+  writeUI(); draw();
+}
+$('new').addEventListener('click',newPlate);
+$('draw').addEventListener('click',draw);
+$('save').addEventListener('click',saveGif);
+$('recall').addEventListener('click',recall);
+$('copy').addEventListener('click',()=>{ const v=$('dna').value; if(!v)return; try{ navigator.clipboard.writeText(v); $('stat').textContent='DNA COPIED'; }catch(e){ $('dna').select(); } });
+['order','scheme','paper','screen','frames'].forEach(id=>$(id).addEventListener('change',draw));
+$('seed').addEventListener('change',draw);
+
+fillSelects();
+(function boot(){
+  const q=new URLSearchParams(location.search).get('dna');
+  if(q){ $('dna').value=q; const c=unpackSpec(q); if(c){ recall(); return; } }
+  writeUI(); draw();
+})();
+</script>
+</body>
+</html>
