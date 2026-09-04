@@ -64,7 +64,7 @@
     <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PLATE-…"></div>
     <button id="recall" class="wide">&#8635; RECALL DNA</button>
     <div id="stat"></div>
-    <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Now with weather (a fog bank the monument rises out of, printed rain), a camera that sways, dollies, cranes or orbits, four more subjects, a second light, and THE SCREEN: one monument that wears a v3 CHIMERA loop as its face — the seed's own, or any PNDR card you paste.</div>
+    <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Now with weather (a fog bank the monument rises out of, printed rain), a camera that sways, dollies, cranes or orbits, four more subjects, a second light, and THE SCREEN: one monument that wears a v3 CHIMERA loop as its face. It chooses that loop by itself from the v3 canon — the curator's own keeps — and paste any PNDR card to overrule it; a pasted card always gets its screen, whatever subject the seed had in mind.</div>
   </div>
 </div>
 <script>
@@ -1040,6 +1040,8 @@ function v3WorkerSrc(res){
   const sw=Math.max(160,Math.min(448,res)), vg=Math.max(56,Math.min(88,Math.round(88*Math.min(1,res/448))));
   return '"use strict";const W='+res+',H='+res+',FW=360,PVSW='+sw+',PVVG='+vg+',OUTD=0;const TAU=6.283185307179586;\n'+V3_CORE+'\n'+V3_CORE2+'\n'+V3_DRIVER;
 }
+/* the v3 canon: the curator's own keeps, so an AUTO screen wears a proven loop, not a roll */
+const V3_CANON=["PNDR-A8TY-XEG7-8AV0-ZW2G-0488-0222-0018-HW4R", "PNDR-AR4H-YW0R-8BJG-ZW18-010G-0222-0008-HW39", "PNDR-BCBX-T0V7-1GJG-ZX10-0808-0222-0008-HW5M", "PNDR-B65V-G8Y8-QFA0-ZY0G-000G-0222-0008-HW6C", "PNDR-B0GC-NZB7-5K9G-ZW10-1090-0222-0008-HW01", "PNDR-AQ72-AB3T-8HKG-ZW41-2810-0222-0008-HW2Y", "PNDR-BBFP-AT6D-3A40-ZW40-321G-0222-0008-HW2Q", "PNDR-B2HE-VNG2-JBA0-ZW0G-08H0-0222-0008-HW5F", "PNDR-AZ0R-7EZ7-8BBG-ZW60-0WRR-0222-0008-HW70", "PNDR-AF37-3EF8-QKBG-ZY00-100G-0222-0008-HW78", "PNDR-ABE2-G44T-MAAG-ZYG1-10G8-0222-0008-HW7Y", "PNDR-A465-Y5A2-7J40-ZW2C-30D4-0222-0008-HW22", "PNDR-B3E6-RT4N-1BAG-ZX20-74J0-0222-0008-HW2F", "PNDR-AS7A-TXQB-0K1G-ZW05-0G80-0222-0008-HW2W", "PNDR-BZ71-V17T-RA20-ZW1H-2400-0222-0008-HW00", "PNDR-AWX0-ESS8-3E1G-ZW00-1290-0222-0008-HW6T", "PNDR-B6VT-F28N-7GBG-ZW10-900G-0222-0008-HW2Z", "PNDR-BMPR-8ZDD-3FVG-ZY08-200G-0222-0008-HW4T", "PNDR-ATK4-FNJ0-7HA0-ZW00-0G24-0222-0008-HW3W", "PNDR-BMTA-XB75-4NSG-ZX00-041G-0222-0008-HW1C", "PNDR-AQ70-SJ2Q-8B2G-ZZ0G-S900-0222-0008-HW14", "PNDR-B5XT-55QQ-2D40-ZW5J-1324-0222-0008-HW2M", "PNDR-ABV7-VRQ7-8MVG-ZY04-G004-0222-0008-HW0M", "PNDR-BSQP-CSGV-5EHG-ZW88-1000-0222-0008-HW45", "PNDR-ABB4-MK2N-1NA0-ZY10-1080-0222-0008-HW5S", "PNDR-ARWX-BF22-RM2G-ZY2K-0000-0222-0008-HW36", "PNDR-BNWP-MN17-2QVG-ZX82-0R50-0222-0008-HW7Y", "PNDR-BPHG-PE77-3S40-ZW52-G2AG-0222-0008-HW18", "PNDR-A48J-N557-8GJG-ZW0B-0AV0-0222-0008-HW01", "PNDR-AX8S-1B3X-0QC0-ZX08-A94G-0222-0008-HW19", "PNDR-AWEH-3EZ7-5G9G-ZY00-10MC-0222-0008-HW65", "PNDR-ARVW-YY1B-3QT0-ZW00-G0RW-0222-0008-HW62", "PNDR-BJJY-G45D-3B1G-ZW28-850G-0222-0008-HW0J", "PNDR-AKE3-36W7-2B20-ZX09-00G0-0222-0008-HW69", "PNDR-AP77-Y3X0-6DB0-ZW04-G088-0222-0008-HW6C", "PNDR-B08X-X8B7-1J20-ZW0G-0A00-0222-0008-HW07", "PNDR-ANYF-7TZ5-3PJ0-ZW80-010G-0222-0008-HW0D", "PNDR-BWW8-3E0A-RFSG-ZW0R-70A8-0222-0008-HW0C", "PNDR-A3FT-2Y7G-6G28-ZWG0-0000-0222-0008-HW0S", "PNDR-B8BR-9MEW-0MW0-ZWJ4-MGS0-0222-0008-HW4K", "PNDR-A9R0-QCZ7-JH1G-ZYCG-2M30-0222-0008-HW44", "PNDR-B453-AYGJ-8AM0-ZW48-9080-0222-0008-HW7S", "PNDR-BEFX-TTB9-RCVG-ZW00-40G4-0222-0008-HW5Q", "PNDR-BVWE-3V3J-HNSG-ZY50-6G58-0222-0008-HW3A", "PNDR-AAD3-2KGQ-4AKG-ZWR0-J89G-0222-0008-HW6Q", "PNDR-B5VR-PE2T-8DT8-QW42-0418-0222-000B-9D48", "PNDR-AS3J-V0PR-8JA8-J4J0-HHM4-0222-000H-K44Y", "PNDR-AVZ1-QFRV-8F28-ZW00-1810-0222-000C-YG5J", "PNDR-AN33-CBXX-0DM0-ZW02-S854-0222-0008-HW4P", "PNDR-AR92-KZW8-3CT8-YW20-0120-0222-000C-1J7Q", "PNDR-ATB4-QE1T-0HA8-Y510-8060-0222-000B-J16Y"];
 
 /* ══════════════════════════════════════════════════════════════════════════
    THE LAB. The engine above is sliced verbatim into workers by its markers;
@@ -1127,12 +1129,18 @@ function draw(){
   readUI();
   const R=resolve();
   const N=S.frames, P=R.P;
+  /* a pasted card always gets its screen: it overrules the seed's subject */
+  const pasted=unpackV3Card(S.tex)?S.tex.toUpperCase():'';
+  if(pasted && P.subject!==12){ P.subject=12; P.camDx*=0.4; }
   const isScreen=(P.subject===12);
   let card=packPlate(S.seed,R.si,P.subject,P.hour,P.ground,P.dither,N,P.weather,P.cam);
-  const texCard=isScreen ? (unpackV3Card(S.tex)?S.tex.toUpperCase():'') : '';
+  /* the screen chooses its own loop from the v3 canon - the curator's keeps -
+     unless a card was pasted; either way the card is written into the DNA */
+  const texCard=isScreen ? (pasted || V3_CANON[(mulberry32((S.seed^0x5C4E)>>>0)()*V3_CANON.length)|0]) : '';
   if(texCard) card+=' '+texCard;
   $('dna').value=card;
-  $('p-sub').textContent=SUBJECTS[P.subject]+(isScreen?' · '+(texCard?'PNDR':'AUTO LOOP'):''); $('p-sch').textContent=R.key; $('p-hour').textContent=HOURS[P.hour]+'°';
+  $('tex').placeholder = isScreen&&!pasted ? 'AUTO · '+texCard : 'AUTO — or paste a v3 PNDR card';
+  $('p-sub').textContent=SUBJECTS[P.subject]+(isScreen?' · '+(pasted?'PASTED':'CANON'):''); $('p-sch').textContent=R.key; $('p-hour').textContent=HOURS[P.hour]+'°';
   $('p-gnd').textContent=GROUNDS[P.ground]+' · '+WEATHERS[P.weather]+' · '+CAMS[P.cam]; $('p-dit').textContent=DITHERS[P.dither]; $('p-ink').textContent=P.inks;
   const job=++JOB;
   $('save').setAttribute('disabled',''); LAST.frames=null;
@@ -1158,7 +1166,7 @@ function v3JobFor(R,N,texCard){
   const c=texCard?unpackV3Card(texCard):null;
   let seed=S.seed, scheme=R.scheme, mode, corr, fx={}, voidamt=0, locality=0, chromacap=0, ov={maskType:0,maskStyle:0,cx:16,cy:16,size:16,n:0,form:0}, epoch=0, ver=6;
   if(c){
-    seed=c.seed; mode=c.mode; corr=c.corr; fx=c.fx; voidamt=c.voidamt|0; locality=c.locality|0; chromacap=c.chromacap|0; if(c.ov)ov=c.ov; epoch=c.epoch|0; ver=c.ver|0;
+    seed=c.seed; mode=c.mode; corr=c.corr; fx=c.fx; voidamt=c.voidamt|0; locality=c.locality|0; chromacap=c.chromacap|0; if(c.ov)ov=c.ov; epoch=c.epoch|0; ver=Math.max(6,c.ver|0);
     scheme = c.scheme==='GENESIS'?genesisScheme(seed) : c.scheme==='TISGEN'?tisScheme(seed) : (SCHEMES[c.scheme]||R.scheme);
   } else {
     /* the seed's own loop, in the plate's own scheme */
