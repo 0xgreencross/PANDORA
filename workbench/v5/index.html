@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DITHERVOID // PLATES · V5</title>
+<style>
+  :root{ --bg:#08080a; --ink:#e9e9f0; --mut:#8a8a9c; --hair:#232330; --acc:#e8ff2e; --mag:#ff1f9c; --cyan:#19f0ff; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font:12px/1.45 ui-monospace,Menlo,Consolas,monospace; -webkit-text-size-adjust:100%; }
+  #wrap{ max-width:1180px; margin:0 auto; padding:14px 14px 40px; display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px; align-items:start; }
+  @media (max-width:820px){ #wrap{ grid-template-columns:1fr; padding:8px 8px 40px; gap:12px; } }
+  header{ grid-column:1/-1; display:flex; align-items:baseline; justify-content:space-between; gap:12px; border-bottom:1px solid var(--hair); padding-bottom:8px; }
+  header b{ letter-spacing:.22em; font-weight:600; }
+  header span{ color:var(--mut); letter-spacing:.1em; font-size:10px; }
+  #stagecol{ min-width:0; }
+  #stage{ position:relative; width:100%; aspect-ratio:1/1; background:#000; border:1px solid var(--hair); overflow:hidden; }
+  #view{ width:100%; height:100%; display:block; image-rendering:pixelated; image-rendering:crisp-edges; }
+  #osd{ position:absolute; left:10px; bottom:8px; font-size:10px; letter-spacing:.14em; color:var(--ink); background:rgba(0,0,0,.55); padding:3px 7px; pointer-events:none; }
+  #prog{ position:absolute; left:0; top:0; height:2px; width:0; background:var(--acc); transition:width .12s linear; }
+  #plate{ margin-top:8px; font-size:10px; letter-spacing:.12em; color:var(--mut); display:flex; flex-wrap:wrap; gap:6px 16px; }
+  #plate b{ color:var(--ink); font-weight:500; }
+  #rail{ display:flex; flex-direction:column; gap:10px; }
+  .row{ display:grid; grid-template-columns:78px 1fr; align-items:center; gap:8px; }
+  .row label{ font-size:9.5px; letter-spacing:.16em; color:var(--mut); }
+  select,input[type=text],input[type=number]{ width:100%; background:#0e0e12; color:var(--ink); border:1px solid var(--hair); padding:7px 8px; font:inherit; letter-spacing:.06em; border-radius:0; -webkit-appearance:none; appearance:none; }
+  select:focus,input:focus{ outline:none; border-color:var(--cyan); }
+  #acts{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px; }
+  button{ background:#0e0e12; color:var(--ink); border:1px solid var(--hair); padding:11px 8px; font:inherit; letter-spacing:.16em; font-size:11px; cursor:pointer; border-radius:0; }
+  button:hover{ border-color:var(--ink); }
+  button[disabled]{ color:#4a4a58; border-color:#1a1a22; cursor:default; }
+  button.prime{ border-color:var(--acc); color:var(--acc); }
+  button.wide{ grid-column:1/-1; }
+  #dna{ font-size:11px; letter-spacing:.12em; }
+  #note{ font-size:10px; line-height:1.6; color:var(--mut); letter-spacing:.04em; border-top:1px solid var(--hair); padding-top:10px; }
+  #note b{ color:var(--ink); font-weight:500; letter-spacing:.14em; }
+  #stat{ font-size:10px; letter-spacing:.12em; color:var(--mut); min-height:14px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header><b>DITHERVOID // PLATES</b><span>WORKBENCH V5 · KINETIC MONUMENTS</span></header>
+  <div id="stagecol">
+    <div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div></div>
+    <div id="plate"><span>SUBJECT <b id="p-sub">—</b></span><span>SCHEME <b id="p-sch">—</b></span><span>HOUR <b id="p-hour">—</b></span><span>GROUND <b id="p-gnd">—</b></span><span>SCREEN <b id="p-dit">—</b></span><span>INKS <b id="p-ink">—</b></span></div>
+  </div>
+  <div id="rail">
+    <div class="row"><label>SEED</label><input id="seed" type="number" min="1" max="4294967295" step="1" value="696969"></div>
+    <div class="row"><label>SUBJECT</label><select id="subject"></select></div>
+    <div class="row"><label>SCHEME</label><select id="scheme"></select></div>
+    <div class="row"><label>HOUR</label><select id="hour"></select></div>
+    <div class="row"><label>GROUND</label><select id="ground"></select></div>
+    <div class="row"><label>SCREEN</label><select id="dither"></select></div>
+    <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
+    <div id="acts">
+      <button id="new" class="prime">&#9860; NEW PLATE</button>
+      <button id="draw">&#9654; DRAW</button>
+      <button id="save" disabled>&#10515; SAVE GIF</button>
+      <button id="copy">&#10697; COPY DNA</button>
+    </div>
+    <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PLATE-…"></div>
+    <button id="recall" class="wide">&#8635; RECALL DNA</button>
+    <div id="stat"></div>
+    <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Only the palettes and the GIF writer survive from the old engines.</div>
+  </div>
+</div>
+<script>
+/*CORE-BEGIN*/
+/* ══════════════════════════════════════════════════════════════════════════
+   DITHERVOID · V5 · "PLATES"
+   Kinetic monuments in an empty landscape, lit by one sun, drawn as prints.
+
+   Nothing here is a pixel effect. Every frame is a small three-dimensional
+   scene - a sculpture whose parts move with whole-number periods so the loop
+   closes by construction - ray-marched, lit, outlined, and then printed in a
+   handful of inks from the palettes this box has always carried. Only the
+   palettes and the GIF writer survive from before. Everything else is new.
+   ═══════════════════════════════════════════════════════════════════════ */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const TAU=Math.PI*2;
+const hex = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+function hsv2rgb(h,s,v){
+  h=((h%1)+1)%1; const i=(h*6)|0, f=h*6-i;
+  const p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s);
+  let r,g,b;
+  switch(i%6){case 0:r=v;g=t;b=p;break;case 1:r=q;g=v;b=p;break;case 2:r=p;g=v;b=t;break;
+    case 3:r=p;g=q;b=v;break;case 4:r=t;g=p;b=v;break;default:r=v;g=p;b=q;}
+  return [(r*255)|0,(g*255)|0,(b*255)|0];
+}
+const toHex=c=>'#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+function genesisScheme(seed){
+  const r=mulberry32((seed^0x5EEDC01A)>>>0);
+  const GOLD=0.61803398875;
+  let h=r();
+  const nA=2+(r()*3|0);                        // 2-4 fluorescent anchors
+  const anchors=[];
+  for(let i=0;i<nA;i++){
+    anchors.push(hsv2rgb(h, 0.86+r()*0.14, 0.9+r()*0.1));
+    h+=GOLD+(r()-0.5)*0.12;                    // golden-ratio hue walk + jitter
+  }
+  const baseHue=r();
+  const stops=[ toHex(hsv2rgb(baseHue,0.5+r()*0.4,0.02+r()*0.03)) ];   // tinted void
+  stops.push( toHex(hsv2rgb(anchors.length?baseHue:0, 0.8, 0.10+r()*0.10)) );
+  for(let i=0;i<nA;i++) stops.push(toHex(anchors[i]));
+  if(r()<0.55) stops.push(toHex(hsv2rgb(h,0.55+r()*0.35,1)));           // saturated hot tip (no white)
+  const glitch=anchors.map(toHex); glitch.push(toHex(hsv2rgb(h+GOLD,0.9,1))); glitch.push(stops[0]);
+  return {stops, glitch, genesis:true, fam:(anchors.length?((Math.atan2(anchors[0][1]-128,anchors[0][0]-128)+4)%6|0):0)};
+}
+/* ============================================================================
+   TIS∞ — the TIME IS SCAM generative palette rules, ported verbatim from
+   timeisscam.art buildPalette(). Five families: MONO+ALARM, NEON DUO,
+   SPLIT TRIO, TRIADIC ACID, ANALOGOUS RUSH. Roles: bg ink dim acc1 acc2
+   alarm shade. Deterministic per seed; family = the seed's own roll.
+   ========================================================================== */
+function hslToRgb(h,s,l){
+  h=((h%360)+360)%360; s/=100; l/=100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs(((h/60)%2)-1)), m=l-c/2;
+  let r,g,b;
+  if(h<60){r=c;g=x;b=0;}else if(h<120){r=x;g=c;b=0;}
+  else if(h<180){r=0;g=c;b=x;}else if(h<240){r=0;g=x;b=c;}
+  else if(h<300){r=x;g=0;b=c;}else{r=c;g=0;b=x;}
+  return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];
+}
+const TIS_FAMILIES=['MONO+ALARM','NEON DUO','SPLIT TRIO','TRIADIC ACID','ANALOGOUS RUSH'];
+function tisScheme(seed){
+  const rr=mulberry32((seed^0x715C0DE5)>>>0);
+  const n=x=>(rr()*x)|0, chance=p=>rr()*100<p;
+  const fam=n(5);
+  const B=n(360);
+  const neon=h=>[((h%360)+360)%360, 92+n(9), 53+n(8)];
+  const bone=[36+n(12), 12+n(8), 78+n(8)];
+  const alarmHue=n(26);                                 // red..orange
+  let acc1, acc2, alarm=neon(alarmHue);
+  if(fam===0){ acc1=neon(alarmHue); acc2=[alarmHue,88,38]; }
+  else if(fam===1){ acc1=neon(B); acc2=neon(B+180); }
+  else if(fam===2){ acc1=neon(B); acc2=neon(B+150); alarm=neon(B+210); }
+  else if(fam===3){ acc1=neon(B); acc2=neon(B+120); alarm=neon(B+240); }
+  else { acc1=neon(B); acc2=neon(B+30); }
+  const bg=chance(55)?[B,16,3+n(3)]:[240,10,3+n(2)];
+  const dim=[bone[0],10,34+n(10)];
+  const shade=[bg[0],Math.min(40,bg[1]+10),bg[2]+6];
+  const roles=[bg,bone,dim,acc1,acc2,alarm,shade].map(c=>hslToRgb(c[0],c[1],c[2]));
+  const lum=c=>0.2126*c[0]+0.7152*c[1]+0.0722*c[2];
+  /* doctrine gate: same sanitizer every fixed scheme passes at load — TIS's
+     near-white bone ink gets pulled to its saturated identity, rules intact */
+  let stops=roles.slice().sort((a,b)=>lum(a)-lum(b)).map(toHex);
+  stops=stops.map((st,i)=>deWhiteHex(st, i?stops[i-1]:null));
+  const glitch=[roles[3],roles[4],roles[5],roles[1],roles[0]].map(toHex)
+    .map(st=>deWhiteHex(st, stops[stops.length-1]));
+  return {stops, glitch, genesis:true, fam:'T'+fam, famName:TIS_FAMILIES[fam]};
+}
+const SCHEMES = {
+  DITHERVOID:{ stops:['#050507','#0b0030','#7a0050','#ff1f9c','#19f0ff','#e8ff2e','#fbfff0'],
+               glitch:['#ff1f9c','#19f0ff','#e8ff2e','#ffffff','#04030a'] },
+  TOXIC:     { stops:['#02050a','#06210f','#0a5d2b','#39ff14','#b6ff3a','#eaffea'],
+               glitch:['#39ff14','#b6ff3a','#00ffd5','#ffffff','#02060a'] },
+  INFRARED:  { stops:['#070202','#2a0306','#7a0410','#ff2a1a','#ff7a00','#ffe08a','#fff6e8'],
+               glitch:['#ff2a1a','#ff7a00','#ffd000','#ffffff','#0a0202'] },
+  VAPOR:     { stops:['#0a0418','#2a0a4a','#7a1f8c','#ff5fc8','#5fd0ff','#aeffff','#fff2ff'],
+               glitch:['#ff5fc8','#5fd0ff','#c08bff','#ffffff','#0a0418'] },
+  ULTRAVIO:  { stops:['#030212','#170a52','#3a1fb0','#6a5cff','#19c6ff','#9bffff','#f4f0ff'],
+               glitch:['#6a5cff','#19c6ff','#c64bff','#ffffff','#030212'] },
+  BONE:      { stops:['#040406','#1c1c22','#42424c','#8a8a96','#c8c8d0','#ffffff'],
+               glitch:['#ffffff','#c8c8d0','#000000','#9a9aa6','#1c1c22'] },
+  ACIDBURN:  { stops:['#020602','#0a3300','#3fbf00','#aaff00','#eaff00','#ffff8a','#ffffe8'],
+               glitch:['#aaff00','#eaff00','#39ff14','#ffffff','#020602'] },
+  HOTLINE:   { stops:['#0c0212','#3a005a','#b3009c','#ff2fd6','#ff71ce','#ffb3f6','#fff0fc'],
+               glitch:['#ff2fd6','#ff71ce','#b967ff','#ffffff','#0c0212'] },
+  LAZER:     { stops:['#02040c','#001a66','#0044ff','#00aaff','#00ffee','#8affff','#eaffff'],
+               glitch:['#00aaff','#00ffee','#0044ff','#ffffff','#02040c'] },
+  NUKEGLOW:  { stops:['#060402','#4a2a00','#c66a00','#ff9500','#ffd000','#ffff2e','#fffbe0'],
+               glitch:['#ff9500','#ffd000','#ffff2e','#ffffff','#060402'] },
+  POISONFROG:{ stops:['#020208','#003a4a','#00c2a0','#2eff9e','#c8ff2e','#ff2fd6','#fff2ff'],
+               glitch:['#2eff9e','#ff2fd6','#c8ff2e','#ffffff','#020208'] },
+  BLACKLIGHT:{ stops:['#050008','#20004a','#6a00e0','#b400ff','#ff2fff','#ff9eff','#ffeaff'],
+               glitch:['#b400ff','#ff2fff','#6a00e0','#ffffff','#050008'] },
+  EMBERGRID: { stops:['#080202','#4a0010','#e00040','#ff2e6a','#ff7a2e','#ffe02e','#fff6e0'],
+               glitch:['#ff2e6a','#ff7a2e','#ffe02e','#ffffff','#080202'] },
+  CATHODE:   { stops:['#010401','#003300','#00aa00','#00ff41','#7aff9e','#e0ffe8'],
+               glitch:['#00ff41','#7aff9e','#00aa00','#ffffff','#010401'] },
+
+  /* TIME IS SCAM colorways — imported from timeisscam.art */
+  KENNE:{ stops:['#000000','#1d1f2e','#690999','#e3058c','#f8057a','#4ab144'],
+               glitch:['#f8057a','#e3058c','#690999','#4ab144','#000000'] },
+  AIRNEON:{ stops:['#101010','#7100d9','#ff00c8','#0ea1f0','#00ff00','#5dffff'],
+               glitch:['#00ff00','#ff00c8','#0ea1f0','#7100d9','#101010'] },
+  DES:{ stops:['#091020','#510087','#ff00e0','#00fa00','#86ffff'],
+               glitch:['#ff00e0','#00fa00','#510087','#86ffff','#091020'] },
+  NEONMONY:{ stops:['#050508','#212121','#441cf4','#644aaa','#e613aa','#3ec819','#0ff107','#0dffff'],
+               glitch:['#0dffff','#0ff107','#441cf4','#e613aa','#050508'] },
+  MGC:{ stops:['#050508','#212121','#ff00c8','#00ff00','#5dffff'],
+               glitch:['#00ff00','#ff00c8','#5dffff','#212121','#050508'] },
+  POLE:{ stops:['#000000','#0926ee','#ff00ff','#ff7700','#00ff74'],
+               glitch:['#00ff74','#ff7700','#ff00ff','#0926ee','#000000'] },
+  FAUXRGB:{ stops:['#000000','#8700ff','#ff0085','#ff00ff','#00ff00','#00ffff'],
+               glitch:['#00ffff','#00ff00','#ff00ff','#ff0085','#000000'] },
+  TRUERGB:{ stops:['#060606','#0000ff','#ff0000','#00ff00'],
+               glitch:['#00ff00','#ff0000','#0000ff','#060606','#060606'] },
+  XPASTE:{ stops:['#020210','#09081a','#1e152b','#722fcd','#f93e9e','#99f8b5'],
+               glitch:['#f93e9e','#722fcd','#99f8b5','#1e152b','#020210'] },
+  DOE:{ stops:['#000000','#222c33','#c200a2','#0994ee','#00c374'],
+               glitch:['#0994ee','#00c374','#c200a2','#222c33','#000000'] },
+  TISNUKE:{ stops:['#050508','#292629','#5529ed','#ef472b','#f2882f','#f1da2e'],
+               glitch:['#ef472b','#5529ed','#f1da2e','#f2882f','#050508'] },
+};
+/* NO-WHITE DOCTRINE: strip the white component from any pale stop and
+   renormalize its residual hue to full saturation — ramp tops go HOT, not pale.
+   (Pure greys inherit the previous stop's hue; last resort is brand magenta.) */
+function deWhiteHex(h6, prevH6){
+  const c=hex(h6); const m=Math.min(c[0],c[1],c[2]);
+  if(m<=160)return h6;
+  let sat=[c[0]-m,c[1]-m,c[2]-m];
+  let mx=Math.max(sat[0],sat[1],sat[2]);
+  if(mx<12&&prevH6){ const p=hex(prevH6); const pm=Math.min(p[0],p[1],p[2]);
+    sat=[p[0]-pm,p[1]-pm,p[2]-pm]; mx=Math.max(sat[0],sat[1],sat[2]); }
+  if(mx<12){ sat=[255,31,156]; mx=255; }
+  const k=255/mx;
+  return toHex(sat.map(v=>{v=(v*k)|0; return v>255?255:v;}));
+}
+for(const key in SCHEMES){ const sc=SCHEMES[key];
+  sc.stops=sc.stops.map((st,i)=>deWhiteHex(st, i?sc.stops[i-1]:null));
+  sc.glitch=sc.glitch.map(st=>deWhiteHex(st, sc.stops[sc.stops.length-1]));
+}
+const SCHEME_KEYS = Object.keys(SCHEMES);
+const MODES = ['MOLTEN','LATHE','ENGRAVED','BROADCAST','GRID','SATELLITE','SEDIMENT','VEINED','MASS','IDOL'];
+
+/* build a 256-entry smooth gradient LUT from stops */
+function buildGradient(stops){
+  const cols = stops.map(hex);
+  const lut = new Uint8Array(256*3);
+  const seg = cols.length-1;
+  for(let i=0;i<256;i++){
+    const f=i/255*seg; let a=Math.floor(f); if(a>=seg)a=seg-1; const t=f-a;
+    const c0=cols[a], c1=cols[a+1];
+    lut[i*3]  = (c0[0]+(c1[0]-c0[0])*t)|0;
+    lut[i*3+1]= (c0[1]+(c1[1]-c0[1])*t)|0;
+    lut[i*3+2]= (c0[2]+(c1[2]-c0[2])*t)|0;
+  }
+  return lut;
+}
+/* build a small power-of-two palette (gradient samples + glitch extremes) + nearest LUT */
+
+/* ───────────────────────────── vectors (allocation-free) ────────────────── */
+/* Everything hot works on plain numbers. Objects in the inner loop would put
+   the garbage collector in the picture, and the picture has no room for it. */
+
+/* ───────────────────────────── SDF primitives ───────────────────────────── */
+function sdBox(px,py,pz,bx,by,bz){
+  const qx=Math.abs(px)-bx, qy=Math.abs(py)-by, qz=Math.abs(pz)-bz;
+  const ox=qx>0?qx:0, oy=qy>0?qy:0, oz=qz>0?qz:0;
+  const m=Math.max(qx,Math.max(qy,qz));
+  return Math.sqrt(ox*ox+oy*oy+oz*oz)+(m<0?m:0);
+}
+function sdSphere(px,py,pz,r){ return Math.sqrt(px*px+py*py+pz*pz)-r; }
+/* torus with axis y */
+function sdTorusY(px,py,pz,R,r){ const q=Math.sqrt(px*px+pz*pz)-R; return Math.sqrt(q*q+py*py)-r; }
+/* torus with axis z (a standing ring) */
+function sdTorusZ(px,py,pz,R,r){ const q=Math.sqrt(px*px+py*py)-R; return Math.sqrt(q*q+pz*pz)-r; }
+/* vertical capped cylinder, centred, half-height h */
+function sdCylY(px,py,pz,r,h){
+  const dx=Math.sqrt(px*px+pz*pz)-r, dy=Math.abs(py)-h;
+  const ox=dx>0?dx:0, oy=dy>0?dy:0;
+  return Math.min(Math.max(dx,dy),0)+Math.sqrt(ox*ox+oy*oy);
+}
+/* cone standing on its base at y=0, height h, base radius r */
+function sdConeY(px,py,pz,r,h){
+  const q=Math.sqrt(px*px+pz*pz);
+  /* distance to the slanted side, clipped by base and apex */
+  const nx=h, ny=r, nl=Math.sqrt(nx*nx+ny*ny);
+  const side=(q*nx+(py-0)*ny-r*nx)/nl;   /* signed distance to the line through (r,0)-(0,h) */
+  const base=-py;
+  const cap=py-h;
+  return Math.max(side,Math.max(base,cap));
+}
+function smin(a,b,k){ const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25; }
+
+/* ───────────────────────────── the plate (per seed) ─────────────────────── */
+const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','HELIX','SUNDIAL','BREATHER','TWINS'];
+const GROUNDS=['PLAIN','TILES','WATER'];
+const HOURS=[8,14,22,32,44,58,70];        /* sun elevation, degrees */
+const DITHERS=['FINE','COARSE','LINE','LINE'];
+
+function buildPlate(seed, o){
+  o=o||{};
+  const rng=mulberry32(seed^0x9E3779B9);
+  const P={ seed:seed>>>0 };
+  P.subject = (o.subject!=null)? o.subject : (rng()*SUBJECTS.length)|0;
+  P.hour    = (o.hour!=null)?    o.hour    : (rng()*HOURS.length)|0;
+  P.ground  = (o.ground!=null)?  o.ground  : (rng()*GROUNDS.length)|0;
+  P.dither  = (o.dither!=null)?  o.dither  : (rng()*DITHERS.length)|0;
+  /* the sun */
+  const el=HOURS[P.hour]*Math.PI/180;
+  /* half the plates are lit from behind the subject: a low sun over the
+     shoulder of the monument throws its shadow at the viewer, and that is the
+     oldest trick in the print-maker's book */
+  P.camAz = rng()*TAU;
+  P.sunAz = rng()<0.5 ? P.camAz+Math.PI+(rng()-0.5)*1.4 : rng()*TAU;
+  P.sunEl = el;
+  P.sunSweep = (P.subject===6);               /* the sundial's light orbits */
+  /* the camera: azimuth, elevation, and distance are the composition */
+  P.camEl = (4+rng()*13)*Math.PI/180;       /* low: a monument is looked UP at */
+  P.camDist = 1;                              /* scaled per subject below */
+  P.horizon = rng()<0.5 ? 0.38 : 0.62;        /* where the horizon sits in the frame */
+  P.bob = rng()<0.6 ? 0.04+rng()*0.06 : 0;    /* the camera breathes */
+  P.fov = 0.55+rng()*0.25;                    /* tan(half angle) */
+  /* the sky */
+  P.moon = rng()<0.42;
+  P.moonR = 0.07+rng()*0.10;
+  P.moonAz = P.camAz+Math.PI+(rng()-0.5)*0.9; /* roughly behind the subject, in frame */
+  P.moonEl = (8+rng()*22)*Math.PI/180;
+  P.haze = 0.25+rng()*0.55;                   /* how much the distance dissolves */
+  /* the ink */
+  P.inks = [3,4,5,6][(rng()*4)|0];
+  P.gamma = 0.8+rng()*0.6;
+  P.outline = rng()<0.85;
+  P.accentSun = rng()<0.7;
+  P.lineAng = rng()*Math.PI;
+  P.linePer = 4+((rng()*3)|0);                 /* 4..6 px at the print raster */
+  /* the subject's own dials */
+  P.a = rng(); P.b = rng(); P.c = rng(); P.d = rng(); P.e = rng();
+  /* every subject sits inside roughly a 4-unit sphere; the camera distance
+     puts that sphere at a chosen share of the frame */
+  /* each subject's real extent, so every plate fills its frame the same way */
+  const EXT=[3.6,3.9,4.2,5.0,3.4,3.8,6.2,2.8,4.0];
+  const fill = 0.55+rng()*0.22;                /* how much of the frame the subject takes */
+  P.camDist = EXT[P.subject]/(2*P.fov*fill);
+  P.camTargetY = [1.7,1.9,1.9,1.8,1.7,1.8,1.7,1.6,1.9][P.subject];
+  P.camDx = (rng()-0.5)*(P.subject===2||P.subject===5||P.subject===0 ? 0.35 : 0.9);   /* off the centre line, less so for the tall ones */
+  P.border = rng()<0.4;                        /* a plate's rule */
+  return P;
+}
+
+/* ───────────────────────────── the scenes ───────────────────────────────── */
+/* Each scene is a distance function of (x,y,z). Everything that depends on
+   the loop phase - every rotation, every bob - is computed ONCE per frame by
+   prepFrame() into FR, because a sine inside a distance function is a sine
+   evaluated a thousand times per pixel. sceneSDF sets MAT as a side effect:
+   1 body, 2 accent part. The ground plane is analytic and never in here. */
+let MAT=1;
+const FR={ th:0, c:new Float64Array(64), s:new Float64Array(64), v:new Float64Array(64) };
+function prepFrame(P,th){
+  FR.th=th;
+  const c=FR.c, s=FR.s, v=FR.v;
+  switch(P.subject){
+    case 0:{ const tilt=(P.a-0.5)*0.16; c[0]=Math.cos(tilt); s[0]=Math.sin(tilt);
+      v[0]=Math.cos(th)*1.55; v[1]=1.2+Math.sin(th*2)*0.35; v[2]=Math.sin(th)*1.55; break; }
+    case 1:{ c[0]=Math.cos(0.45); s[0]=Math.sin(0.45); c[1]=Math.cos(-0.9); s[1]=Math.sin(-0.9); c[2]=Math.cos(0.7); s[2]=Math.sin(0.7);
+      for(let k=0;k<3;k++){ const a=th+k*TAU/3; v[k*2]=Math.cos(a)*1.25; v[k*2+1]=Math.sin(a)*1.25; }
+      for(let k=0;k<2;k++){ const a=-th+k*Math.PI; v[6+k*2]=Math.cos(a)*1.75; v[7+k*2]=Math.sin(a)*1.75; }
+      break; }
+    case 2:{ const rate=[1,-2,1,-1,2]; let yy=0;
+      for(let k=0;k<5;k++){ const h=0.42-k*0.03, w=0.95-k*0.13, a=th*rate[k]+k*0.6;
+        c[k]=Math.cos(a); s[k]=Math.sin(a); v[k*4]=w; v[k*4+1]=h; v[k*4+2]=yy+h; v[k*4+3]=w*0.62; yy+=h*2+0.03; }
+      break; }
+    case 3:{ const top=3.3, L=1.6+P.b*0.6, A=0.35+P.c*0.35;
+      for(let k=0;k<5;k++){ const px=-1.6+k*0.8, ang=A*Math.sin(th+k*(0.9+P.d*1.4));
+        v[k*4]=px; v[k*4+1]=px+Math.sin(ang)*L; v[k*4+2]=top-Math.cos(ang)*L; v[k*4+3]=L; }
+      break; }
+    case 4:{ const r=0.95; v[0]=1.7+Math.sin(th)*r; v[1]=Math.cos(th)*r; break; }
+    case 5:{ const n=11, rise=0.26, step=TAU/7, ph=th/TAU;
+      for(let k=0;k<n;k++){ const kk=k-ph, a=kk*step; c[k]=Math.cos(a); s[k]=Math.sin(a); v[k]=0.55+kk*rise; }
+      break; }
+    case 6: break;
+    case 7:{ for(let k=0;k<4;k++){ const a=k*TAU/4+P.a*3;
+        v[k*4]=Math.cos(a)*0.62; v[k*4+1]=1.6+Math.sin(th+k*1.57)*0.18; v[k*4+2]=Math.sin(a)*0.62; v[k*4+3]=0.55+0.12*Math.sin(th*(k%2?2:1)+k); }
+      break; }
+    default:{ c[0]=Math.cos(0.12); s[0]=Math.sin(0.12); c[1]=Math.cos(th); s[1]=Math.sin(th); }
+  }
+}
+function sceneSDF(P,x,y,z){
+  let d=1e9, m=1;
+  const c=FR.c, s=FR.s, v=FR.v;
+  switch(P.subject){
+    case 0:{ /* MONOLITH — a leaning slab, and a small moon that circles it */
+      const lx= c[0]*x + s[0]*(y-1.7), ly=-s[0]*x + c[0]*(y-1.7);
+      d=sdBox(lx,ly,z,0.42,1.7,0.22);
+      const ds=sdSphere(x-v[0],y-v[1],z-v[2],0.22);
+      if(ds<d){ d=ds; m=2; }
+      break; }
+    case 1:{ /* ORRERY — a sphere on a stem, rings that turn, beads that ride them */
+      const cy=1.9;
+      d=Math.min(sdSphere(x,y-cy,z,0.55), sdCylY(x,y-cy*0.5,z,0.06,cy*0.5));
+      let rx=x, ry=(y-cy)*c[0] - z*s[0], rz=(y-cy)*s[0] + z*c[0];
+      let dr=sdTorusY(rx,ry,rz,1.25,0.035);
+      for(let k=0;k<3;k++){ const db=sdSphere(rx-v[k*2],ry,rz-v[k*2+1],0.13); if(db<dr)dr=db; }
+      if(dr<d){ d=dr; m=2; }
+      rx=x*c[2]-z*s[2]; rz=x*s[2]+z*c[2];
+      ry=(y-cy)*c[1] - rz*s[1]; rz=(y-cy)*s[1] + rz*c[1];
+      let dr2=sdTorusY(rx,ry,rz,1.75,0.03);
+      for(let k=0;k<2;k++){ const db=sdSphere(rx-v[6+k*2],ry,rz-v[7+k*2],0.17); if(db<dr2)dr2=db; }
+      if(dr2<d){ d=dr2; m=2; }
+      break; }
+    case 2:{ /* TOTEM — a stack, each block turning at its own whole-number rate */
+      for(let k=0;k<5;k++){
+        const w=v[k*4], h=v[k*4+1], yc=v[k*4+2];
+        const ay=Math.abs(y-yc)-h; if(ay>d) continue;          /* cannot be nearer than d */
+        const lx=c[k]*x+s[k]*z, lz=-s[k]*x+c[k]*z;
+        const db=sdBox(lx,y-yc,lz,w,h,v[k*4+3]);
+        if(db<d){ d=db; m=(k&1)?2:1; }
+      }
+      break; }
+    case 3:{ /* PENDULA — five bobs on a beam, swinging in a chord */
+      const top=3.3;
+      d=Math.min(sdBox(x,y-top,z,2.4,0.08,0.12), sdBox(x-2.3,y-top*0.5,z,0.08,top*0.5,0.08), sdBox(x+2.3,y-top*0.5,z,0.08,top*0.5,0.08));
+      for(let k=0;k<5;k++){
+        const px=v[k*4], bx=v[k*4+1], by=v[k*4+2];
+        if(Math.abs(x-px)-2.2>d) continue;
+        const vx=bx-px, vy=by-top, ex=x-px, ey=y-top;
+        let t=(ex*vx+ey*vy)/(vx*vx+vy*vy); t=t<0?0:(t>1?1:t);
+        const rx=ex-vx*t, ry=ey-vy*t;
+        const drod=Math.sqrt(rx*rx+ry*ry+z*z)-0.02;
+        const db=sdSphere(x-bx,y-by,z,0.19);
+        if(drod<d){ d=drod; m=1; }
+        if(db<d){ d=db; m=2; }
+      }
+      break; }
+    case 4:{ /* GATE — a standing ring, and a sphere that threads it, twice a loop */
+      const cy=1.7;
+      d=sdTorusZ(x,y-cy,z,1.45,0.13);
+      const ds=sdSphere(x,y-v[0],z-v[1],0.34);
+      if(ds<d){ d=ds; m=2; }
+      const dp=sdBox(x,y-0.12,z,0.5,0.12,0.5); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 5:{ /* HELIX — a stair that climbs forever: one step of screw per loop */
+      d=sdCylY(x,y-1.7,z,0.16,1.9);
+      for(let k=0;k<11;k++){
+        const yy=v[k];
+        const ay=Math.abs(y-yy)-0.05; if(ay>d) continue;       /* pruned by height first */
+        const lx=c[k]*x+s[k]*z, lz=-s[k]*x+c[k]*z;
+        const db=sdBox(lx-0.62,y-yy,lz,0.5,0.045,0.19);
+        if(db<d){ d=db; m=(k&1)?2:1; }
+      }
+      break; }
+    case 6:{ /* SUNDIAL — a colonnade; the light itself walks around it */
+      for(let k=0;k<6;k++){
+        const px=-2.5+k*1.0, pz=(k%2?0.35:-0.35);
+        if(Math.abs(x-px)-0.3>d) continue;
+        const dc=sdCylY(x-px,y-1.5,z-pz,0.16,1.5);
+        if(dc<d){ d=dc; m=1; }
+        const dcap=sdBox(x-px,y-3.05,z-pz,0.24,0.05,0.24);
+        if(dcap<d){ d=dcap; m=2; }
+      }
+      const db=sdBox(x,y-3.18,z,3.0,0.07,0.55); if(db<d){ d=db; m=1; }
+      break; }
+    case 7:{ /* BREATHER — four bodies melting into one, breathing in turn */
+      for(let k=0;k<4;k++){
+        const ds=sdSphere(x-v[k*4],y-v[k*4+1],z-v[k*4+2],v[k*4+3]);
+        d=(k===0)?ds:smin(d,ds,0.45);
+      }
+      m=1;
+      break; }
+    default:{ /* TWINS — two obelisks leaning together, and the bar that turns between them */
+      for(let sgn=-1;sgn<=1;sgn+=2){
+        const ox=x-sgn*1.3;
+        const lx=c[0]*ox+sgn*s[0]*y, ly=-sgn*s[0]*ox+c[0]*y;
+        const dc=sdConeY(lx,ly,z,0.42,3.6);
+        if(dc<d){ d=dc; m=1; }
+      }
+      const lx=c[1]*x+s[1]*z, lz=-s[1]*x+c[1]*z;
+      const db=sdBox(lx,y-2.35,lz,1.05,0.05,0.05);
+      if(db<d){ d=db; m=2; }
+      const dh=sdSphere(x,y-2.35,z,0.14); if(dh<d){ d=dh; m=2; }
+    }
+  }
+  MAT=m;
+  return d;
+}
+
+/* ───────────────────────────── camera & light ───────────────────────────── */
+function camera(P,th){
+  const az=P.camAz, el=P.camEl;
+  const bob=P.bob*Math.sin(th);
+  const dist=P.camDist*(1+bob*0.5);
+  const cx=Math.cos(az)*Math.cos(el)*dist, cy=Math.sin(el)*dist+P.camTargetY+bob, cz=Math.sin(az)*Math.cos(el)*dist;
+  /* forward toward the target */
+  let fx=-cx, fy=P.camTargetY-cy, fz=-cz; let fl=Math.sqrt(fx*fx+fy*fy+fz*fz); fx/=fl; fy/=fl; fz/=fl;
+  /* right = forward x world-up; with forward (0,0,-1) this is +x, and the
+     frame comes out the way up the world is */
+  let rx=-fz, ry=0, rz=fx; let rl=Math.sqrt(rx*rx+rz*rz); rx/=rl; rz/=rl;
+  /* up = right x forward */
+  const ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
+  return {cx,cy,cz,fx,fy,fz,rx,ry,rz,ux,uy,uz};
+}
+function sunDir(P,th){
+  const az=P.sunSweep ? th : P.sunAz, el=P.sunEl;
+  return [Math.cos(az)*Math.cos(el), Math.sin(el), Math.sin(az)*Math.cos(el)];
+}
+
+/* ───────────────────────────── the march ────────────────────────────────── */
+/* Every sculpture lives inside one bounding sphere. A ray that misses it can
+   only meet the ground or the sky, and both of those are analytic - so the
+   expensive march is spent only where there is something to find. This is
+   the difference between twelve seconds a frame and a few hundred
+   milliseconds. */
+const BCX=0, BCY=1.85, BCZ=0, BR=4.4;
+const FAR=60, EPS=0.0016, MAXST=64;
+let HIT_T=-1, HIT_M=4;                        /* 4 = sky */
+function march(P,ox,oy,oz,dx,dy,dz,th){
+  const tg = dy<-1e-6 ? -oy/dy : -1;          /* the ground, exactly */
+  const bx=ox-BCX, by=oy-BCY, bz=oz-BCZ;
+  const b=bx*dx+by*dy+bz*dz, c=bx*bx+by*by+bz*bz-BR*BR;
+  const disc=b*b-c;
+  if(disc>0){
+    const s=Math.sqrt(disc); let t0=-b-s, t1=-b+s;
+    if(t1>0.02){
+      if(t0<0.02)t0=0.02;
+      const tEnd = (tg>0 && tg<t1) ? tg : t1;
+      if(!(tg>0 && tg<t0)){                   /* the ground is not already in the way */
+        let t=t0;
+        for(let i=0;i<MAXST;i++){
+          const d=sceneSDF(P,ox+dx*t,oy+dy*t,oz+dz*t);
+          if(d<EPS*(1+t*0.5)){ HIT_T=t; HIT_M=MAT; return t; }
+          t+=d*0.9;
+          if(t>tEnd) break;
+        }
+      }
+    }
+  }
+  if(tg>0){ HIT_T=tg; HIT_M=0; return tg; }
+  HIT_T=-1; HIT_M=4; return -1;
+}
+const NRM=[0,0,0];
+function normalAt(P,x,y,z,th){
+  const e=0.0012;
+  const a=sceneSDF(P,x+e,y-e,z-e), b=sceneSDF(P,x-e,y-e,z+e), c=sceneSDF(P,x-e,y+e,z-e), d=sceneSDF(P,x+e,y+e,z+e);
+  let nx=a-b-c+d, ny=-a-b+c+d, nz=-a+b-c+d;
+  const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+  NRM[0]=nx/l; NRM[1]=ny/l; NRM[2]=nz/l;
+}
+function shadow(P,x,y,z,lx,ly,lz,th){
+  /* the sun's ray from here must cross the sculpture's sphere to be shaded */
+  const bx=x-BCX, by=y-BCY, bz=z-BCZ;
+  const b=bx*lx+by*ly+bz*lz, c=bx*bx+by*by+bz*bz-BR*BR;
+  const disc=b*b-c; if(disc<=0) return 1;
+  const s=Math.sqrt(disc); let t0=-b-s, t1=-b+s; if(t1<=0.03) return 1;
+  let t=t0>0.03?t0:0.03, res=1;
+  for(let i=0;i<14;i++){
+    const d=sceneSDF(P,x+lx*t,y+ly*t,z+lz*t);
+    const k=d/(0.08*t); if(k<res)res=k;
+    if(res<0.02) return 0;
+    t+=Math.max(d,0.03);
+    if(t>t1) break;
+  }
+  return res<0?0:res;
+}
+function occlusion(P,x,y,z,nx,ny,nz,th){
+  const bx=x-BCX, by=y-BCY, bz=z-BCZ;
+  if(bx*bx+by*by+bz*bz>(BR+0.8)*(BR+0.8)) return 1;
+  let occ=0, sc=1;
+  for(let i=1;i<=3;i++){
+    const h=0.03+0.16*i;
+    const qx=x+nx*h, qy=y+ny*h, qz=z+nz*h;
+    let d=sceneSDF(P,qx,qy,qz); if(qy<d)d=qy;   /* the ground occludes too */
+    occ+=(h-d)*sc; sc*=0.7;
+  }
+  const r=1-1.6*occ; return r<0?0:(r>1?1:r);
+}
+
+/* ───────────────────────────── the sky ──────────────────────────────────── */
+/* Luminance only. Colour is the ink's business. */
+function skyLum(P,dx,dy,dz,sx,sy,sz){
+  const up=dy<0?0:dy;
+  let l=0.62-0.40*Math.pow(up,0.55);         /* bright horizon, dark zenith: the print's sky */
+  const sd=dx*sx+dy*sy+dz*sz;
+  const halo=Math.exp(26*(sd-1))*0.35+Math.exp(900*(sd-1))*1.4;
+  l+=halo;
+  if(P.moon){
+    const mx=Math.cos(P.moonAz)*Math.cos(P.moonEl), my=Math.sin(P.moonEl), mz=Math.sin(P.moonAz)*Math.cos(P.moonEl);
+    const md=dx*mx+dy*my+dz*mz;
+    const ang=Math.acos(md>1?1:md);
+    if(ang<P.moonR){ const q=ang/P.moonR; l=0.86-0.22*q*q; }
+    else if(ang<P.moonR*1.06){ l=0.12; }      /* a thin dark limb: a printed disc */
+  }
+  return l;
+}
+
+/* ───────────────────────────── one frame ────────────────────────────────── */
+/* Fills lum (Float32 W*W in 0..1+), mat (Uint8), dep (Float32) for the frame.
+   sun-accent pixels are flagged in mat as 3. */
+function renderLum(P,W,th,lum,mat,dep){
+  prepFrame(P,th);
+  const C=camera(P,th);
+  const S=sunDir(P,th), sx=S[0], sy=S[1], sz=S[2];
+  const fov=P.fov;
+  const hy=P.horizon;                         /* frame share below the horizon line */
+  /* the camera pitch is what places the horizon; we approximate by shifting
+     the image plane vertically: a plate is composed, not pointed */
+  const shift=(hy-0.5)*2.0*fov*0.9;
+  const fogK=0.028*P.haze;
+  const water=(P.ground===2);
+  for(let py=0;py<W;py++){
+    const v=-((py+0.5)/W*2-1)*fov - shift;
+    for(let px=0;px<W;px++){
+      const u=((px+0.5)/W*2-1)*fov + P.camDx*0.35;
+      let dx=C.fx+C.rx*u+C.ux*v, dy=C.fy+C.ry*u+C.uy*v, dz=C.fz+C.rz*u+C.uz*v;
+      const dl=Math.sqrt(dx*dx+dy*dy+dz*dz); dx/=dl; dy/=dl; dz/=dl;
+      const i=py*W+px;
+      let t=march(P,C.cx,C.cy,C.cz,dx,dy,dz,th);
+      if(t<0){
+        lum[i]=skyLum(P,dx,dy,dz,sx,sy,sz); mat[i]=(P.accentSun&&(dx*sx+dy*sy+dz*sz)>0.9975)?3:4; dep[i]=FAR;
+        continue;
+      }
+      let hx=C.cx+dx*t, hy2=C.cy+dy*t, hz=C.cz+dz*t;
+      let m=HIT_M, nx,ny,nz;
+      if(m===0){ nx=0; ny=1; nz=0; hy2=0; }
+      else { normalAt(P,hx,hy2,hz,th); nx=NRM[0]; ny=NRM[1]; nz=NRM[2]; }
+      let L;
+      if(m===0 && water){
+        /* still water: the sky and the monument again, upside down, with a
+           faint ripple that breathes with the loop */
+        const rip=0.012*Math.sin(hx*3.1+th*2)+0.010*Math.sin(hz*2.7-th*2+1.3);
+        nx+=rip; nz-=rip*0.7; const nl=Math.sqrt(nx*nx+ny*ny+nz*nz); nx/=nl; ny/=nl; nz/=nl;
+        const dn=dx*nx+dy*ny+dz*nz;
+        let rx=dx-2*dn*nx, ry=dy-2*dn*ny, rz=dz-2*dn*nz;
+        const t2=march(P,hx+nx*0.01,hy2+0.01,hz+nz*0.01,rx,ry,rz,th);
+        let refl;
+        if(t2<0) refl=skyLum(P,rx,ry,rz,sx,sy,sz);
+        else{
+          const qx=hx+rx*t2, qy=hy2+ry*t2, qz=hz+rz*t2;
+          if(HIT_M===0){ NRM[0]=0; NRM[1]=1; NRM[2]=0; } else normalAt(P,qx,qy,qz,th);
+          const ndl=Math.max(0,NRM[0]*sx+NRM[1]*sy+NRM[2]*sz);
+          refl=0.18+0.55*ndl*shadow(P,qx+NRM[0]*0.02,qy+NRM[1]*0.02,qz+NRM[2]*0.02,sx,sy,sz,th);
+        }
+        const fres=Math.pow(1-Math.max(0,-(dx*nx+dy*ny+dz*nz)),3);
+        L=0.05+refl*(0.62+0.38*fres);
+        m=0;
+      } else {
+        const ndl=Math.max(0,nx*sx+ny*sy+nz*sz);
+        const sh=ndl>0?shadow(P,hx+nx*0.02,hy2+ny*0.02,hz+nz*0.02,sx,sy,sz,th):0;
+        const ao=occlusion(P,hx,hy2,hz,nx,ny,nz,th);
+        const skyF=0.5+0.5*ny;
+        /* a soft rim from the sky behind the form, which is what lifts a
+           silhouette off a print */
+        const rim=Math.pow(1-Math.max(0,-(dx*nx+dy*ny+dz*nz)),4)*0.18;
+        L=0.16*skyF*ao + 0.78*ndl*sh + rim*ao;
+        if(m===0){
+          /* the plain: a faint tile grid draws the perspective the eye needs */
+          if(P.ground===1){
+            const gx=Math.abs(((hx*0.8)%1+1)%1-0.5), gz=Math.abs(((hz*0.8)%1+1)%1-0.5);
+            if(gx>0.47||gz>0.47) L*=0.55;
+          }
+          L*=0.82;
+        }
+        /* a small specular on the accent parts: the sun caught on a bead */
+        if(m===2){
+          const hxv=sx-dx, hyv=sy-dy, hzv=sz-dz; const hl=Math.sqrt(hxv*hxv+hyv*hyv+hzv*hzv);
+          const spec=Math.pow(Math.max(0,(nx*hxv+ny*hyv+nz*hzv)/hl),48)*sh;
+          L+=spec*0.9;
+        }
+      }
+      /* the distance dissolves into the sky's horizon tone */
+      const f=1-Math.exp(-t*fogK);
+      L=L*(1-f)+0.60*f;
+      lum[i]=L; mat[i]=m; dep[i]=t;
+    }
+  }
+}
+
+/* ───────────────────────────── outlines ─────────────────────────────────── */
+/* Depth discontinuities become ink lines. The line is what turns a render
+   into a drawing. */
+function outlineMask(W,dep,mat,out){
+  out.fill(0);
+  for(let y=1;y<W-1;y++)for(let x=1;x<W-1;x++){
+    const i=y*W+x, m=mat[i];
+    if(m===4||m===3) continue;                /* the sky draws no line */
+    const d=dep[i];
+    /* the ground against itself is never a line - a receding plane changes
+       depth faster and faster toward the horizon, and outlining that would
+       ink the whole distance black. Lines belong to the forms. */
+    const nb=[i-1,i+1,i-W,i+W];
+    for(let k=0;k<4;k++){
+      const j=nb[k], mj=mat[j];
+      if(m===0 && (mj===0||mj===4)) continue;      /* ground meets ground or sky: no line */
+      if(mj!==m){ if(m!==0){ out[i]=1; break; } continue; }   /* a form's edge, drawn on the form */
+      /* same material: a fold or a step within the form, on the nearer side */
+      if(m!==0 && (dep[j]-d)>0.03*(1+d*0.25)){ out[i]=1; break; }
+    }
+  }
+}
+
+/* ───────────────────────────── the ink ──────────────────────────────────── */
+const BAYER8=[0,32,8,40,2,34,10,42,48,16,56,24,50,18,58,26,12,44,4,36,14,46,6,38,60,28,52,20,62,30,54,22,
+  3,35,11,43,1,33,9,41,51,19,59,27,49,17,57,25,15,47,7,39,13,45,5,37,63,31,55,23,61,29,53,21];
+const BAYER4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+function ditherThreshold(P,x,y){
+  switch(P.dither){
+    case 0: return (BAYER4[(y&3)*4+(x&3)]+0.5)/16;
+    case 1: return (BAYER8[(y&7)*8+(x&7)]+0.5)/64;
+    default:{ /* line screen: an engraving's hatching, one direction per plate */
+      const c=Math.cos(P.lineAng), s=Math.sin(P.lineAng);
+      const q=(x*c+y*s)/P.linePer; return ((q%1)+1)%1; }
+  }
+}
+/* Build the plate's palette: K inks sampled up the scheme's gradient, one
+   accent from its glitch colours, and the first ink doubling as the line. */
+function buildInks(P,scheme){
+  const grad=buildGradient(scheme.stops);
+  const K=P.inks, pal=[];
+  for(let k=0;k<K;k++){
+    const g=Math.round(Math.pow(k/(K-1),1.0)*255);
+    pal.push([grad[g*3],grad[g*3+1],grad[g*3+2]]);
+  }
+  /* the ground ink goes genuinely dark */
+  pal[0]=[Math.round(pal[0][0]*0.55),Math.round(pal[0][1]*0.55),Math.round(pal[0][2]*0.55)];
+  const acc=hex(scheme.glitch[0]);
+  pal.push(acc);                              /* index K: the sun's accent */
+  while(pal.length<8) pal.push(pal[pal.length-1]);
+  return pal;
+}
+/* lum + mat + outline -> palette indices */
+function inkFrame(P,W,lum,mat,line,out){
+  const K=P.inks, g=P.gamma;
+  for(let y=0;y<W;y++)for(let x=0;x<W;x++){
+    const i=y*W+x;
+    if(line[i]){ out[i]=0; continue; }
+    if(mat[i]===3){ out[i]=K; continue; }     /* the sun disc */
+    let L=lum[i]; if(L<0)L=0; if(L>1)L=1;
+    L=Math.pow(L,g);
+    const v=L*(K-1);
+    const base=Math.floor(v), frac=v-base;
+    const th=ditherThreshold(P,x,y);
+    let idx=base+(frac>th?1:0); if(idx>K-1)idx=K-1;
+    out[i]=idx;
+  }
+  if(P.border){
+    const b=Math.max(2,Math.round(W*0.014)), m=Math.max(3,Math.round(W*0.03));
+    for(let y=0;y<W;y++)for(let x=0;x<W;x++){
+      const e=Math.min(Math.min(x,W-1-x),Math.min(y,W-1-y));
+      if(e<m) out[y*W+x]=0;                   /* the margin */
+      else if(e<m+b) out[y*W+x]=K-1;          /* the rule, in the lightest ink */
+    }
+  }
+}
+
+/* ───────────────────────────── the card ─────────────────────────────────── */
+const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+function crc8(bytes){let c=0; for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c&0x80)?((c<<1)^0x07)&0xff:(c<<1)&0xff;} return c;}
+/* ver(4) seed(32) scheme(5) subject(4) hour(3) ground(2) dither(2) frames(7) = 59 -> 64 bits + crc */
+function packPlate(seed,schemeIdx,subject,hour,ground,dither,frames){
+  let v=0n; const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
+  push(1,4); push(seed>>>0,32); push(schemeIdx,5); push(subject,4); push(hour,3); push(ground,2); push(dither,2); push(frames,7);
+  v<<=5n;                                     /* 59 -> 64 */
+  const bytes=[]; for(let i=7;i>=0;i--)bytes.push(Number((v>>BigInt(i*8))&0xffn));
+  bytes.push(crc8(bytes));
+  let bv=0n; for(const b of bytes)bv=(bv<<8n)|BigInt(b);
+  bv<<=3n;                                    /* 72 -> 75 = 15 chars */
+  let out=''; for(let i=14;i>=0;i--)out+=B32[Number((bv>>BigInt(i*5))&31n)];
+  return 'PLATE-'+out.slice(0,5)+'-'+out.slice(5,10)+'-'+out.slice(10,15);
+}
+function unpackPlate(str){
+  let sx=String(str||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
+  if(sx.startsWith('PLATE'))sx=sx.slice(5);
+  sx=sx.replace(/I|L/g,'1').replace(/O/g,'0').replace(/U/g,'V');
+  if(sx.length!==15) return null;
+  let bv=0n; for(const c of sx){const d=B32.indexOf(c); if(d<0)return null; bv=(bv<<5n)|BigInt(d);}
+  bv>>=3n;
+  const bytes=[]; for(let i=8;i>=0;i--)bytes.push(Number((bv>>BigInt(i*8))&0xffn));
+  const crc=bytes.pop(); if(crc8(bytes)!==crc)return null;
+  let v=0n; for(const b of bytes)v=(v<<8n)|BigInt(b);
+  let used=0; const pull=bits=>{const r=Number((v>>BigInt(64-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
+  const ver=pull(4); if(ver!==1)return null;
+  const seed=pull(32), scheme=pull(5), subject=pull(4), hour=pull(3), ground=pull(2), dither=pull(2), frames=pull(7);
+  if(scheme>=SCHEME_KEYS.length+2||subject>=SUBJECTS.length||hour>=HOURS.length||ground>=GROUNDS.length||frames<8||frames>80)return null;
+  return {seed,scheme,subject,hour,ground,dither,frames};
+}
+/* scheme index: 0..SCHEME_KEYS.length-1 fixed, then GENESIS, then TISGEN */
+function schemeOf(idx,seed){
+  if(idx<SCHEME_KEYS.length) return {key:SCHEME_KEYS[idx], scheme:SCHEMES[SCHEME_KEYS[idx]]};
+  if(idx===SCHEME_KEYS.length) return {key:'GENESIS', scheme:genesisScheme(seed)};
+  return {key:'TISGEN', scheme:tisScheme(seed)};
+}
+/*CORE-END*/
+function Sink(cap){ this.b=new Uint8Array(cap||65536); this.n=0; }
+Sink.prototype.u8=function(v){ if(this.n>=this.b.length){const g=new Uint8Array(this.b.length*2);g.set(this.b);this.b=g;} this.b[this.n++]=v&0xff; };
+Sink.prototype.u16=function(v){ this.u8(v); this.u8(v>>8); };
+Sink.prototype.str=function(s){ for(let i=0;i<s.length;i++)this.u8(s.charCodeAt(i)); };
+Sink.prototype.done=function(){ return this.b.subarray(0,this.n); };
+
+function lzwEncode(minCodeSize, data){
+  const clearCode=1<<minCodeSize, eoiCode=clearCode+1;
+  let codeSize=minCodeSize+1, nextCode=clearCode+2;
+  const dict=new Map(); const out=new Sink(1<<16); let cur=0,curBits=0;
+  const emit=code=>{ cur|=code<<curBits; curBits+=codeSize; while(curBits>=8){out.u8(cur&0xff);cur>>>=8;curBits-=8;} };
+  emit(clearCode);
+  if(data.length===0){ emit(eoiCode); if(curBits>0)out.u8(cur&0xff); return out.done(); }
+  let prefix=data[0];
+  for(let i=1;i<data.length;i++){
+    const c=data[i], key=(prefix<<8)|c, v=dict.get(key);
+    if(v!==undefined){ prefix=v; }
+    else{
+      emit(prefix);
+      if(nextCode===4096){ emit(clearCode); dict.clear(); nextCode=clearCode+2; codeSize=minCodeSize+1; }
+      else{ if(nextCode>=(1<<codeSize)&&codeSize<12)codeSize++; dict.set(key,nextCode); nextCode++; }
+      prefix=c;
+    }
+  }
+  emit(prefix); emit(eoiCode); if(curBits>0)out.u8(cur&0xff); return out.done();
+}
+function gifBegin(sink,width,height,palette,loop){
+  let bits=Math.max(1,Math.ceil(Math.log2(palette.length)));
+  const size=1<<bits, pal=palette.slice(); while(pal.length<size)pal.push([0,0,0]);
+  sink.str('GIF89a'); sink.u16(width); sink.u16(height);
+  sink.u8(0x80|((bits-1)<<4)|(bits-1)); sink.u8(0); sink.u8(0);
+  for(let i=0;i<size;i++){ sink.u8(pal[i][0]); sink.u8(pal[i][1]); sink.u8(pal[i][2]); }
+  sink.u8(0x21);sink.u8(0xFF);sink.u8(0x0B);sink.str('NETSCAPE2.0');sink.u8(0x03);sink.u8(0x01);sink.u16(loop|0);sink.u8(0x00);
+  return Math.max(2,bits); // minCodeSize
+}
+function gifFrame(sink,width,height,indices,delay,minCodeSize){
+  sink.u8(0x21);sink.u8(0xF9);sink.u8(0x04);sink.u8(0x00);sink.u16(delay|0);sink.u8(0x00);sink.u8(0x00);
+  sink.u8(0x2C);sink.u16(0);sink.u16(0);sink.u16(width);sink.u16(height);sink.u8(0x00);
+  sink.u8(minCodeSize);
+  const lzw=lzwEncode(minCodeSize,indices); let p=0;
+  while(p<lzw.length){const len=Math.min(255,lzw.length-p);sink.u8(len);for(let i=0;i<len;i++)sink.u8(lzw[p+i]);p+=len;}
+  sink.u8(0x00);
+}
+function gifEnd(sink){ sink.u8(0x3B); return sink.done(); }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE LAB. The engine above is sliced verbatim into workers by its markers;
+   nothing draws on the main thread but the player.
+   ═══════════════════════════════════════════════════════════════════════ */
+const $=id=>document.getElementById(id);
+const LADDER=[135,270,540];                /* every rung divides 1080: the draft is the print, smaller */
+const MASTER=1080;
+const DELAY_CS=4;                          /* 25fps */
+const NW=Math.max(2,Math.min(8,(navigator.hardwareConcurrency||4)));
+
+function coreSrc(){
+  const t=[...document.querySelectorAll('script:not([src])')].map(e=>e.textContent).find(x=>x.includes('/*CORE-BEGIN*/'))||'';
+  return t.slice(t.indexOf('/*CORE-BEGIN*/'), t.indexOf('/*CORE-END*/'));
+}
+const WORKER_DRIVER=`
+self.onmessage=function(e){
+  const J=e.data;
+  const W=J.W, P=J.P, N=J.N;
+  const lum=new Float32Array(W*W), mat=new Uint8Array(W*W), dep=new Float32Array(W*W), line=new Uint8Array(W*W);
+  for(let q=0;q<J.frames.length;q++){
+    const i=J.frames[q], th=i/N*TAU;
+    const idx=new Uint8Array(W*W);
+    renderLum(P,W,th,lum,mat,dep);
+    if(P.outline) outlineMask(W,dep,mat,line); else line.fill(0);
+    inkFrame(P,W,lum,mat,line,idx);
+    self.postMessage({t:'frame',i:i,W:W,job:J.job,buf:idx.buffer},[idx.buffer]);
+  }
+  self.postMessage({t:'done',job:J.job,W:W});
+};`;
+let POOL=null;
+function pool(){
+  if(POOL) return POOL;
+  const url=URL.createObjectURL(new Blob([coreSrc()+'\n'+WORKER_DRIVER],{type:'text/javascript'}));
+  POOL=[]; for(let i=0;i<NW;i++) POOL.push(new Worker(url));
+  return POOL;
+}
+
+/* ---- state ---- */
+const S={ seed:696969, subject:-1, scheme:-1, hour:-1, ground:-1, dither:-1, frames:36 };
+let JOB=0, RUN={ frames:null, N:0, W:0, pal:null, P:null, key:'', rung:0, have:0 };
+let PLAY={ raf:0, frames:null, N:0, W:0, pal:null, t0:0 };
+let LAST={ frames:null, N:0, W:0, pal:null, card:'' };
+
+function fillSelects(){
+  const opt=(sel,list,auto)=>{ const el=$(sel); el.innerHTML='';
+    if(auto){ const o=document.createElement('option'); o.value=-1; o.textContent='AUTO'; el.appendChild(o); }
+    list.forEach((n,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=n; el.appendChild(o); }); };
+  opt('subject',SUBJECTS,true);
+  opt('scheme',[...SCHEME_KEYS,'GENESIS','TISGEN'],true);
+  opt('hour',HOURS.map(h=>h+'°'),true);
+  opt('ground',GROUNDS,true);
+  opt('dither',['FINE','COARSE','LINE','LINE'].map((n,i)=>n+(i===3?' ·2':'')),true);
+}
+function readUI(){
+  S.seed=(parseInt($('seed').value,10)>>>0)||1;
+  S.subject=+$('subject').value; S.scheme=+$('scheme').value; S.hour=+$('hour').value;
+  S.ground=+$('ground').value; S.dither=+$('dither').value; S.frames=+$('frames').value;
+}
+function writeUI(){
+  $('seed').value=S.seed; $('subject').value=S.subject; $('scheme').value=S.scheme; $('hour').value=S.hour;
+  $('ground').value=S.ground; $('dither').value=S.dither; $('frames').value=S.frames;
+}
+/* the resolved plate: AUTO is the seed's own choice */
+function resolve(){
+  const rng=mulberry32((S.seed^0x51CE)>>>0);
+  const o={};
+  if(S.subject>=0)o.subject=S.subject; if(S.hour>=0)o.hour=S.hour; if(S.ground>=0)o.ground=S.ground; if(S.dither>=0)o.dither=S.dither;
+  const P=buildPlate(S.seed,o);
+  const si = S.scheme>=0 ? S.scheme : (rng()*(SCHEME_KEYS.length+2))|0;
+  const {key,scheme}=schemeOf(si,S.seed);
+  return {P, si, key, scheme};
+}
+
+/* ---- drawing: the ladder ---- */
+function draw(){
+  readUI();
+  const R=resolve();
+  const N=S.frames, P=R.P;
+  const card=packPlate(S.seed,R.si,P.subject,P.hour,P.ground,P.dither,N);
+  $('dna').value=card;
+  $('p-sub').textContent=SUBJECTS[P.subject]; $('p-sch').textContent=R.key; $('p-hour').textContent=HOURS[P.hour]+'°';
+  $('p-gnd').textContent=GROUNDS[P.ground]; $('p-dit').textContent=DITHERS[P.dither]; $('p-ink').textContent=P.inks;
+  const pal=buildInks(P,R.scheme);
+  const job=++JOB;
+  RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0 };
+  $('save').setAttribute('disabled',''); LAST.frames=null;
+  rung(job);
+}
+function rung(job){
+  if(job!==JOB) return;
+  const W=LADDER[RUN.rung];
+  RUN.W=W; RUN.frames=new Array(RUN.N); RUN.have=0;
+  $('osd').textContent='DRAWING '+W+'² · '+RUN.N+' FRAMES';
+  $('prog').style.width='0%';
+  const ws=pool(), N=RUN.N;
+  /* interleave, so every worker carries an even share of the loop */
+  const lists=ws.map(()=>[]); for(let i=0;i<N;i++) lists[i%ws.length].push(i);
+  let done=0;
+  ws.forEach((w,k)=>{
+    w.onmessage=e=>{
+      const m=e.data; if(m.job!==job) return;
+      if(m.t==='frame'){
+        RUN.frames[m.i]=new Uint8Array(m.buf); RUN.have++;
+        $('prog').style.width=Math.round(RUN.have/N*100)+'%';
+        /* the first frame of the first rung goes on the glass immediately */
+        if(RUN.rung===0 && RUN.have===1) paintOne(RUN.frames[m.i],W,RUN.pal);
+      } else if(m.t==='done'){
+        if(++done===ws.length) rungDone(job);
+      }
+    };
+    w.postMessage({job, P:RUN.P, N, W, frames:lists[k]});
+  });
+}
+function rungDone(job){
+  if(job!==JOB) return;
+  const W=RUN.W;
+  play(RUN.frames,RUN.N,W,RUN.pal);
+  $('osd').textContent=(W===LADDER[LADDER.length-1]?'PRINT ':'DRAFT ')+W+'² · 25FPS';
+  if(RUN.rung<LADDER.length-1){ RUN.rung++; setTimeout(()=>rung(job),30); }
+  else{
+    LAST={ frames:RUN.frames, N:RUN.N, W, pal:RUN.pal, card:RUN.card };
+    $('save').removeAttribute('disabled');
+    $('prog').style.width='0%';
+    $('stat').textContent='THE PRINT IS READY — SAVE writes it at '+MASTER+'².';
+  }
+}
+
+/* ---- the player ---- */
+const view=$('view'), vctx=view.getContext('2d');
+const off=document.createElement('canvas'), octx=off.getContext('2d');
+let img=null, u32=null;
+function paintOne(fr,W,pal){
+  if(off.width!==W){ off.width=off.height=W; img=octx.createImageData(W,W); u32=new Uint32Array(img.data.buffer); }
+  const L=new Uint32Array(16);
+  for(let q=0;q<16;q++){ const c=pal[q]||pal[pal.length-1]; L[q]=(255<<24)|(c[2]<<16)|(c[1]<<8)|c[0]; }
+  for(let q=0;q<W*W;q++) u32[q]=L[fr[q]];
+  octx.putImageData(img,0,0);
+  vctx.imageSmoothingEnabled=false;
+  vctx.drawImage(off,0,0,view.width,view.height);
+}
+function play(frames,N,W,pal){
+  if(PLAY.raf) cancelAnimationFrame(PLAY.raf);
+  PLAY={ raf:0, frames, N, W, pal, t0:performance.now(), shown:-1 };
+  const step=()=>{
+    PLAY.raf=requestAnimationFrame(step);
+    const i=Math.floor((performance.now()-PLAY.t0)/(DELAY_CS*10))%N;
+    if(i===PLAY.shown) return; PLAY.shown=i;
+    paintOne(frames[i],W,pal);
+  };
+  PLAY.raf=requestAnimationFrame(step);
+}
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&PLAY.raf){cancelAnimationFrame(PLAY.raf);PLAY.raf=0;} else if(PLAY.frames&&!PLAY.raf) play(PLAY.frames,PLAY.N,PLAY.W,PLAY.pal); });
+
+/* ---- the print: 1080², nearest-neighbour from the 540 frames, the box's own writer ---- */
+function saveGif(){
+  if(!LAST.frames) return;
+  const {frames,N,W,pal,card}=LAST;
+  const k=MASTER/W, out=MASTER;
+  $('stat').textContent='WRITING '+out+'²…';
+  setTimeout(()=>{
+    const sink=new Sink(1<<20);
+    const pal16=[]; for(let q=0;q<16;q++) pal16.push(pal[q]||pal[pal.length-1]);
+    const mcs=gifBegin(sink,out,out,pal16,0);
+    const px=new Uint8Array(out*out);
+    for(let f=0;f<N;f++){
+      const src=frames[f]; let o=0;
+      for(let y=0;y<out;y++){ const sy=((y/k)|0)*W; for(let x=0;x<out;x++) px[o++]=src[sy+((x/k)|0)]; }
+      gifFrame(sink,out,out,px,DELAY_CS,mcs);
+    }
+    const bytes=new Uint8Array(gifEnd(sink));
+    const blob=new Blob([bytes],{type:'image/gif'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='PLATE_'+SUBJECTS[LAST_P().subject]+'_'+S.seed+'.gif'; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },4000);
+    $('stat').textContent='SAVED · '+(bytes.length/1024|0)+'KB · '+card;
+  },20);
+}
+function LAST_P(){ return RUN.P; }
+
+/* ---- rolls, recalls ---- */
+function newPlate(){
+  S.seed=(Math.random()*0xFFFFFFFF)>>>0;
+  $('seed').value=S.seed;
+  draw();
+}
+function recall(){
+  const c=unpackPlate($('dna').value);
+  if(!c){ $('stat').textContent='THAT IS NOT A PLATE.'; return; }
+  S.seed=c.seed; S.scheme=c.scheme; S.subject=c.subject; S.hour=c.hour; S.ground=c.ground; S.dither=c.dither; S.frames=c.frames;
+  writeUI(); draw();
+}
+$('new').addEventListener('click',newPlate);
+$('draw').addEventListener('click',draw);
+$('save').addEventListener('click',saveGif);
+$('recall').addEventListener('click',recall);
+$('copy').addEventListener('click',()=>{ const v=$('dna').value; if(!v)return; try{ navigator.clipboard.writeText(v); $('stat').textContent='DNA COPIED'; }catch(e){ $('dna').select(); } });
+['subject','scheme','hour','ground','dither','frames'].forEach(id=>$(id).addEventListener('change',draw));
+$('seed').addEventListener('change',draw);
+
+fillSelects();
+(function boot(){
+  const q=new URLSearchParams(location.search).get('dna');
+  if(q){ $('dna').value=q; const c=unpackPlate(q); if(c){ recall(); return; } }
+  writeUI(); draw();
+})();
+</script>
+</body>
+</html>
