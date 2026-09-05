@@ -13,6 +13,19 @@
   header{ grid-column:1/-1; display:flex; align-items:baseline; justify-content:space-between; gap:12px; border-bottom:1px solid var(--hair); padding-bottom:8px; }
   header b{ letter-spacing:.22em; font-weight:600; }
   header span{ color:var(--mut); letter-spacing:.1em; font-size:10px; }
+  header #art{ padding:7px 10px; font-size:10px; letter-spacing:.16em; margin-left:auto; }
+  header #hsub{ margin-left:auto; }
+  header #art + *{ margin-left:0; }
+  #acts{ margin-top:0; }
+  /* ART: the plate takes the whole screen. The same mechanism the public box
+     and the workbenches use: a class on body, nothing asked of the browser's
+     fullscreen API, which iOS does not have for anything but video. */
+  body.artmax #rail, body.artmax #plate, body.artmax header b, body.artmax header #hsub{ display:none; }
+  body.artmax #wrap{ display:block; max-width:none; padding:0; min-height:100dvh; background:#000; }
+  body.artmax header{ position:fixed; right:10px; top:10px; z-index:5; border:none; padding:0; }
+  body.artmax #stagecol{ min-height:100dvh; display:flex; align-items:center; justify-content:center; }
+  body.artmax #stage{ width:min(100vw,100dvh); height:min(100vw,100dvh); border:none; }
+  body.artmax #osd{ display:none; }
   #stagecol{ min-width:0; }
   #stage{ position:relative; width:100%; aspect-ratio:1/1; background:#000; border:1px solid var(--hair); overflow:hidden; }
   #view{ width:100%; height:100%; display:block; image-rendering:pixelated; image-rendering:crisp-edges; }
@@ -25,7 +38,7 @@
   .row label{ font-size:9.5px; letter-spacing:.16em; color:var(--mut); }
   select,input[type=text],input[type=number]{ width:100%; background:#0e0e12; color:var(--ink); border:1px solid var(--hair); padding:7px 8px; font:inherit; letter-spacing:.06em; border-radius:0; -webkit-appearance:none; appearance:none; }
   select:focus,input:focus{ outline:none; border-color:var(--cyan); }
-  #acts{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px; }
+  #acts{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   button{ background:#0e0e12; color:var(--ink); border:1px solid var(--hair); padding:11px 8px; font:inherit; letter-spacing:.16em; font-size:11px; cursor:pointer; border-radius:0; }
   button:hover{ border-color:var(--ink); }
   button[disabled]{ color:#4a4a58; border-color:#1a1a22; cursor:default; }
@@ -39,12 +52,20 @@
 </head>
 <body>
 <div id="wrap">
-  <header><b>DITHERVOID // PLATES</b><span>WORKBENCH V5.1 · WEATHER, A BRAVER CAMERA, AND A SCREEN</span></header>
+  <header><b>DITHERVOID // PLATES</b><span id="hsub">WORKBENCH V5.1 · WEATHER, A BRAVER CAMERA, AND A SCREEN</span><button id="art" aria-pressed="false" title="give the whole screen to the plate">&#9974; ART</button></header>
   <div id="stagecol">
     <div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div></div>
     <div id="plate"><span>SUBJECT <b id="p-sub">—</b></span><span>SCHEME <b id="p-sch">—</b></span><span>HOUR <b id="p-hour">—</b></span><span>GROUND <b id="p-gnd">—</b></span><span>SCREEN <b id="p-dit">—</b></span><span>INKS <b id="p-ink">—</b></span></div>
   </div>
   <div id="rail">
+    <div id="acts">
+      <button id="new" class="prime">&#9860; NEW PLATE</button>
+      <button id="draw">&#9654; DRAW</button>
+      <button id="save" disabled>&#10515; SAVE</button>
+      <button id="copy">&#10697; COPY DNA</button>
+    </div>
+    <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PLATE-…"></div>
+    <button id="recall" class="wide">&#8635; RECALL DNA</button>
     <div class="row"><label>SEED</label><input id="seed" type="number" min="1" max="4294967295" step="1" value="696969"></div>
     <div class="row"><label>SUBJECT</label><select id="subject"></select></div>
     <div class="row"><label>SCHEME</label><select id="scheme"></select></div>
@@ -56,14 +77,6 @@
     <div class="row"><label>SCREEN LOOP</label><input id="tex" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AUTO · a random PANDORA roll — or paste a PNDR card"></div>
     <div class="row"><label>PRINT AT</label><select id="raster"><option value="135">135² · 8 px grain</option><option value="270">270² · 4 px grain</option><option value="540" selected>540² · 2 px grain</option></select></div>
     <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
-    <div id="acts">
-      <button id="new" class="prime">&#9860; NEW PLATE</button>
-      <button id="draw">&#9654; DRAW</button>
-      <button id="save" disabled>&#10515; SAVE</button>
-      <button id="copy">&#10697; COPY DNA</button>
-    </div>
-    <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PLATE-…"></div>
-    <button id="recall" class="wide">&#8635; RECALL DNA</button>
     <div id="stat"></div>
     <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Most plates are ASSEMBLIES — monuments composed on the spot from a grammar of primitives, arrangements and whole-number motions, so no two come round twice; the named subjects are the rest. Weather (a fog bank, printed rain), a camera that sways, dollies, cranes or orbits, a second light, and a PANDORA loop on every plate: the largest part of every monument wears a v3 CHIMERA loop, wrapped to the form and modelled by the plate's light, rolled at random by the seed with nothing steered. Paste any PNDR card to make it wear that one instead.</div>
   </div>
@@ -1478,6 +1491,12 @@ function recall(){
   S.tex=(parts[1]&&unpackV3Card(parts[1]))?parts[1].toUpperCase():'';
   writeUI(); draw();
 }
+$('art').addEventListener('click',()=>{
+  const on=document.body.classList.toggle('artmax');
+  const b=$('art'); b.setAttribute('aria-pressed',String(on));
+  b.textContent=on?'\u2637 CONTROLS':'\u26F6 ART';
+  window.dispatchEvent(new Event('resize'));
+});
 $('new').addEventListener('click',newPlate);
 $('draw').addEventListener('click',draw);
 $('save').addEventListener('click',saveGif);
