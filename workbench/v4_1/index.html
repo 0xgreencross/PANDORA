@@ -560,6 +560,7 @@ body.artmax #ui{
     <span class="wbb-id">&#9874; WORKBENCH V4.1 &middot; EIDOLON E11 PRESS</span>
     <span id="wb-livestat"></span>
     <nav id="shellrooms" aria-label="rooms"><a href="/">PUBLIC BOX</a><a href="/gardens.html">GARDENS</a><a href="/showcase.html">SHOWCASE</a><a href="/sealed.html">SEALED</a></nav>
+    <button type="button" id="wb-shape" class="vio" aria-pressed="false" title="SHAPE">&#9633; 1:1</button>
     <button type="button" id="wb-artmax" class="vio" aria-pressed="false" title="give the whole deck to the artwork">&#9974; ART</button>
     <button type="button" id="infobtn" class="vio" title="INFO MODE: tap this, then tap anything to learn what it does">?</button>
   </header>
@@ -9073,6 +9074,16 @@ function wbApplyAspect(){
   if(el) el.querySelectorAll('button').forEach(b=>
     b.setAttribute('aria-pressed', String(b.dataset.ar===RCFG.ar)));
   const l=$('wb-arlab'); if(l) l.textContent=RCFG.ar;
+  /* THE SHAPE SWITCH, beside the artwork switch. It states the shape the plate
+     is cut to now and says in its title what tapping it will do — a toggle
+     that only shows a state leaves you guessing which of the two it means. */
+  const sb=$('wb-shape');
+  if(sb){
+    const tall=(RCFG.ar==='9:16');
+    sb.innerHTML=(tall?'&#9647;':'&#9633;')+' '+RCFG.ar;
+    sb.setAttribute('aria-pressed', String(tall));
+    sb.title='SHAPE \u2014 the plate is '+RCFG.ar+'. Tap to cut it '+(tall?'1:1':'9:16')+'.';
+  }
 }
 function wbAspectChanged(){ wbApplyAspect(); wbRasterChanged(); }
 /* one door for the shape: the buttons come through it, and so does a card that
@@ -9138,6 +9149,10 @@ $('wb-rasttypego').addEventListener('click',e=>{e.preventDefault();wbRastType();
 $('wb-rasttype').addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();e.stopPropagation();wbRastType();} });
 $('wb-rasttype').addEventListener('change',wbRastType);
+$('wb-shape').addEventListener('click',()=>{
+  if(busy)return;                       /* a render owns the shape until it ends */
+  if(wbAspectSet(RCFG.ar==='9:16'?'1:1':'9:16', true)) generate();
+});
 $('wb-artmax').addEventListener('click',()=>{
   const on=document.body.classList.toggle('artmax');
   const b=$('wb-artmax');
