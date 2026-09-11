@@ -5182,7 +5182,7 @@ async function generateSeq(){
   lastBlob=new Blob([bytes],{type:'image/gif'}); lastBytes=bytes;
   lastURL=URL.createObjectURL(lastBlob);
   lastMaster=W;   /* the no-Worker path is hard-bound to the main thread's W */
-  lastName='EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
+  lastName='EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+(RCFG.ar==='9:16'?'_9x16':'')+'.gif';
   $('dna').value=wbPfx()+packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
 
   const LIMIT=14900000;  // 15MB platform cap, safe under both MB and MiB readings
@@ -5649,7 +5649,7 @@ async function generate(){
   if(lastURL)URL.revokeObjectURL(lastURL);
   lastBlob=new Blob([bytes],{type:'image/gif'}); lastBytes=bytes;
   lastURL=URL.createObjectURL(lastBlob);
-  lastName='EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
+  lastName='EIDOLON_'+schemeKey+'_'+scene.mode+'_'+seed+(RCFG.ar==='9:16'?'_9x16':'')+'.gif';
   $('dna').value=wbPfx()+packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
 
   /* 𝕏 has TWO ceilings and the dimension one is not negotiable: it rejects a
