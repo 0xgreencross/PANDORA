@@ -24,10 +24,23 @@
   body.artmax #wrap{ display:block; max-width:none; padding:0; min-height:100dvh; background:#000; }
   body.artmax header{ position:fixed; right:10px; top:10px; z-index:5; border:none; padding:0; }
   body.artmax #stagecol{ min-height:100dvh; display:flex; align-items:center; justify-content:center; }
-  body.artmax #stage{ width:min(100vw,100dvh); height:min(100vw,100dvh); border:none; }
+  /* ART gives the plate the largest rectangle of ITS OWN SHAPE that the
+     screen will hold. The old rule asked for a square by construction, so a
+     tall plate was squeezed into it. */
+  body.artmax #stage{
+    width:min(100vw, calc(100dvh * var(--arw) / var(--arh)));
+    height:min(100dvh, calc(100vw * var(--arh) / var(--arw)));
+    border:none;
+  }
   body.artmax #osd{ display:none; }
   #stagecol{ min-width:0; }
-  #stage{ position:relative; width:100%; aspect-ratio:1/1; background:#000; border:1px solid var(--hair); overflow:hidden; }
+  #stage{ position:relative; --arw:1; --arh:1;
+    width:100%; aspect-ratio:var(--arw)/var(--arh);
+    background:#000; border:1px solid var(--hair); overflow:hidden; }
+  body[data-ar="9:16"] #stage{ --arw:9; --arh:16; }
+  /* a tall plate in the column would otherwise run off the bottom of a
+     laptop: cap it at the viewport and let it centre in its column */
+  body:not(.artmax)[data-ar="9:16"] #stage{ max-height:78dvh; width:auto; margin:0 auto; }
   #view{ width:100%; height:100%; display:block; image-rendering:pixelated; image-rendering:crisp-edges; }
   #osd{ position:absolute; left:10px; bottom:8px; font-size:10px; letter-spacing:.14em; color:var(--ink); background:rgba(0,0,0,.55); padding:3px 7px; pointer-events:none; }
   #prog{ position:absolute; left:0; top:0; height:2px; width:0; background:var(--acc); transition:width .12s linear; }
@@ -52,7 +65,7 @@
 </head>
 <body>
 <div id="wrap">
-  <header><b>DITHERVOID // PLATES</b><span id="hsub">WORKBENCH V5.1 · WEATHER, A BRAVER CAMERA, AND A SCREEN</span><button id="art" aria-pressed="false" title="give the whole screen to the plate">&#9974; ART</button></header>
+  <header><b>DITHERVOID // PLATES</b><span id="hsub">WORKBENCH V5.1 · WEATHER, A BRAVER CAMERA, AND A SCREEN</span><button id="shape" aria-pressed="false" title="SHAPE">&#9633; 1:1</button><button id="art" aria-pressed="false" title="give the whole screen to the plate">&#9974; ART</button></header>
   <div id="stagecol">
     <div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div></div>
     <div id="plate"><span>SUBJECT <b id="p-sub">—</b></span><span>SCHEME <b id="p-sch">—</b></span><span>HOUR <b id="p-hour">—</b></span><span>GROUND <b id="p-gnd">—</b></span><span>SCREEN <b id="p-dit">—</b></span><span>INKS <b id="p-ink">—</b></span></div>
@@ -76,6 +89,7 @@
     <div class="row"><label>CAMERA</label><select id="cam"></select></div>
     <div class="row"><label>SCREEN LOOP</label><input id="tex" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AUTO · a random PANDORA roll — or paste a PNDR card"></div>
     <div class="row"><label>PRINT AT</label><select id="raster"><option value="135">135² · 8 px grain</option><option value="270">270² · 4 px grain</option><option value="540" selected>540² · 2 px grain</option></select></div>
+    <div class="row"><label>SHAPE</label><select id="aspect"><option value="1:1">1:1 &#183; the square plate</option><option value="9:16">9:16 &#183; the tall plate</option></select></div>
     <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
     <div id="stat"></div>
     <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Most plates are ASSEMBLIES — monuments composed on the spot from a grammar of primitives, arrangements and whole-number motions, so no two come round twice; the named subjects are the rest. Weather (a fog bank, printed rain), a camera that sways, dollies, cranes or orbits, a second light, and a PANDORA loop on every plate: the largest part of every monument wears a v3 CHIMERA loop, wrapped to the form and modelled by the plate's light, rolled at random by the seed with nothing steered. Paste any PNDR card to make it wear that one instead.</div>
@@ -660,19 +674,28 @@ function sceneSDF(P,x,y,z){
 }
 
 /* ───────────────────────────── camera & light ───────────────────────────── */
-function camera(P,th){
+/* TALLFIT. A tall sheet cannot have a roughly cubic subject fill its width AND
+   its height; one of the two has to give. Framed for the width alone the
+   monument shrinks into the middle of the sheet with empty floor under it, so
+   the camera steps in, and the horizon drops to put the room it gained into
+   SKY rather than into foreground. A monument wants air above it. */
+const TALL_DIST=0.78;        /* how much closer the camera stands */
+const TALL_HZ=0.52;          /* how far down the sheet the horizon falls */
+const TALL_AIM=0.30;         /* aim higher up the form, so it sits low and looms */
+function camera(P,th,tall){
   let az=P.camAz, el=P.camEl;
   const bob=P.bob*Math.sin(th);
-  let dist=P.camDist*(1+bob*0.5);
+  let dist=P.camDist*(1+bob*0.5)*(tall?TALL_DIST:1);
+  const aimY=P.camTargetY+(tall?TALL_AIM:0);
   /* THE BRAVER CAMERA. Every move is periodic in the loop: a sway and a crane
      are sines, a dolly is a sine, and an orbit is one whole turn. */
   if(P.cam===1) az+=Math.sin(th)*P.camA*3.2;
   else if(P.cam===2) dist*=1+Math.sin(th)*P.camA*1.6;
   else if(P.cam===3) el+=Math.sin(th)*P.camA*1.2;
   else if(P.cam===4) az+=th;
-  const cx=Math.cos(az)*Math.cos(el)*dist, cy=Math.sin(el)*dist+P.camTargetY+bob, cz=Math.sin(az)*Math.cos(el)*dist;
+  const cx=Math.cos(az)*Math.cos(el)*dist, cy=Math.sin(el)*dist+aimY+bob, cz=Math.sin(az)*Math.cos(el)*dist;
   /* forward toward the target */
-  let fx=-cx, fy=P.camTargetY-cy, fz=-cz; let fl=Math.sqrt(fx*fx+fy*fy+fz*fz); fx/=fl; fy/=fl; fz/=fl;
+  let fx=-cx, fy=aimY-cy, fz=-cz; let fl=Math.sqrt(fx*fx+fy*fy+fz*fz); fx/=fl; fy/=fl; fz/=fl;
   /* right = forward x world-up; with forward (0,0,-1) this is +x, and the
      frame comes out the way up the world is */
   let rx=-fz, ry=0, rz=fx; let rl=Math.sqrt(rx*rx+rz*rz); rx/=rl; rz/=rl;
@@ -805,23 +828,36 @@ function skyLum(P,dx,dy,dz,sx,sy,sz){
 }
 
 /* ───────────────────────────── one frame ────────────────────────────────── */
-/* Fills lum (Float32 W*W in 0..1+), mat (Uint8), dep (Float32) for the frame.
+/* Fills lum (Float32 W*H in 0..1+), mat (Uint8), dep (Float32) for the frame.
    sun-accent pixels are flagged in mat as 3. */
-function renderLum(P,W,th,lum,mat,dep,texbuf){
+function renderLum(P,W,H,th,lum,mat,dep,texbuf){
   prepFrame(P,th);
-  const C=camera(P,th);
+  const C=camera(P,th,(H/W)>1.05);
   const S=sunDir(P,th), sx=S[0], sy=S[1], sz=S[2];
   const fov=P.fov;
-  const hy=P.horizon;                         /* frame share below the horizon line */
+  /* THE TALL PLATE IS A TALLER WINDOW ON THE SAME WORLD. This is a camera, so
+     the honest way to change the shape of the sheet is to open the vertical
+     field and leave the horizontal one alone: the monument stays exactly the
+     size it was, at exactly the distance it was, and what arrives is air above
+     it and ground below it. Nothing is cropped and nothing is stretched, and
+     the pixels stay square because the vertical half-angle scales by the same
+     ratio as the sheet. */
+  const AR=H/W, fovV=fov*AR;
+  const tall=(AR>1.05);
+  /* and a standing thing wants more sky than floor, so the horizon is nudged
+     down the sheet. A monument photographed with the skyline at its waist is a
+     snapshot; the same monument with the skyline at its ankles is a monument. */
+  let hy=P.horizon;                           /* frame share below the horizon line */
+  if(tall) hy*=TALL_HZ;
   /* the camera pitch is what places the horizon; we approximate by shifting
      the image plane vertically: a plate is composed, not pointed */
-  const shift=(hy-0.5)*2.0*fov*0.9;
+  const shift=(hy-0.5)*2.0*fovV*0.9;
   const fogK=0.028*P.haze;
   const water=(P.ground===2);
   const bank=(P.weather===1||P.weather===3);
   const LP=P.lamp?lampPos(P,th):null;
-  for(let py=0;py<W;py++){
-    const v=-((py+0.5)/W*2-1)*fov - shift;
+  for(let py=0;py<H;py++){
+    const v=-((py+0.5)/H*2-1)*fovV - shift;
     for(let px=0;px<W;px++){
       const u=((px+0.5)/W*2-1)*fov + P.camDx*0.35;
       let dx=C.fx+C.rx*u+C.ux*v, dy=C.fy+C.ry*u+C.uy*v, dz=C.fz+C.rz*u+C.uz*v;
@@ -931,9 +967,9 @@ function renderLum(P,W,th,lum,mat,dep,texbuf){
 /* ───────────────────────────── outlines ─────────────────────────────────── */
 /* Depth discontinuities become ink lines. The line is what turns a render
    into a drawing. */
-function outlineMask(W,dep,mat,out){
+function outlineMask(W,H,dep,mat,out){
   out.fill(0);
-  for(let y=1;y<W-1;y++)for(let x=1;x<W-1;x++){
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
     const i=y*W+x, m=mat[i];
     if(m===4||m===3) continue;                /* the sky draws no line */
     const d=dep[i];
@@ -982,10 +1018,10 @@ function buildInks(P,scheme,texPal){
   return pal;
 }
 /* lum + mat + outline -> palette indices */
-function inkFrame(P,W,lum,mat,line,out,texbuf,th){
+function inkFrame(P,W,H,lum,mat,line,out,texbuf,th){
   const K=P.inks, g=P.gamma;
   const rain=(P.weather>=2);
-  for(let y=0;y<W;y++)for(let x=0;x<W;x++){
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     const i=y*W+x;
     if(line[i]){ out[i]=0; continue; }
     if(mat[i]===3){ out[i]=K; continue; }     /* the sun disc */
@@ -1007,15 +1043,15 @@ function inkFrame(P,W,lum,mat,line,out,texbuf,th){
   if(rain){
     /* RAIN, printed: streaks that fall an integer number of frame heights
        per loop, so the seam holds. Each column keeps its own drops. */
-    const ph=(th/TAU)*P.rainSp, len=Math.round(W*0.07), gap=Math.max(3,Math.round(W/60));
+    const ph=(th/TAU)*P.rainSp, len=Math.round(H*0.07), gap=Math.max(3,Math.round(W/60));
     for(let x=0;x<W;x+=gap){
       const h=((x*2654435761)>>>0)%1000/1000;
       const n=1+((x*40503)>>>0)%2;
       for(let q=0;q<n;q++){
         const off=(h+q*0.47)%1;
         const yy=(((off+ph)%1)+1)%1;
-        const y0=Math.round(yy*W*1.15-W*0.075), xo=x+((x*7919)%gap);
-        for(let k=0;k<len;k++){ const y=y0+k; if(y<0||y>=W)continue;
+        const y0=Math.round(yy*H*1.15-H*0.075), xo=x+((x*7919)%gap);
+        for(let k=0;k<len;k++){ const y=y0+k; if(y<0||y>=H)continue;
           const i=y*W+xo; if(mat[i]===6||line[i])continue;
           if(out[i]<K-1) out[i]=Math.min(K-1,out[i]+1+(k<3?1:0)); }
       }
@@ -1023,8 +1059,8 @@ function inkFrame(P,W,lum,mat,line,out,texbuf,th){
   }
   if(P.border){
     const b=Math.max(2,Math.round(W*0.014)), m=Math.max(3,Math.round(W*0.03));
-    for(let y=0;y<W;y++)for(let x=0;x<W;x++){
-      const e=Math.min(Math.min(x,W-1-x),Math.min(y,W-1-y));
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+      const e=Math.min(Math.min(x,W-1-x),Math.min(y,H-1-y));
       if(e<m) out[y*W+x]=0;                   /* the margin */
       else if(e<m+b) out[y*W+x]=K-1;          /* the rule, in the lightest ink */
     }
@@ -1035,14 +1071,19 @@ function inkFrame(P,W,lum,mat,line,out,texbuf,th){
 const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 function crc8(bytes){let c=0; for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c&0x80)?((c<<1)^0x07)&0xff:(c<<1)&0xff;} return c;}
 /* ver(4) seed(32) scheme(5) subject(4) hour(3) ground(2) dither(2) frames(7) = 59 -> 64 bits + crc */
-function packPlate(seed,schemeIdx,subject,hour,ground,dither,frames,weather,cam){
+function packPlate(seed,schemeIdx,subject,hour,ground,dither,frames,weather,cam,tall){
   let v=0n; const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
   push(2,4); push(seed>>>0,32); push(schemeIdx,5); push(subject,4); push(hour,3); push(ground,2); push(dither,2); push(frames,7);
   push(weather|0,2); push(cam|0,3);           /* 59 -> 64, exactly */
   const bytes=[]; for(let i=7;i>=0;i--)bytes.push(Number((v>>BigInt(i*8))&0xffn));
   bytes.push(crc8(bytes));
   let bv=0n; for(const b of bytes)bv=(bv<<8n)|BigInt(b);
-  bv<<=3n;                                    /* 72 -> 75 = 15 chars */
+  /* THE SHAPE RIDES IN THE PAD. 72 bits become 75 to reach fifteen
+     characters, and the top pad bit is the shape: 0 square, 1 tall. Every
+     PLATE card written before today has a zero there, so it reads back as the
+     square it was cut as. It sits below the crc, which covers the nine bytes
+     above it; a flip here is a shape, never a corrupt payload. */
+  bv=(bv<<3n)|BigInt(tall?4:0);               /* 72 -> 75 = 15 chars */
   let out=''; for(let i=14;i>=0;i--)out+=B32[Number((bv>>BigInt(i*5))&31n)];
   return 'PLATE-'+out.slice(0,5)+'-'+out.slice(5,10)+'-'+out.slice(10,15);
 }
@@ -1052,6 +1093,7 @@ function unpackPlate(str){
   sx=sx.replace(/I|L/g,'1').replace(/O/g,'0').replace(/U/g,'V');
   if(sx.length!==15) return null;
   let bv=0n; for(const c of sx){const d=B32.indexOf(c); if(d<0)return null; bv=(bv<<5n)|BigInt(d);}
+  const pad=Number(bv&7n);                    /* the shape, under the payload */
   bv>>=3n;
   const bytes=[]; for(let i=8;i>=0;i--)bytes.push(Number((bv>>BigInt(i*8))&0xffn));
   const crc=bytes.pop(); if(crc8(bytes)!==crc)return null;
@@ -1062,7 +1104,8 @@ function unpackPlate(str){
   let weather=-1, cam=-1;
   if(ver===2){ weather=pull(2); cam=pull(3); if(cam>=CAMS.length)return null; }
   if(scheme>=SCHEME_KEYS.length+2||subject>=SUBJECTS.length||hour>=HOURS.length||ground>=GROUNDS.length||frames<8||frames>80)return null;
-  return {seed,scheme,subject,hour,ground,dither,frames,weather,cam,ver};
+  const ar=(pad&4)?'9:16':'1:1';
+  return {seed,scheme,subject,hour,ground,dither,frames,weather,cam,ver,ar};
 }
 /* scheme index: 0..SCHEME_KEYS.length-1 fixed, then GENESIS, then TISGEN */
 function schemeOf(idx,seed){
@@ -1206,20 +1249,20 @@ function coreSrc(){
 const WORKER_DRIVER=`
 self.onmessage=function(e){
   const J=e.data;
-  const W=J.W, P=J.P, N=J.N;
-  const lum=new Float32Array(W*W), mat=new Uint8Array(W*W), dep=new Float32Array(W*W), line=new Uint8Array(W*W), tex=new Uint8Array(W*W);
+  const W=J.W, H=J.H||J.W, P=J.P, N=J.N;
+  const lum=new Float32Array(W*H), mat=new Uint8Array(W*H), dep=new Float32Array(W*H), line=new Uint8Array(W*H), tex=new Uint8Array(W*H);
   if(J.tex){ TEX.frames=J.tex.frames.map(function(b){return new Uint8Array(b);}); TEX.W=J.tex.W; TEX.N=J.tex.N; }
   else { TEX.frames=null; }
   for(let q=0;q<J.frames.length;q++){
     const i=J.frames[q], th=i/N*TAU;
-    const idx=new Uint8Array(W*W);
+    const idx=new Uint8Array(W*H);
     if(TEX.frames) TEX.i=i%TEX.N;
-    renderLum(P,W,th,lum,mat,dep,tex);
-    if(P.outline) outlineMask(W,dep,mat,line); else line.fill(0);
-    inkFrame(P,W,lum,mat,line,idx,tex,th);
-    self.postMessage({t:'frame',i:i,W:W,job:J.job,buf:idx.buffer},[idx.buffer]);
+    renderLum(P,W,H,th,lum,mat,dep,tex);
+    if(P.outline) outlineMask(W,H,dep,mat,line); else line.fill(0);
+    inkFrame(P,W,H,lum,mat,line,idx,tex,th);
+    self.postMessage({t:'frame',i:i,W:W,H:H,job:J.job,buf:idx.buffer},[idx.buffer]);
   }
-  self.postMessage({t:'done',job:J.job,W:W});
+  self.postMessage({t:'done',job:J.job,W:W,H:H});
 };`;
 let POOL=null;
 function pool(){
@@ -1230,7 +1273,13 @@ function pool(){
 }
 
 /* ---- state ---- */
-const S={ seed:696969, subject:-1, scheme:-1, hour:-1, ground:-1, dither:-1, frames:36, weather:-1, cam:-1, tex:'', raster:540 };
+const S={ seed:696969, subject:-1, scheme:-1, hour:-1, ground:-1, dither:-1, frames:36, weather:-1, cam:-1, tex:'', raster:540, ar:'1:1' };
+const ARS={'1:1':1, '9:16':16/9};
+function arRatio(){ return ARS[S.ar]||1; }
+function arH(w){ return Math.max(1,Math.round(w*arRatio())); }
+/* every readout states the sheet it is actually talking about */
+function dimLabel(w,h){ return (h===w)?(w+'²'):(w+'×'+h); }
+window.arRatio=arRatio; window.arH=arH;
 let JOB=0, RUN={ frames:null, N:0, W:0, pal:null, P:null, key:'', rung:0, have:0 };
 let PLAY={ raf:0, frames:null, N:0, W:0, pal:null, t0:0 };
 let LAST={ frames:null, N:0, W:0, pal:null, card:'' };
@@ -1253,6 +1302,7 @@ function readUI(){
   S.ground=+$('ground').value; S.dither=+$('dither').value; S.frames=+$('frames').value;
   S.weather=+$('weather').value; S.cam=+$('cam').value; S.tex=($('tex').value||'').trim();
   S.raster=+$('raster').value||540;
+  if($('aspect')) S.ar=$('aspect').value||'1:1';
 }
 function writeUI(){
   $('seed').value=S.seed; $('subject').value=S.subject; $('scheme').value=S.scheme; $('hour').value=S.hour;
@@ -1282,7 +1332,7 @@ function draw(){
      card was pasted, which always wins. Either way the DNA carries it. */
   const pasted=unpackV3Card(S.tex)?S.tex.toUpperCase():'';
   const isScreen=(P.subject===12);
-  let card=packPlate(S.seed,R.si,P.subject,P.hour,P.ground,P.dither,N,P.weather,P.cam);
+  let card=packPlate(S.seed,R.si,P.subject,P.hour,P.ground,P.dither,N,P.weather,P.cam,S.ar==='9:16');
   const texCard=pasted;
   if(texCard) card+=' '+texCard;
   $('dna').value=card;
@@ -1352,9 +1402,9 @@ function texLoop(job,R,N,texCard,done){
 }
 function rung(job){
   if(job!==JOB) return;
-  const W=RUN.ladder[RUN.rung];
-  RUN.W=W; RUN.frames=new Array(RUN.N); RUN.have=0;
-  $('osd').textContent='DRAWING '+W+'² · '+RUN.N+' FRAMES';
+  const W=RUN.ladder[RUN.rung], H=arH(W);
+  RUN.W=W; RUN.H=H; RUN.frames=new Array(RUN.N); RUN.have=0;
+  $('osd').textContent='DRAWING '+dimLabel(W,H)+' · '+RUN.N+' FRAMES';
   $('prog').style.width='0%';
   const ws=pool(), N=RUN.N;
   /* interleave, so every worker carries an even share of the loop */
@@ -1367,32 +1417,32 @@ function rung(job){
         RUN.frames[m.i]=new Uint8Array(m.buf); RUN.have++;
         $('prog').style.width=Math.round(RUN.have/N*100)+'%';
         /* the first frame of the first rung goes on the glass immediately */
-        if(RUN.rung===0 && RUN.have===1) paintOne(RUN.frames[m.i],W,RUN.pal);
+        if(RUN.rung===0 && RUN.have===1) paintOne(RUN.frames[m.i],W,H,RUN.pal);
       } else if(m.t==='done'){
         if(++done===ws.length) rungDone(job);
       }
     };
-    const msg={job, P:RUN.P, N, W, frames:lists[k]};
+    const msg={job, P:RUN.P, N, W, H, frames:lists[k]};
     if(RUN.tex){ msg.tex={W:RUN.tex.W, N:RUN.tex.N, frames:RUN.tex.frames.map(f=>f.slice().buffer)}; }
     w.postMessage(msg);
   });
 }
 function rungDone(job){
   if(job!==JOB) return;
-  const W=RUN.W;
-  play(RUN.frames,RUN.N,W,RUN.pal);
+  const W=RUN.W, H=RUN.H;
+  play(RUN.frames,RUN.N,W,H,RUN.pal);
   const last=RUN.ladder[RUN.ladder.length-1];
-  $('osd').textContent=(W===last?'PRINT ':'DRAFT ')+W+'² · 25FPS';
+  $('osd').textContent=(W===last?'PRINT ':'DRAFT ')+dimLabel(W,H)+' · 25FPS';
   if(RUN.rung<RUN.ladder.length-1){ RUN.rung++; setTimeout(()=>rung(job),30); }
   else{
-    LAST={ frames:RUN.frames, N:RUN.N, W, pal:RUN.pal, card:RUN.card, P:RUN.P, blob:null, bytes:null, name:'' };
+    LAST={ frames:RUN.frames, N:RUN.N, W, H, ar:S.ar, pal:RUN.pal, card:RUN.card, P:RUN.P, blob:null, bytes:null, name:'' };
     $('prog').style.width='0%';
     $('stat').textContent='WRITING THE PRINT\u2026';
     /* encode now, off the tap, so SAVE can open the share sheet inside the gesture */
     const me=job;
     setTimeout(()=>{ if(me!==JOB) return; encodePrint();
       $('save').removeAttribute('disabled');
-      $('stat').textContent='THE PRINT IS READY \u00b7 '+LAST.W+'\u00b2 \u00d7 '+(MASTER/LAST.W)+' \u00b7 '+(LAST.bytes.length/1024|0)+'KB \u00b7 '+(isDesktop?'SAVE downloads it':'SAVE puts it in PHOTOS'); },30);
+      $('stat').textContent='THE PRINT IS READY · '+dimLabel(LAST.outW,LAST.outH)+' · '+(MASTER/LAST.W)+'× · '+(LAST.bytes.length/1024|0)+'KB \u00b7 '+(isDesktop?'SAVE downloads it':'SAVE puts it in PHOTOS'); },30);
   }
 }
 
@@ -1400,43 +1450,53 @@ function rungDone(job){
 const view=$('view'), vctx=view.getContext('2d');
 const off=document.createElement('canvas'), octx=off.getContext('2d');
 let img=null, u32=null;
-function paintOne(fr,W,pal){
-  if(off.width!==W){ off.width=off.height=W; img=octx.createImageData(W,W); u32=new Uint32Array(img.data.buffer); }
+function paintOne(fr,W,H,pal){
+  /* the guard must watch BOTH edges. Flipping 540 square to 540x960 leaves the
+     width alone, so a width-only test keeps painting into the old square
+     canvas and lets the stage stretch it across the tall glass. */
+  if(off.width!==W||off.height!==H){ off.width=W; off.height=H; img=octx.createImageData(W,H); u32=new Uint32Array(img.data.buffer); }
+  if(view.width!==W||view.height!==H){ view.width=W; view.height=H; }
   const L=new Uint32Array(256);
   for(let q=0;q<256;q++){ const c=pal[q]||pal[pal.length-1]; L[q]=(255<<24)|(c[2]<<16)|(c[1]<<8)|c[0]; }
-  for(let q=0;q<W*W;q++) u32[q]=L[fr[q]];
+  for(let q=0,qn=W*H;q<qn;q++) u32[q]=L[fr[q]];
   octx.putImageData(img,0,0);
   vctx.imageSmoothingEnabled=false;
   vctx.drawImage(off,0,0,view.width,view.height);
 }
-function play(frames,N,W,pal){
+function play(frames,N,W,H,pal){
   if(PLAY.raf) cancelAnimationFrame(PLAY.raf);
-  PLAY={ raf:0, frames, N, W, pal, t0:performance.now(), shown:-1 };
+  PLAY={ raf:0, frames, N, W, H, pal, t0:performance.now(), shown:-1 };
   const step=()=>{
     PLAY.raf=requestAnimationFrame(step);
     const i=Math.floor((performance.now()-PLAY.t0)/(DELAY_CS*10))%N;
     if(i===PLAY.shown) return; PLAY.shown=i;
-    paintOne(frames[i],W,pal);
+    paintOne(frames[i],W,H,pal);
   };
   PLAY.raf=requestAnimationFrame(step);
 }
-document.addEventListener('visibilitychange',()=>{ if(document.hidden&&PLAY.raf){cancelAnimationFrame(PLAY.raf);PLAY.raf=0;} else if(PLAY.frames&&!PLAY.raf) play(PLAY.frames,PLAY.N,PLAY.W,PLAY.pal); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&PLAY.raf){cancelAnimationFrame(PLAY.raf);PLAY.raf=0;} else if(PLAY.frames&&!PLAY.raf) play(PLAY.frames,PLAY.N,PLAY.W,PLAY.H,PLAY.pal); });
 
 /* ---- the print: 1080², nearest-neighbour from the 540 frames, the box's own writer ---- */
 function encodePrint(){
   const {frames,N,W,pal}=LAST;
+  const H=LAST.H||W;
   const k=MASTER/W, out=MASTER;
+  /* the print's height is the plate's height scaled by the SAME integer k the
+     width is scaled by, so the print is the draft enlarged and never the draft
+     reshaped */
+  const outH=Math.max(1,Math.round(H*k));
   const sink=new Sink(1<<20);
-  const mcs=gifBegin(sink,out,out,pal.slice(0,256),0);
-  const px=new Uint8Array(out*out);
+  const mcs=gifBegin(sink,out,outH,pal.slice(0,256),0);
+  const px=new Uint8Array(out*outH);
   for(let f=0;f<N;f++){
     const src=frames[f]; let o=0;
-    for(let y=0;y<out;y++){ const sy=((y/k)|0)*W; for(let x=0;x<out;x++) px[o++]=src[sy+((x/k)|0)]; }
-    gifFrame(sink,out,out,px,DELAY_CS,mcs);
+    for(let y=0;y<outH;y++){ const sy=Math.min(H-1,(y/k)|0)*W; for(let x=0;x<out;x++) px[o++]=src[sy+((x/k)|0)]; }
+    gifFrame(sink,out,outH,px,DELAY_CS,mcs);
   }
   const bytes=new Uint8Array(gifEnd(sink));
   LAST.bytes=bytes; LAST.blob=new Blob([bytes],{type:'image/gif'});
-  LAST.name='PLATE_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+'.gif';
+  LAST.outW=out; LAST.outH=outH;
+  LAST.name='PLATE_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':'')+'.gif';
   return LAST.blob;
 }
 /* SAVE, TIERED — the same doctrine as the public box. On a phone the file
@@ -1475,6 +1535,29 @@ async function saveGif(){
   if(isIOS) openSaveView(blob); else downloadBlob(blob,name);
 }
 
+/* ---- the shape ----------------------------------------------------------
+   One door. The switch in the header, the row in the rail and a recalled card
+   all come through applyAspect, so the three of them can never disagree about
+   what shape the plate is. The canvas is resized here too: the backing store
+   IS the sheet, and leaving it square while the stage went tall is exactly how
+   a render ends up stretched. */
+function applyAspect(){
+  document.body.dataset.ar=S.ar;
+  const tall=(S.ar==='9:16');
+  const sel=$('aspect'); if(sel) sel.value=S.ar;
+  const b=$('shape');
+  if(b){
+    b.innerHTML=(tall?'&#9647;':'&#9633;')+' '+S.ar;
+    b.setAttribute('aria-pressed',String(tall));
+    b.title='SHAPE \u2014 the plate is '+S.ar+'. Tap to cut it '+(tall?'1:1':'9:16')+'.';
+  }
+}
+function setAspect(a){
+  if(!(a in ARS)||S.ar===a) return false;
+  S.ar=a; applyAspect(); return true;
+}
+window.setAspect=setAspect; window.applyAspect=applyAspect;
+
 /* ---- rolls, recalls ---- */
 function newPlate(){
   S.seed=(Math.random()*0xFFFFFFFF)>>>0;
@@ -1488,8 +1571,9 @@ function recall(){
   if(!c){ $('stat').textContent='THAT IS NOT A PLATE.'; return; }
   S.seed=c.seed; S.scheme=c.scheme; S.subject=c.subject; S.hour=c.hour; S.ground=c.ground; S.dither=c.dither; S.frames=c.frames;
   S.weather=c.weather; S.cam=c.cam;
+  if(c.ar) S.ar=c.ar;                  /* the shape rode in the card's pad */
   S.tex=(parts[1]&&unpackV3Card(parts[1]))?parts[1].toUpperCase():'';
-  writeUI(); draw();
+  writeUI(); applyAspect(); draw();
 }
 $('art').addEventListener('click',()=>{
   const on=document.body.classList.toggle('artmax');
@@ -1497,6 +1581,8 @@ $('art').addEventListener('click',()=>{
   b.textContent=on?'\u2637 CONTROLS':'\u26F6 ART';
   window.dispatchEvent(new Event('resize'));
 });
+$('shape').addEventListener('click',()=>{ if(setAspect(S.ar==='9:16'?'1:1':'9:16')) draw(); });
+$('aspect').addEventListener('change',()=>{ if(setAspect($('aspect').value)) draw(); });
 $('new').addEventListener('click',newPlate);
 $('draw').addEventListener('click',draw);
 $('save').addEventListener('click',saveGif);
@@ -1506,6 +1592,7 @@ $('copy').addEventListener('click',()=>{ const v=$('dna').value; if(!v)return; t
 $('seed').addEventListener('change',draw);
 
 fillSelects();
+applyAspect();
 (function boot(){
   const q=new URLSearchParams(location.search).get('dna');
   if(q){ $('dna').value=q; const c=unpackPlate(q); if(c){ recall(); return; } }
