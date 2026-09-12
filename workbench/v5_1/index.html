@@ -75,7 +75,7 @@
   <div id="rail">
     <div id="acts">
       <button id="new" class="prime">&#9860; NEW PLATE</button>
-      <button id="draw">&#9654; DRAW</button>
+      <button id="draw">&#9654; PRINT</button>
       <button id="save" disabled>&#10515; SAVE</button>
       <button id="copy">&#10697; COPY DNA</button>
     </div>
@@ -1257,6 +1257,7 @@ const DRAFT=135;                           /* the one rung that exists to be loo
    fast draft answers "is this the plate I want", and everything after it is
    the print. */
 function ladderFor(R){ return R<=DRAFT ? [R] : [DRAFT,R]; }
+function draftOf(R){ return Math.min(DRAFT,R); }
 const MASTER=1080;
 const DELAY_CS=4;                          /* 25fps */
 const NW=Math.max(2,Math.min(8,(navigator.hardwareConcurrency||4)));
@@ -1379,19 +1380,45 @@ function stateKey(){
   return [S.seed,S.subject,S.scheme,S.hour,S.ground,S.dither,S.frames,
           S.weather,S.cam,S.tex,S.raster,S.ar,S.frame].join('|');
 }
-let DONEKEY='';
-function draw(force){
+let DONEKEY='';     /* the state whose print is in hand */
+let BROWSEKEY='';   /* the state whose draft is on the glass */
+/* the button lights when there is something to print and goes quiet once the
+   file exists, so the rail always says what is left to do */
+function printReady(on){
+  const b=$('draw'); if(!b)return;
+  b.classList.toggle('prime', !!on);
+  b.title = on ? 'PRINT \u2014 march this plate at the full raster and write the file'
+               : 'PRINT \u2014 already written; SAVE has it';
+}
+/* PRINT. If the draft on the glass is this plate, only the print rung is left
+   to march: the guest loop, the palette and the plate itself are all in hand. */
+function doPrint(){
   readUI();
-  if(!force && DONEKEY && DONEKEY===stateKey() && LAST.bytes && LAST.frames){
-    /* the plate on the glass IS this plate: put the loop back on its feet and
-       hand the finished print straight back */
-    play(LAST.frames,LAST.N,LAST.W,LAST.H,LAST.pal);
-    $('save').removeAttribute('disabled');
-    $('stat').textContent='ALREADY DRAWN \u00b7 '+dimLabel(LAST.outW,LAST.outH)
+  const k=stateKey();
+  if(DONEKEY===k && LAST.bytes){
+    $('save').removeAttribute('disabled'); printReady(false);
+    $('stat').textContent='ALREADY PRINTED \u00b7 '+dimLabel(LAST.outW,LAST.outH)
       +' \u00b7 '+(LAST.bytes.length/1024|0)+'KB \u00b7 '+(isDesktop?'SAVE downloads it':'SAVE puts it in PHOTOS');
     return;
   }
+  if(BROWSEKEY===k && RUN && RUN.P && RUN.tex && RUN.job===JOB){
+    RUN.printing=true; RUN.ladder=[S.raster]; RUN.rung=0;
+    printReady(false);
+    rung(RUN.job);
+    return;
+  }
+  draw(true, true);                      /* nothing in hand: straight through */
+}
+window.doPrint=doPrint;
+/* ROLLING A PLATE DRAWS A DRAFT, AND NOTHING ELSE. Every plate used to be
+   marched at the full raster the moment it appeared, so eleven seconds were
+   spent on every monument you were going to reject in one. The draft answers
+   "is this the plate I want" in about two; PRINT is where you say yes, and it
+   is the only thing that writes a file. */
+function draw(force, wantPrint){
+  readUI();
   DONEKEY='';
+  BROWSEKEY='';
   const R=resolve();
   const N=S.frames, P=R.P;
   /* EVERY plate wears a PANDORA loop on one part of its monument. The loop is
@@ -1408,7 +1435,7 @@ function draw(force){
   $('p-sub').textContent=SUBJECTS[P.subject]+' · LOOP '+(pasted?'PASTED':'RANDOM'); $('p-sch').textContent=R.key; $('p-hour').textContent=HOURS[P.hour]+'°';
   $('p-gnd').textContent=GROUNDS[P.ground]+' · '+WEATHERS[P.weather]+' · '+CAMS[P.cam]; $('p-dit').textContent=DITHERS[P.dither]; $('p-ink').textContent=P.inks;
   const job=++JOB;
-  $('save').setAttribute('disabled',''); LAST.frames=null;
+  $('save').setAttribute('disabled',''); LAST.frames=null; LAST.bytes=null; printReady(false);
   /* the other engine draws its loop first, at the decal's raster, and the
      plate is drawn around it */
   $('osd').textContent='ROLLING THE PANDORA LOOP\u2026';
@@ -1418,7 +1445,10 @@ function draw(force){
     /* THE PRINT RASTER is the curator's. Every rung divides 1080, so the file
        is the chosen rung doubled, quadrupled or octupled by nearest neighbour
        - a 2, 4 or 8 pixel grain - and the ladder simply stops there. */
-    RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0, tex:{frames:tex.frames, W:tex.W, N:tex.N}, ladder:ladderFor(S.raster) };
+    RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0,
+          tex:{frames:tex.frames, W:tex.W, N:tex.N},
+          printing:!!wantPrint,
+          ladder: wantPrint ? ladderFor(S.raster) : [draftOf(S.raster)] };
     rung(job);
   });
 }
@@ -1557,11 +1587,20 @@ function rungDone(job){
     LAST={ frames:RUN.frames, N:RUN.N, W, H, ar:S.ar, pal:RUN.pal, card:RUN.card, P:RUN.P,
            gif:RUN.gif, blob:null, bytes:null, name:'' };
     $('prog').style.width='0%';
+    if(!RUN.printing){
+      /* a draft. The loop is on the glass and nothing has been written. */
+      BROWSEKEY=stateKey();
+      $('osd').textContent='DRAFT '+dimLabel(W,H)+' \u00b7 25FPS';
+      $('stat').textContent='DRAFT \u00b7 PRINT writes it at '
+        +dimLabel(MASTER, Math.max(1,Math.round(arH(S.raster)*MASTER/S.raster)));
+      printReady(true);
+      return;
+    }
     $('stat').textContent='WRITING THE PRINT\u2026';
     /* encode now, off the tap, so SAVE can open the share sheet inside the gesture */
     const me=job;
     setTimeout(()=>{ if(me!==JOB) return; encodePrint();
-      DONEKEY=stateKey();
+      DONEKEY=stateKey(); printReady(false);
       $('save').removeAttribute('disabled');
       $('stat').textContent='THE PRINT IS READY · '+dimLabel(LAST.outW,LAST.outH)+' · '+(MASTER/LAST.W)+'× · '+(LAST.bytes.length/1024|0)+'KB \u00b7 '+(isDesktop?'SAVE downloads it':'SAVE puts it in PHOTOS'); },30);
   }
@@ -1664,6 +1703,10 @@ function openSaveView(blob){
 }
 async function saveGif(){
   if(!LAST.frames) return;
+  /* a draft has no file. The button is disabled until PRINT has run, and this
+     is the second lock: SAVE must never hand over a draft enlarged to look
+     like a print. */
+  if(!LAST.bytes||DONEKEY!==stateKey()){ $('stat').textContent='PRESS PRINT FIRST.'; return; }
   const blob=LAST.blob||encodePrint(), name=LAST.name;
   $('stat').textContent='SAVING · '+(LAST.bytes.length/1024|0)+'KB · '+LAST.card;
   if(isDesktop){ downloadBlob(blob,name); return; }
@@ -1752,7 +1795,7 @@ $('aspect').addEventListener('change',()=>{ if(setAspect($('aspect').value)) dra
 $('frame').addEventListener('click',()=>{ if(setFrame(S.frame+1)) draw(); });
 $('frameSel').addEventListener('change',()=>{ if(setFrame(+$('frameSel').value)) draw(); });
 $('new').addEventListener('click',newPlate);
-$('draw').addEventListener('click',()=>draw(false));
+$('draw').addEventListener('click',doPrint);
 $('save').addEventListener('click',saveGif);
 $('recall').addEventListener('click',recall);
 $('copy').addEventListener('click',()=>{ const v=$('dna').value; if(!v)return; try{ navigator.clipboard.writeText(v); $('stat').textContent='DNA COPIED'; }catch(e){ $('dna').select(); } });
