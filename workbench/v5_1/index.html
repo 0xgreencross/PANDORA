@@ -1121,6 +1121,7 @@ function schemeOf(idx,seed){
   return {key:'TISGEN', scheme:tisScheme(seed)};
 }
 /*CORE-END*/
+/*ENC-BEGIN*/
 function Sink(cap){ this.b=new Uint8Array(cap||65536); this.n=0; }
 Sink.prototype.u8=function(v){ if(this.n>=this.b.length){const g=new Uint8Array(this.b.length*2);g.set(this.b);this.b=g;} this.b[this.n++]=v&0xff; };
 Sink.prototype.u16=function(v){ this.u8(v); this.u8(v>>8); };
@@ -1156,6 +1157,9 @@ function gifBegin(sink,width,height,palette,loop){
   sink.u8(0x21);sink.u8(0xFF);sink.u8(0x0B);sink.str('NETSCAPE2.0');sink.u8(0x03);sink.u8(0x01);sink.u16(loop|0);sink.u8(0x00);
   return Math.max(2,bits); // minCodeSize
 }
+function gifMinCodeSize(palette){
+  return Math.max(2, Math.max(1,Math.ceil(Math.log2(palette.length))));
+}
 function gifFrame(sink,width,height,indices,delay,minCodeSize){
   sink.u8(0x21);sink.u8(0xF9);sink.u8(0x04);sink.u8(0x00);sink.u16(delay|0);sink.u8(0x00);sink.u8(0x00);
   sink.u8(0x2C);sink.u16(0);sink.u16(0);sink.u16(width);sink.u16(height);sink.u8(0x00);
@@ -1165,6 +1169,7 @@ function gifFrame(sink,width,height,indices,delay,minCodeSize){
   sink.u8(0x00);
 }
 function gifEnd(sink){ sink.u8(0x3B); return sink.done(); }
+/*ENC-END*/
 
 /* ═══ V3, EMBEDDED. The whole CHIMERA engine rides along as text, so one
    monument in the landscape can wear a glitch loop as its face. ═══ */
@@ -1245,6 +1250,13 @@ const V3_CANON=["PNDR-A8TY-XEG7-8AV0-ZW2G-0488-0222-0018-HW4R", "PNDR-AR4H-YW0R-
    ═══════════════════════════════════════════════════════════════════════ */
 const $=id=>document.getElementById(id);
 const LADDER=[135,270,540];                /* every rung divides 1080: the draft is the print, smaller */
+const DRAFT=135;                           /* the one rung that exists to be looked at, not kept */
+/* TWO RUNGS, NEVER THREE. The ladder used to walk 135, 270, 540 and throw the
+   first two away: measured at 36 frames that is 0.8s and 2.8s of marching for
+   pictures that are replaced seconds later, a fifth of the whole wait. One
+   fast draft answers "is this the plate I want", and everything after it is
+   the print. */
+function ladderFor(R){ return R<=DRAFT ? [R] : [DRAFT,R]; }
 const MASTER=1080;
 const DELAY_CS=4;                          /* 25fps */
 const NW=Math.max(2,Math.min(8,(navigator.hardwareConcurrency||4)));
@@ -1253,6 +1265,12 @@ function coreSrc(){
   const t=[...document.querySelectorAll('script:not([src])')].map(e=>e.textContent).find(x=>x.includes('/*CORE-BEGIN*/'))||'';
   return t.slice(t.indexOf('/*CORE-BEGIN*/'), t.indexOf('/*CORE-END*/'));
 }
+/* defined AFTER the markers it looks for, so indexOf finds the real ones and
+   not the two inside this function */
+function encSrc(){
+  const t=[...document.querySelectorAll('script:not([src])')].map(e=>e.textContent).find(x=>x.includes('/*ENC-BEGIN*/'))||'';
+  return t.slice(t.indexOf('/*ENC-BEGIN*/'), t.indexOf('/*ENC-END*/'));
+}
 const WORKER_DRIVER=`
 self.onmessage=function(e){
   const J=e.data;
@@ -1260,6 +1278,11 @@ self.onmessage=function(e){
   const lum=new Float32Array(W*H), mat=new Uint8Array(W*H), dep=new Float32Array(W*H), line=new Uint8Array(W*H), tex=new Uint8Array(W*H);
   if(J.tex){ TEX.frames=J.tex.frames.map(function(b){return new Uint8Array(b);}); TEX.W=J.tex.W; TEX.N=J.tex.N; }
   else { TEX.frames=null; }
+  /* when J.print is set this rung IS the print, so each frame is enlarged and
+     encoded here, in the same pass that drew it */
+  const PR=J.print||null;
+  let px=null, mcs=0;
+  if(PR){ px=new Uint8Array(PR.outW*PR.outH); mcs=PR.mcs; }
   for(let q=0;q<J.frames.length;q++){
     const i=J.frames[q], th=i/N*TAU;
     const idx=new Uint8Array(W*H);
@@ -1267,14 +1290,27 @@ self.onmessage=function(e){
     renderLum(P,W,H,th,lum,mat,dep,tex);
     if(P.outline) outlineMask(W,H,dep,mat,line); else line.fill(0);
     inkFrame(P,W,H,lum,mat,line,idx,tex,th);
-    self.postMessage({t:'frame',i:i,W:W,H:H,job:J.job,buf:idx.buffer},[idx.buffer]);
+    let chunk=null;
+    if(PR){
+      const k=PR.k, outW=PR.outW, outH=PR.outH;
+      let o=0;
+      for(let y=0;y<outH;y++){ const sy=Math.min(H-1,(y/k)|0)*W;
+        for(let x=0;x<outW;x++) px[o++]=idx[sy+((x/k)|0)]; }
+      const cs=new Sink(1<<16);
+      gifFrame(cs,outW,outH,px,PR.delay,mcs);
+      chunk=cs.done().slice().buffer;
+    }
+    const msg={t:'frame',i:i,W:W,H:H,job:J.job,buf:idx.buffer};
+    const tr=[idx.buffer];
+    if(chunk){ msg.gif=chunk; tr.push(chunk); }
+    self.postMessage(msg,tr);
   }
   self.postMessage({t:'done',job:J.job,W:W,H:H});
 };`;
 let POOL=null;
 function pool(){
   if(POOL) return POOL;
-  const url=URL.createObjectURL(new Blob([coreSrc()+'\n'+WORKER_DRIVER],{type:'text/javascript'}));
+  const url=URL.createObjectURL(new Blob([coreSrc()+'\n'+encSrc()+'\n'+WORKER_DRIVER],{type:'text/javascript'}));
   POOL=[]; for(let i=0;i<NW;i++) POOL.push(new Worker(url));
   return POOL;
 }
@@ -1334,8 +1370,28 @@ function resolve(){
 }
 
 /* ---- drawing: the ladder ---- */
-function draw(){
+/* EVERYTHING THE PRINT DEPENDS ON, IN ONE STRING. Pressing DRAW on a plate
+   that is already drawn used to re-roll the guest loop and re-march every rung
+   to arrive at the identical file, seventeen seconds to be handed back what
+   was already on the glass. The print in hand is the answer whenever this
+   signature has not moved. */
+function stateKey(){
+  return [S.seed,S.subject,S.scheme,S.hour,S.ground,S.dither,S.frames,
+          S.weather,S.cam,S.tex,S.raster,S.ar,S.frame].join('|');
+}
+let DONEKEY='';
+function draw(force){
   readUI();
+  if(!force && DONEKEY && DONEKEY===stateKey() && LAST.bytes && LAST.frames){
+    /* the plate on the glass IS this plate: put the loop back on its feet and
+       hand the finished print straight back */
+    play(LAST.frames,LAST.N,LAST.W,LAST.H,LAST.pal);
+    $('save').removeAttribute('disabled');
+    $('stat').textContent='ALREADY DRAWN \u00b7 '+dimLabel(LAST.outW,LAST.outH)
+      +' \u00b7 '+(LAST.bytes.length/1024|0)+'KB \u00b7 '+(isDesktop?'SAVE downloads it':'SAVE puts it in PHOTOS');
+    return;
+  }
+  DONEKEY='';
   const R=resolve();
   const N=S.frames, P=R.P;
   /* EVERY plate wears a PANDORA loop on one part of its monument. The loop is
@@ -1362,13 +1418,21 @@ function draw(){
     /* THE PRINT RASTER is the curator's. Every rung divides 1080, so the file
        is the chosen rung doubled, quadrupled or octupled by nearest neighbour
        - a 2, 4 or 8 pixel grain - and the ladder simply stops there. */
-    RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0, tex:{frames:tex.frames, W:tex.W, N:tex.N}, ladder:LADDER.filter(r=>r<=S.raster) };
+    RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0, tex:{frames:tex.frames, W:tex.W, N:tex.N}, ladder:ladderFor(S.raster) };
     rung(job);
   });
 }
 /* ---- the other engine, as a guest ---- */
 const TEXW=160;
 let TEXWORKER=null;
+/* THE GUEST LOOP IS NOT A FUNCTION OF THE PLATE. It is a function of the seed,
+   the colourway, the frame count and a pasted card, and of nothing else: not
+   the subject, the hour, the ground, the screen, the weather, the camera, the
+   raster, the shape or the rule. Every one of those used to re-roll it and
+   wait 1.5s for an identical answer. It is kept now, and only rolled again
+   when one of the four things it actually depends on moves. */
+let TEXC={key:'', tex:null};
+function texKey(R,N,texCard){ return S.seed+'|'+R.si+'|'+N+'|'+(texCard||''); }
 function v3JobFor(R,N,texCard){
   const c=texCard?unpackV3Card(texCard):null;
   let seed=S.seed, scheme=R.scheme, mode, corr, fx={}, voidamt=0, locality=0, chromacap=0, ov={maskType:0,maskStyle:0,cx:16,cy:16,size:16,n:0,form:0}, epoch=0, ver=6;
@@ -1393,29 +1457,71 @@ function v3JobFor(R,N,texCard){
     corr, N, fx, ov, epoch, ver, wb:{fam:null,prim:null,cam:null,mod:null,gain:{}}, gr:null };
 }
 function texLoop(job,R,N,texCard,done){
-  if(TEXWORKER){ try{TEXWORKER.terminate();}catch(e){} TEXWORKER=null; }
-  let w;
-  try{ w=TEXWORKER=new Worker(URL.createObjectURL(new Blob([v3WorkerSrc(TEXW)],{type:'text/javascript'}))); }
-  catch(e){ $('stat').textContent='THE GUEST ENGINE WOULD NOT START.'; return; }
+  const key=texKey(R,N,texCard);
+  if(TEXC.key===key && TEXC.tex && TEXC.tex.N===N){        /* already in hand */
+    setTimeout(function(){ if(job===JOB) done(TEXC.tex); },0);
+    return;
+  }
+  killTex();
   const J=v3JobFor(R,N,texCard);
-  const frames=new Array(N); let pal=null, k=0;
-  w.onmessage=e=>{
-    const m=e.data; if(job!==JOB){ w.terminate(); return; }
-    if(m.t==='meta'){ pal=m.pal; return; }
-    if(m.t==='err'){ $('stat').textContent='GUEST ENGINE: '+String(m.msg).slice(0,60); w.terminate(); return; }
-    if(m.t!=='pv') return;
-    frames[m.i]=new Uint8Array(m.buf); k++;
-    $('prog').style.width=Math.round(k/N*100)+'%';
-    if(k>=N){ w.terminate(); TEXWORKER=null; done({frames, W:TEXW, N, pal:pal||[]}); return; }
-    w.postMessage({t:'job', step:true, job:Object.assign({},J,{__i:k})});
-  };
-  w.onerror=()=>{ $('stat').textContent='GUEST ENGINE FAILED.'; };
-  w.postMessage({t:'job', step:true, job:Object.assign({},J,{__i:0})});
+  const frames=new Array(N); let pal=null, k=0, dead=false;
+  /* ONE WORKER WALKED THE WHOLE LOOP, a message round trip per frame, which is
+     as serial as it gets. The frames are independent, so the loop is split
+     across the same number of cores everything else here uses. */
+  /* FOUR, AT MOST. Every guest worker pays for its own scene build before it
+     draws a single frame, so the split stops paying once the setup outweighs
+     the marching. Measured on a two-core machine: one worker 3355ms, four
+     3300ms, eight 4804ms. Respect the cores the machine actually has and
+     never ask for more than four. */
+  const nw=Math.max(1,Math.min(4,NW,N));
+  const url=URL.createObjectURL(new Blob([v3WorkerSrc(TEXW)],{type:'text/javascript'}));
+  const lists=[]; for(let i=0;i<nw;i++)lists.push([]);
+  for(let i=0;i<N;i++) lists[i%nw].push(i);
+  TEXWORKER=[];
+  const fail=(msg)=>{ if(dead)return; dead=true; killTex(); $('stat').textContent=msg; };
+  for(let q=0;q<nw;q++){
+    let w;
+    try{ w=new Worker(url); }
+    catch(e){ fail('THE GUEST ENGINE WOULD NOT START.'); return; }
+    TEXWORKER.push(w);
+    const mine=lists[q]; let at=0;
+    w.onmessage=e=>{
+      const m=e.data;
+      if(job!==JOB||dead){ try{w.terminate();}catch(_){} return; }
+      if(m.t==='meta'){ if(!pal)pal=m.pal; return; }
+      if(m.t==='err'){ fail('GUEST ENGINE: '+String(m.msg).slice(0,60)); return; }
+      if(m.t!=='pv') return;
+      frames[m.i]=new Uint8Array(m.buf); k++;
+      $('prog').style.width=Math.round(k/N*100)+'%';
+      if(k>=N){
+        const tex={frames, W:TEXW, N, pal:pal||[]};
+        TEXC={key:key, tex:tex};
+        killTex(); done(tex); return;
+      }
+      if(++at<mine.length) w.postMessage({t:'job', step:true, job:Object.assign({},J,{__i:mine[at]})});
+    };
+    w.onerror=()=>fail('GUEST ENGINE FAILED.');
+    w.postMessage({t:'job', step:true, job:Object.assign({},J,{__i:mine[0]})});
+  }
+}
+function killTex(){
+  if(TEXWORKER){ const a=[].concat(TEXWORKER);
+    for(const w of a) try{w.terminate();}catch(e){}
+    TEXWORKER=null; }
 }
 function rung(job){
   if(job!==JOB) return;
   const W=RUN.ladder[RUN.rung], H=arH(W);
   RUN.W=W; RUN.H=H; RUN.frames=new Array(RUN.N); RUN.have=0;
+  /* the last rung is the print, so it writes it as it draws it */
+  const isPrint=(RUN.rung===RUN.ladder.length-1);
+  RUN.gif=isPrint?new Array(RUN.N):null;
+  RUN.print=null;
+  if(isPrint){
+    const k=MASTER/W;
+    RUN.print={ k:k, outW:MASTER, outH:Math.max(1,Math.round(H*k)),
+                delay:DELAY_CS, mcs:gifMinCodeSize(RUN.pal) };
+  }
   $('osd').textContent='DRAWING '+dimLabel(W,H)+' · '+RUN.N+' FRAMES';
   $('prog').style.width='0%';
   const ws=pool(), N=RUN.N;
@@ -1427,6 +1533,7 @@ function rung(job){
       const m=e.data; if(m.job!==job) return;
       if(m.t==='frame'){
         RUN.frames[m.i]=new Uint8Array(m.buf); RUN.have++;
+        if(RUN.gif&&m.gif) RUN.gif[m.i]=new Uint8Array(m.gif);
         $('prog').style.width=Math.round(RUN.have/N*100)+'%';
         /* the first frame of the first rung goes on the glass immediately */
         if(RUN.rung===0 && RUN.have===1) paintOne(RUN.frames[m.i],W,H,RUN.pal);
@@ -1434,7 +1541,7 @@ function rung(job){
         if(++done===ws.length) rungDone(job);
       }
     };
-    const msg={job, P:RUN.P, N, W, H, frames:lists[k]};
+    const msg={job, P:RUN.P, N, W, H, frames:lists[k], print:RUN.print};
     if(RUN.tex){ msg.tex={W:RUN.tex.W, N:RUN.tex.N, frames:RUN.tex.frames.map(f=>f.slice().buffer)}; }
     w.postMessage(msg);
   });
@@ -1447,12 +1554,14 @@ function rungDone(job){
   $('osd').textContent=(W===last?'PRINT ':'DRAFT ')+dimLabel(W,H)+' · 25FPS';
   if(RUN.rung<RUN.ladder.length-1){ RUN.rung++; setTimeout(()=>rung(job),30); }
   else{
-    LAST={ frames:RUN.frames, N:RUN.N, W, H, ar:S.ar, pal:RUN.pal, card:RUN.card, P:RUN.P, blob:null, bytes:null, name:'' };
+    LAST={ frames:RUN.frames, N:RUN.N, W, H, ar:S.ar, pal:RUN.pal, card:RUN.card, P:RUN.P,
+           gif:RUN.gif, blob:null, bytes:null, name:'' };
     $('prog').style.width='0%';
     $('stat').textContent='WRITING THE PRINT\u2026';
     /* encode now, off the tap, so SAVE can open the share sheet inside the gesture */
     const me=job;
     setTimeout(()=>{ if(me!==JOB) return; encodePrint();
+      DONEKEY=stateKey();
       $('save').removeAttribute('disabled');
       $('stat').textContent='THE PRINT IS READY · '+dimLabel(LAST.outW,LAST.outH)+' · '+(MASTER/LAST.W)+'× · '+(LAST.bytes.length/1024|0)+'KB \u00b7 '+(isDesktop?'SAVE downloads it':'SAVE puts it in PHOTOS'); },30);
   }
@@ -1493,6 +1602,26 @@ function encodePrint(){
   const {frames,N,W,pal}=LAST;
   const H=LAST.H||W;
   const k=MASTER/W, out=MASTER;
+  const outH0=Math.max(1,Math.round(H*k));
+  /* THE FRAMES CAME BACK ALREADY WRITTEN. Each worker enlarged and LZW-encoded
+     its own frames in the pass that drew them, and a GIF's frames are
+     independent streams, so the file is the header followed by those chunks in
+     order. The slow path below still exists for a rung that was drawn without
+     them. */
+  if(LAST.gif && LAST.gif.length===N && LAST.gif.every(c=>c&&c.length)){
+    const head=new Sink(2048); gifBegin(head,out,outH0,pal.slice(0,256),0);
+    const h=head.done();
+    let total=h.length+1;
+    for(let f=0;f<N;f++) total+=LAST.gif[f].length;
+    const bytes=new Uint8Array(total);
+    bytes.set(h,0); let o=h.length;
+    for(let f=0;f<N;f++){ bytes.set(LAST.gif[f],o); o+=LAST.gif[f].length; }
+    bytes[o]=0x3B;
+    LAST.bytes=bytes; LAST.blob=new Blob([bytes],{type:'image/gif'});
+    LAST.outW=out; LAST.outH=outH0;
+    LAST.name='PLATE_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':'')+'.gif';
+    return LAST.blob;
+  }
   /* the print's height is the plate's height scaled by the SAME integer k the
      width is scaled by, so the print is the draft enlarged and never the draft
      reshaped */
@@ -1599,6 +1728,7 @@ function newPlate(){
   $('seed').value=S.seed;
   draw();
 }
+window.draw=draw; window.stateKey=stateKey;
 function recall(){
   const raw=($('dna').value||'').trim();
   const parts=raw.split(/[\s+]+/);
@@ -1622,12 +1752,13 @@ $('aspect').addEventListener('change',()=>{ if(setAspect($('aspect').value)) dra
 $('frame').addEventListener('click',()=>{ if(setFrame(S.frame+1)) draw(); });
 $('frameSel').addEventListener('change',()=>{ if(setFrame(+$('frameSel').value)) draw(); });
 $('new').addEventListener('click',newPlate);
-$('draw').addEventListener('click',draw);
+$('draw').addEventListener('click',()=>draw(false));
 $('save').addEventListener('click',saveGif);
 $('recall').addEventListener('click',recall);
 $('copy').addEventListener('click',()=>{ const v=$('dna').value; if(!v)return; try{ navigator.clipboard.writeText(v); $('stat').textContent='DNA COPIED'; }catch(e){ $('dna').select(); } });
-['subject','scheme','hour','ground','dither','frames','weather','cam','tex','raster'].forEach(id=>$(id).addEventListener('change',draw));
-$('seed').addEventListener('change',draw);
+/* the Event object must never reach draw's force flag */
+['subject','scheme','hour','ground','dither','frames','weather','cam','tex','raster'].forEach(id=>$(id).addEventListener('change',()=>draw(false)));
+$('seed').addEventListener('change',()=>draw(false));
 
 fillSelects();
 applyAspect();
