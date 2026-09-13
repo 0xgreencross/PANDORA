@@ -340,7 +340,7 @@ const WEATHERS=['CLEAR','FOG','RAIN','FOG+RAIN','OVERCAST','STORM','SNOW'];
 const wxBank =P=>P.weather===1||P.weather===3||P.weather===5;   /* a fog bank on the ground */
 const wxRain =P=>P.weather===2||P.weather===3||P.weather===5;   /* rain streaks */
 const wxSnow =P=>P.weather===6;
-const wxOver =P=>P.weather===4||P.weather===5;                  /* no sun disc; a lid of cloud */
+const wxOver =P=>P.weather===4||P.weather===5||P.weather===6;   /* no sun disc; a lid of cloud. Snow falls out of one too */
 const wxStorm=P=>P.weather===5;
 /* GAS IS THE WEATHER. The base fee in gwei, log-banded. The network standing
    still is snow; the network on fire is a storm. */
@@ -912,8 +912,14 @@ function skyLum(P,dx,dy,dz,sx,sy,sz){
   let l=0.62-0.40*Math.pow(up,0.55);         /* bright horizon, dark zenith: the print's sky */
   const df=dayF(P);
   if(wxOver(P)){
-    /* a lid of cloud: flat, a little darker, with slow bands the wind drags */
-    const band=0.04*Math.sin((dx+dz*0.6)*4.2+FR.th*(0.6+P.wind*1.4));
+    /* a lid of cloud: flat, a little darker, with slow bands the wind drags.
+       THE SEAM. The bands travel a WHOLE number of turns per loop, one in a
+       breeze and two under a storm, in the wind's direction; the wind's
+       strength is read in how far the plate's other things lean, never in a
+       fractional rate that would leave the sky torn at frame 0. Still air
+       keeps the lid still, which is what a lid of cloud does in two seconds. */
+    const wt=(P.wind===0)?0:((P.wind<0?-1:1)*(wxStorm(P)?2:1));
+    const band=0.035*Math.sin((dx+dz*0.6)*4.2+FR.th*wt)+0.02*Math.sin((dz-dx*0.5)*7.3-FR.th*wt+1.7);
     l=(wxStorm(P)?0.34:0.52)+band-0.10*up;
     /* the storm's flash: one strike per loop, periodic, so the seam holds */
     if(wxStorm(P)){ const k=Math.exp(40*(Math.cos(FR.th-P.stormAt)-1)); l+=1.2*k*(0.5+0.5*up); }
@@ -1153,7 +1159,7 @@ function buildInks(P,scheme,texPal){
   return pal;
 }
 /* lum + mat + outline -> palette indices */
-function inkFrame(P,W,H,lum,mat,line,out,texbuf,th){
+function inkFrame(P,W,H,lum,mat,line,out,texbuf,th,dep,N){
   const K=P.inks, g=P.gamma;
   const rain=wxRain(P), snow=wxSnow(P);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
@@ -1196,22 +1202,53 @@ function inkFrame(P,W,H,lum,mat,line,out,texbuf,th){
     }
   }
   if(snow){
-    /* SNOW, printed: slow flakes, two pixels long, that drift with the wind
-       and fall a whole frame height per loop. Wider apart than rain, brighter,
-       and they settle: the ground takes one ink of light where it is flat. */
-    const ph=(th/TAU), gap=Math.max(4,Math.round(W/34)), len=Math.max(2,Math.round(H*0.012));
-    for(let x=0;x<W;x+=gap){
-      const h=((x*2654435761)>>>0)%1000/1000;
-      const n=1+((x*40503)>>>0)%3;
-      for(let q=0;q<n;q++){
-        const off=(h+q*0.37)%1;
-        const yy=(((off+ph*(1+q*0.15))%1)+1)%1;      /* each flake its own pace, all periodic */
-        const sway=Math.sin((yy+off)*TAU*2)*gap*0.35;
-        const y0=Math.round(yy*H*1.1-H*0.05), xo=x+((x*7919)%gap)+Math.round(sway+P.wind*gap*0.8*yy);
-        for(let k=0;k<len;k++){ const y=y0+k; if(y<0||y>=H)continue;
-          const xs=xo; if(xs<0||xs>=W)continue;
-          const i=y*W+xs; if(mat[i]===6||line[i])continue;
-          out[i]=K-1; }
+    /* SNOW, studied. A flake is not a drop. Rain falls at nine metres a second
+       and draws a streak; a flake of snow settles at one, and at that speed
+       the air owns it: it wobbles as it falls, it is carried sideways by any
+       wind at all, and gusts bend its path. So this pass keeps three depths
+       of flake, far, middle and near, each with its own fall, size and depth
+       into the plate (a far flake goes behind the monument, a near one
+       passes in front of everything), a coherent gust that swings every
+       flake together, and each flake's own flutter on top.
+       THE SEAM. Every flake lives exactly one loop: it fades in, falls its
+       distance, fades out, and its next life begins where the last began.
+       Nothing wraps, so no rate has to divide the loop, and the fall can be
+       as slow as snow is. The gust turns whole turns. Frame 0 and frame N
+       are the same picture. */
+    const T=((N>0?N:36))/25, ph=th/TAU;               /* the loop in seconds, and where we are in it */
+    const s=Math.max(1,W/540);
+    const wind=P.wind;
+    const NF=Math.round(520*Math.max(1,H/W));
+    const LAY=[ {n:0.50, v:0.055, d:22,  r:0.55*s, fl:0.0025},    /* far: a pixel, slow, behind the plate */
+                {n:0.30, v:0.13,  d:8,   r:1.15*s, fl:0.0040},    /* middle */
+                {n:0.20, v:0.30,  d:2.6, r:2.00*s, fl:0.0060} ];  /* near: in front, the size of a flake */
+    const hsh=(i,k)=>{ let x=(Math.imul(i,374761393)+Math.imul(k,668265263))|0; x=Math.imul(x^(x>>>13),1274126177)|0; return ((x^(x>>>16))>>>0)/4294967296; };
+    let f=0;
+    for(let Lq=0;Lq<3;Lq++){ const Y=LAY[Lq], cnt=Math.round(NF*Y.n);
+      const fall=Y.v*T;                                /* screen heights fallen in one life */
+      const lat=wind*1.9*fall;                         /* the wind's carry: at full strength the path leans ~60 deg */
+      const gA=fall*(0.20+0.35*Math.abs(wind)), mA=0.006+0.014*Math.abs(wind);
+      for(let q=0;q<cnt;q++,f++){
+        const h1=hsh(f,1), h2=hsh(f,2), h3=hsh(f,3), h4=hsh(f,4), h5=hsh(f,5);
+        const u=(((ph-h1)%1)+1)%1;                     /* where in its life the flake is */
+        const w=Math.min(1,u/0.12,(1-u)/0.12);         /* in, then out: the eye never sees it born or die */
+        if(w<0.05)continue;
+        const t=u*T;
+        const gust=gA*(0.7*Math.sin(th+h4*TAU)+0.3*Math.sin(th*2+h5*TAU));            /* the gust, whole turns, felt by every flake */
+        const mea=mA*Math.sin(t*TAU*(0.35+0.5*h1)+h4*TAU);                              /* the eddy: its own slow wander */
+        const flut=Y.fl*(0.6+0.8*h5)*Math.sin(t*TAU*(1.1+h3*1.2)+h2*TAU);              /* its own flutter */
+        const bob=Y.fl*0.5*Math.sin(t*TAU*(1.5+h2)+h1*TAU)*(W/H);                        /* and it does not even fall evenly */
+        const yy=(h2*(1+fall)-fall)+fall*u+bob;        /* -fall .. 1 */
+        let xx=h3+(lat*(0.75+0.5*h4)*u+gust)*(H/W)+mea+flut; xx=((xx%1)+1)%1;
+        const px=Math.round(xx*W), py=Math.round(yy*H);
+        const r=Y.r*(0.55+0.45*w), R=Math.ceil(r);
+        for(let dy=-R;dy<=R;dy++){ const y=py+dy; if(y<0||y>=H)continue;
+          for(let dx=-R;dx<=R;dx++){ const x=px+dx; if(x<0||x>=W)continue;
+            if(dx*dx+dy*dy>r*r+0.25)continue;
+            const i=y*W+x;
+            if(dep[i]<=Y.d)continue;                   /* the plate stands in front of it */
+            if(Lq<2&&(line[i]||mat[i]===6))continue;   /* far and middle flakes never cross the ink line or the screen */
+            if(w>0.6) out[i]=K-1; else if(out[i]<K-1) out[i]=Math.min(K-1,out[i]+(w>0.3?2:1)); } }
       }
     }
     /* the settle: flat ground lifts by one ink */
@@ -1422,13 +1459,15 @@ const V3_CANON=["PNDR-A8TY-XEG7-8AV0-ZW2G-0488-0222-0018-HW4R", "PNDR-AR4H-YW0R-
    ═══════════════════════════════════════════════════════════════════════ */
 const $=id=>document.getElementById(id);
 const LADDER=[135,270,540];                /* every rung divides 1080: the draft is the print, smaller */
-const DRAFT=135;                           /* the one rung that exists to be looked at, not kept */
-/* TWO RUNGS, NEVER THREE. The ladder used to walk 135, 270, 540 and throw the
-   first two away: measured at 36 frames that is 0.8s and 2.8s of marching for
-   pictures that are replaced seconds later, a fifth of the whole wait. One
-   fast draft answers "is this the plate I want", and everything after it is
-   the print. */
-function ladderFor(R){ return R<=DRAFT ? [R] : [DRAFT,R]; }
+const SKETCH=135;                          /* the first thing on the glass, under a second */
+const DRAFT=540;                           /* THE PREVIEW IS THE PRINT. What you browse is the raster you keep */
+/* TWO RUNGS. A sketch so the glass answers at once, then the plate at its
+   own raster: 540 is what the print is made at, so browsing shows the file
+   itself, and when the chosen raster is 540 or under that rung ENCODES the
+   file as it draws it and PRINT has nothing left to do. Only a 1080 raster
+   still leaves a rung for PRINT. */
+function ladderFor(R){ return R<=SKETCH ? [R] : [SKETCH,R]; }
+function browseLadder(R){ const d=Math.min(DRAFT,R); return d<=SKETCH ? [d] : [SKETCH,d]; }
 function draftOf(R){ return Math.min(DRAFT,R); }
 const MASTER=1080;
 const DELAY_CS=4;                          /* 25fps */
@@ -1462,7 +1501,7 @@ self.onmessage=function(e){
     if(TEX.frames) TEX.i=i%TEX.N;
     renderLum(P,W,H,th,lum,mat,dep,tex);
     if(P.outline) outlineMask(W,H,dep,mat,line); else line.fill(0);
-    inkFrame(P,W,H,lum,mat,line,idx,tex,th);
+    inkFrame(P,W,H,lum,mat,line,idx,tex,th,dep,N);
     let chunk=null;
     if(PR){
       const k=PR.k, outW=PR.outW, outH=PR.outH;
@@ -1602,11 +1641,10 @@ function doPrint(){
   draw(true, true);                      /* nothing in hand: straight through */
 }
 window.doPrint=doPrint;
-/* ROLLING A PLATE DRAWS A DRAFT, AND NOTHING ELSE. Every plate used to be
-   marched at the full raster the moment it appeared, so eleven seconds were
-   spent on every monument you were going to reject in one. The draft answers
-   "is this the plate I want" in about two; PRINT is where you say yes, and it
-   is the only thing that writes a file. */
+/* ROLLING A PLATE DRAWS THE PLATE. A sketch at 135 lands on the glass in
+   under a second so the eye can say no early; the print raster follows, and
+   at 540 and under that rung writes the file as it draws, so what you are
+   looking at IS the print and PRINT has nothing left to march. */
 function draw(force, wantPrint){
   readUI();
   DONEKEY='';
@@ -1639,8 +1677,8 @@ function draw(force, wantPrint){
        - a 2, 4 or 8 pixel grain - and the ladder simply stops there. */
     RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0,
           tex:{frames:tex.frames, W:tex.W, N:tex.N},
-          printing:!!wantPrint,
-          ladder: wantPrint ? ladderFor(S.raster) : [draftOf(S.raster)] };
+          printing:!!wantPrint || draftOf(S.raster)===S.raster,   /* the draft IS the print at 540 and under */
+          ladder: wantPrint ? ladderFor(S.raster) : browseLadder(S.raster) };
     rung(job);
   });
 }
