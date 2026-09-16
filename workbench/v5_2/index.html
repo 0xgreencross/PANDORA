@@ -112,9 +112,11 @@
       <div class="lrow"><label>WIND</label><input type="range" id="lv-wind" min="-1" max="1" step="0.01" value="0"><b id="lvv-wind">off</b><i data-k="wind">&#215;</i></div>
       <div class="lrow"><label>TIDE</label><input type="range" id="lv-tide" min="0" max="1" step="0.01" value="0"><b id="lvv-tide">off</b><i data-k="tide">&#215;</i></div>
       <div class="lrow"><label>LEDGER</label><input type="range" id="lv-ledger" min="0" max="40" step="1" value="0"><b id="lvv-ledger">off</b><i data-k="ledger">&#215;</i></div>
+      <div class="lrow"><label>LINEAGE</label><input type="range" id="lv-lineage" min="0" max="365" step="1" value="0"><b id="lvv-lineage">off</b><i data-k="lineage">&#215;</i></div>
       <div class="lrow"><label>LAMPS</label><input type="range" id="lv-lamps" min="0" max="7" step="1" value="0"><b id="lvv-lamps">off</b><i data-k="lamps">&#215;</i></div>
       <div class="lrow"><label>WEIGHT</label><input type="range" id="lv-weight" min="0" max="1" step="0.01" value="0.5"><b id="lvv-weight">off</b><i data-k="weight">&#215;</i></div>
       <div class="lrow"><label>AGE</label><input type="range" id="lv-age" min="0" max="365" step="1" value="0"><b id="lvv-age">off</b><i data-k="age">&#215;</i></div>
+      <div class="lrow"><label>PEG</label><input type="range" id="lv-peg" min="0" max="3" step="0.05" value="0"><b id="lvv-peg">off</b><i data-k="peg">&#215;</i></div>
       <div class="lrow"><label>PULSE</label><input type="range" id="lv-pulse" min="0" max="1" step="0.01" value="0"><b id="lvv-pulse">off</b><i data-k="pulse">&#215;</i></div>
     </div>
     <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
@@ -344,6 +346,8 @@ const wxOver =P=>P.weather===4||P.weather===5||P.weather===6;   /* no sun disc; 
 const wxStorm=P=>P.weather===5;
 /* GAS IS THE WEATHER. The base fee in gwei, log-banded. The network standing
    still is snow; the network on fire is a storm. */
+/* a small integer hash the engines agree on, for made-up hands and picks */
+function mix32(i,k){ let x=(Math.imul(i,374761393)+Math.imul(k,668265263))|0; x=Math.imul(x^(x>>>13),1274126177)|0; return (x^(x>>>16))>>>0; }
 function gasBand(gwei){
   if(!(gwei>0)) return 0;
   if(gwei<0.1)  return 6;   /* SNOW */
@@ -423,7 +427,7 @@ function buildPlate(seed, o){
   const rb=rng();
   P.border = (o.border!=null) ? !!o.border : (rb<0.4);   /* a plate's rule */
   /* the live defaults: exactly the v5.1 plate until applyLive says otherwise */
-  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.lampN=P.lamp?1:0; P.pulse=0;
+  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0;
   P.stormAt=((seed>>>0)%997)/997*TAU;          /* where in the loop the strike lands; no rng draw */
   return P;
 }
@@ -437,10 +441,13 @@ function buildPlate(seed, o){
      wind    -1..1                      -> rain and snow shear, fog drift
      tide    0..1                       -> water level on water plates
      ledger  transfers of this token    -> notches in the margin
+     hands   one 32-bit hash per holder  -> each notch takes its holder's shape (ledger is the count when absent)
+     lineage the picks of the ancestors  -> the lineage strip: one 5-bit column per day this plate descends from
      lamps   0..7 weeks held            -> lamps lit around the monument
      weight  0..1 owner's balance       -> haze
      age     days the collection lived  -> the horizon sinks
      pulse   0..1 hours since last bid  -> rupture of the screen loop
+     peg     stablecoin depeg, percent  -> the counterfeit: a second, misregistered impression
    ═══════════════════════════════════════════════════════════════════════ */
 function applyLive(P,L){
   if(!L) return P;
@@ -456,11 +463,26 @@ function applyLive(P,L){
   if(L.wind!=null){ P.wind=Math.max(-1,Math.min(1,+L.wind)); }
   if(L.tide!=null){ P.tide=Math.max(0,Math.min(1,+L.tide)); }
   P.wy=(P.ground===2)?P.tide*0.55:0;
-  if(L.ledger!=null){ P.notches=Math.max(0,Math.min(200,L.ledger|0)); }
+  /* THE HOLDER'S NOTCH. On chain the contract hands over one hash per holder,
+     in order; every notch is cut in that holder's own shape and stays after
+     they sell. The workbench only has a count, so it makes the hashes up. */
+  if(L.hands!=null&&L.hands.length!=null){ P.hands=Array.prototype.slice.call(L.hands,0,200).map(x=>x>>>0); P.notches=P.hands.length; }
+  else if(L.ledger!=null){ P.notches=Math.max(0,Math.min(200,L.ledger|0)); P.hands=[]; for(let i=0;i<P.notches;i++)P.hands.push(mix32(i,0x4A11)); }
+  /* THE LINEAGE. Plate N exists because the winner of N-1 chose it from 32;
+     that winner's plate exists because of the choice before. The picks, oldest
+     first, each 0..31. A number here is the workbench asking for that many. */
+  if(L.lineage!=null){
+    if(L.lineage.length!=null) P.lineage=Array.prototype.slice.call(L.lineage,0,400).map(x=>(x|0)&31);
+    else { P.lineage=[]; const n=Math.max(0,Math.min(400,L.lineage|0)); for(let i=0;i<n;i++)P.lineage.push(mix32(i,0x11E4)&31); }
+  }
   if(L.lamps!=null){ P.lampN=Math.max(0,Math.min(7,L.lamps|0)); P.lamp=P.lampN>0||P.subject===11; }
   if(L.weight!=null){ const w=Math.max(0,Math.min(1,+L.weight)); P.haze*= (1.55-1.15*w); }
   if(L.age!=null){ const d=Math.max(0,Math.min(365,+L.age)); P.horizon=Math.max(0.10,P.horizon-d*0.0006); }
   if(L.pulse!=null){ P.pulse=Math.max(0,Math.min(1,+L.pulse)); }
+  /* THE COUNTERFEIT. How far the dollar's shadow is off its peg, read from the
+     USDC/USDT pool: under half a percent nothing; from there to three percent
+     the plate prints twice, misregistered, like a banknote off a bad press. */
+  if(L.peg!=null){ const d=Math.abs(+L.peg); P.peg=Math.max(0,Math.min(1,(d-0.5)/2.5)); }
   return P;
 }
 
@@ -1265,18 +1287,83 @@ function inkFrame(P,W,H,lum,mat,line,out,texbuf,th,dep,N){
   }
   if(P.notches>0){
     /* THE LEDGER. One notch per time the piece has changed hands, cut along
-       the bottom edge in the lightest ink, left to right, forever. */
+       the bottom edge in the lightest ink, left to right, forever. Each notch
+       is its holder's: the height, the lean and the dot come from that
+       holder's hash, so the tally reads as a row of different hands and a
+       holder who sold in a week still left their own cut on the plate. */
     const m=Math.max(3,Math.round(W*0.03)), tw=Math.max(1,Math.round(W/270)), th2=Math.max(4,Math.round(W*0.016)), sp=tw*5;
-    const y1=H-1-Math.max(1,Math.round(m*0.5));
+    const y1=H-1-Math.max(1,Math.round(m*0.2));   /* low enough that the tallest notch and its dot stay inside the margin, under the rule */
     const maxN=Math.floor((W-2*m)/sp);
     const n=Math.min(P.notches,maxN);
     /* a light core in a dark sleeve, so the tally reads on a bright ground and
        on a dark one alike */
-    for(let k=0;k<n;k++){ const x0=m+k*sp;
-      for(let yy=-1;yy<=th2;yy++){ const y=y1-yy; if(y<0||y>=H)continue;
-        for(let xx=-tw;xx<tw*2;xx++){ const x=x0+xx; if(x<0||x>=W)continue;
-          const core=(xx>=0&&xx<tw&&yy>=0&&yy<th2);
+    for(let k=0;k<n;k++){ const x0=m+k*sp, h=(P.hands&&P.hands[k]!=null)?P.hands[k]>>>0:0;
+      const hh=Math.max(2,Math.round(th2*(0.55+0.45*((h&3)/3))));     /* four heights */
+      const lean=((h>>2)&3)===1?-1:((h>>2)&3)===2?1:0;                 /* left, right or straight */
+      const dot=((h>>4)&1)===1;                                        /* a dot above, or not */
+      for(let yy=-1;yy<=hh+(dot?tw+1:0);yy++){ const y=y1-yy; if(y<0||y>=H)continue;
+        const lx=lean*Math.floor(Math.max(0,yy)/3);
+        for(let xx=-tw;xx<tw*2;xx++){ const x=x0+xx+lx; if(x<0||x>=W)continue;
+          const inCore=(xx>=0&&xx<tw);
+          const core=inCore&&((yy>=0&&yy<hh)||(dot&&yy>=hh+1&&yy<hh+1+tw));
+          const sleeve=(yy<hh+1)||(dot&&yy>=hh+1);
+          if(!sleeve)continue;
           out[y*W+x]=core?K-1:0; } } }
+  }
+  if(P.lineage&&P.lineage.length>0){
+    /* THE LINEAGE STRIP. Provenance of decisions, printed: one column per
+       ancestor, oldest first, running along the top edge and then down the
+       right and the left. Each column is five cells, the five bits of which
+       of the 32 candidates that day's winner chose, lit cells for ones, in
+       the same dark sleeve as the ledger. It can be read back with a loupe. */
+    const m=Math.max(3,Math.round(W*0.03)), tw=Math.max(1,Math.round(W/270)), sp=tw*3;
+    const e0=Math.max(1,Math.round(m*0.5)-Math.floor(tw*2.5));          /* where the column starts, in from the edge */
+    const capT=Math.floor((W-2*m)/sp), capS=Math.floor((H-2*m)/sp);
+    const n=Math.min(P.lineage.length,capT+2*capS);
+    for(let k=0;k<n;k++){ const pick=P.lineage[k]&31;
+      /* u runs along the edge, v runs into the plate; each mark is tw wide
+         and five cells of tw deep, with a one pixel sleeve all round */
+      for(let v=-1;v<=5*tw;v++) for(let u=-1;u<=tw;u++){
+        let x,y;
+        if(k<capT){ x=m+k*sp+u; y=e0+v; }                                 /* the top edge, left to right */
+        else if(k<capT+capS){ const j=k-capT; x=W-1-e0-v; y=m+j*sp+u; }   /* the right edge, downward */
+        else { const j=k-capT-capS; x=e0+v; y=H-1-m-j*sp-u; }             /* the left edge, upward */
+        if(x<0||x>=W||y<0||y>=H)continue;
+        const inCol=(u>=0&&u<tw&&v>=0&&v<5*tw);
+        const lit=inCol&&((pick>>(4-Math.floor(v/tw)))&1)===1;
+        out[y*W+x]=lit?K-1:0; } }
+  }
+
+  if(P.peg>0){
+    /* THE COUNTERFEIT. When the dollar's shadow slips its peg the plate is
+       printed twice, off register, like a banknote off a bad press. The key
+       plate (every edge of the monument and every ink line) is printed a
+       second time in the accent ink; the monument's whole body is printed a
+       second time as a dark ghost. The slip is SMALL and ERRATIC: a pixel or
+       two, held for a couple of frames, then a jump; now and then the second
+       impression drops out altogether. It is a function of the frame number
+       and of nothing else, so frame N is frame 0 and the seam holds. The
+       screen and the sun are never touched: PANDORA prints true whatever the
+       money does. */
+    const N_=(N>0?N:36), fi=Math.round(th/TAU*N_)%N_, seg=Math.floor(fi/2);
+    const hz=(i,k)=>{ let x=(Math.imul(i,374761393)+Math.imul(k,668265263))|0; x=Math.imul(x^(x>>>13),1274126177)|0; return ((x^(x>>>16))>>>0)/4294967296; };
+    const a=Math.max(1,Math.round(W*0.004))*(0.6+0.8*P.peg);          /* 1..3 px at 540 */
+    const alive=(hz(seg,7)*8)>=1;                                     /* one hold in eight the second impression vanishes */
+    if(alive){
+      const jx=Math.round((hz(seg,1)*2-1)*a*1.6), jy=Math.round((hz(seg,2)*2-1)*a);
+      const gx0=Math.round((hz(seg,3)*2-1)*a*1.6), gy0=Math.round((hz(seg,4)*2-1)*a);
+      const dx=jx===0&&jy===0?1:jx, dy=jy;                           /* never a perfect register while it lives */
+      const src=out.slice();
+      const body=m=>(m!==0&&m!==3&&m!==4&&m!==6);
+      const edge=(x,y)=>{ const i=y*W+x; if(line[i])return true; const m=mat[i];
+        if(x+1<W&&mat[i+1]!==m&&(body(m)||body(mat[i+1])))return true;
+        if(y+1<H&&mat[i+W]!==m&&(body(m)||body(mat[i+W])))return true; return false; };
+      for(let y=0;y<H;y++)for(let x=0;x<W;x++){ const i=y*W+x; const b=src[i]; if(b>=K)continue;   /* the screen and the sun stay */
+        const gx=x+gx0, gy=y+gy0;
+        if(gx>=0&&gx<W&&gy>=0&&gy<H&&body(mat[gy*W+gx])&&!body(mat[i])&&mat[i]!==6&&b>1) out[i]=1;
+        const kx=x-dx, ky=y-dy;
+        if(kx>=0&&kx<W&&ky>=0&&ky<H&&edge(kx,ky)) out[i]=K; }
+    }
   }
 }
 
@@ -1534,15 +1621,15 @@ const FRAMES=['AUTO','ON','OFF'];
 const ARS={'1:1':1, '9:16':16/9};
 /* THE LIVE STATE, as the workbench simulates it. null means "the seed's own";
    on chain, tokenURI fills every field from the block. */
-const LIVE={gas:null,hour:null,moon:null,wind:null,tide:null,ledger:null,lamps:null,weight:null,age:null,pulse:null};
-const LIVEK=['gas','hour','moon','wind','tide','ledger','lamps','weight','age','pulse'];
+const LIVE={gas:null,hour:null,moon:null,wind:null,tide:null,ledger:null,lineage:null,lamps:null,weight:null,age:null,pulse:null,peg:null};
+const LIVEK=['gas','hour','moon','wind','tide','ledger','lineage','lamps','weight','age','pulse','peg'];
 const LVFMT={
   gas:v=>{ const g=Math.pow(10,v); return (g<0.1?g.toFixed(3):g<1?g.toFixed(2):g<10?g.toFixed(1):Math.round(g))+' gwei \u00b7 '+WEATHERS[gasBand(g)]; },
   hour:v=>{ const h=Math.floor(v), m=Math.round((v-h)*60); return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); },
   moon:v=>['NEW','WAXING','FIRST Q','GIBBOUS','FULL','GIBBOUS','LAST Q','WANING','NEW'][Math.round(v*8)],
   wind:v=>(v<-0.05?'\u2190 ':v>0.05?'\u2192 ':'')+Math.abs(Math.round(v*100))+'%',
-  tide:v=>Math.round(v*100)+'%', ledger:v=>v+' hands', lamps:v=>v+' lit', weight:v=>Math.round(v*100)+'%',
-  age:v=>v+' days', pulse:v=>Math.round(v*100)+'%' };
+  tide:v=>Math.round(v*100)+'%', ledger:v=>v+' hands', lineage:v=>v+' ancestors', lamps:v=>v+' lit', weight:v=>Math.round(v*100)+'%',
+  age:v=>v+' days', pulse:v=>Math.round(v*100)+'%', peg:v=>(+v).toFixed(2)+'% off peg'+(v<0.5?' \u00b7 holds':' \u00b7 COUNTERFEIT') };
 function liveRead(k){ const e=$('lv-'+k); if(!e)return null; const v=+e.value; return k==='gas'?Math.pow(10,v):v; }
 function livePaint(){
   for(const k of LIVEK){ const row=$('lv-'+k).parentNode, b=$('lvv-'+k);
@@ -2039,7 +2126,7 @@ $('live-now').addEventListener('click',()=>{
   const set=(k,v)=>{ const e=$('lv-'+k); e.value=String(k==='gas'?Math.log10(v):v); LIVE[k]=v; };
   set('gas',0.041); set('hour',d.getUTCHours()+d.getUTCMinutes()/60);
   set('moon',((d.getTime()/86400000-9.5)%29.53+29.53)%29.53/29.53);
-  set('wind',0.3); set('tide',0.44); set('ledger',0); set('lamps',1); set('weight',0.3); set('age',0); set('pulse',0.1);
+  set('wind',0.3); set('tide',0.44); set('ledger',0); set('lineage',0); set('peg',0); set('lamps',1); set('weight',0.3); set('age',0); set('pulse',0.1);
   livePaint(); draw();
 });
 $('live-off').addEventListener('click',()=>{ LIVEK.forEach(k=>LIVE[k]=null); livePaint(); draw(); });
