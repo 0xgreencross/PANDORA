@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>DITHERVOID // PLATES · V5.2</title>
+<title>DITHERVOID // STORMGLASS · V5.2</title>
 <style>
   :root{ --bg:#08080a; --ink:#e9e9f0; --mut:#8a8a9c; --hair:#232330; --acc:#e8ff2e; --mag:#ff1f9c; --cyan:#19f0ff; }
   *{ box-sizing:border-box; }
@@ -78,19 +78,19 @@
 </head>
 <body>
 <div id="wrap">
-  <header><b>DITHERVOID // PLATES</b><span id="hsub">WORKBENCH V5.2 · THE LIVE PLATE: THE CHAIN WRITES THE SKY</span><button id="shape" aria-pressed="false" title="SHAPE">&#9633; 1:1</button><button id="frame" aria-pressed="false" title="FRAME">&#9635; AUTO</button><button id="art" aria-pressed="false" title="give the whole screen to the plate">&#9974; ART</button></header>
+  <header><b>DITHERVOID // STORMGLASS</b><span id="hsub">WORKBENCH V5.2 · THE STORMGLASS: THE CHAIN WRITES THE SKY</span><button id="shape" aria-pressed="false" title="SHAPE">&#9633; 1:1</button><button id="frame" aria-pressed="false" title="FRAME">&#9635; AUTO</button><button id="art" aria-pressed="false" title="give the whole screen to the plate">&#9974; ART</button></header>
   <div id="stagecol">
     <div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div></div>
     <div id="plate"><span>SUBJECT <b id="p-sub">—</b></span><span>SCHEME <b id="p-sch">—</b></span><span>HOUR <b id="p-hour">—</b></span><span>GROUND <b id="p-gnd">—</b></span><span>SCREEN <b id="p-dit">—</b></span><span>INKS <b id="p-ink">—</b></span></div>
   </div>
   <div id="rail">
     <div id="acts">
-      <button id="new" class="prime">&#9860; NEW PLATE</button>
+      <button id="new" class="prime">&#9860; NEW GLASS</button>
       <button id="draw">&#9654; PRINT</button>
       <button id="save" disabled>&#10515; SAVE</button>
       <button id="copy">&#10697; COPY DNA</button>
     </div>
-    <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PLATE-…"></div>
+    <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="GLASS-…"></div>
     <button id="recall" class="wide">&#8635; RECALL DNA</button>
     <div class="row"><label>SEED</label><input id="seed" type="number" min="1" max="4294967295" step="1" value="696969"></div>
     <div class="row"><label>SUBJECT</label><select id="subject"></select></div>
@@ -121,7 +121,7 @@
     </div>
     <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
     <div id="stat"></div>
-    <div id="note"><b>THE PLATE.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Most plates are ASSEMBLIES — monuments composed on the spot from a grammar of primitives, arrangements and whole-number motions, so no two come round twice; the named subjects are the rest. Weather (a fog bank, printed rain), a camera that sways, dollies, cranes or orbits, a second light, and a PANDORA loop on every plate: the largest part of every monument wears a v3 CHIMERA loop, wrapped to the form and modelled by the plate's light, rolled at random by the seed with nothing steered. Paste any PNDR card to make it wear that one instead.</div>
+    <div id="note"><b>THE GLASS.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Most plates are ASSEMBLIES — monuments composed on the spot from a grammar of primitives, arrangements and whole-number motions, so no two come round twice; the named subjects are the rest. Weather (a fog bank, printed rain), a camera that sways, dollies, cranes or orbits, a second light, and a PANDORA loop on every plate: the largest part of every monument wears a v3 CHIMERA loop, wrapped to the form and modelled by the plate's light, rolled at random by the seed with nothing steered. Paste any PNDR card to make it wear that one instead.</div>
   </div>
 </div>
 <script>
@@ -421,13 +421,13 @@ function buildPlate(seed, o){
   const EXT=[3.6,3.9,4.2,5.0,3.4,3.8,6.2,2.8,4.0,4.4,6.0,4.6,4.2,4.6];
   const fill = 0.55+rng()*0.22;                /* how much of the frame the subject takes */
   const ext = P.subject===13 ? P.asm.ext : EXT[P.subject];
-  P.camDist = ext/(2*P.fov*fill);
+  P.camDist = ext/(2*P.fov*fill); P.ext=ext; P.fill=fill;
   P.camTargetY = P.subject===13 ? P.asm.ty : [1.7,1.9,1.9,1.8,1.7,1.8,1.7,1.6,1.9,2.0,1.6,1.9,1.9,1.9][P.subject];
   P.camDx = (rng()-0.5)*(P.subject===2||P.subject===5||P.subject===0||P.subject===12 ? 0.35 : 0.9);   /* off the centre line, less so for the tall ones */
   const rb=rng();
   P.border = (o.border!=null) ? !!o.border : (rb<0.4);   /* a plate's rule */
   /* the live defaults: exactly the v5.1 plate until applyLive says otherwise */
-  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0;
+  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0; P.screenGlow=0;
   P.stormAt=((seed>>>0)%997)/997*TAU;          /* where in the loop the strike lands; no rng draw */
   return P;
 }
@@ -483,6 +483,25 @@ function applyLive(P,L){
      USDC/USDT pool: under half a percent nothing; from there to three percent
      the plate prints twice, misregistered, like a banknote off a bad press. */
   if(L.peg!=null){ const d=Math.abs(+L.peg); P.peg=Math.max(0,Math.min(1,(d-0.5)/2.5)); }
+  return P;
+}
+
+/* ═══ THE TUNING KNOBS ═══ Composition and screen overrides for the tuning
+   rooms. Every field null = the seed's own; with none set the plate is
+   byte-identical. These are what the curator turns; whatever he settles on
+   gets baked into buildPlate as the new defaults. */
+function applyTune(P,T){
+  if(!T) return P;
+  if(T.fov!=null) P.fov=+T.fov;
+  if(T.fill!=null) P.fill=+T.fill;
+  if(T.fov!=null||T.fill!=null) P.camDist=P.ext/(2*P.fov*P.fill);
+  if(T.el!=null) P.camEl=(+T.el)*Math.PI/180;
+  if(T.horizon!=null) P.horizon=+T.horizon;
+  if(T.dx!=null) P.camDx=+T.dx;
+  if(T.bob!=null) P.bob=+T.bob;
+  if(T.texTile!=null) P.texTile=+T.texTile;
+  if(T.tileM!=null) P.texTile*=+T.tileM;
+  if(T.glow!=null) P.screenGlow=Math.max(0,Math.min(1,+T.glow));
   return P;
 }
 
@@ -1189,7 +1208,8 @@ function inkFrame(P,W,H,lum,mat,line,out,texbuf,th,dep,N){
     if(line[i]){ out[i]=0; continue; }
     if(mat[i]===3){ out[i]=K; continue; }     /* the sun disc */
     if(mat[i]===6){                              /* the loop, in its own inks, MODELLED by the plate's light */
-      const Ls=lum[i]<0?0:lum[i];
+      let Ls=lum[i]<0?0:lum[i];
+      if(P.screenGlow>0&&Ls<P.screenGlow) Ls=P.screenGlow;   /* lit from within, to at least this much */
       const d=ditherThreshold(P,x,y);
       if(Ls<0.09) out[i]=0;                                   /* deep shadow: ink */
       else if(Ls<0.42) out[i]= d>(Ls-0.09)/0.33 ? 0 : K+1+texbuf[i];   /* the turn of the form: dithered into ink */
@@ -1387,11 +1407,11 @@ function packPlate(seed,schemeIdx,subject,hour,ground,dither,frames,weather,cam,
      so a flip here is a different plate and never a corrupt payload. */
   bv=(bv<<3n)|BigInt((tall?4:0)|((frame|0)&3));   /* 72 -> 75 = 15 chars */
   let out=''; for(let i=14;i>=0;i--)out+=B32[Number((bv>>BigInt(i*5))&31n)];
-  return 'PLATE-'+out.slice(0,5)+'-'+out.slice(5,10)+'-'+out.slice(10,15);
+  return 'GLASS-'+out.slice(0,5)+'-'+out.slice(5,10)+'-'+out.slice(10,15);
 }
 function unpackPlate(str){
   let sx=String(str||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
-  if(sx.startsWith('PLATE'))sx=sx.slice(5);
+  if(sx.startsWith('GLASS')||sx.startsWith('PLATE'))sx=sx.slice(5);   /* PLATE cards from before the name still read */
   sx=sx.replace(/I|L/g,'1').replace(/O/g,'0').replace(/U/g,'V');
   if(sx.length!==15) return null;
   let bv=0n; for(const c of sx){const d=B32.indexOf(c); if(d<0)return null; bv=(bv<<5n)|BigInt(d);}
@@ -1621,6 +1641,7 @@ const FRAMES=['AUTO','ON','OFF'];
 const ARS={'1:1':1, '9:16':16/9};
 /* THE LIVE STATE, as the workbench simulates it. null means "the seed's own";
    on chain, tokenURI fills every field from the block. */
+const TUNE={}; window.TUNE=TUNE;
 const LIVE={gas:null,hour:null,moon:null,wind:null,tide:null,ledger:null,lineage:null,lamps:null,weight:null,age:null,pulse:null,peg:null};
 const LIVEK=['gas','hour','moon','wind','tide','ledger','lineage','lamps','weight','age','pulse','peg'];
 const LVFMT={
@@ -1681,7 +1702,7 @@ function resolve(){
   if(S.subject>=0)o.subject=S.subject; if(S.hour>=0)o.hour=S.hour; if(S.ground>=0)o.ground=S.ground; if(S.dither>=0)o.dither=S.dither;
   if(S.weather>=0)o.weather=S.weather; if(S.cam>=0)o.cam=S.cam;
   if(S.frame===1)o.border=true; else if(S.frame===2)o.border=false;
-  const P=applyLive(buildPlate(S.seed,o), LIVE);
+  const P=applyTune(applyLive(buildPlate(S.seed,o), LIVE), TUNE);
   const si = S.scheme>=0 ? S.scheme : (rng()*(SCHEME_KEYS.length+2))|0;
   const {key,scheme}=schemeOf(si,S.seed);
   return {P, si, key, scheme};
@@ -1696,7 +1717,7 @@ function resolve(){
 function stateKey(){
   return [S.seed,S.subject,S.scheme,S.hour,S.ground,S.dither,S.frames,
           S.weather,S.cam,S.tex,S.raster,S.ar,S.frame,
-          LIVEK.map(k=>LIVE[k]==null?'':LIVE[k]).join(',')].join('|');
+          LIVEK.map(k=>LIVE[k]==null?'':LIVE[k]).join(','), JSON.stringify(TUNE)].join('|');
 }
 let DONEKEY='';     /* the state whose print is in hand */
 let BROWSEKEY='';   /* the state whose draft is on the glass */
@@ -1980,7 +2001,7 @@ function encodePrint(){
     bytes[o]=0x3B;
     LAST.bytes=bytes; LAST.blob=new Blob([bytes],{type:'image/gif'});
     LAST.outW=out; LAST.outH=outH0;
-    LAST.name='PLATE_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':'')+'.gif';
+    LAST.name='STORMGLASS_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':'')+'.gif';
     return LAST.blob;
   }
   /* the print's height is the plate's height scaled by the SAME integer k the
@@ -1998,7 +2019,7 @@ function encodePrint(){
   const bytes=new Uint8Array(gifEnd(sink));
   LAST.bytes=bytes; LAST.blob=new Blob([bytes],{type:'image/gif'});
   LAST.outW=out; LAST.outH=outH;
-  LAST.name='PLATE_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':'')+'.gif';
+  LAST.name='STORMGLASS_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':'')+'.gif';
   return LAST.blob;
 }
 /* SAVE, TIERED — the same doctrine as the public box. On a phone the file
@@ -2098,7 +2119,7 @@ function recall(){
   const raw=($('dna').value||'').trim();
   const parts=raw.split(/[\s+]+/);
   const c=unpackPlate(parts[0]);
-  if(!c){ $('stat').textContent='THAT IS NOT A PLATE.'; return; }
+  if(!c){ $('stat').textContent='THAT IS NOT A GLASS.'; return; }
   S.seed=c.seed; S.scheme=c.scheme; S.subject=c.subject; S.hour=c.hour; S.ground=c.ground; S.dither=c.dither; S.frames=c.frames;
   S.weather=c.weather; S.cam=c.cam;
   if(c.ar) S.ar=c.ar;                  /* the shape rode in the card's pad */
@@ -2148,8 +2169,20 @@ applyAspect();
 applyFrame();
 livePaint();
 (function boot(){
-  const q=new URLSearchParams(location.search).get('dna');
+  const sp=new URLSearchParams(location.search);
+  const q=sp.get('dna');
   if(q){ $('dna').value=q; const c=unpackPlate(q); if(c){ recall(); return; } }
+  /* THE TUNING ROOMS LINK HERE. ?seed=&subject=&hour=&ground=&weather=&cam=&ar=&live={json}&tune={json}
+     opens the exact plate a card shows, so the motion can be judged live. */
+  if(sp.has('seed')){
+    S.seed=(+sp.get('seed'))>>>0;
+    for(const k of ['subject','scheme','hour','ground','dither','weather','cam']) if(sp.has(k)) S[k]=+sp.get(k);
+    if(sp.has('frames')) S.frames=+sp.get('frames');
+    if(sp.has('ar')&&window.setAspect) setAspect(sp.get('ar'));
+    try{ if(sp.has('live')){ const L=JSON.parse(sp.get('live')); for(const k in L) if(k in LIVE) LIVE[k]=L[k]; } }catch(e){}
+    try{ if(sp.has('tune')){ const T=JSON.parse(sp.get('tune')); for(const k in T) TUNE[k]=T[k]; } }catch(e){}
+    livePaint();
+  }
   writeUI(); draw();
 })();
 </script>
