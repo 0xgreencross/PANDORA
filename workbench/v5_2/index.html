@@ -118,6 +118,8 @@
       <div class="lrow"><label>WEIGHT</label><input type="range" id="lv-weight" min="0" max="1" step="0.01" value="0.5"><b id="lvv-weight">off</b><i data-k="weight">&#215;</i></div>
       <div class="lrow"><label>AGE</label><input type="range" id="lv-age" min="0" max="365" step="1" value="0"><b id="lvv-age">off</b><i data-k="age">&#215;</i></div>
       <div class="lrow"><label>PEG</label><input type="range" id="lv-peg" min="0" max="3" step="0.05" value="0"><b id="lvv-peg">off</b><i data-k="peg">&#215;</i></div>
+      <div class="lrow"><label>FLOOD</label><input type="range" id="lv-flood" min="0" max="0.6" step="0.01" value="0"><b id="lvv-flood">off</b><i data-k="flood">&#215;</i></div>
+      <div class="lrow"><label>HUNGER</label><input type="range" id="lv-hunger" min="0" max="100" step="0.5" value="0"><b id="lvv-hunger">off</b><i data-k="hunger">&#215;</i></div>
       <div class="lrow"><label>PULSE</label><input type="range" id="lv-pulse" min="0" max="1" step="0.01" value="0"><b id="lvv-pulse">off</b><i data-k="pulse">&#215;</i></div>
     </div>
     <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
@@ -428,7 +430,7 @@ function buildPlate(seed, o){
   const rb=rng();
   P.border = (o.border!=null) ? !!o.border : (rb<0.4);   /* a plate's rule */
   /* the live defaults: exactly the v5.1 plate until applyLive says otherwise */
-  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0; P.screenGlow=0;
+  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0; P.screenGlow=0; P.flood=0; P.flooded=false; P.hunger=0;
   P.stormAt=((seed>>>0)%997)/997*TAU;          /* where in the loop the strike lands; no rng draw */
   return P;
 }
@@ -449,6 +451,8 @@ function buildPlate(seed, o){
      age     days the collection lived  -> the horizon sinks
      pulse   0..1 hours since last bid  -> rupture of the screen loop
      peg     stablecoin depeg, percent  -> the counterfeit: a second, misregistered impression
+     flood   ETH drawdown vs 7-day TWAP -> the water rises over the base, on every ground
+     hunger  blob base fee, gwei        -> the screen loop's corruption climbs (main thread, like the pulse)
    ═══════════════════════════════════════════════════════════════════════ */
 function applyLive(P,L){
   if(!L) return P;
@@ -464,6 +468,11 @@ function applyLive(P,L){
   if(L.wind!=null){ P.wind=Math.max(-1,Math.min(1,+L.wind)); }
   if(L.tide!=null){ P.tide=Math.max(0,Math.min(1,+L.tide)); }
   P.wy=(P.ground===2)?P.tide*0.55:0;
+  /* THE FLOOD. ETH against its own seven-day average, read from the pool's
+     stored observations: a fall of a fifth starts the water, and at half the
+     whole base of the monument is under. On every ground, not only water. */
+  P.flood=0; if(L.flood!=null){ const d=Math.max(0,+L.flood); P.flood=Math.max(0,Math.min(1,(d-0.20)/0.30)); }
+  if(P.flood>0){ P.wy=Math.max(P.wy, 0.15+P.flood*0.85); P.flooded=true; }
   /* THE HOLDER'S NOTCH. On chain the contract hands over one hash per holder,
      in order; every notch is cut in that holder's own shape and stays after
      they sell. The workbench only has a count, so it makes the hashes up. */
@@ -1037,7 +1046,7 @@ function renderLum(P,W,H,th,lum,mat,dep,texbuf){
      now, so night fog is dark and storm fog is leaden */
   const hzTone = wxOver(P) ? (wxStorm(P)?0.30:0.48)*df : 0.60*df;
   const bankTone = wxOver(P) ? (wxStorm(P)?0.34:0.52)*df : 0.66*df;
-  const water=(P.ground===2);
+  const water=(P.ground===2)||!!P.flooded;
   const bank=wxBank(P);
   const LP=P.lamp?lampPos(P,th):null;
   const NL=P.lamp?(P.subject===11?1:FR.nl):0;
@@ -1646,15 +1655,16 @@ const ARS={'1:1':1, '9:16':16/9, '16:9':9/16};
 /* THE LIVE STATE, as the workbench simulates it. null means "the seed's own";
    on chain, tokenURI fills every field from the block. */
 const TUNE={}; window.TUNE=TUNE;
-const LIVE={gas:null,hour:null,moon:null,wind:null,tide:null,ledger:null,lineage:null,lamps:null,weight:null,age:null,pulse:null,peg:null};
-const LIVEK=['gas','hour','moon','wind','tide','ledger','lineage','lamps','weight','age','pulse','peg'];
+const LIVE={gas:null,hour:null,moon:null,wind:null,tide:null,ledger:null,lineage:null,lamps:null,weight:null,age:null,pulse:null,peg:null,flood:null,hunger:null};
+const LIVEK=['gas','hour','moon','wind','tide','ledger','lineage','lamps','weight','age','pulse','peg','flood','hunger'];
 const LVFMT={
   gas:v=>{ const g=Math.pow(10,v); return (g<0.1?g.toFixed(3):g<1?g.toFixed(2):g<10?g.toFixed(1):Math.round(g))+' gwei \u00b7 '+WEATHERS[gasBand(g)]; },
   hour:v=>{ const h=Math.floor(v), m=Math.round((v-h)*60); return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); },
   moon:v=>['NEW','WAXING','FIRST Q','GIBBOUS','FULL','GIBBOUS','LAST Q','WANING','NEW'][Math.round(v*8)],
   wind:v=>(v<-0.05?'\u2190 ':v>0.05?'\u2192 ':'')+Math.abs(Math.round(v*100))+'%',
   tide:v=>Math.round(v*100)+'%', ledger:v=>v+' hands', lineage:v=>v+' ancestors', lamps:v=>v+' lit', weight:v=>Math.round(v*100)+'%',
-  age:v=>v+' days', pulse:v=>Math.round(v*100)+'%', peg:v=>(+v).toFixed(2)+'% off peg'+(v<0.5?' \u00b7 holds':' \u00b7 COUNTERFEIT') };
+  age:v=>v+' days', pulse:v=>Math.round(v*100)+'%', peg:v=>(+v).toFixed(2)+'% off peg'+(v<0.5?' \u00b7 holds':' \u00b7 COUNTERFEIT'),
+  flood:v=>'ETH \u2212'+Math.round(v*100)+'% vs 7d'+(v<0.2?' \u00b7 dry':' \u00b7 FLOOD'), hunger:v=>(+v).toFixed(1)+' gwei blob' };
 function liveRead(k){ const e=$('lv-'+k); if(!e)return null; const v=+e.value; return k==='gas'?Math.pow(10,v):v; }
 function livePaint(){
   for(const k of LIVEK){ const row=$('lv-'+k).parentNode, b=$('lvv-'+k);
@@ -1804,7 +1814,7 @@ let TEXWORKER=null;
    wait 1.5s for an identical answer. It is kept now, and only rolled again
    when one of the four things it actually depends on moves. */
 let TEXC={key:'', tex:null};
-function texKey(R,N,texCard){ return S.seed+'|'+R.si+'|'+N+'|'+(texCard||'')+'|'+(LIVE.pulse==null?'':LIVE.pulse); }
+function texKey(R,N,texCard){ return S.seed+'|'+R.si+'|'+N+'|'+(texCard||'')+'|'+(LIVE.pulse==null?'':LIVE.pulse)+'|'+(LIVE.hunger==null?'':LIVE.hunger); }
 function v3JobFor(R,N,texCard){
   const c=texCard?unpackV3Card(texCard):null;
   let seed=S.seed, scheme=R.scheme, mode, corr, fx={}, voidamt=0, locality=0, chromacap=0, ov={maskType:0,maskStyle:0,cx:16,cy:16,size:16,n:0,form:0}, epoch=0, ver=6;
@@ -1830,6 +1840,10 @@ function v3JobFor(R,N,texCard){
      of death. Applied after the card, so a pasted card is still the loop it
      was, only more or less ruptured. */
   if(LIVE.pulse!=null){ const pu=Math.max(0,Math.min(1,+LIVE.pulse)); corr=Math.min(100,Math.round(corr+pu*(100-corr))); }
+  /* THE HUNGER. The blob base fee is what the rollups pay to feed the machine,
+     in every block since Dencun. From 1 gwei up the machine eats the image
+     faster, on top of the pulse. */
+  if(LIVE.hunger!=null){ const g=Math.max(0,+LIVE.hunger); const h=Math.max(0,Math.min(1,Math.log10(1+g)/2)); corr=Math.min(100,Math.round(corr+h*(100-corr)*0.7)); }
   return { seed, mode, voidamt, locality, chromacap, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov, epoch, ver, wb:{fam:null,prim:null,cam:null,mod:null,gain:{}}, gr:null };
 }
@@ -2152,7 +2166,7 @@ $('live-now').addEventListener('click',()=>{
   const set=(k,v)=>{ const e=$('lv-'+k); e.value=String(k==='gas'?Math.log10(v):v); LIVE[k]=v; };
   set('gas',0.041); set('hour',d.getUTCHours()+d.getUTCMinutes()/60);
   set('moon',((d.getTime()/86400000-9.5)%29.53+29.53)%29.53/29.53);
-  set('wind',0.3); set('tide',0.44); set('ledger',0); set('lineage',0); set('peg',0); set('lamps',1); set('weight',0.3); set('age',0); set('pulse',0.1);
+  set('wind',0.3); set('tide',0.44); set('ledger',0); set('lineage',0); set('peg',0); set('flood',0); set('hunger',1); set('lamps',1); set('weight',0.3); set('age',0); set('pulse',0.1);
   livePaint(); draw();
 });
 $('live-off').addEventListener('click',()=>{ LIVEK.forEach(k=>LIVE[k]=null); livePaint(); draw(); });
