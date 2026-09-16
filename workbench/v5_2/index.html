@@ -38,6 +38,7 @@
     width:100%; aspect-ratio:var(--arw)/var(--arh);
     background:#000; border:1px solid var(--hair); overflow:hidden; }
   body[data-ar="9:16"] #stage{ --arw:9; --arh:16; }
+  body[data-ar="16:9"] #stage{ --arw:16; --arh:9; }
   /* a tall plate in the column would otherwise run off the bottom of a
      laptop: cap it at the viewport and let it centre in its column */
   body:not(.artmax)[data-ar="9:16"] #stage{ max-height:78dvh; width:auto; margin:0 auto; }
@@ -102,7 +103,7 @@
     <div class="row"><label>CAMERA</label><select id="cam"></select></div>
     <div class="row"><label>SCREEN LOOP</label><input id="tex" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AUTO · a random PANDORA roll — or paste a PNDR card"></div>
     <div class="row"><label>PRINT AT</label><select id="raster"><option value="135">135² · 8 px grain</option><option value="270">270² · 4 px grain</option><option value="540" selected>540² · 2 px grain</option></select></div>
-    <div class="row"><label>SHAPE</label><select id="aspect"><option value="1:1">1:1 &#183; the square plate</option><option value="9:16">9:16 &#183; the tall plate</option></select></div>
+    <div class="row"><label>SHAPE</label><select id="aspect"><option value="1:1">1:1 &#183; the square plate</option><option value="9:16">9:16 &#183; the tall plate</option><option value="16:9">16:9 &#183; the wide plate</option></select></div>
     <div class="row"><label>FRAME</label><select id="frameSel"><option value="0">AUTO &#183; the seed decides</option><option value="1">ON &#183; always ruled</option><option value="2">OFF &#183; never ruled</option></select></div>
     <div id="live">
       <div class="lhead">LIVE <span>what the chain knows when the plate is read</span><button id="live-now" title="fill every dial with a plausible now">NOW</button><button id="live-off" title="clear every dial: the seed's own plate">OFF</button></div>
@@ -1018,7 +1019,10 @@ function renderLum(P,W,H,th,lum,mat,dep,texbuf){
      it and ground below it. Nothing is cropped and nothing is stretched, and
      the pixels stay square because the vertical half-angle scales by the same
      ratio as the sheet. */
-  const AR=H/W, fovV=fov*AR;
+  const AR=H/W, fovV=fov*Math.max(1,AR), fovH=fov*Math.max(1,1/AR);
+  /* THE WIDE PLATE IS A WIDER WINDOW ON THE SAME WORLD, by the same rule:
+     the vertical field stays the square's and the horizontal one opens, so
+     the monument keeps its size and what arrives is land to either side. */
   const tall=(AR>1.05);
   /* and a standing thing wants more sky than floor, so the horizon is nudged
      down the sheet. A monument photographed with the skyline at its waist is a
@@ -1040,7 +1044,7 @@ function renderLum(P,W,H,th,lum,mat,dep,texbuf){
   for(let py=0;py<H;py++){
     const v=-((py+0.5)/H*2-1)*fovV - shift;
     for(let px=0;px<W;px++){
-      const u=((px+0.5)/W*2-1)*fov + P.camDx*0.35;
+      const u=((px+0.5)/W*2-1)*fovH + P.camDx*0.35;
       let dx=C.fx+C.rx*u+C.ux*v, dy=C.fy+C.ry*u+C.uy*v, dz=C.fz+C.rz*u+C.uz*v;
       const dl=Math.sqrt(dx*dx+dy*dy+dz*dz); dx/=dl; dy/=dl; dz/=dl;
       const i=py*W+px;
@@ -1638,7 +1642,7 @@ function pool(){
 const S={ seed:696969, subject:-1, scheme:-1, hour:-1, ground:-1, dither:-1, frames:36, weather:-1, cam:-1, tex:'', raster:540, ar:'1:1', frame:0 };
 /* THE RULE: 0 the seed's own choice, 1 always printed, 2 never */
 const FRAMES=['AUTO','ON','OFF'];
-const ARS={'1:1':1, '9:16':16/9};
+const ARS={'1:1':1, '9:16':16/9, '16:9':9/16};
 /* THE LIVE STATE, as the workbench simulates it. null means "the seed's own";
    on chain, tokenURI fills every field from the block. */
 const TUNE={}; window.TUNE=TUNE;
@@ -2001,7 +2005,7 @@ function encodePrint(){
     bytes[o]=0x3B;
     LAST.bytes=bytes; LAST.blob=new Blob([bytes],{type:'image/gif'});
     LAST.outW=out; LAST.outH=outH0;
-    LAST.name='STORMGLASS_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':'')+'.gif';
+    LAST.name='STORMGLASS_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':LAST.ar==='16:9'?'_16x9':'')+'.gif';
     return LAST.blob;
   }
   /* the print's height is the plate's height scaled by the SAME integer k the
@@ -2019,7 +2023,7 @@ function encodePrint(){
   const bytes=new Uint8Array(gifEnd(sink));
   LAST.bytes=bytes; LAST.blob=new Blob([bytes],{type:'image/gif'});
   LAST.outW=out; LAST.outH=outH;
-  LAST.name='STORMGLASS_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':'')+'.gif';
+  LAST.name='STORMGLASS_'+SUBJECTS[LAST.P.subject]+'_'+S.seed+(LAST.ar==='9:16'?'_9x16':LAST.ar==='16:9'?'_16x9':'')+'.gif';
   return LAST.blob;
 }
 /* SAVE, TIERED — the same doctrine as the public box. On a phone the file
@@ -2070,15 +2074,16 @@ async function saveGif(){
    a render ends up stretched. */
 function applyAspect(){
   document.body.dataset.ar=S.ar;
-  const tall=(S.ar==='9:16');
+  const tall=(S.ar==='9:16'), wide=(S.ar==='16:9');
   const sel=$('aspect'); if(sel) sel.value=S.ar;
   const b=$('shape');
   if(b){
-    b.innerHTML=(tall?'&#9647;':'&#9633;')+' '+S.ar;
-    b.setAttribute('aria-pressed',String(tall));
-    b.title='SHAPE \u2014 the plate is '+S.ar+'. Tap to cut it '+(tall?'1:1':'9:16')+'.';
+    b.innerHTML=(tall?'&#9647;':wide?'&#9645;':'&#9633;')+' '+S.ar;
+    b.setAttribute('aria-pressed',String(tall||wide));
+    b.title='SHAPE \u2014 the glass is '+S.ar+'. Tap to cut it '+nextAspect()+'.';
   }
 }
+function nextAspect(){ return S.ar==='1:1'?'9:16':S.ar==='9:16'?'16:9':'1:1'; }
 function setAspect(a){
   if(!(a in ARS)||S.ar===a) return false;
   S.ar=a; applyAspect(); return true;
@@ -2151,7 +2156,7 @@ $('live-now').addEventListener('click',()=>{
   livePaint(); draw();
 });
 $('live-off').addEventListener('click',()=>{ LIVEK.forEach(k=>LIVE[k]=null); livePaint(); draw(); });
-$('shape').addEventListener('click',()=>{ if(setAspect(S.ar==='9:16'?'1:1':'9:16')) draw(); });
+$('shape').addEventListener('click',()=>{ if(setAspect(nextAspect())) draw(); });
 $('aspect').addEventListener('change',()=>{ if(setAspect($('aspect').value)) draw(); });
 $('frame').addEventListener('click',()=>{ if(setFrame(S.frame+1)) draw(); });
 $('frameSel').addEventListener('change',()=>{ if(setFrame(+$('frameSel').value)) draw(); });
