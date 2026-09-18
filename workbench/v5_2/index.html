@@ -338,11 +338,11 @@ function sdConeY(px,py,pz,r,h){
 function smin(a,b,k){ const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25; }
 
 /* ───────────────────────────── the plate (per seed) ─────────────────────── */
-const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','HELIX','SUNDIAL','BREATHER','TWINS','WHEEL','STELAE','LANTERN','SCREEN','ASSEMBLY'];
-const SUBJ_OK=[0,1,2,3,4,6,7,10,11,12];            /* the subjects a seed may roll: the curator's list */
+const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS'];
+const SUBJ_OK=[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15]; /* the subjects a seed may roll: the curator's list (HELIX, TWINS, WHEEL were killed; their slots hold OBELISK, TRILITHON, ZIGGURAT) */
 /* THE ANGLES A MONUMENT MAY FACE THE CAMERA AT, per subject, in degrees of
    world azimuth: arcs the curator kept in the angle room. Empty = any. */
-const AZ_OK={3:[[30,150]], 4:[[30,150],[210,330]], 6:[[30,150],[210,330]], 10:[[30,150],[210,330]], 11:[[210,330]]};
+const AZ_OK={3:[[30,150]], 4:[[30,150],[210,330]], 6:[[30,150],[210,330]], 8:[[30,150],[210,330]], 10:[[30,150],[210,330]], 11:[[210,330]], 14:[[30,150],[210,330]]};
 function azFor(sub,r){ const arcs=AZ_OK[sub]; if(!arcs) return r*TAU;
   const tot=arcs.reduce((a,[x,y])=>a+(y-x),0); let u=r*tot;
   for(const [x,y] of arcs){ if(u<=y-x) return (x+u)*Math.PI/180; u-=y-x; } return arcs[0][0]*Math.PI/180; }
@@ -383,17 +383,17 @@ function buildPlate(seed, o){
      were killed in the rooms; the seed can no longer roll them. One draw, as
      before, so the rest of the seed's rolls are untouched. */
   P.subject = (o.subject!=null)? o.subject : (rs<0.62 ? 13 : SUBJ_OK[(rng()*SUBJ_OK.length)|0]);
-  if(P.subject===13) P.asm=buildAssembly(rng);
+  if(P.subject===13){ P.asm=buildAssembly(rng); measureAssembly(P); }
   const r1=rng(), r2=rng();
   P.weather = (o.weather!=null)? o.weather : (r1<0.50?0:(r1<0.74?1:(r1<0.92?2:3)));
-  P.cam     = (o.cam!=null)?     o.cam     : (r2<0.42?0:(r2<0.66?1:(r2<0.82?2:(r2<0.92?3:4))));
+  P.cam     = (o.cam!=null)?     o.cam     : (r2<0.55?0:(r2<0.75?1:(r2<0.88?2:3)));   /* tuning pass 2: no orbit from the seed; STILL more often */
   /* an orbit only suits a subject that reads from every side */
   if(P.cam===4 && !(P.subject===1||P.subject===2||P.subject===5||P.subject===7||P.subject===9)) P.cam=1;
   P.lamp = (P.subject===11) || rng()<0.22;      /* a second light, low and warm, in the accent */
   P.lampAz = rng()*TAU; P.lampR=2.4+rng()*1.4; P.lampY=0.5+rng()*0.9; P.lampI=0.9+rng()*0.9;
   P.fogH = 0.5+rng()*1.1; P.fogD = 0.35+rng()*0.5;
   P.rainA = 0.5+rng()*0.4; P.rainSp = 2+((rng()*3)|0);
-  P.camA = 0.06+rng()*0.10;
+  P.camA = 0.03+rng()*0.05;                   /* pass 2: the moves are subtle */
   P.texTile = 1.6+rng()*2.2;                   /* how many world units one loop covers on the form */
   P.hour    = (o.hour!=null)?    o.hour    : (rng()*HOURS.length)|0;
   P.ground  = (o.ground!=null)?  o.ground  : (rng()*GROUNDS.length)|0;
@@ -411,7 +411,8 @@ function buildPlate(seed, o){
   P.camEl = (6+rng()*18)*Math.PI/180;       /* low: a monument is looked UP at. LOW (3 deg) was killed, HIGH (26) kept */
   P.camDist = 1;                              /* scaled per subject below */
   P.horizon = rng()<0.5 ? 0.34 : 0.54;        /* where the horizon sits in the frame; the high horizon of LOW was killed */
-  P.bob = rng()<0.6 ? 0.04+rng()*0.06 : 0;    /* the camera breathes */
+  P.bob = rng()<0.6 ? 0.015+rng()*0.025 : 0;  /* the camera breathes, barely (pass 2: 0.04..0.10 was too much) */
+  if(P.cam===0) P.bob=0;                      /* STILL means still */
   P.fov = 0.55+rng()*0.25;                    /* tan(half angle) */
   /* the sky */
   P.moon = rng()<0.42;
@@ -431,11 +432,11 @@ function buildPlate(seed, o){
   /* every subject sits inside roughly a 4-unit sphere; the camera distance
      puts that sphere at a chosen share of the frame */
   /* each subject's real extent, so every plate fills its frame the same way */
-  const EXT=[3.6,3.9,4.2,5.0,3.4,3.8,6.2,2.8,4.0,4.4,6.0,4.6,4.2,4.6];
+  const EXT=[3.6,3.9,4.2,5.0,3.4,4.6,6.2,2.8,4.8,4.4,6.0,4.6,4.2,4.6,4.4,4.6];
   const fill = 0.62+rng()*0.23;                /* how much of the frame the subject takes; FAR was killed, CLOSE kept */
   const ext = P.subject===13 ? P.asm.ext : EXT[P.subject];
   P.camDist = ext/(2*P.fov*fill); P.ext=ext; P.fill=fill;
-  P.camTargetY = P.subject===13 ? P.asm.ty : [1.7,1.9,1.9,1.8,1.7,1.8,1.7,1.6,1.9,2.0,1.6,1.9,1.9,1.9][P.subject];
+  P.camTargetY = P.subject===13 ? P.asm.ty : [1.7,1.9,1.9,1.8,1.7,2.0,1.7,1.6,1.9,1.5,1.6,1.9,1.9,1.9,1.6,2.0][P.subject];
   P.camDx = (rng()-0.5)*(P.subject===2||P.subject===5||P.subject===0||P.subject===12 ? 0.35 : 0.9);   /* off the centre line, less so for the tall ones */
   const rb=rng();
   P.border = (o.border!=null) ? !!o.border : (rb<0.4);   /* a plate's rule */
@@ -546,8 +547,8 @@ function buildAssembly(rng){
       prim:(rng()*PRIMS.length)|0, arr:(rng()*ARRS.length)|0, mot:(rng()*MOTS.length)|0,
       rate:1+((rng()*3)|0), sign:rng()<0.5?-1:1,
       cnt:2+((rng()*6)|0), size:0.18+rng()*0.55, aspect:0.4+rng()*2.2,
-      radius:0.6+rng()*1.4, height:0.3+rng()*2.4, rise:0.15+rng()*0.35,
-      ox:(rng()-0.5)*1.6, oz:(rng()-0.5)*1.6, tilt:(rng()-0.5)*0.5, phase:rng()*TAU,
+      radius:0.5+rng()*0.8, height:0.8+rng()*1.8, rise:0.15+rng()*0.35,
+      ox:(rng()-0.5)*1.0, oz:(rng()-0.5)*1.0, tilt:(rng()-0.5)*0.5, phase:rng()*TAU,   /* pass 2: tighter, taller; the sprawlers were killed */
       amp:0.15+rng()*0.4 };
     if(M.arr===0){ M.cnt=2+((rng()*4)|0); M.size=0.35+rng()*0.5; }       /* a stack is few and large */
     if(M.arr===6){ M.cnt=3+((rng()*5)|0); M.size=0.12+rng()*0.14; M.height=1.6+rng()*1.6; }
@@ -565,6 +566,18 @@ function buildAssembly(rng){
     if(r>wx)wx=r; if(h>hy)hy=h;
   }
   return {mods, ext:Math.max(2.6,Math.min(7.5,Math.max(wx*2.2,hy*1.25))), ty:Math.max(1.0,Math.min(2.6,hy*0.48))};
+}
+/* THE ASSEMBLY'S REAL EXTENT (pass 2). The guess above overshot on most rolls
+   and left small things adrift in an empty frame, which is what the curator
+   killed. Lay the instances out once at frame 0 and measure them. */
+function measureAssembly(P){
+  prepAssembly(P,0);
+  let wx=0, hy=0;
+  for(let i=0;i<ASM.n;i++){ const a=ASM.a, o=i*8;
+    const r=Math.hypot(a[o],a[o+2])+Math.max(a[o+5],a[o+7]); const h=a[o+1]+a[o+6];
+    if(r>wx)wx=r; if(h>hy)hy=h; }
+  P.asm.ext=Math.max(2.4,Math.min(7.0,Math.max(wx*2.3,hy*1.3)));
+  P.asm.ty=Math.max(0.9,Math.min(2.4,hy*0.5));
 }
 /* instances are laid out once per frame into FR.a: x,y,z, cos,sin (yaw), sx,sy,sz per instance */
 const ASM={ n:0, a:new Float64Array(8*64), mod:new Uint8Array(64), wears:new Uint8Array(64) };
@@ -659,16 +672,18 @@ function prepFrame(P,th){
         v[k*4]=px; v[k*4+1]=px+Math.sin(ang)*L; v[k*4+2]=top-Math.cos(ang)*L; v[k*4+3]=L; }
       break; }
     case 4:{ const r=0.95; v[0]=1.7+Math.sin(th)*r; v[1]=Math.cos(th)*r; break; }
-    case 5:{ const n=11, rise=0.26, step=TAU/7, ph=th/TAU;
-      for(let k=0;k<n;k++){ const kk=k-ph, a=kk*step; c[k]=Math.cos(a); s[k]=Math.sin(a); v[k]=0.55+kk*rise; }
-      break; }
+    case 5:{ /* OBELISK — a bead circles the shaft once a loop */
+      v[0]=Math.cos(th)*1.0; v[1]=1.6+Math.sin(th*2)*0.45; v[2]=Math.sin(th)*1.0; break; }
     case 6: break;
     case 7:{ for(let k=0;k<4;k++){ const a=k*TAU/4+P.a*3;
         v[k*4]=Math.cos(a)*0.62; v[k*4+1]=1.6+Math.sin(th+k*1.57)*0.18; v[k*4+2]=Math.sin(a)*0.62; v[k*4+3]=0.55+0.12*Math.sin(th*(k%2?2:1)+k); }
       break; }
-    case 8:{ c[0]=Math.cos(0.12); s[0]=Math.sin(0.12); c[1]=Math.cos(th); s[1]=Math.sin(th); break; }
-    case 9:{ /* WHEEL — eight spokes; one eighth of a turn per loop is seamless and slow */
-      const a=th/8; for(let k=0;k<8;k++){ const b=a+k*TAU/8; c[k]=Math.cos(b); s[k]=Math.sin(b); } break; }
+    case 8:{ /* TRILITHON — a stone passes under the lintel and back */ v[2]=Math.sin(th)*1.5; v[1]=0.32; break; }
+    case 9:{ /* ZIGGURAT — the crowning slab turns once a loop */ c[0]=Math.cos(th); s[0]=Math.sin(th); break; }
+    case 14:{ /* DOLMEN — the capstone leans a little; a stone circles beneath */
+      c[0]=Math.cos(0.10+P.a*0.12); s[0]=Math.sin(0.10+P.a*0.12); v[0]=Math.cos(th)*1.25; v[1]=0.45; v[2]=Math.sin(th)*1.25; break; }
+    case 15:{ /* GLASS — the bead rides the vial's neck ring once a loop */
+      v[0]=Math.cos(th)*0.72; v[1]=3.3+Math.sin(th*2)*0.08; v[2]=Math.sin(th)*0.72; break; }
     case 10:{ v[0]=2.6+Math.sin(th)*0.35; c[0]=Math.cos(th+P.a*TAU); s[0]=Math.sin(th+P.a*TAU); break; }   /* a whole turn, or the seam shows */
     case 11:{ /* LANTERN — the lamp swings, and it is the second light */
       const A=0.30+P.c*0.30, L=1.5, ang=A*Math.sin(th);
@@ -740,15 +755,13 @@ function sceneSDF(P,x,y,z){
       if(ds<d){ d=ds; m=2; }
       const dp=sdBox(x,y-0.12,z,0.5,0.12,0.5); if(dp<d){ d=dp; m=1; }
       break; }
-    case 5:{ /* HELIX — a stair that climbs forever: one step of screw per loop */
-      d=sdCylY(x,y-1.7,z,0.16,1.9); m=1;
-      for(let k=0;k<11;k++){
-        const yy=v[k];
-        const ay=Math.abs(y-yy)-0.05; if(ay>d) continue;       /* pruned by height first */
-        const lx=c[k]*x+s[k]*z, lz=-s[k]*x+c[k]*z;
-        const db=sdBox(lx-0.62,y-yy,lz,0.5,0.045,0.19);
-        if(db<d){ d=db; m=7; }                                  /* one material: the stair advances a step per loop, and alternating inks would swap at the seam */
-      }
+    case 5:{ /* OBELISK — a tapered shaft, a pyramidion, a plinth, and a bead that circles it */
+      const H=3.5, w=0.40*(1-0.55*Math.max(0,Math.min(1,y/H)));
+      const dx=Math.max(Math.abs(x),Math.abs(z))-w, dy=Math.abs(y-H*0.5)-H*0.5;
+      d=Math.max(dx,dy); m=7;                                  /* the shaft wears the loop */
+      const dt=sdConeY(x,y-H,z,0.19,0.42); if(dt<d){ d=dt; m=2; }
+      const dp=sdBox(x,y-0.14,z,0.72,0.14,0.72); if(dp<d){ d=dp; m=1; }
+      const ds=sdSphere(x-v[0],y-v[1],z-v[2],0.16); if(ds<d){ d=ds; m=2; }
       break; }
     case 6:{ /* SUNDIAL — a colonnade; the light itself walks around it */
       for(let k=0;k<6;k++){
@@ -768,18 +781,29 @@ function sceneSDF(P,x,y,z){
       }
       m=7;
       break; }
-    case 9:{ /* WHEEL — a standing wheel on two legs, turning */
-      const cy=2.4;
-      d=sdTorusZ(x,y-cy,z,1.8,0.12); m=7;                      /* the rim wears the loop */
-      const dh=sdSphere(x,y-cy,z,0.22); if(dh<d){ d=dh; m=2; }
-      for(let k=0;k<8;k++){
-        const lx=c[k]*x+s[k]*(y-cy), ly=-s[k]*x+c[k]*(y-cy);
-        if(Math.abs(ly)-0.1>d) continue;
-        const ds=sdBox(lx-0.9,ly,z,0.9,0.035,0.035);
-        if(ds<d){ d=ds; m=2; }                                  /* same reason: the wheel turns a spoke per loop */
-      }
-      const dl=Math.min(sdBox(x-0.9,y-cy*0.5,z-0.4,0.06,cy*0.5,0.06), sdBox(x+0.9,y-cy*0.5,z-0.4,0.06,cy*0.5,0.06), sdBox(x-0.9,y-cy*0.5,z+0.4,0.06,cy*0.5,0.06), sdBox(x+0.9,y-cy*0.5,z+0.4,0.06,cy*0.5,0.06));
-      if(dl<d){ d=dl; m=1; }
+    case 8:{ /* TRILITHON — two uprights and a lintel; a stone passes beneath */
+      d=Math.min(sdBox(x-1.0,y-1.7,z,0.36,1.7,0.5), sdBox(x+1.0,y-1.7,z,0.36,1.7,0.5)); m=7;   /* the uprights wear the loop */
+      const dl=sdBox(x,y-3.6,z,1.78,0.26,0.56); if(dl<d){ d=dl; m=1; }
+      const ds=sdSphere(x,y-v[1],z-v[2],0.30); if(ds<d){ d=ds; m=2; }
+      break; }
+    case 9:{ /* ZIGGURAT — five tiers, and a slab on the summit that turns */
+      const W=[1.9,1.5,1.15,0.82,0.52], T=0.5;
+      for(let k=0;k<5;k++){ const dk=sdBox(x,y-(k*T+T*0.5),z,W[k],T*0.5,W[k]); if(dk<d){ d=dk; m=7; } }   /* the tiers wear the loop */
+      const lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
+      const dt=sdBox(lx,y-5*T-0.12,lz,0.55,0.10,0.22); if(dt<d){ d=dt; m=2; }
+      break; }
+    case 14:{ /* DOLMEN — three uprights, a leaning capstone, a stone that circles beneath */
+      const U=[[0.9,0.55],[-0.9,0.55],[0,-1.0]];
+      for(const [ux,uz] of U){ const du=sdBox(x-ux,y-1.3,z-uz,0.28,1.3,0.28); if(du<d){ d=du; m=1; } }
+      const ly=c[0]*(y-2.85)-s[0]*x, lx=s[0]*(y-2.85)+c[0]*x;
+      const dc=sdBox(lx,ly,z+0.1,1.6,0.22,1.35); if(dc<d){ d=dc; m=7; }                   /* the capstone wears the loop */
+      const ds=sdSphere(x-v[0],y-v[1],z-v[2],0.24); if(ds<d){ d=ds; m=2; }
+      break; }
+    case 15:{ /* GLASS — the stormglass itself: a sealed vial on a stand, a bead riding its neck */
+      d=Math.min(sdCylY(x,y-2.05,z,0.56,1.45), sdSphere(x,y-3.5,z,0.56)); m=7;            /* the vial wears the loop: the weather sealed inside */
+      const dr=sdTorusY(x,y-3.28,z,0.62,0.07); if(dr<d){ d=dr; m=2; }
+      const db=Math.min(sdCylY(x,y-0.25,z,0.85,0.25), sdCylY(x,y-0.5,z,0.42,0.12)); if(db<d){ d=db; m=1; }
+      const ds=sdSphere(x-v[0],y-v[1],z-v[2],0.13); if(ds<d){ d=ds; m=2; }
       break; }
     case 10:{ /* STELAE — a row of standing stones, and one stone that will not stay down */
       for(let k=0;k<7;k++){
@@ -810,18 +834,7 @@ function sceneSDF(P,x,y,z){
       m=(lz>0.17)?5:1;                                     /* only the front face is the screen */
       const dp=sdBox(x,y-0.07,z,1.85,0.07,0.45); if(dp<d){ d=dp; m=1; }
       break; }
-    default:{ /* TWINS — two obelisks leaning together, and the bar that turns between them */
-      for(let sgn=-1;sgn<=1;sgn+=2){
-        const ox=x-sgn*1.3;
-        const lx=c[0]*ox+sgn*s[0]*y, ly=-sgn*s[0]*ox+c[0]*y;
-        const dc=sdConeY(lx,ly,z,0.42,3.6);
-        if(dc<d){ d=dc; m=7; }                                  /* the obelisks wear the loop */
-      }
-      const lx=c[1]*x+s[1]*z, lz=-s[1]*x+c[1]*z;
-      const db=sdBox(lx,y-2.35,lz,1.05,0.05,0.05);
-      if(db<d){ d=db; m=2; }
-      const dh=sdSphere(x,y-2.35,z,0.14); if(dh<d){ d=dh; m=2; }
-    }
+    default: break;
   }
   for(let i=0;i<FR.nl;i++){
     const dl=sdSphere(x-FR.lp[i*3],y-FR.lp[i*3+1],z-FR.lp[i*3+2],0.13);
