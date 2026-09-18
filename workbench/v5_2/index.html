@@ -336,10 +336,29 @@ function sdConeY(px,py,pz,r,h){
   return Math.max(side,Math.max(base,cap));
 }
 function smin(a,b,k){ const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25; }
+/* THE GOLDEN SOLIDS (pass 4). Each is the intersection of its face planes,
+   folded through the octant by abs(); r is the inradius, the distance from
+   the centre to a face. In the frame the solids are written in, a vertex of
+   the tetrahedron (and of the cube's diagonal) points along (1,1,1). */
+const PHI=(1+Math.sqrt(5))/2, K_DOD=1/Math.sqrt(1+PHI*PHI), K_3=1/Math.sqrt(3);
+function sdDodeca(px,py,pz,r){ const x=Math.abs(px),y=Math.abs(py),z=Math.abs(pz);
+  return Math.max(y+PHI*z, Math.max(x+PHI*y, z+PHI*x))*K_DOD-r; }
+function sdIcosa(px,py,pz,r){ const x=Math.abs(px),y=Math.abs(py),z=Math.abs(pz), q=1/PHI;
+  return Math.max(x+y+z, Math.max(y*q+PHI*z, Math.max(z*q+PHI*x, x*q+PHI*y)))*K_3-r; }
+function sdTetra(px,py,pz,r){ /* vertices along (1,1,1),(1,-1,-1),(-1,1,-1),(-1,-1,1); r = inradius */
+  return Math.max(Math.max(-px-py-pz, -px+py+pz), Math.max(px-py+pz, px+py-pz))*K_3-r; }
+function sdSeg(px,py,pz,ax,ay,az,bx,by,bz,r){ const vx=bx-ax,vy=by-ay,vz=bz-az, ex=px-ax,ey=py-ay,ez=pz-az;
+  let t=(ex*vx+ey*vy+ez*vz)/(vx*vx+vy*vy+vz*vz); t=t<0?0:(t>1?1:t);
+  const rx=ex-vx*t, ry=ey-vy*t, rz=ez-vz*t; return Math.sqrt(rx*rx+ry*ry+rz*rz)-r; }
+/* the frame that stands a solid on its (1,1,1) axis: world (x,y,z) -> solid coords */
+const S6=1/Math.sqrt(6);
+const E1=[1/Math.SQRT2,K_3,S6], E2=[0,K_3,-2*S6], E3=[-1/Math.SQRT2,K_3,S6];   /* rows: world y -> (1,1,1)/sqrt3 */
+/* and the frame that stands a dodecahedron on a face: world y -> the face normal (0,1,PHI) */
+const F1=[1,0,0], F2=[0,K_DOD,-PHI*K_DOD], F3=[0,PHI*K_DOD,K_DOD];
 
 /* ───────────────────────────── the plate (per seed) ─────────────────────── */
-const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS'];
-const SUBJ_OK=[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15]; /* the subjects a seed may roll: the curator's list (HELIX, TWINS, WHEEL were killed; their slots hold OBELISK, TRILITHON, ZIGGURAT) */
+const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS','DODECA','EQUILIBRIUM','MERKABA','FIBONACCI','FLOWER'];
+const SUBJ_OK=[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,19,20]; /* the subjects a seed may roll: the curator's list (HELIX, TWINS, WHEEL were killed; their slots hold OBELISK, TRILITHON, ZIGGURAT) */
 /* THE ANGLES A MONUMENT MAY FACE THE CAMERA AT, per subject, in degrees of
    world azimuth: arcs the curator kept in the angle room. Empty = any. */
 const AZ_OK={3:[[30,150]], 4:[[30,150],[210,330]], 6:[[30,150],[210,330]], 8:[[30,150],[210,330]], 10:[[30,150],[210,330]], 11:[[210,330]], 14:[[30,150],[210,330]]};
@@ -367,7 +386,7 @@ function gasBand(gwei){
   if(gwei<100)  return 2;   /* RAIN */
   return 5;                 /* STORM */
 }
-const CAMS=['STILL','SWAY','DOLLY','CRANE','ORBIT'];
+const CAMS=['STILL','SWAY','DOLLY','CRANE'];
 const GROUNDS=['PLAIN','TILES','WATER'];
 const HOURS=[8,14,22,32,44,58,70];        /* sun elevation, degrees */
 const DITHERS=['FINE','COARSE','LINE','LINE'];
@@ -432,12 +451,12 @@ function buildPlate(seed, o){
   /* every subject sits inside roughly a 4-unit sphere; the camera distance
      puts that sphere at a chosen share of the frame */
   /* each subject's real extent, so every plate fills its frame the same way */
-  const EXT=[3.6,3.9,4.2,5.0,3.4,4.6,6.2,2.8,4.8,4.4,6.0,4.6,4.2,4.6,4.4,4.0];
+  const EXT=[3.6,3.9,4.2,5.0,3.4,4.6,6.2,2.8,4.8,4.4,6.0,4.6,4.2,4.6,4.4,4.0,4.2,4.6,4.4,4.4,4.2];
   const fill = 0.62+rng()*0.23;                /* how much of the frame the subject takes; FAR was killed, CLOSE kept */
   const ext = P.subject===13 ? P.asm.ext : EXT[P.subject];
   P.camDist = ext/(2*P.fov*fill); P.ext=ext; P.fill=fill;
-  P.camTargetY = P.subject===13 ? P.asm.ty : [1.7,1.9,1.9,1.8,1.7,2.0,1.7,1.6,1.9,1.5,1.6,1.9,1.9,1.9,1.6,1.9][P.subject];
-  P.camDx = (rng()-0.5)*(P.subject===2||P.subject===5||P.subject===0||P.subject===12||P.subject===13 ? 0.35 : 0.9);   /* off the centre line, less so for the tall ones */
+  P.camTargetY = P.subject===13 ? P.asm.ty : [1.7,1.9,1.9,1.8,1.7,2.0,1.7,1.6,1.9,1.5,1.6,1.9,1.9,1.9,1.6,1.9,1.6,2.0,2.0,1.4,1.9][P.subject];
+  P.camDx = (rng()-0.5)*(P.subject===2||P.subject===5||P.subject===0||P.subject===12||P.subject===13||P.subject>=16 ? 0.35 : 0.9);   /* off the centre line, less so for the tall ones */
   const rb=rng();
   P.border = (o.border!=null) ? !!o.border : (rb<0.4);   /* a plate's rule */
   /* the live defaults: exactly the v5.1 plate until applyLive says otherwise */
@@ -536,7 +555,7 @@ function applyTune(P,T){
    at one to three turns a loop, an orbit, a bob, a swing, a screw. The
    biggest module wears the loop. The parameter space is continuous, so the
    same plate does not come round twice. */
-const PRIMS=['BOX','SPHERE','TORUS','CYL','CONE','SLAB'];
+const PRIMS=['BOX','SPHERE','TORUS','CYL','CONE','SLAB','DODECA','ICOSA'];
 const ARRS=['STACK','RING','ROW','ORBIT','HELIX','CLUSTER','COLONNADE','ARCH'];
 const MOTS=['NONE','SPIN','ORBIT','BOB','SWING','SCREW','COUNTER'];
 function buildAssembly(rng){
@@ -588,6 +607,7 @@ function measureAssembly(P){
         case 2: { const t=Math.min(s*0.35,sy*0.5); rh=s+t; vh=t; break; }
         case 3: rh=s*0.7; vh=sy; break;
         case 4: rh=s; vh=sy; break;
+        case 6: case 7: rh=s*1.26; vh=s*1.26; break;
         default: rh=s*1.3; vh=sy;
       }
       const r=Math.hypot(a[o],a[o+2])+rh, h=a[o+1]+vh;
@@ -645,6 +665,8 @@ function assemblySDF(P,x,y,z){
       case 2: dd=sdTorusY(lx,dy,lz,s,Math.min(s*0.35,sy*0.5)); break;
       case 3: dd=sdCylY(lx,dy,lz,s*0.7,sy); break;
       case 4: dd=sdConeY(lx,dy+sy,lz,s,sy*2); break;
+      case 6: dd=sdDodeca(lx*F1[0]+dy*F1[1]+lz*F1[2], lx*F2[0]+dy*F2[1]+lz*F2[2], lx*F3[0]+dy*F3[1]+lz*F3[2], s); break;   /* on a face */
+      case 7: dd=sdIcosa(lx*E1[0]+dy*E1[1]+lz*E1[2], lx*E2[0]+dy*E2[1]+lz*E2[2], lx*E3[0]+dy*E3[1]+lz*E3[2], s); break;    /* on a vertex */
       default: dd=sdBox(lx,dy,lz,s*1.3,sy,s*0.18);
     }
     if(dd<d){ d=dd; m=ASM.wears[q]?7:((ASM.mod[q]&1)?2:1); }
@@ -708,6 +730,16 @@ function prepFrame(P,th){
       v[0]=Math.sin(ang)*L; v[1]=3.4-Math.cos(ang)*L; v[2]=ang; break; }
     case 12:{ /* the slab's local +z must point AT the camera: sin(az-a)=1 -> a=az-pi/2 */
       c[0]=Math.cos(P.camAz-Math.PI/2); s[0]=Math.sin(P.camAz-Math.PI/2); break; }
+    case 16:{ /* DODECA — a fifth of a turn a loop (five faces meet the axis); its dual circles it once */
+      c[0]=Math.cos(th/5+P.a); s[0]=Math.sin(th/5+P.a); v[0]=Math.cos(th)*2.3; v[1]=1.2+Math.sin(th*2)*0.4; v[2]=Math.sin(th)*2.3; break; }
+    case 17:{ /* EQUILIBRIUM — the vector equilibrium turns a third of a turn a loop about its 3-fold axis */
+      c[0]=Math.cos(th/3+P.a); s[0]=Math.sin(th/3+P.a); break; }
+    case 18:{ /* MERKABA — two tetrahedra, counter-rotating, each a third of a turn a loop */
+      c[0]=Math.cos(th/3+P.a); s[0]=Math.sin(th/3+P.a); c[1]=Math.cos(-th/3+P.a); s[1]=Math.sin(-th/3+P.a); break; }
+    case 19:{ /* FIBONACCI — the tiling faces the camera and sways; the bead never leaves the spiral */
+      const a=P.camAz-Math.PI/2+Math.sin(th)*0.12; c[0]=Math.cos(a); s[0]=Math.sin(a); break; }
+    case 20:{ /* FLOWER — the medallion faces the camera; the rings turn a sixth of a turn a loop */
+      c[0]=Math.cos(P.camAz-Math.PI/2); s[0]=Math.sin(P.camAz-Math.PI/2); c[1]=Math.cos(th/6); s[1]=Math.sin(th/6); break; }
     default: break;
   }
 }
@@ -854,6 +886,64 @@ function sceneSDF(P,x,y,z){
       d=sdBox(lx,y-1.95,lz,1.7,1.7,0.18);
       m=(lz>0.17)?5:1;                                     /* only the front face is the screen */
       const dp=sdBox(x,y-0.07,z,1.85,0.07,0.45); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 16:{ /* DODECA — a dodecahedron resting on a face, turning; its dual, an icosahedron, circles it */
+      const R=1.30, cy=R+0.16;
+      const wx=c[0]*x+s[0]*z, wz=-s[0]*x+c[0]*z, wy=y-cy;
+      const qx=wx*F1[0]+wy*F1[1]+wz*F1[2], qy=wx*F2[0]+wy*F2[1]+wz*F2[2], qz=wx*F3[0]+wy*F3[1]+wz*F3[2];
+      d=sdDodeca(qx,qy,qz,R); m=7;                                                       /* the solid wears the loop */
+      const dp=sdCylY(x,y-0.08,z,1.9,0.08); if(dp<d){ d=dp; m=1; }
+      const ix=x-v[0], iy=y-v[1], iz=z-v[2];
+      const di=sdIcosa(ix*E1[0]+iy*E1[1]+iz*E1[2], ix*E2[0]+iy*E2[1]+iz*E2[2], ix*E3[0]+iy*E3[1]+iz*E3[2], 0.26); if(di<d){ d=di; m=2; }
+      break; }
+    case 17:{ /* EQUILIBRIUM — the vector equilibrium: twelve vertices, twenty-four edges, twelve spokes, all one length */
+      const S=1.30, cy=2.0, rt=0.055;
+      const wx=c[0]*x+s[0]*z, wz=-s[0]*x+c[0]*z, wy=y-cy;
+      const qx=Math.abs(wx*E1[0]+wy*E1[1]+wz*E1[2]), qy=Math.abs(wx*E2[0]+wy*E2[1]+wz*E2[2]), qz=Math.abs(wx*E3[0]+wy*E3[1]+wz*E3[2]);
+      /* folded into one octant: three vertices, the triangle between them, six half-edges to the axes, three spokes */
+      d=Math.min(sdSphere(qx-S,qy-S,qz,0.15), Math.min(sdSphere(qx-S,qy,qz-S,0.15), sdSphere(qx,qy-S,qz-S,0.15))); m=7;   /* the vertices wear the loop */
+      let de=Math.min(sdSeg(qx,qy,qz,S,S,0,S,0,S,rt), Math.min(sdSeg(qx,qy,qz,S,S,0,0,S,S,rt), sdSeg(qx,qy,qz,S,0,S,0,S,S,rt)));
+      de=Math.min(de, Math.min(sdSeg(qx,qy,qz,S,S,0,S,0,0,rt), sdSeg(qx,qy,qz,S,S,0,0,S,0,rt)));
+      de=Math.min(de, Math.min(sdSeg(qx,qy,qz,S,0,S,S,0,0,rt), sdSeg(qx,qy,qz,S,0,S,0,0,S,rt)));
+      de=Math.min(de, Math.min(sdSeg(qx,qy,qz,0,S,S,0,S,0,rt), sdSeg(qx,qy,qz,0,S,S,0,0,S,rt)));
+      if(de<d){ d=de; m=2; }
+      const dk=Math.min(sdSeg(qx,qy,qz,0,0,0,S,S,0,rt), Math.min(sdSeg(qx,qy,qz,0,0,0,S,0,S,rt), sdSeg(qx,qy,qz,0,0,0,0,S,S,rt))); if(dk<d){ d=dk; m=1; }
+      const dc=sdSphere(wx,wy,wz,0.24); if(dc<d){ d=dc; m=2; }
+      const dst=Math.min(sdCylY(x,y-0.16,z,0.6,0.16), sdCylY(x,y-0.3,z,0.06,0.3)); if(dst<d){ d=dst; m=1; }   /* a stem to the lowest face */
+      break; }
+    case 18:{ /* MERKABA — two tetrahedra through each other, turning against each other */
+      const R=1.55, cy=2.0, ri=R/3;
+      const wy=y-cy;
+      const ax=c[0]*x+s[0]*z, az=-s[0]*x+c[0]*z;
+      const bx=c[1]*x+s[1]*z, bz=-s[1]*x+c[1]*z;
+      const da=sdTetra(ax*E1[0]+wy*E1[1]+az*E1[2], ax*E2[0]+wy*E2[1]+az*E2[2], ax*E3[0]+wy*E3[1]+az*E3[2], ri);
+      const db=sdTetra(-(bx*E1[0]+wy*E1[1]+bz*E1[2]), -(bx*E2[0]+wy*E2[1]+bz*E2[2]), -(bx*E3[0]+wy*E3[1]+bz*E3[2]), ri);
+      if(da<db){ d=da; m=7; } else { d=db; m=2; }                                        /* the rising one wears the loop */
+      const dst=Math.min(sdCylY(x,y-0.12,z,0.7,0.12), sdCylY(x,y-(cy-R)*0.5,z,0.05,(cy-R)*0.5)); if(dst<d){ d=dst; m=1; }
+      break; }
+    case 19:{ /* FIBONACCI — the golden tiling, 1 1 2 3 5 8, standing as a relief that faces the camera, the spiral drawn through it */
+      const lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z, u=0.28;
+      /* squares as [x0,y0,side,depth,material, arc centre cx,cy, quadrant sx,sy] in tiling units; the 13x8 rectangle spans x -3..10, y -5..3 */
+      const Q=[[0,0,1,0.16,1, 0,0, 1,1],[1,0,1,0.24,2, 1,1, 1,-1],[0,1,2,0.10,1, 0,1, 1,1],[-3,0,3,0.20,2, 0,0, -1,1],[-3,-5,5,0.13,1, 2,0, -1,-1],[2,-5,8,0.18,7, 2,3, 1,-1]];
+      const px=lx/u+3.5, py=(y-0.16)/u-5;                                                   /* the point in tiling units */
+      let da=1e9;
+      for(let k=0;k<6;k++){ const q=Q[k], h=q[2]*u*0.5, cx=(q[0]-3.5)*u+h, cy=0.16+(q[1]+5)*u+h;
+        const dq=sdBox(lx-cx,y-cy,lz,h-0.01,h-0.01,q[3]); if(dq<d){ d=dq; m=q[4]; }
+        /* the quarter arc of radius side, centred on a corner, kept to its square */
+        const ax=(px-q[5])*q[7], ay=(py-q[6])*q[8], r=q[2]; let e;
+        if(ax>=0&&ay>=0) e=Math.abs(Math.hypot(ax,ay)-r); else if(ax<0&&ay>=0) e=Math.hypot(ax,ay-r); else if(ay<0&&ax>=0) e=Math.hypot(ax-r,ay); else e=Math.min(Math.hypot(ax,ay-r),Math.hypot(ax-r,ay));
+        const w=lz-q[3]; const dd=Math.sqrt(e*u*e*u+w*w)-0.05; if(dd<da) da=dd; }
+      if(da<d){ d=da; m=2; }
+      const dp=sdBox(x,y-0.08,z,2.0,0.08,0.5); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 20:{ /* FLOWER — seven rings of one radius, each through the centre of the next, raised on a stone medallion */
+      const lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z, cy=1.95, R=0.72;
+      d=sdCylY(lx,lz,y-cy,1.75,0.10); m=7;                                                  /* the medallion wears the loop (a disc along z) */
+      const rx=c[1]*lx+s[1]*(y-cy), ry=-s[1]*lx+c[1]*(y-cy), pz=lz-0.10;
+      let dr=sdTorusZ(rx,ry,pz,R,0.075);
+      for(let k=0;k<6;k++){ const a=k*Math.PI/3; const dk=sdTorusZ(rx-Math.cos(a)*R,ry-Math.sin(a)*R,pz,R,0.075); if(dk<dr) dr=dk; }
+      if(dr<d){ d=dr; m=2; }
+      const dst=Math.min(sdCylY(x,y-0.1,z,0.8,0.1), sdBox(x,y-0.6,z,0.5,0.5,0.14)); if(dst<d){ d=dst; m=1; }
       break; }
     default: break;
   }
@@ -1453,8 +1543,8 @@ function crc8(bytes){let c=0; for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(
 /* ver(4) seed(32) scheme(5) subject(4) hour(3) ground(2) dither(2) frames(7) = 59 -> 64 bits + crc */
 function packPlate(seed,schemeIdx,subject,hour,ground,dither,frames,weather,cam,tall,frame){
   let v=0n; const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
-  push(2,4); push(seed>>>0,32); push(schemeIdx,5); push(subject,4); push(hour,3); push(ground,2); push(dither,2); push(frames,7);
-  push(weather|0,2); push(cam|0,3);           /* 59 -> 64, exactly */
+  push(3,4); push(seed>>>0,32); push(schemeIdx,5); push(subject,5); push(hour,3); push(ground,2); push(dither,2); push(frames,7);
+  push(weather|0,2); push(cam|0,2);           /* 64, exactly: version 3 gives the subject a fifth bit and the camera has four states */
   const bytes=[]; for(let i=7;i>=0;i--)bytes.push(Number((v>>BigInt(i*8))&0xffn));
   bytes.push(crc8(bytes));
   let bv=0n; for(const b of bytes)bv=(bv<<8n)|BigInt(b);
@@ -1481,10 +1571,11 @@ function unpackPlate(str){
   const crc=bytes.pop(); if(crc8(bytes)!==crc)return null;
   let v=0n; for(const b of bytes)v=(v<<8n)|BigInt(b);
   let used=0; const pull=bits=>{const r=Number((v>>BigInt(64-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
-  const ver=pull(4); if(ver!==1&&ver!==2)return null;
-  const seed=pull(32), scheme=pull(5), subject=pull(4), hour=pull(3), ground=pull(2), dither=pull(2), frames=pull(7);
+  const ver=pull(4); if(ver!==1&&ver!==2&&ver!==3)return null;
+  const seed=pull(32), scheme=pull(5), subject=pull(ver===3?5:4), hour=pull(3), ground=pull(2), dither=pull(2), frames=pull(7);
   let weather=-1, cam=-1;
-  if(ver===2){ weather=pull(2); cam=pull(3); if(cam>=CAMS.length)return null; }
+  if(ver===2){ weather=pull(2); cam=pull(3); if(cam>=CAMS.length)cam=1; }   /* an old ORBIT card sways now */
+  if(ver===3){ weather=pull(2); cam=pull(2); }
   if(scheme>=SCHEME_KEYS.length+2||subject>=SUBJECTS.length||hour>=HOURS.length||ground>=GROUNDS.length||frames<8||frames>80)return null;
   const ar=(pad&4)?'9:16':'1:1';
   const frame=(pad&3)>2?0:(pad&3);            /* 3 is not a state: read it as AUTO */
