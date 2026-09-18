@@ -339,6 +339,13 @@ function smin(a,b,k){ const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b
 
 /* ───────────────────────────── the plate (per seed) ─────────────────────── */
 const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','HELIX','SUNDIAL','BREATHER','TWINS','WHEEL','STELAE','LANTERN','SCREEN','ASSEMBLY'];
+const SUBJ_OK=[0,1,2,3,4,6,7,10,11,12];            /* the subjects a seed may roll: the curator's list */
+/* THE ANGLES A MONUMENT MAY FACE THE CAMERA AT, per subject, in degrees of
+   world azimuth: arcs the curator kept in the angle room. Empty = any. */
+const AZ_OK={3:[[30,150]], 4:[[30,150],[210,330]], 6:[[30,150],[210,330]], 10:[[30,150],[210,330]], 11:[[210,330]]};
+function azFor(sub,r){ const arcs=AZ_OK[sub]; if(!arcs) return r*TAU;
+  const tot=arcs.reduce((a,[x,y])=>a+(y-x),0); let u=r*tot;
+  for(const [x,y] of arcs){ if(u<=y-x) return (x+u)*Math.PI/180; u-=y-x; } return arcs[0][0]*Math.PI/180; }
 const WEATHERS=['CLEAR','FOG','RAIN','FOG+RAIN','OVERCAST','STORM','SNOW'];
 /* which weathers do what. Indices 0-3 are the v5.1 set and keep their meaning;
    4-6 arrive with the live sky. */
@@ -372,7 +379,10 @@ function buildPlate(seed, o){
   /* most plates are ASSEMBLIES - monuments composed on the spot from a grammar,
      so no two are alike; the named subjects are the rest */
   const rs=rng();
-  P.subject = (o.subject!=null)? o.subject : (rs<0.62 ? 13 : (rng()*13)|0);
+  /* THE CURATED SUBJECTS (tuning pass 1, 2026-09-17). HELIX, TWINS and WHEEL
+     were killed in the rooms; the seed can no longer roll them. One draw, as
+     before, so the rest of the seed's rolls are untouched. */
+  P.subject = (o.subject!=null)? o.subject : (rs<0.62 ? 13 : SUBJ_OK[(rng()*SUBJ_OK.length)|0]);
   if(P.subject===13) P.asm=buildAssembly(rng);
   const r1=rng(), r2=rng();
   P.weather = (o.weather!=null)? o.weather : (r1<0.50?0:(r1<0.74?1:(r1<0.92?2:3)));
@@ -393,14 +403,14 @@ function buildPlate(seed, o){
   /* half the plates are lit from behind the subject: a low sun over the
      shoulder of the monument throws its shadow at the viewer, and that is the
      oldest trick in the print-maker's book */
-  P.camAz = rng()*TAU;
+  P.camAz = azFor(P.subject, rng());          /* one draw, into the arcs the curator kept */
   P.sunAz = rng()<0.5 ? P.camAz+Math.PI+(rng()-0.5)*1.4 : rng()*TAU;
   P.sunEl = el;
   P.sunSweep = (P.subject===6);               /* the sundial's light orbits */
   /* the camera: azimuth, elevation, and distance are the composition */
-  P.camEl = (4+rng()*13)*Math.PI/180;       /* low: a monument is looked UP at */
+  P.camEl = (6+rng()*18)*Math.PI/180;       /* low: a monument is looked UP at. LOW (3 deg) was killed, HIGH (26) kept */
   P.camDist = 1;                              /* scaled per subject below */
-  P.horizon = rng()<0.5 ? 0.38 : 0.62;        /* where the horizon sits in the frame */
+  P.horizon = rng()<0.5 ? 0.34 : 0.54;        /* where the horizon sits in the frame; the high horizon of LOW was killed */
   P.bob = rng()<0.6 ? 0.04+rng()*0.06 : 0;    /* the camera breathes */
   P.fov = 0.55+rng()*0.25;                    /* tan(half angle) */
   /* the sky */
@@ -422,7 +432,7 @@ function buildPlate(seed, o){
      puts that sphere at a chosen share of the frame */
   /* each subject's real extent, so every plate fills its frame the same way */
   const EXT=[3.6,3.9,4.2,5.0,3.4,3.8,6.2,2.8,4.0,4.4,6.0,4.6,4.2,4.6];
-  const fill = 0.55+rng()*0.22;                /* how much of the frame the subject takes */
+  const fill = 0.62+rng()*0.23;                /* how much of the frame the subject takes; FAR was killed, CLOSE kept */
   const ext = P.subject===13 ? P.asm.ext : EXT[P.subject];
   P.camDist = ext/(2*P.fov*fill); P.ext=ext; P.fill=fill;
   P.camTargetY = P.subject===13 ? P.asm.ty : [1.7,1.9,1.9,1.8,1.7,1.8,1.7,1.6,1.9,2.0,1.6,1.9,1.9,1.9][P.subject];
@@ -430,7 +440,7 @@ function buildPlate(seed, o){
   const rb=rng();
   P.border = (o.border!=null) ? !!o.border : (rb<0.4);   /* a plate's rule */
   /* the live defaults: exactly the v5.1 plate until applyLive says otherwise */
-  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0; P.screenGlow=0; P.flood=0; P.flooded=false; P.hunger=0;
+  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0; P.screenGlow=0.35; P.flood=0; P.flooded=false; P.hunger=0;
   P.stormAt=((seed>>>0)%997)/997*TAU;          /* where in the loop the strike lands; no rng draw */
   return P;
 }
@@ -506,6 +516,9 @@ function applyTune(P,T){
   if(T.fill!=null) P.fill=+T.fill;
   if(T.fov!=null||T.fill!=null) P.camDist=P.ext/(2*P.fov*P.fill);
   if(T.el!=null) P.camEl=(+T.el)*Math.PI/180;
+  /* the angle the monument faces the camera: the sun and moon keep their place
+     relative to the camera, so only the monument turns */
+  if(T.az!=null){ const az=(+T.az)*Math.PI/180, d=az-P.camAz; P.camAz=az; P.sunAz+=d; P.moonAz+=d; P.lampAz+=d; }
   if(T.horizon!=null) P.horizon=+T.horizon;
   if(T.dx!=null) P.camDx=+T.dx;
   if(T.bob!=null) P.bob=+T.bob;
