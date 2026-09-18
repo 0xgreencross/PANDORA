@@ -79,7 +79,7 @@
 </head>
 <body>
 <div id="wrap">
-  <header><b>DITHERVOID // STORMGLASS</b><span id="hsub">WORKBENCH V5.2 · THE STORMGLASS: THE CHAIN WRITES THE SKY</span><button id="shape" aria-pressed="false" title="SHAPE">&#9633; 1:1</button><button id="frame" aria-pressed="false" title="FRAME">&#9635; AUTO</button><button id="art" aria-pressed="false" title="give the whole screen to the plate">&#9974; ART</button></header>
+  <header><b>DITHERVOID // STORMGLASS</b><span id="hsub">WORKBENCH V5.2 · THE STORMGLASS: THE CHAIN WRITES THE SKY</span><button id="shape" aria-pressed="false" title="SHAPE">&#9633; 1:1</button><button id="frame" aria-pressed="false" title="FRAME" style="display:none">&#9635; AUTO</button><button id="art" aria-pressed="false" title="give the whole screen to the plate">&#9974; ART</button></header>
   <div id="stagecol">
     <div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div></div>
     <div id="plate"><span>SUBJECT <b id="p-sub">—</b></span><span>SCHEME <b id="p-sch">—</b></span><span>HOUR <b id="p-hour">—</b></span><span>GROUND <b id="p-gnd">—</b></span><span>SCREEN <b id="p-dit">—</b></span><span>INKS <b id="p-ink">—</b></span></div>
@@ -104,7 +104,7 @@
     <div class="row"><label>SCREEN LOOP</label><input id="tex" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AUTO · a random PANDORA roll — or paste a PNDR card"></div>
     <div class="row"><label>PRINT AT</label><select id="raster"><option value="135">135² · 8 px grain</option><option value="270">270² · 4 px grain</option><option value="540" selected>540² · 2 px grain</option></select></div>
     <div class="row"><label>SHAPE</label><select id="aspect"><option value="1:1">1:1 &#183; the square plate</option><option value="9:16">9:16 &#183; the tall plate</option><option value="16:9">16:9 &#183; the wide plate</option></select></div>
-    <div class="row"><label>FRAME</label><select id="frameSel"><option value="0">AUTO &#183; the seed decides</option><option value="1">ON &#183; always ruled</option><option value="2">OFF &#183; never ruled</option></select></div>
+    <div class="row" style="display:none"><label>FRAME</label><select id="frameSel"><option value="0">AUTO &#183; the seed decides</option><option value="1">ON &#183; always ruled</option><option value="2">OFF &#183; never ruled</option></select></div>
     <div id="live">
       <div class="lhead">LIVE <span>what the chain knows when the plate is read</span><button id="live-now" title="fill every dial with a plausible now">NOW</button><button id="live-off" title="clear every dial: the seed's own plate">OFF</button></div>
       <div class="lrow"><label>GAS</label><input type="range" id="lv-gas" min="-2" max="3" step="0.01" value="-1.4"><b id="lvv-gas">off</b><i data-k="gas">&#215;</i></div>
@@ -508,7 +508,7 @@ function buildPlate(seed, o){
   P.camTargetY = P.subject===13 ? P.asm.ty : (P.fit ? P.fit.ty : (P.gno ? P.gno.ty : (P.phy ? P.phy.ty : [1.7,1.9,1.9,1.8,1.7,2.0,1.7,1.6,1.9,1.5,1.6,1.9,1.9,1.9,1.6,1.9,1.6,2.0,2.0,1.9,2.0][P.subject])));
   P.camDx = (rng()-0.5)*(P.subject===2||P.subject===5||P.subject===0||P.subject===12||P.subject===13||P.subject>=16 ? 0.35 : 0.9);   /* the golden and the solids stay centred */   /* off the centre line, less so for the tall ones */
   const rb=rng();
-  P.border = (o.border!=null) ? !!o.border : (rb<0.4);   /* a plate's rule */
+  P.border = false;                                       /* pass 7: no rule, no margin, ever (the draw rb stays, so no seed shifts) */
   /* the live defaults: exactly the v5.1 plate until applyLive says otherwise */
   P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0; P.screenGlow=0.35; P.flood=0; P.flooded=false; P.hunger=0;
   P.stormAt=((seed>>>0)%997)/997*TAU;          /* where in the loop the strike lands; no rng draw */
@@ -2060,7 +2060,7 @@ function readUI(){
   S.weather=+$('weather').value; S.cam=+$('cam').value; S.tex=($('tex').value||'').trim();
   S.raster=+$('raster').value||540;
   if($('aspect')) S.ar=$('aspect').value||'1:1';
-  if($('frameSel')) S.frame=+$('frameSel').value||0;
+  S.frame=0;                                   /* pass 7: the rule is gone; the card's pad bits stay AUTO */
 }
 function writeUI(){
   $('seed').value=S.seed; $('subject').value=S.subject; $('scheme').value=S.scheme; $('hour').value=S.hour;
@@ -2480,8 +2480,7 @@ function applyFrame(eff){
 }
 function setFrame(c){
   c=((c|0)%3+3)%3;
-  if(S.frame===c) return false;
-  S.frame=c; applyFrame(); return true;
+  return false;                                /* pass 7: no frames */
 }
 window.setAspect=setAspect; window.applyAspect=applyAspect;
 window.setFrame=setFrame; window.applyFrame=applyFrame;
@@ -2501,7 +2500,7 @@ function recall(){
   S.seed=c.seed; S.scheme=c.scheme; S.subject=c.subject; S.hour=c.hour; S.ground=c.ground; S.dither=c.dither; S.frames=c.frames;
   S.weather=c.weather; S.cam=c.cam;
   if(c.ar) S.ar=c.ar;                  /* the shape rode in the card's pad */
-  if(c.frame!=null) S.frame=c.frame;   /* and the rule beside it */
+  S.frame=0;                           /* old cards may carry a rule bit; the rule is gone */
   S.tex=(parts[1]&&unpackV3Card(parts[1]))?parts[1].toUpperCase():'';
   writeUI(); applyAspect(); applyFrame(); draw();
 }
