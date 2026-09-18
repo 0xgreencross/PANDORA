@@ -344,13 +344,55 @@ const PHI=(1+Math.sqrt(5))/2, K_DOD=1/Math.sqrt(1+PHI*PHI), K_3=1/Math.sqrt(3);
 function sdDodeca(px,py,pz,r){ const x=Math.abs(px),y=Math.abs(py),z=Math.abs(pz);
   return Math.max(y+PHI*z, Math.max(x+PHI*y, z+PHI*x))*K_DOD-r; }
 function sdIcosa(px,py,pz,r){ const x=Math.abs(px),y=Math.abs(py),z=Math.abs(pz), q=1/PHI;
-  return Math.max(x+y+z, Math.max(y*q+PHI*z, Math.max(z*q+PHI*x, x*q+PHI*y)))*K_3-r; }
+  return Math.max(x+y+z, Math.max(y*PHI+q*z, Math.max(z*PHI+q*x, x*PHI+q*y)))*K_3-r; }   /* faces along (1,1,1) and (0,phi,1/phi) cyclic */
 function sdTetra(px,py,pz,r){ /* vertices along (1,1,1),(1,-1,-1),(-1,1,-1),(-1,-1,1); r = inradius */
   return Math.max(Math.max(-px-py-pz, -px+py+pz), Math.max(px-py+pz, px+py-pz))*K_3-r; }
 function sdTriaconta(px,py,pz,r){ /* the rhombic triacontahedron: thirty golden rhombi */
   const x=Math.abs(px),y=Math.abs(py),z=Math.abs(pz), h=0.5/PHI, g=PHI*0.5;
   return Math.max(Math.max(x,Math.max(y,z)), Math.max(x*h+y*0.5+z*g, Math.max(y*h+z*0.5+x*g, z*h+x*0.5+y*g)))-r; }
 const GOLD=Math.PI*(3-Math.sqrt(5));   /* the golden angle: 137.5 degrees, the turn that never repeats */
+function sdOcta(px,py,pz,r){ return (Math.abs(px)+Math.abs(py)+Math.abs(pz))*K_3-r; }
+function sdCube(px,py,pz,r){ return Math.max(Math.abs(px),Math.max(Math.abs(py),Math.abs(pz)))-r; }
+function sdRhombic(px,py,pz,r){ const x=Math.abs(px),y=Math.abs(py),z=Math.abs(pz); return Math.max(x+y,Math.max(y+z,z+x))*Math.SQRT1_2-r; }   /* the rhombic dodecahedron */
+function sdPent(px,pz,r){ let d=-1e9; for(let k=0;k<5;k++){ const a=k*TAU/5; const t=Math.cos(a)*px+Math.sin(a)*pz-r; if(t>d)d=t; } return d; }   /* a regular pentagon in the xz plane, inradius r */
+function sdBoxFrame(px,py,pz,bx,by,bz,e){ /* a wire box (iq) */
+  px=Math.abs(px)-bx; py=Math.abs(py)-by; pz=Math.abs(pz)-bz;
+  const qx=Math.abs(px+e)-e, qy=Math.abs(py+e)-e, qz=Math.abs(pz+e)-e;
+  const L=(a,b,c)=>Math.sqrt(Math.max(a,0)**2+Math.max(b,0)**2+Math.max(c,0)**2)+Math.min(Math.max(a,Math.max(b,c)),0);
+  return Math.min(L(px,qy,qz), Math.min(L(qx,py,qz), L(qx,qy,pz))); }
+/* THE SOLIDS TABLE (pass 6). f: the solid's distance with inradius r, in the frame that stands it
+   (fr: E stands (1,1,1) up, F stands the (0,1,phi) face normal up, I leaves y up); sym: the order of
+   its symmetry about the vertical, so a 1/sym turn per loop is seamless; R: its inradius here;
+   dual: the small companion that circles it. */
+const SOLIDS={
+  21:{f:sdIcosa, fr:'E', sym:3, R:1.30, dual:sdDodeca},
+  22:{f:sdOcta,  fr:'I', sym:4, R:0.95, dual:sdCube},
+  23:{f:sdCube,  fr:'E', sym:3, R:0.95, dual:sdOcta},
+  24:{f:sdTetra, fr:'E', sym:3, R:0.55, dual:sdTetra},
+  25:{f:(x,y,z,r)=>Math.max(sdIcosa(x,y,z,r*1.0982), sdDodeca(x,y,z,r)), fr:'F', sym:5, R:1.50, dual:sdTriaconta},      /* icosidodecahedron */
+  26:{f:(x,y,z,r)=>Math.max(sdIcosa(x,y,z,r*0.9742), sdDodeca(x,y,z,r)), fr:'F', sym:5, R:1.50, dual:sdDodeca},        /* truncated icosahedron */
+  27:{f:(x,y,z,r)=>Math.max(sdCube(x,y,z,r), sdOcta(x,y,z,r*0.8660)), fr:'I', sym:4, R:1.45, dual:sdCube},               /* truncated octahedron */
+  28:{f:sdRhombic, fr:'I', sym:4, R:1.15, dual:(x,y,z,r)=>Math.max(sdCube(x,y,z,r), sdOcta(x,y,z,r*1.1547))},
+  29:{f:(x,y,z,r)=>Math.max(sdCube(x,y,z,r), sdOcta(x,y,z,r*1.1547)), fr:'I', sym:4, R:1.15, dual:sdRhombic},           /* cuboctahedron, solid */
+  30:{f:(x,y,z,r)=>Math.max(sdCube(x,y,z,r), sdOcta(x,y,z,r*1.3938)), fr:'I', sym:4, R:1.10, dual:sdOcta},              /* truncated cube */
+  31:{f:(x,y,z,r)=>Math.max(sdTetra(x,y,z,r), sdTetra(-x,-y,-z,r*1.6667)), fr:'E', sym:3, R:0.85, dual:sdTetra},         /* truncated tetrahedron */
+  32:{f:(x,y,z,r)=>Math.max(sdPent(x,z,r), Math.abs(y)-r*1.176), fr:'I', sym:5, R:1.05, dual:sdSphere},                 /* a pentagonal prism, phi tall for its edge */
+  33:{f:(x,y,z,r)=>Math.min(sdCube(x,y,z,r), sdOcta(x,y,z,r*0.78)), fr:'I', sym:4, R:1.00, dual:sdSphere},              /* the cube and the octahedron, through each other */
+};
+function toFrame(fr,x,y,z,out){
+  if(fr==='E'){ out[0]=x*E1[0]+y*E1[1]+z*E1[2]; out[1]=x*E2[0]+y*E2[1]+z*E2[2]; out[2]=x*E3[0]+y*E3[1]+z*E3[2]; }
+  else if(fr==='F'){ out[0]=x*F1[0]+y*F1[1]+z*F1[2]; out[1]=x*F2[0]+y*F2[1]+z*F2[2]; out[2]=x*F3[0]+y*F3[1]+z*F3[2]; }
+  else { out[0]=x; out[1]=y; out[2]=z; }
+}
+const Q3=[0,0,0];
+/* the solid's own extent, found on the distance field itself: how far it reaches down, up and out */
+function fitSolid(P){
+  const S=SOLIDS[P.subject]; const reach=(dx,dy,dz)=>{ let lo=0, hi=S.R*4; for(let i=0;i<28;i++){ const t=(lo+hi)/2; toFrame(S.fr,dx*t,dy*t,dz*t,Q3); if(S.f(Q3[0],Q3[1],Q3[2],S.R)<0) lo=t; else hi=t; } return lo; };
+  const low=reach(0,-1,0), top=reach(0,1,0); let wr=0;
+  for(let k=0;k<24;k++){ const a=k/24*TAU; const r=reach(Math.cos(a),0,Math.sin(a)); if(r>wr)wr=r; }
+  const cy=0.16+low+0.04;
+  P.fit={ext:Math.max(3.4,Math.min(5.5,Math.max(wr*2*1.3,(cy+top+0.3)*1.2))), ty:Math.max(1.2,Math.min(2.4,cy)), cy, wr};
+}
 function sdSeg(px,py,pz,ax,ay,az,bx,by,bz,r){ const vx=bx-ax,vy=by-ay,vz=bz-az, ex=px-ax,ey=py-ay,ez=pz-az;
   let t=(ex*vx+ey*vy+ez*vz)/(vx*vx+vy*vy+vz*vz); t=t<0?0:(t>1?1:t);
   const rx=ex-vx*t, ry=ey-vy*t, rz=ez-vz*t; return Math.sqrt(rx*rx+ry*ry+rz*rz)-r; }
@@ -361,8 +403,8 @@ const E1=[1/Math.SQRT2,K_3,S6], E2=[0,K_3,-2*S6], E3=[-1/Math.SQRT2,K_3,S6];   /
 const F1=[1,0,0], F2=[0,K_DOD,-PHI*K_DOD], F3=[0,PHI*K_DOD,K_DOD];
 
 /* ───────────────────────────── the plate (per seed) ─────────────────────── */
-const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS','DODECA','EQUILIBRIUM','GNOMON','PHYLLO','TRIACONTA'];
-const SUBJ_OK=[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,19,20]; /* the subjects a seed may roll: the curator's list (HELIX, TWINS, WHEEL were killed; their slots hold OBELISK, TRILITHON, ZIGGURAT) */
+const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS','DODECA','EQUILIBRIUM','GNOMON','PHYLLO','TRIACONTA','ICOSA','OCTA','HEXA','TETRA','ICOSIDODECA','BUCKY','KELVIN','RHOMBIC','CUBOCTA','TRUNCUBE','TRUNTETRA','PRISM','COMPOUND','TREE','NEST','ARCADE','WHORL','CIRCLE','ARMILLARY','PARTITION','TOWERS','DOMES','CRYSTAL'];
+const SUBJ_OK=[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43]; /* the subjects a seed may roll: the curator's list (HELIX, TWINS, WHEEL were killed; their slots hold OBELISK, TRILITHON, ZIGGURAT) */
 /* THE ANGLES A MONUMENT MAY FACE THE CAMERA AT, per subject, in degrees of
    world azimuth: arcs the curator kept in the angle room. Empty = any. */
 const AZ_OK={3:[[30,150]], 4:[[30,150],[210,330]], 6:[[30,150],[210,330]], 8:[[30,150],[210,330]], 10:[[30,150],[210,330]], 11:[[210,330]], 14:[[30,150],[210,330]]};
@@ -454,15 +496,17 @@ function buildPlate(seed, o){
   P.a = rng(); P.b = rng(); P.c = rng(); P.d = rng(); P.e = rng();
   if(P.subject===18) buildGnomon(P);            /* the golden subjects lay themselves out from the dials: no extra draws */
   if(P.subject===19) buildPhyllo(P);
+  if(SOLIDS[P.subject]) fitSolid(P);
+  if(P.subject>=34) buildGolden(P);
   /* every subject sits inside roughly a 4-unit sphere; the camera distance
      puts that sphere at a chosen share of the frame */
   /* each subject's real extent, so every plate fills its frame the same way */
   const EXT=[3.6,3.9,4.2,5.0,3.4,4.6,6.2,2.8,4.8,4.4,6.0,4.6,4.2,4.6,4.4,4.0,4.2,4.6,4.4,4.4,4.4];
   const fill = 0.62+rng()*0.23;                /* how much of the frame the subject takes; FAR was killed, CLOSE kept */
-  const ext = P.subject===13 ? P.asm.ext : (P.gno ? P.gno.ext : (P.phy ? P.phy.ext : EXT[P.subject]));
+  const ext = P.subject===13 ? P.asm.ext : (P.fit ? P.fit.ext : (P.gno ? P.gno.ext : (P.phy ? P.phy.ext : EXT[P.subject])));
   P.camDist = ext/(2*P.fov*fill); P.ext=ext; P.fill=fill;
-  P.camTargetY = P.subject===13 ? P.asm.ty : (P.gno ? P.gno.ty : (P.phy ? P.phy.ty : [1.7,1.9,1.9,1.8,1.7,2.0,1.7,1.6,1.9,1.5,1.6,1.9,1.9,1.9,1.6,1.9,1.6,2.0,2.0,1.9,2.0][P.subject]));
-  P.camDx = (rng()-0.5)*(P.subject===2||P.subject===5||P.subject===0||P.subject===12||P.subject===13||P.subject>=16 ? 0.35 : 0.9);   /* off the centre line, less so for the tall ones */
+  P.camTargetY = P.subject===13 ? P.asm.ty : (P.fit ? P.fit.ty : (P.gno ? P.gno.ty : (P.phy ? P.phy.ty : [1.7,1.9,1.9,1.8,1.7,2.0,1.7,1.6,1.9,1.5,1.6,1.9,1.9,1.9,1.6,1.9,1.6,2.0,2.0,1.9,2.0][P.subject])));
+  P.camDx = (rng()-0.5)*(P.subject===2||P.subject===5||P.subject===0||P.subject===12||P.subject===13||P.subject>=16 ? 0.35 : 0.9);   /* the golden and the solids stay centred */   /* off the centre line, less so for the tall ones */
   const rb=rng();
   P.border = (o.border!=null) ? !!o.border : (rb<0.4);   /* a plate's rule */
   /* the live defaults: exactly the v5.1 plate until applyLive says otherwise */
@@ -581,6 +625,71 @@ function buildPhyllo(P){
     const r= prof===0 ? Rm*(1-tk) : (prof===1 ? Rm*Math.pow(Math.sin(Math.PI*tk),0.8) : Rm*Math.sqrt(1-tk*tk));   /* a cone, a spindle, a dome */
     x[k]=Math.cos(a)*r; z[k]=Math.sin(a)*r; y[k]=0.35+tk*H; s[k]=0.13+0.15*Math.sqrt(r/Rm); t[k]=tk; }
   P.phy={N,prim,x,y,z,s,t,H, ext:Math.max(3.4,Math.min(5.0,Math.max(Rm*2*1.8,(H+0.5)*1.1))), ty:Math.max(1.2,Math.min(2.2,(H+0.35)*0.5))};
+}
+/* THE GOLDEN GENERATORS, SECOND DOZEN (pass 6). Each lays out a structure from
+   the plate's dials and the proportion, and records its own extent in P.fit. */
+function buildGolden(P){
+  const a=P.a,b=P.b,c=P.c,d=P.d,e=P.e; const G={};
+  switch(P.subject){
+    case 34:{ /* TREE — a binary tree; every branch 1/phi of its parent, every fork turned by the golden angle */
+      const D=4+((a*2)|0), beta=0.45+b*0.4, seg=[]; let fruit=[];
+      const grow=(x,y,z,dx,dy,dz,L,r,k,depth,az)=>{ const ex=x+dx*L, ey=y+dy*L, ez=z+dz*L; seg.push([x,y,z,ex,ey,ez,r]);
+        if(depth===0){ fruit.push([ex,ey,ez,r*3.2]); return; }
+        /* two children, leaning beta off the parent, on opposite sides of an azimuth that steps by the golden angle */
+        const hx=Math.hypot(dx,dz)>1e-6? -dz/Math.hypot(dx,dz):1, hz=Math.hypot(dx,dz)>1e-6? dx/Math.hypot(dx,dz):0;   /* a horizontal normal */
+        for(let sgn=-1;sgn<=1;sgn+=2){ const ang=az+(sgn>0?0:Math.PI); const px=Math.cos(ang), pz=Math.sin(ang);
+          let nx=dx*Math.cos(beta)+px*Math.sin(beta), ny=dy*Math.cos(beta)+0.15*Math.sin(beta), nz=dz*Math.cos(beta)+pz*Math.sin(beta); const n=Math.hypot(nx,ny,nz); nx/=n; ny/=n; nz/=n;
+          grow(ex,ey,ez,nx,ny,nz,L/PHI,r/Math.sqrt(PHI),k*2+(sgn>0?1:2),depth-1,az+GOLD); } };
+      grow(0,0.1,0,0,1,0,1.25+c*0.3,0.11,1,D,d*TAU);
+      G.seg=seg; G.fruit=fruit; const H=0.1+(1.25+c*0.3)*(1+1/PHI+1/(PHI*PHI)+1/(PHI*PHI*PHI)+1/(PHI**4)+1/(PHI**5));
+      P.fit={ext:Math.max(3.8,Math.min(5.6,H*1.25)), ty:Math.min(2.3,H*0.5)}; break; }
+    case 35:{ /* NEST — golden cuboid frames one inside the next, each 1/sqrt(phi) of the last, each turned by the golden angle */
+      const K=5+((a*3)|0), s0=1.15+b*0.25; G.K=K; G.s=[]; for(let k=0;k<K;k++) G.s.push(s0*Math.pow(PHI,-k*0.5));
+      G.cy=0.16+s0*0.62*PHI*0.62+0.05; G.e=0.045+c*0.02; P.fit={ext:Math.max(3.4,s0*PHI*0.62*2*1.3), ty:G.cy}; break; }
+    case 36:{ /* ARCADE — portals one behind the other, each 1/phi of the last; a stone passes through them and back */
+      const N=4+((a*3)|0), w0=1.0+b*0.25, gap=0.5+c*0.3; G.N=N; G.w=[]; G.x=[]; let z=0;
+      for(let k=0;k<N;k++){ G.w.push(w0*Math.pow(PHI,-k*0.5)); G.x.push(z); z+=gap; }
+      const cz=(G.x[0]+G.x[N-1])/2; for(let k=0;k<N;k++) G.x[k]-=cz; G.t=0.14+d*0.06;
+      P.fit={ext:Math.max(3.6,Math.min(5.4,Math.max(w0*PHI*2*1.15,(z+w0)*1.1))), ty:w0*PHI*0.55}; break; }
+    case 37:{ /* WHORL — a spiral of spheres climbing: every step the golden angle round, every eighth step phi further out */
+      const N=13+((a*3)|0)*4, r0=0.22+b*0.1, dy=0.14+c*0.06; G.N=N; G.x=[]; G.y=[]; G.z=[]; G.s=[]; let top=0, wr=0;
+      for(let k=0;k<N;k++){ const r=r0*Math.pow(PHI,k/8), ang=k*GOLD+d*TAU, sz=0.09+0.05*Math.pow(PHI,k/10);
+        G.x.push(Math.cos(ang)*r); G.z.push(Math.sin(ang)*r); G.y.push(0.3+k*dy+sz); G.s.push(sz); top=0.3+k*dy+sz*2; if(r+sz>wr)wr=r+sz; }
+      P.fit={ext:Math.max(3.4,Math.min(5.6,Math.max(wr*2*1.3,top*1.25))), ty:Math.min(2.2,top*0.5)}; break; }
+    case 38:{ /* CIRCLE — standing stones round a ring, each the golden angle on from the last, each 1/phi^(1/4) shorter */
+      const N=8+((a*6)|0), R=1.35+b*0.3; G.N=N; G.R=R; G.h=[]; G.a=[];
+      for(let k=0;k<N;k++){ G.a.push(k*GOLD+c*TAU); G.h.push((1.5+d*0.5)*Math.pow(PHI,-k/4)); }
+      P.fit={ext:Math.max(3.8,Math.min(5.6,(R+0.4)*2*1.2)), ty:1.2}; break; }
+    case 39:{ /* ARMILLARY — rings whose radii fall by phi, their axes spread on the golden spiral of the sphere */
+      const K=4+((a*3)|0), r0=1.45+b*0.2; G.K=K; G.r=[]; G.n=[];
+      for(let k=0;k<K;k++){ G.r.push(r0*Math.pow(PHI,-k*0.5)); const z=1-2*(k+0.5)/K, rr=Math.sqrt(1-z*z), ang=k*GOLD+c*TAU; G.n.push([Math.cos(ang)*rr, z, Math.sin(ang)*rr]); }
+      G.cy=0.2+r0+0.1; G.tube=0.045+d*0.02; P.fit={ext:Math.max(3.8,(r0+G.tube)*2*1.3), ty:G.cy}; break; }
+    case 40:{ /* PARTITION — a golden slab cut and cut again at the golden section, each part standing at its own depth */
+      const depth=5+((a*3)|0), rects=[]; let W=PHI*1.4, H=1.4, x0=-W/2, y0=0, bits=Math.floor(b*4096)|0;
+      for(let k=0;k<depth;k++){ const horiz=W>=H; const cut=(bits>>k)&1;   /* which side keeps growing */
+        if(horiz){ const w1=W/PHI, w2=W-w1; if(cut){ rects.push([x0,y0,w2,H,k]); x0+=w2; W=w1; } else { rects.push([x0+w1,y0,w2,H,k]); W=w1; } }
+        else { const h1=H/PHI, h2=H-h1; if(cut){ rects.push([x0,y0,W,h2,k]); y0+=h2; H=h1; } else { rects.push([x0,y0+h1,W,h2,k]); H=h1; } } }
+      rects.push([x0,y0,W,H,depth]); G.rects=rects; G.wear=(c*rects.length)|0; G.dep=[]; for(let k=0;k<rects.length;k++) G.dep.push(0.06+0.30*((k*7+((d*5)|0))%4)/3);
+      P.fit={ext:3.4, ty:0.16+0.7}; break; }
+    case 41:{ /* TOWERS — golden cuboid towers on the seed-head spiral: the golden angle round, sqrt(k) out, phi lower each ring */
+      const N=5+((a*4)|0); G.N=N; G.x=[]; G.z=[]; G.h=[]; G.w=[]; G.a=[]; let wr=0;
+      for(let k=0;k<N;k++){ const ang=k*GOLD+b*TAU, r=0.55*Math.sqrt(k+0.3)*(0.9+c*0.3), h=(2.4+d*0.6)*Math.pow(PHI,-k/3), w=0.22+0.05*Math.pow(PHI,-k/3);
+        G.x.push(Math.cos(ang)*r); G.z.push(Math.sin(ang)*r); G.h.push(h); G.w.push(w); G.a.push(k*GOLD); if(r+w*PHI>wr)wr=r+w*PHI; }
+      P.fit={ext:Math.max(3.4,Math.min(5.6,Math.max(wr*2*1.15,G.h[0]*1.25))), ty:G.h[0]*0.5}; break; }
+    case 42:{ /* DOMES — shells within shells, radii falling by phi, cut open on the side that faces the camera */
+      const K=4+((a*2)|0), r0=1.45+b*0.25; G.K=K; G.r=[]; for(let k=0;k<K;k++) G.r.push(r0*Math.pow(PHI,-k*0.5)); G.t=0.06+c*0.03; G.cut=0.15+d*0.25;
+      P.fit={ext:Math.max(3.6,r0*2*1.35), ty:r0*0.55+0.16}; break; }
+    case 43:{ /* CRYSTAL — pentagonal prisms growing from a rock, every one the golden angle round and 1/phi^(1/4) shorter, each tipped with its point */
+      const N=5+((a*4)|0); G.N=N; G.u=[]; G.v=[]; G.w=[]; G.L=[]; G.r=[]; G.o=[]; let top=0, wr=0;
+      for(let k=0;k<N;k++){ const ang=k*GOLD+b*TAU, el=0.95-0.55*(k/N)*(0.6+c*0.6); const dx=Math.cos(ang)*Math.cos(el), dy=Math.sin(el), dz=Math.sin(ang)*Math.cos(el);
+        const L=(1.7+d*0.5)*Math.pow(PHI,-k/4), r=(0.26+e*0.06)*Math.pow(PHI,-k/6);
+        /* an orthonormal frame round the axis */
+        let ux=-dz, uy=0, uz=dx; const un=Math.hypot(ux,uz)||1; ux/=un; uz/=un; const vx=dy*uz-dz*uy, vy=dz*ux-dx*uz, vz=dx*uy-dy*ux;
+        G.w.push([dx,dy,dz]); G.u.push([ux,uy,uz]); G.v.push([vx,vy,vz]); G.L.push(L); G.r.push(r); G.o.push([Math.cos(ang)*0.25, 0.25, Math.sin(ang)*0.25]);
+        const ty=0.25+dy*(L+r*1.2); if(ty>top)top=ty; const rr=0.25+Math.cos(el)*(L+r*1.2)+r; if(rr>wr)wr=rr; }
+      P.fit={ext:Math.max(3.4,Math.min(5.6,Math.max(wr*2*1.25,top*1.3))), ty:Math.min(2.0,top*0.5)}; break; }
+  }
+  P.gold=G;
 }
 function buildAssembly(rng){
   const n=2+((rng()*3)|0), mods=[];
@@ -765,7 +874,19 @@ function prepFrame(P,th){
       const Y=P.phy, w=FR.w; for(let k=0;k<Y.N;k++) w[k]=1+0.18*Math.sin(th*2-Y.t[k]*TAU); break; }
     case 20:{ /* TRIACONTA — a third of a turn on its 3-fold axis; a bead circles it once */
       c[0]=Math.cos(th/3+P.a); s[0]=Math.sin(th/3+P.a); v[0]=Math.cos(th)*2.2; v[1]=1.9+Math.sin(th*2)*0.5; v[2]=Math.sin(th)*2.2; break; }
-    default: break;
+    case 34: case 37: case 38: case 41: case 43:{ /* the golden structures that turn once a loop; a bead circles the ring and the towers */
+      c[0]=Math.cos(th+P.b*TAU); s[0]=Math.sin(th+P.b*TAU); v[0]=Math.cos(th)*1.0; v[1]=1.1; v[2]=Math.sin(th)*1.0; break; }
+    case 35:{ /* NEST — every frame a whole turn, against its neighbours */
+      for(let k=0;k<P.gold.K;k++){ const a=k*GOLD+th*(k%2?-1:1); c[k]=Math.cos(a); s[k]=Math.sin(a); } break; }
+    case 36:{ /* ARCADE — the stone goes through and comes back */
+      v[0]=Math.sin(th)*(Math.abs(P.gold.x[P.gold.N-1]-P.gold.x[0])*0.5+0.6); break; }
+    case 39:{ /* ARMILLARY — every ring precesses a whole turn about the vertical, alternating */
+      const G=P.gold; for(let k=0;k<G.K;k++){ const a=th*(k%2?-1:1); const n=G.n[k]; v[k*3]=Math.cos(a)*n[0]+Math.sin(a)*n[2]; v[k*3+1]=n[1]; v[k*3+2]=-Math.sin(a)*n[0]+Math.cos(a)*n[2]; } break; }
+    case 40:{ /* PARTITION — faces the camera, and sways */
+      const a=P.camAz-Math.PI/2+Math.sin(th)*0.10; c[0]=Math.cos(a); s[0]=Math.sin(a); break; }
+    case 42:{ /* DOMES — the cut faces the camera; a bead circles inside the innermost shell */
+      c[0]=Math.cos(P.camAz-Math.PI/2); s[0]=Math.sin(P.camAz-Math.PI/2); v[0]=Math.cos(th)*0.5; v[1]=Math.sin(th)*0.5; break; }
+    default:{ const S=SOLIDS[P.subject]; if(S){ c[0]=Math.cos(th/S.sym+P.a); s[0]=Math.sin(th/S.sym+P.a); v[0]=Math.cos(th)*(P.fit.wr+0.6); v[1]=P.fit.cy*0.55+Math.sin(th*2)*0.4; v[2]=Math.sin(th)*(P.fit.wr+0.6); } break; }
   }
 }
 function sceneSDF(P,x,y,z){
@@ -964,7 +1085,87 @@ function sceneSDF(P,x,y,z){
       const dst=Math.min(sdCylY(x,y-0.14,z,0.7,0.14), sdCylY(x,y-0.4,z,0.06,0.4)); if(dst<d){ d=dst; m=1; }
       const ds=sdSphere(x-v[0],y-v[1],z-v[2],0.2); if(ds<d){ d=ds; m=2; }
       break; }
-    default: break;
+    case 34:{ /* TREE */
+      const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
+      for(const g of G.seg){ const mx=(g[0]+g[3])*0.5, my=(g[1]+g[4])*0.5, mz=(g[2]+g[5])*0.5, hl=Math.hypot(g[3]-g[0],g[4]-g[1],g[5]-g[2])*0.5+g[6];
+        const bx=lx-mx, by=y-my, bz=lz-mz; if(bx*bx+by*by+bz*bz>(hl+d)*(hl+d)) continue;
+        const dk=sdSeg(lx,y,lz,g[0],g[1],g[2],g[3],g[4],g[5],g[6]); if(dk<d){ d=dk; m=1; } }
+      for(const f of G.fruit){ const dk=sdSphere(lx-f[0],y-f[1],lz-f[2],f[3]); if(dk<d){ d=dk; m=7; } }   /* the fruit wear the loop */
+      const dp=sdCylY(x,y-0.08,z,0.7,0.08); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 35:{ /* NEST */
+      const G=P.gold;
+      for(let k=0;k<G.K;k++){ const sk=G.s[k], lx=c[k]*x+s[k]*z, lz=-s[k]*x+c[k]*z;
+        const dk=sdBoxFrame(lx,y-G.cy,lz,sk*PHI*0.62,sk*0.62*PHI*0.62,sk*0.62/PHI*0.62+sk*0.25,G.e); if(dk<d){ d=dk; m=(k%2)?2:7; } }
+      const dst=Math.min(sdCylY(x,y-0.1,z,0.6,0.1), sdCylY(x,y-G.cy*0.5,z,0.05,G.cy*0.5)); if(dst<d){ d=dst; m=1; }
+      break; }
+    case 36:{ /* ARCADE */
+      const G=P.gold;
+      for(let k=0;k<G.N;k++){ const w=G.w[k], h=w*PHI, cz=G.x[k]; if(Math.abs(z-cz)-G.t-0.05>d) continue;
+        const outer=sdBox(x,y-h*0.5-0.02,z-cz,w,h*0.5,G.t), inner=sdBox(x,y-(h-0.22)*0.5,z-cz,w-0.22,(h-0.22)*0.5,G.t*2);
+        const dk=Math.max(outer,-inner); if(dk<d){ d=dk; m=(k%2)?1:7; } }
+      const ds=sdSphere(x,y-0.3,z-v[0],0.24); if(ds<d){ d=ds; m=2; }
+      const dp=sdBox(x,y-0.02,z,G.w[0]+0.3,0.02,Math.abs(G.x[0])+0.5); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 37:{ /* WHORL */
+      const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
+      for(let k=0;k<G.N;k++){ const dy=y-G.y[k]; if(Math.abs(dy)-G.s[k]>d) continue; const dk=sdSphere(lx-G.x[k],dy,lz-G.z[k],G.s[k]); if(dk<d){ d=dk; m=(k%3===0)?7:((k%3===1)?1:2); } }
+      const dc=sdCylY(x,y-(G.y[G.N-1])*0.5,z,0.06,G.y[G.N-1]*0.5); if(dc<d){ d=dc; m=1; }
+      const dp=sdCylY(x,y-0.1,z,0.6,0.1); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 38:{ /* CIRCLE */
+      const G=P.gold;
+      for(let k=0;k<G.N;k++){ const a=G.a[k], px=Math.cos(a)*G.R, pz=Math.sin(a)*G.R; const ca=Math.cos(a), sa=Math.sin(a);
+        const dx=x-px, dz=z-pz; if(dx*dx+dz*dz>(0.6+d)*(0.6+d)) continue;
+        const lx=ca*dx+sa*dz, lz=-sa*dx+ca*dz;                                  /* the stone faces the centre */
+        const dk=sdBox(lx,y-G.h[k],lz,0.16,G.h[k],0.42); if(dk<d){ d=dk; m=(k%2)?1:7; } }
+      const ds=sdSphere(x-v[0],y-v[1]*0.5,z-v[2],0.28); if(ds<d){ d=ds; m=2; }
+      break; }
+    case 39:{ /* ARMILLARY */
+      const G=P.gold, wy=y-G.cy;
+      for(let k=0;k<G.K;k++){ const nx=v[k*3],ny=v[k*3+1],nz=v[k*3+2]; const t=x*nx+wy*ny+z*nz; const q=Math.sqrt(Math.max(0,x*x+wy*wy+z*z-t*t))-G.r[k];
+        const dk=Math.sqrt(q*q+t*t)-G.tube; if(dk<d){ d=dk; m=(k%2)?1:2; } }
+      const dc=sdSphere(x,wy,z,0.36); if(dc<d){ d=dc; m=7; }                                                   /* the core wears the loop */
+      const dst=Math.min(sdCylY(x,y-0.1,z,0.6,0.1), sdCylY(x,y-G.cy*0.5,z,0.05,G.cy*0.5)); if(dst<d){ d=dst; m=1; }
+      break; }
+    case 40:{ /* PARTITION */
+      const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
+      for(let k=0;k<G.rects.length;k++){ const r=G.rects[k]; const dk=sdBox(lx-(r[0]+r[2]*0.5),y-(0.16+r[1]+r[3]*0.5),lz,r[2]*0.5-0.012,r[3]*0.5-0.012,G.dep[k]); if(dk<d){ d=dk; m=(k===G.wear)?7:((k%2)?1:2); } }
+      const dp=sdBox(x,y-0.08,z,PHI*1.4*0.5+0.3,0.08,0.5); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 41:{ /* TOWERS */
+      const G=P.gold;
+      for(let k=0;k<G.N;k++){ const dx=x-G.x[k], dz=z-G.z[k], w=G.w[k]; if(dx*dx+dz*dz>(w*PHI*1.5+d)*(w*PHI*1.5+d)) continue;
+        const ca=Math.cos(G.a[k]), sa=Math.sin(G.a[k]); const lx=ca*dx+sa*dz, lz=-sa*dx+ca*dz;
+        const dk=sdBox(lx,y-G.h[k]*0.5,lz,w*PHI,G.h[k]*0.5,w); if(dk<d){ d=dk; m=(k%2)?1:7; } }
+      const ds=sdSphere(x-v[0]*1.6,y-G.h[0]-0.5,z-v[2]*1.6,0.2); if(ds<d){ d=ds; m=2; }
+      const dp=sdCylY(x,y-0.04,z,2.0,0.04); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 42:{ /* DOMES */
+      const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z, cy=0.16;
+      for(let k=0;k<G.K;k++){ const r=G.r[k]; const sh=Math.abs(sdSphere(lx,y-cy,lz,r))-G.t;
+        const dk=Math.max(sh, Math.max(cy-y, lz-r*G.cut));                       /* a hemisphere shell, its front cut away */
+        if(dk<d){ d=dk; m=(k%2)?1:7; } }
+      const ds=sdSphere(lx-v[0],y-cy-0.35-v[1]*0.3,lz,0.16); if(ds<d){ d=ds; m=2; }
+      const dp=sdCylY(x,y-0.08,z,G.r[0]+0.3,0.08); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 43:{ /* CRYSTAL */
+      const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
+      for(let k=0;k<G.N;k++){ const o=G.o[k], px=lx-o[0], py=y-o[1], pz=lz-o[2]; const u=G.u[k], vv=G.v[k], w=G.w[k];
+        const t=px*w[0]+py*w[1]+pz*w[2], L=G.L[k], r=G.r[k], tip=r*1.3;
+        if(t<-r-d||t>L+tip+d) continue;
+        const a=px*u[0]+py*u[1]+pz*u[2], b=px*vv[0]+py*vv[1]+pz*vv[2];
+        const rr=t<L?r:r*(1-(t-L)/tip); const pent=sdPent(a,b,rr);
+        const dk=Math.max(t<L?pent:pent*0.8, Math.max(-t, t-(L+tip))); if(dk<d){ d=dk; m=(k%2)?2:7; } }
+      const rock=Math.min(sdBox(x,y-0.2,z,0.55,0.2,0.45), sdBox(x*0.8+z*0.6,y-0.32,-x*0.6+z*0.8,0.4,0.32,0.3)); if(rock<d){ d=rock; m=1; }
+      break; }
+    default:{ const S=SOLIDS[P.subject]; if(S){
+      const cy=P.fit.cy, wx=c[0]*x+s[0]*z, wz=-s[0]*x+c[0]*z, wy=y-cy;
+      toFrame(S.fr,wx,wy,wz,Q3); d=S.f(Q3[0],Q3[1],Q3[2],S.R); m=7;                                        /* the solid wears the loop */
+      const dp=sdCylY(x,y-0.08,z,P.fit.wr+0.5,0.08); if(dp<d){ d=dp; m=1; }
+      const ix=x-v[0], iy=y-v[1], iz=z-v[2]; toFrame(S.fr==='I'?'E':S.fr,ix,iy,iz,Q3);
+      const di=S.dual(Q3[0],Q3[1],Q3[2],0.22); if(di<d){ d=di; m=2; } }                                    /* its dual circles it */
+      break; }
   }
   for(let i=0;i<FR.nl;i++){
     const dl=sdSphere(x-FR.lp[i*3],y-FR.lp[i*3+1],z-FR.lp[i*3+2],0.13);
@@ -1562,8 +1763,8 @@ function crc8(bytes){let c=0; for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(
 /* ver(4) seed(32) scheme(5) subject(4) hour(3) ground(2) dither(2) frames(7) = 59 -> 64 bits + crc */
 function packPlate(seed,schemeIdx,subject,hour,ground,dither,frames,weather,cam,tall,frame){
   let v=0n; const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
-  push(3,4); push(seed>>>0,32); push(schemeIdx,5); push(subject,5); push(hour,3); push(ground,2); push(dither,2); push(frames,7);
-  push(weather|0,2); push(cam|0,2);           /* 64, exactly: version 3 gives the subject a fifth bit and the camera has four states */
+  push(4,4); push(seed>>>0,32); push(schemeIdx,5); push(subject,6); push(hour,3); push(ground,2); push(dither,2); push(frames>>2,5);
+  push(weather<0?7:weather,3); push(cam|0,2); /* 64, exactly: version 4 gives the subject six bits, the weather three (all seven kinds), frames in fours */
   const bytes=[]; for(let i=7;i>=0;i--)bytes.push(Number((v>>BigInt(i*8))&0xffn));
   bytes.push(crc8(bytes));
   let bv=0n; for(const b of bytes)bv=(bv<<8n)|BigInt(b);
@@ -1590,11 +1791,12 @@ function unpackPlate(str){
   const crc=bytes.pop(); if(crc8(bytes)!==crc)return null;
   let v=0n; for(const b of bytes)v=(v<<8n)|BigInt(b);
   let used=0; const pull=bits=>{const r=Number((v>>BigInt(64-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
-  const ver=pull(4); if(ver!==1&&ver!==2&&ver!==3)return null;
-  const seed=pull(32), scheme=pull(5), subject=pull(ver===3?5:4), hour=pull(3), ground=pull(2), dither=pull(2), frames=pull(7);
+  const ver=pull(4); if(ver<1||ver>4)return null;
+  const seed=pull(32), scheme=pull(5), subject=pull(ver===4?6:(ver===3?5:4)), hour=pull(3), ground=pull(2), dither=pull(2), frames=(ver===4?pull(5)<<2:pull(7));
   let weather=-1, cam=-1;
   if(ver===2){ weather=pull(2); cam=pull(3); if(cam>=CAMS.length)cam=1; }   /* an old ORBIT card sways now */
   if(ver===3){ weather=pull(2); cam=pull(2); }
+  if(ver===4){ weather=pull(3); if(weather===7)weather=-1; cam=pull(2); }
   if(scheme>=SCHEME_KEYS.length+2||subject>=SUBJECTS.length||hour>=HOURS.length||ground>=GROUNDS.length||frames<8||frames>80)return null;
   const ar=(pad&4)?'9:16':'1:1';
   const frame=(pad&3)>2?0:(pad&3);            /* 3 is not a state: read it as AUTO */
