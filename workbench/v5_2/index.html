@@ -880,7 +880,7 @@ function prepFrame(P,th){
     case 34: case 37: case 38: case 41: case 43:{ /* the golden structures that turn once a loop; a bead circles the ring and the towers */
       c[0]=Math.cos(th+P.b*TAU); s[0]=Math.sin(th+P.b*TAU); v[0]=Math.cos(th)*1.0; v[1]=1.1; v[2]=Math.sin(th)*1.0; break; }
     case 35:{ /* NEST — every frame a whole turn, against its neighbours */
-      for(let k=0;k<P.gold.K;k++){ const a=k*GOLD+th*(k%2?-1:1); c[k]=Math.cos(a); s[k]=Math.sin(a); } break; }
+      for(let k=0;k<P.gold.K;k++){ const a=k*GOLD+th*0.5*(k%2?-1:1); c[k]=Math.cos(a); s[k]=Math.sin(a); } break; }   /* pass 9: half a turn, softly; a frame is its own mirror */
     case 36:{ /* ARCADE — the stone goes through and comes back */
       v[0]=Math.sin(th)*(Math.abs(P.gold.x[P.gold.N-1]-P.gold.x[0])*0.5+0.6); break; }
     case 39:{ /* ARMILLARY — every ring precesses a whole turn about the vertical, alternating */
@@ -1046,7 +1046,7 @@ function sceneSDF(P,x,y,z){
       const di=sdIcosa(ix*E1[0]+iy*E1[1]+iz*E1[2], ix*E2[0]+iy*E2[1]+iz*E2[2], ix*E3[0]+iy*E3[1]+iz*E3[2], 0.26); if(di<d){ d=di; m=2; }
       break; }
     case 17:{ /* EQUILIBRIUM — the vector equilibrium: twelve vertices, twenty-four edges, twelve spokes, all one length */
-      const S=1.30, cy=2.0, rt=0.032;                                         /* pass 8: thinner tubes */
+      const S=1.30, cy=1.84, rt=0.032;                                        /* pass 8: thinner tubes; pass 9: it rests on the plinth, no peg */
       const wx=c[0]*x+s[0]*z, wz=-s[0]*x+c[0]*z, wy=y-cy;
       const qx=Math.abs(wx*E1[0]+wy*E1[1]+wz*E1[2]), qy=Math.abs(wx*E2[0]+wy*E2[1]+wz*E2[2]), qz=Math.abs(wx*E3[0]+wy*E3[1]+wz*E3[2]);
       /* folded into one octant: three vertices, the triangle between them, six half-edges to the axes, three spokes */
@@ -1058,7 +1058,7 @@ function sceneSDF(P,x,y,z){
       if(de<d){ d=de; m=2; }
       const dk=Math.min(sdSeg(qx,qy,qz,0,0,0,S,S,0,rt), Math.min(sdSeg(qx,qy,qz,0,0,0,S,0,S,rt), sdSeg(qx,qy,qz,0,0,0,0,S,S,rt))); if(dk<d){ d=dk; m=1; }
       const dc=sdSphere(wx,wy,wz,0.30); if(dc<d){ d=dc; m=7; }                                              /* pass 8: the centre wears the loop */
-      const dst=Math.min(sdCylY(x,y-0.16,z,0.6,0.16), sdCylY(x,y-0.3,z,0.06,0.3)); if(dst<d){ d=dst; m=1; }   /* a stem to the lowest face */
+      const dst=sdCylY(x,y-0.16,z,0.7,0.16); if(dst<d){ d=dst; m=1; }
       break; }
     case 18:{ /* GNOMON — a stack of golden solids, each 1/phi (or 1/sqrt phi) of the one below, each turned by the golden angle */
       const G=P.gno;
@@ -1160,7 +1160,10 @@ function sceneSDF(P,x,y,z){
         const a0=px*u[0]+py*u[1]+pz*u[2], b0=px*vv[0]+py*vv[1]+pz*vv[2], tw=G.tw[k]; const a=tw[0]*a0-tw[1]*b0, b=tw[1]*a0+tw[0]*b0;
         const rr=t<L?r:r*(1-(t-L)/tip); const pent=sdPent(a,b,rr);
         const dk=Math.max(t<L?pent:pent*0.8, Math.max(-t, t-(L+tip))); if(dk<d){ d=dk; m=(k%2)?2:7; } }
-      const rock=Math.min(sdBox(x,y-0.2,z,0.55,0.2,0.45), sdBox(x*0.8+z*0.6,y-0.32,-x*0.6+z*0.8,0.4,0.32,0.3)); if(rock<d){ d=rock; m=1; }
+      let rock=1e9; for(let j=0;j<5;j++){ const hh=(t)=>{ const q=Math.sin(j*91.7+t*57.3+P.b*311.1)*43758.5453; return q-Math.floor(q); };
+        const mx=(hh(1)-0.5)*0.9, mz=(hh(2)-0.5)*0.9, mr=0.32+hh(3)*0.3; const ex=lx-mx, ez=lz-mz, ey=(y-0.02)/0.45;
+        const ds=(Math.sqrt(ex*ex+ey*ey+ez*ez)-mr)*0.45; rock=(j===0)?ds:smin(rock,ds,0.22); }                 /* pass 9: a mound of earth, five soft heaps grown together */
+      if(rock<d){ d=rock; m=1; }
       break; }
     default:{ const S=SOLIDS[P.subject]; if(S){
       const cy=P.fit.cy, wx=c[0]*x+s[0]*z, wz=-s[0]*x+c[0]*z, wy=y-cy;
