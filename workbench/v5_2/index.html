@@ -432,7 +432,7 @@ function gasBand(gwei){
   if(gwei<100)  return 2;   /* RAIN */
   return 5;                 /* STORM */
 }
-const CAMS=['STILL','SWAY','DOLLY','CRANE'];
+const CAMS=['STILL','SWAY','DRIFT','BREATH','ROLL','FLOAT','HANDHELD','NOD'];   /* pass 10: the hangable moves. DOLLY and CRANE were killed */
 const GROUNDS=['PLAIN','TILES','WATER'];
 const HOURS=[8,14,22,32,44,58,70];        /* sun elevation, degrees */
 const DITHERS=['FINE','COARSE','LINE','LINE'];
@@ -451,9 +451,8 @@ function buildPlate(seed, o){
   if(P.subject===13){ P.asm=buildAssembly(rng); measureAssembly(P); }
   const r1=rng(), r2=rng();
   P.weather = (o.weather!=null)? o.weather : (r1<0.50?0:(r1<0.74?1:(r1<0.92?2:3)));
-  P.cam     = (o.cam!=null)?     o.cam     : (r2<0.55?0:(r2<0.75?1:(r2<0.88?2:3)));   /* tuning pass 2: no orbit from the seed; STILL more often */
+  P.cam     = (o.cam!=null)?     o.cam     : (r2<0.40?0:1+(((r2-0.40)/0.60*7)|0));   /* pass 10: STILL 40%, the seven soft moves share the rest */
   /* an orbit only suits a subject that reads from every side */
-  if(P.cam===4 && !(P.subject===1||P.subject===2||P.subject===5||P.subject===7||P.subject===9)) P.cam=1;
   P.lamp = (P.subject===11) || rng()<0.22;      /* a second light, low and warm, in the accent */
   P.lampAz = rng()*TAU; P.lampR=2.4+rng()*1.4; P.lampY=0.5+rng()*0.9; P.lampI=0.9+rng()*0.9;
   P.fogH = 0.5+rng()*1.1; P.fogD = 0.35+rng()*0.5;
@@ -478,6 +477,7 @@ function buildPlate(seed, o){
   P.horizon = rng()<0.5 ? 0.34 : 0.54;        /* where the horizon sits in the frame; the high horizon of LOW was killed */
   P.bob = rng()<0.6 ? 0.015+rng()*0.025 : 0;  /* the camera breathes, barely (pass 2: 0.04..0.10 was too much) */
   if(P.cam===0) P.bob=0;                      /* STILL means still */
+  if(P.cam===5) P.bob=0.02+P.camA*0.3;        /* FLOAT always rises and falls */
   P.fov = 0.55+rng()*0.25;                    /* tan(half angle) */
   /* the sky */
   P.moon = rng()<0.42;
@@ -1195,21 +1195,31 @@ function camera(P,th,tall){
   const bob=P.bob*Math.sin(th);
   let dist=P.camDist*(1+bob*0.5)*(tall?TALL_DIST:1);
   const aimY=P.camTargetY+(tall?TALL_AIM:0);
-  /* THE BRAVER CAMERA. Every move is periodic in the loop: a sway and a crane
-     are sines, a dolly is a sine, and an orbit is one whole turn. */
-  if(P.cam===1) az+=Math.sin(th)*P.camA*3.2;
-  else if(P.cam===2) dist*=1+Math.sin(th)*P.camA*1.6;
-  else if(P.cam===3) el+=Math.sin(th)*P.camA*1.2;
-  else if(P.cam===4) az+=th;
-  const cx=Math.cos(az)*Math.cos(el)*dist, cy=Math.sin(el)*dist+aimY+bob, cz=Math.sin(az)*Math.cos(el)*dist;
+  /* THE HANGABLE CAMERA (pass 10). A piece on a wall may breathe; it must not
+     travel. Every move is a sine of whole cycles per loop, small, and soft:
+     SWAY an arc round the subject; DRIFT the whole frame slides on a rail;
+     BREATH the lens opens and closes by a percent or two; ROLL the horizon
+     tips like a boat; FLOAT a rise and a roll a quarter out of phase;
+     HANDHELD three tiny sines at one, two and three cycles; NOD the gaze dips. */
+  const A=P.camA; let roll=0, truck=0, fovS=1;
+  if(P.cam===1) az+=Math.sin(th)*A*3.2;
+  else if(P.cam===2) truck=Math.sin(th)*A*1.5;
+  else if(P.cam===3) fovS=1+Math.sin(th)*A*0.3;
+  else if(P.cam===4) roll=Math.sin(th)*A*0.25;
+  else if(P.cam===5){ roll=Math.cos(th)*A*0.12; }
+  else if(P.cam===6){ az+=Math.sin(th)*A*0.12; el+=Math.sin(th*2)*A*0.08; roll=Math.sin(th*3)*A*0.06; }
+  else if(P.cam===7) el+=Math.sin(th)*A*0.2;
+  let cx=Math.cos(az)*Math.cos(el)*dist, cy=Math.sin(el)*dist+aimY+bob, cz=Math.sin(az)*Math.cos(el)*dist;
   /* forward toward the target */
   let fx=-cx, fy=aimY-cy, fz=-cz; let fl=Math.sqrt(fx*fx+fy*fy+fz*fz); fx/=fl; fy/=fl; fz/=fl;
   /* right = forward x world-up; with forward (0,0,-1) this is +x, and the
      frame comes out the way up the world is */
   let rx=-fz, ry=0, rz=fx; let rl=Math.sqrt(rx*rx+rz*rz); rx/=rl; rz/=rl;
   /* up = right x forward */
-  const ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
-  return {cx,cy,cz,fx,fy,fz,rx,ry,rz,ux,uy,uz};
+  let ux=ry*fz-rz*fy, uy=rz*fx-rx*fz, uz=rx*fy-ry*fx;
+  if(roll!==0){ const cr=Math.cos(roll), sr=Math.sin(roll); const nrx=rx*cr+ux*sr, nry=ry*cr+uy*sr, nrz=rz*cr+uz*sr; ux=ux*cr-rx*sr; uy=uy*cr-ry*sr; uz=uz*cr-rz*sr; rx=nrx; ry=nry; rz=nrz; }
+  if(truck!==0){ cx+=rx*truck; cy+=ry*truck; cz+=rz*truck; }     /* the frame slides; the gaze stays parallel */
+  return {cx,cy,cz,fx,fy,fz,rx,ry,rz,ux,uy,uz,fovS};
 }
 function lampPos(P,th){
   if(P.subject===11){ const v=FR.v; return [0.9+v[0], v[1]-0.35, 0]; }
@@ -1383,7 +1393,7 @@ function renderLum(P,W,H,th,lum,mat,dep,texbuf){
     keyI=0.44;
   }
   if(wxOver(P)){ keyI*=wxStorm(P)?0.30:0.48; hardShadow=false; }   /* a lid of cloud: soft, no cast shadow */
-  const fov=P.fov;
+  const fov=P.fov*(C.fovS||1);
   /* THE TALL PLATE IS A TALLER WINDOW ON THE SAME WORLD. This is a camera, so
      the honest way to change the shape of the sheet is to open the vertical
      field and leave the horizontal one alone: the monument stays exactly the
@@ -1769,8 +1779,8 @@ function crc8(bytes){let c=0; for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(
 /* ver(4) seed(32) scheme(5) subject(4) hour(3) ground(2) dither(2) frames(7) = 59 -> 64 bits + crc */
 function packPlate(seed,schemeIdx,subject,hour,ground,dither,frames,weather,cam,tall,frame){
   let v=0n; const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
-  push(4,4); push(seed>>>0,32); push(schemeIdx,5); push(subject,6); push(hour,3); push(ground,2); push(dither,2); push(frames>>2,5);
-  push(weather<0?7:weather,3); push(cam|0,2); /* 64, exactly: version 4 gives the subject six bits, the weather three (all seven kinds), frames in fours */
+  push(5,4); push(seed>>>0,32); push(schemeIdx,5); push(subject,6); push(hour,3); push(ground,2); push(dither,2); push(frameIdx(frames),3);
+  push(weather<0?7:weather,3); push(cam|0,3); push(0,1); /* 64, exactly: version 5 gives the camera three bits (eight moves); frames are one of eight sizes */
   const bytes=[]; for(let i=7;i>=0;i--)bytes.push(Number((v>>BigInt(i*8))&0xffn));
   bytes.push(crc8(bytes));
   let bv=0n; for(const b of bytes)bv=(bv<<8n)|BigInt(b);
@@ -1785,6 +1795,8 @@ function packPlate(seed,schemeIdx,subject,hour,ground,dither,frames,weather,cam,
   let out=''; for(let i=14;i>=0;i--)out+=B32[Number((bv>>BigInt(i*5))&31n)];
   return 'GLASS-'+out.slice(0,5)+'-'+out.slice(5,10)+'-'+out.slice(10,15);
 }
+const FRAME_SIZES=[8,12,16,24,36,48,60,80];
+function frameIdx(n){ let b=0; for(let i=0;i<8;i++) if(Math.abs(FRAME_SIZES[i]-n)<Math.abs(FRAME_SIZES[b]-n)) b=i; return b; }
 function unpackPlate(str){
   let sx=String(str||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
   if(sx.startsWith('GLASS')||sx.startsWith('PLATE'))sx=sx.slice(5);   /* PLATE cards from before the name still read */
@@ -1797,12 +1809,14 @@ function unpackPlate(str){
   const crc=bytes.pop(); if(crc8(bytes)!==crc)return null;
   let v=0n; for(const b of bytes)v=(v<<8n)|BigInt(b);
   let used=0; const pull=bits=>{const r=Number((v>>BigInt(64-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
-  const ver=pull(4); if(ver<1||ver>4)return null;
-  const seed=pull(32), scheme=pull(5), subject=pull(ver===4?6:(ver===3?5:4)), hour=pull(3), ground=pull(2), dither=pull(2), frames=(ver===4?pull(5)<<2:pull(7));
+  const ver=pull(4); if(ver<1||ver>5)return null;
+  const seed=pull(32), scheme=pull(5), subject=pull(ver>=4?6:(ver===3?5:4)), hour=pull(3), ground=pull(2), dither=pull(2), frames=(ver===5?FRAME_SIZES[pull(3)]:(ver===4?pull(5)<<2:pull(7)));
   let weather=-1, cam=-1;
-  if(ver===2){ weather=pull(2); cam=pull(3); if(cam>=CAMS.length)cam=1; }   /* an old ORBIT card sways now */
+  if(ver===2){ weather=pull(2); cam=pull(3); }
   if(ver===3){ weather=pull(2); cam=pull(2); }
   if(ver===4){ weather=pull(3); if(weather===7)weather=-1; cam=pull(2); }
+  if(ver===5){ weather=pull(3); if(weather===7)weather=-1; cam=pull(3); }
+  if(ver<5&&cam>1) cam=1;                       /* DOLLY, CRANE and ORBIT were killed: old cards with them sway */
   if(scheme>=SCHEME_KEYS.length+2||subject>=SUBJECTS.length||hour>=HOURS.length||ground>=GROUNDS.length||frames<8||frames>80)return null;
   const ar=(pad&4)?'9:16':'1:1';
   const frame=(pad&3)>2?0:(pad&3);            /* 3 is not a state: read it as AUTO */
