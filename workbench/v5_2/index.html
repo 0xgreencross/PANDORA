@@ -1204,11 +1204,11 @@ function camera(P,th,tall){
   const A=P.camA; let roll=0, truck=0, fovS=1;
   if(P.cam===1) az+=Math.sin(th)*A*3.2;
   else if(P.cam===2) truck=Math.sin(th)*A*1.5;
-  else if(P.cam===3) fovS=1+Math.sin(th)*A*0.3;
-  else if(P.cam===4) roll=Math.sin(th)*A*0.25;
-  else if(P.cam===5){ roll=Math.cos(th)*A*0.12; }
-  else if(P.cam===6){ az+=Math.sin(th)*A*0.12; el+=Math.sin(th*2)*A*0.08; roll=Math.sin(th*3)*A*0.06; }
-  else if(P.cam===7) el+=Math.sin(th)*A*0.2;
+  else if(P.cam===3) fovS=1+Math.sin(th)*A*0.4;
+  else if(P.cam===4) roll=Math.sin(th)*A*0.35;
+  else if(P.cam===5){ roll=Math.cos(th)*A*0.18; }
+  else if(P.cam===6){ az+=Math.sin(th)*A*0.3; el+=Math.sin(th*2)*A*0.2; roll=Math.sin(th*3)*A*0.15; }
+  else if(P.cam===7) el+=Math.sin(th)*A*0.3;
   let cx=Math.cos(az)*Math.cos(el)*dist, cy=Math.sin(el)*dist+aimY+bob, cz=Math.sin(az)*Math.cos(el)*dist;
   /* forward toward the target */
   let fx=-cx, fy=aimY-cy, fz=-cz; let fl=Math.sqrt(fx*fx+fy*fy+fz*fz); fx/=fl; fy/=fl; fz/=fl;
