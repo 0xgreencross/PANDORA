@@ -447,7 +447,7 @@ function buildPlate(seed, o){
   /* THE CURATED SUBJECTS (tuning pass 1, 2026-09-17). HELIX, TWINS and WHEEL
      were killed in the rooms; the seed can no longer roll them. One draw, as
      before, so the rest of the seed's rolls are untouched. */
-  P.subject = (o.subject!=null)? o.subject : (rs<0.35 ? 13 : SUBJ_OK[(rng()*SUBJ_OK.length)|0]);   /* pass 7: a third assemblies, now that the named roll is forty strong */
+  P.subject = (o.subject!=null)? o.subject : (rs<0.25 ? 13 : SUBJ_OK[(rng()*SUBJ_OK.length)|0]);   /* pass 8: a quarter assemblies (their kill rate stays a third; the named roll is near zero) */
   if(P.subject===13){ P.asm=buildAssembly(rng); measureAssembly(P); }
   const r1=rng(), r2=rng();
   P.weather = (o.weather!=null)? o.weather : (r1<0.50?0:(r1<0.74?1:(r1<0.92?2:3)));
@@ -644,8 +644,8 @@ function buildGolden(P){
       G.seg=seg; G.fruit=fruit; const H=0.1+(1.25+c*0.3)*(1+1/PHI+1/(PHI*PHI)+1/(PHI*PHI*PHI)+1/(PHI**4)+1/(PHI**5));
       P.fit={ext:Math.max(3.8,Math.min(5.6,H*1.25)), ty:Math.min(2.3,H*0.5)}; break; }
     case 35:{ /* NEST — golden cuboid frames one inside the next, each 1/sqrt(phi) of the last, each turned by the golden angle */
-      const K=5+((a*3)|0), s0=1.15+b*0.25; G.K=K; G.s=[]; for(let k=0;k<K;k++) G.s.push(s0*Math.pow(PHI,-k*0.5));
-      G.cy=0.16+s0*0.62*PHI*0.62+0.05; G.e=0.045+c*0.02; P.fit={ext:Math.max(3.4,s0*PHI*0.62*2*1.3), ty:G.cy}; break; }
+      const K=5+((a*3)|0), s0=1.5+b*0.3; G.K=K; G.s=[]; for(let k=0;k<K;k++) G.s.push(s0*Math.pow(PHI,-k*0.5));
+      G.cy=0.16+s0*0.5*PHI+0.05; G.e=0.045+c*0.02; P.fit={ext:Math.max(3.2,s0*0.5*PHI*2*1.2), ty:G.cy}; break; }   /* pass 8: the frames stand tall, 1 : phi : 1/phi */
     case 36:{ /* ARCADE — portals one behind the other, each 1/phi of the last; a stone passes through them and back */
       const N=4+((a*3)|0), w0=1.0+b*0.25, gap=0.5+c*0.3; G.N=N; G.w=[]; G.x=[]; let z=0;
       for(let k=0;k<N;k++){ G.w.push(w0*Math.pow(PHI,-k*0.5)); G.x.push(z); z+=gap; }
@@ -679,15 +679,16 @@ function buildGolden(P){
     case 42:{ /* DOMES — shells within shells, radii falling by phi, cut open on the side that faces the camera */
       const K=4+((a*2)|0), r0=1.45+b*0.25; G.K=K; G.r=[]; for(let k=0;k<K;k++) G.r.push(r0*Math.pow(PHI,-k*0.5)); G.t=0.06+c*0.03; G.cut=0.15+d*0.25;
       P.fit={ext:Math.max(3.6,r0*2*1.35), ty:r0*0.55+0.16}; break; }
-    case 43:{ /* CRYSTAL — pentagonal prisms growing from a rock, every one the golden angle round and 1/phi^(1/4) shorter, each tipped with its point */
-      const N=5+((a*4)|0); G.N=N; G.u=[]; G.v=[]; G.w=[]; G.L=[]; G.r=[]; G.o=[]; let top=0, wr=0;
-      for(let k=0;k<N;k++){ const ang=k*GOLD+b*TAU, el=0.95-0.55*(k/N)*(0.6+c*0.6); const dx=Math.cos(ang)*Math.cos(el), dy=Math.sin(el), dz=Math.sin(ang)*Math.cos(el);
-        const L=(1.7+d*0.5)*Math.pow(PHI,-k/4), r=(0.26+e*0.06)*Math.pow(PHI,-k/6);
+    case 43:{ /* CRYSTAL — pentagonal prisms growing from a rock; the golden angle sets them round, and every one is its own (pass 8: length, lean, girth, twist and tip all from the seed) */
+      const N=4+((a*6)|0); G.N=N; G.u=[]; G.v=[]; G.w=[]; G.L=[]; G.r=[]; G.o=[]; G.tw=[]; G.tip=[]; let top=0, wr=0;
+      const h=(k,j)=>{ const x=Math.sin(k*127.1+j*311.7+b*977.3+e*401.1)*43758.5453; return x-Math.floor(x); };
+      for(let k=0;k<N;k++){ const ang=k*GOLD+c*TAU+(h(k,1)-0.5)*0.8, el=0.22+h(k,2)*1.15; const dx=Math.cos(ang)*Math.cos(el), dy=Math.sin(el), dz=Math.sin(ang)*Math.cos(el);
+        const L=(0.8+h(k,3)*1.6)*(0.85+d*0.3), r=0.13+h(k,4)*0.2; G.tw.push([Math.cos(h(k,5)*TAU),Math.sin(h(k,5)*TAU)]); G.tip.push(r*(0.7+h(k,6)*1.3));
         /* an orthonormal frame round the axis */
         let ux=-dz, uy=0, uz=dx; const un=Math.hypot(ux,uz)||1; ux/=un; uz/=un; const vx=dy*uz-dz*uy, vy=dz*ux-dx*uz, vz=dx*uy-dy*ux;
-        G.w.push([dx,dy,dz]); G.u.push([ux,uy,uz]); G.v.push([vx,vy,vz]); G.L.push(L); G.r.push(r); G.o.push([Math.cos(ang)*0.25, 0.25, Math.sin(ang)*0.25]);
-        const ty=0.25+dy*(L+r*1.2); if(ty>top)top=ty; const rr=0.25+Math.cos(el)*(L+r*1.2)+r; if(rr>wr)wr=rr; }
-      P.fit={ext:Math.max(3.4,Math.min(5.6,Math.max(wr*2*1.25,top*1.3))), ty:Math.min(2.0,top*0.5)}; break; }
+        G.w.push([dx,dy,dz]); G.u.push([ux,uy,uz]); G.v.push([vx,vy,vz]); G.L.push(L); G.r.push(r); const ro=0.1+h(k,7)*0.3; G.o.push([Math.cos(ang)*ro, 0.2, Math.sin(ang)*ro]);
+        const ty=0.2+dy*(L+r*2); if(ty>top)top=ty; const rr=ro+Math.cos(el)*(L+r*2)+r; if(rr>wr)wr=rr; }
+      P.fit={ext:Math.max(3.0,Math.min(5.2,Math.max(wr*2*1.1,top*1.25))), ty:Math.min(2.0,top*0.5)}; break; }
   }
   P.gold=G;
 }
@@ -1045,7 +1046,7 @@ function sceneSDF(P,x,y,z){
       const di=sdIcosa(ix*E1[0]+iy*E1[1]+iz*E1[2], ix*E2[0]+iy*E2[1]+iz*E2[2], ix*E3[0]+iy*E3[1]+iz*E3[2], 0.26); if(di<d){ d=di; m=2; }
       break; }
     case 17:{ /* EQUILIBRIUM — the vector equilibrium: twelve vertices, twenty-four edges, twelve spokes, all one length */
-      const S=1.30, cy=2.0, rt=0.055;
+      const S=1.30, cy=2.0, rt=0.032;                                         /* pass 8: thinner tubes */
       const wx=c[0]*x+s[0]*z, wz=-s[0]*x+c[0]*z, wy=y-cy;
       const qx=Math.abs(wx*E1[0]+wy*E1[1]+wz*E1[2]), qy=Math.abs(wx*E2[0]+wy*E2[1]+wz*E2[2]), qz=Math.abs(wx*E3[0]+wy*E3[1]+wz*E3[2]);
       /* folded into one octant: three vertices, the triangle between them, six half-edges to the axes, three spokes */
@@ -1056,7 +1057,7 @@ function sceneSDF(P,x,y,z){
       de=Math.min(de, Math.min(sdSeg(qx,qy,qz,0,S,S,0,S,0,rt), sdSeg(qx,qy,qz,0,S,S,0,0,S,rt)));
       if(de<d){ d=de; m=2; }
       const dk=Math.min(sdSeg(qx,qy,qz,0,0,0,S,S,0,rt), Math.min(sdSeg(qx,qy,qz,0,0,0,S,0,S,rt), sdSeg(qx,qy,qz,0,0,0,0,S,S,rt))); if(dk<d){ d=dk; m=1; }
-      const dc=sdSphere(wx,wy,wz,0.24); if(dc<d){ d=dc; m=2; }
+      const dc=sdSphere(wx,wy,wz,0.30); if(dc<d){ d=dc; m=7; }                                              /* pass 8: the centre wears the loop */
       const dst=Math.min(sdCylY(x,y-0.16,z,0.6,0.16), sdCylY(x,y-0.3,z,0.06,0.3)); if(dst<d){ d=dst; m=1; }   /* a stem to the lowest face */
       break; }
     case 18:{ /* GNOMON — a stack of golden solids, each 1/phi (or 1/sqrt phi) of the one below, each turned by the golden angle */
@@ -1098,7 +1099,7 @@ function sceneSDF(P,x,y,z){
     case 35:{ /* NEST */
       const G=P.gold;
       for(let k=0;k<G.K;k++){ const sk=G.s[k], lx=c[k]*x+s[k]*z, lz=-s[k]*x+c[k]*z;
-        const dk=sdBoxFrame(lx,y-G.cy,lz,sk*PHI*0.62,sk*0.62*PHI*0.62,sk*0.62/PHI*0.62+sk*0.25,G.e); if(dk<d){ d=dk; m=(k%2)?2:7; } }
+        const dk=sdBoxFrame(lx,y-G.cy,lz,sk*0.5,sk*0.5*PHI,sk*0.5/PHI,G.e); if(dk<d){ d=dk; m=(k%2)?2:7; } }
       const dst=Math.min(sdCylY(x,y-0.1,z,0.6,0.1), sdCylY(x,y-G.cy*0.5,z,0.05,G.cy*0.5)); if(dst<d){ d=dst; m=1; }
       break; }
     case 36:{ /* ARCADE */
@@ -1154,9 +1155,9 @@ function sceneSDF(P,x,y,z){
     case 43:{ /* CRYSTAL */
       const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
       for(let k=0;k<G.N;k++){ const o=G.o[k], px=lx-o[0], py=y-o[1], pz=lz-o[2]; const u=G.u[k], vv=G.v[k], w=G.w[k];
-        const t=px*w[0]+py*w[1]+pz*w[2], L=G.L[k], r=G.r[k], tip=r*1.3;
+        const t=px*w[0]+py*w[1]+pz*w[2], L=G.L[k], r=G.r[k], tip=G.tip[k];
         if(t<-r-d||t>L+tip+d) continue;
-        const a=px*u[0]+py*u[1]+pz*u[2], b=px*vv[0]+py*vv[1]+pz*vv[2];
+        const a0=px*u[0]+py*u[1]+pz*u[2], b0=px*vv[0]+py*vv[1]+pz*vv[2], tw=G.tw[k]; const a=tw[0]*a0-tw[1]*b0, b=tw[1]*a0+tw[0]*b0;
         const rr=t<L?r:r*(1-(t-L)/tip); const pent=sdPent(a,b,rr);
         const dk=Math.max(t<L?pent:pent*0.8, Math.max(-t, t-(L+tip))); if(dk<d){ d=dk; m=(k%2)?2:7; } }
       const rock=Math.min(sdBox(x,y-0.2,z,0.55,0.2,0.45), sdBox(x*0.8+z*0.6,y-0.32,-x*0.6+z*0.8,0.4,0.32,0.3)); if(rock<d){ d=rock; m=1; }
