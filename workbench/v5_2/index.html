@@ -580,6 +580,29 @@ function applyLive(P,L){
    rooms. Every field null = the seed's own; with none set the plate is
    byte-identical. These are what the curator turns; whatever he settles on
    gets baked into buildPlate as the new defaults. */
+/* THE FRAME GUARD (pass 12). Nothing of the subject may touch the outer band of
+   the frame, at any moment of the loop: the plate is marched coarsely along
+   its edges at eight phases, and the camera steps back until the band is
+   clear. Lamps (3) and the ground (0) are not the subject. Deterministic. */
+function keepInFrame(P){
+  const G=48, band=0.055, TH=[0,1,2,3,4,5,6,7].map(k=>k/8*TAU);
+  const foot=(P.fit&&P.fit.wr)?P.fit.wr+0.2:P.ext/2.4;   /* the subject's footprint: ground this near its centre, at the edge, means the base is cut */
+  for(let iter=0;iter<14;iter++){
+    let out=false;
+    for(const th of TH){ prepFrame(P,th); const C=camera(P,th,false); const fov=P.fov*(C.fovS||1), shift=(P.horizon-0.5)*2.0*fov*0.9;
+      for(let py=0;py<G&&!out;py++){ const edgeY=(py<G*band)||(py>=G*(1-band)); const v=-((py+0.5)/G*2-1)*fov-shift;
+        for(let px=0;px<G;px++){ const edgeX=(px<G*band)||(px>=G*(1-band)); if(!edgeX&&!edgeY) continue;
+          const u=((px+0.5)/G*2-1)*fov+P.camDx*0.35;
+          let dx=C.fx+C.rx*u+C.ux*v, dy=C.fy+C.ry*u+C.uy*v, dz=C.fz+C.rz*u+C.uz*v; const dl=Math.sqrt(dx*dx+dy*dy+dz*dz); dx/=dl; dy/=dl; dz/=dl;
+          const t=march(P,C.cx,C.cy,C.cz,dx,dy,dz,th); if(t<0||HIT_M===3) continue;
+          if(HIT_M!==0){ out=true; break; }
+          if(edgeY&&py>=G/2){ const hx=C.cx+dx*t, hz=C.cz+dz*t; if(Math.hypot(hx,hz)<foot){ out=true; break; } } } }
+      if(out) break; }
+    if(!out) return P;
+    P.camDist*=1.05; if(P.horizon<0.5) P.horizon=Math.min(0.5,P.horizon+0.025);   /* step back, and let the horizon rise a little */
+  }
+  return P;
+}
 function applyTune(P,T){
   if(!T) return P;
   if(T.fov!=null) P.fov=+T.fov;
@@ -679,16 +702,23 @@ function buildGolden(P){
     case 42:{ /* DOMES — shells within shells, radii falling by phi, cut open on the side that faces the camera */
       const K=4+((a*2)|0), r0=1.45+b*0.25; G.K=K; G.r=[]; for(let k=0;k<K;k++) G.r.push(r0*Math.pow(PHI,-k*0.5)); G.t=0.06+c*0.03; G.cut=0.15+d*0.25;
       P.fit={ext:Math.max(3.6,r0*2*1.35), ty:r0*0.55+0.16}; break; }
-    case 43:{ /* CRYSTAL — pentagonal prisms growing from a rock; the golden angle sets them round, and every one is its own (pass 8: length, lean, girth, twist and tip all from the seed) */
-      const N=4+((a*6)|0); G.N=N; G.u=[]; G.v=[]; G.w=[]; G.L=[]; G.r=[]; G.o=[]; G.tw=[]; G.tip=[]; let top=0, wr=0;
+    case 43:{ /* CRYSTAL — a quartz cluster on its matrix (pass 12). Quartz grows as a hexagonal prism
+         closed by a six-sided point whose faces alternate large (r) and small (z) at about 38 degrees to
+         the axis; the prism narrows a little toward the point; a cluster is a few large crystals among
+         many small, all radiating from the rock they grew on, some in pairs. */
+      const N=7+((a*6)|0); G.N=N; G.u=[]; G.v=[]; G.w=[]; G.L=[]; G.r=[]; G.o=[]; G.tw=[]; let top=0, wr=0;
       const h=(k,j)=>{ const x=Math.sin(k*127.1+j*311.7+b*977.3+e*401.1)*43758.5453; return x-Math.floor(x); };
-      for(let k=0;k<N;k++){ const ang=k*GOLD+c*TAU+(h(k,1)-0.5)*0.8, el=0.5+h(k,2)*0.85;              /* pass 11: they grow up more than out */ const dx=Math.cos(ang)*Math.cos(el), dy=Math.sin(el), dz=Math.sin(ang)*Math.cos(el);
-        const L=(0.8+h(k,3)*1.6)*(0.85+d*0.3), r=0.13+h(k,4)*0.2; G.tw.push([Math.cos(h(k,5)*TAU),Math.sin(h(k,5)*TAU)]); G.tip.push(r*(0.7+h(k,6)*1.3));
-        /* an orthonormal frame round the axis */
+      G.rock=[]; for(let j=0;j<4;j++){ const ra=h(50+j,1)*TAU; G.rock.push([(h(50+j,2)-0.5)*0.7,(h(50+j,3)-0.5)*0.7,Math.cos(ra),Math.sin(ra),0.42+h(50+j,4)*0.35,0.12+h(50+j,5)*0.16,0.32+h(50+j,6)*0.3]); }
+      for(let k=0;k<N;k++){ const big=h(k,8)<0.35;
+        const ang=k*GOLD+c*TAU+(h(k,1)-0.5)*0.9, el=big?0.6+h(k,2)*0.8:0.3+h(k,2)*1.1;
+        const dx=Math.cos(ang)*Math.cos(el), dy=Math.sin(el), dz=Math.sin(ang)*Math.cos(el);
+        const r=big?0.17+h(k,4)*0.14:0.06+h(k,4)*0.08, L=r*(4+h(k,3)*5)*(0.85+d*0.3);
+        G.tw.push([Math.cos(h(k,5)*TAU),Math.sin(h(k,5)*TAU)]);
         let ux=-dz, uy=0, uz=dx; const un=Math.hypot(ux,uz)||1; ux/=un; uz/=un; const vx=dy*uz-dz*uy, vy=dz*ux-dx*uz, vz=dx*uy-dy*ux;
-        G.w.push([dx,dy,dz]); G.u.push([ux,uy,uz]); G.v.push([vx,vy,vz]); G.L.push(L); G.r.push(r); const ro=0.1+h(k,7)*0.3; G.o.push([Math.cos(ang)*ro, 0.2, Math.sin(ang)*ro]);
-        const ty=0.2+dy*(L+r*2); if(ty>top)top=ty; const rr=ro+Math.cos(el)*(L+r*2)+r; if(rr>wr)wr=rr; }
-      P.fit={ext:Math.max(3.0,Math.min(5.2,Math.max(wr*2*1.1,top*1.25))), ty:Math.min(2.0,top*0.5)}; break; }
+        const ro=0.05+h(k,7)*0.45, oa=ang+(h(k,9)-0.5)*1.2;
+        G.w.push([dx,dy,dz]); G.u.push([ux,uy,uz]); G.v.push([vx,vy,vz]); G.L.push(L); G.r.push(r); G.o.push([Math.cos(oa)*ro, 0.12, Math.sin(oa)*ro]);
+        const ty=0.12+dy*(L+r*1.3); if(ty>top)top=ty; const rr=ro+Math.cos(el)*(L+r*1.3)+r; if(rr>wr)wr=rr; }
+      P.fit={ext:Math.max(3.0,Math.min(5.2,Math.max(wr*2*1.1,top*1.3))), ty:Math.min(1.8,top*0.5)}; break; }
   }
   P.gold=G;
 }
@@ -1153,17 +1183,18 @@ function sceneSDF(P,x,y,z){
       const ds=sdSphere(lx-v[0],y-cy-0.35-v[1]*0.3,lz,0.16); if(ds<d){ d=ds; m=2; }
       const dp=sdCylY(x,y-0.08,z,G.r[0]+0.3,0.08); if(dp<d){ d=dp; m=1; }
       break; }
-    case 43:{ /* CRYSTAL */
+    case 43:{ /* CRYSTAL — quartz on its matrix */
       const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
       for(let k=0;k<G.N;k++){ const o=G.o[k], px=lx-o[0], py=y-o[1], pz=lz-o[2]; const u=G.u[k], vv=G.v[k], w=G.w[k];
-        const t=px*w[0]+py*w[1]+pz*w[2], L=G.L[k], r=G.r[k], tip=G.tip[k];
+        const t=px*w[0]+py*w[1]+pz*w[2], L=G.L[k], r=G.r[k], tip=r*1.28;                                   /* the point: faces at 38 degrees to the axis */
         if(t<-r-d||t>L+tip+d) continue;
-        const a0=px*u[0]+py*u[1]+pz*u[2], b0=px*vv[0]+py*vv[1]+pz*vv[2], tw=G.tw[k]; const a=tw[0]*a0-tw[1]*b0, b=tw[1]*a0+tw[0]*b0;
-        const rr=t<L?r:r*(1-(t-L)/tip); const pent=sdPent(a,b,rr);
-        const dk=Math.max(t<L?pent:pent*0.8, Math.max(-t, t-(L+tip))); if(dk<d){ d=dk; m=(k%2)?2:7; } }
-      let rock=1e9; for(let j=0;j<5;j++){ const hh=(t)=>{ const q=Math.sin(j*91.7+t*57.3+P.b*311.1)*43758.5453; return q-Math.floor(q); };
-        const mx=(hh(1)-0.5)*0.9, mz=(hh(2)-0.5)*0.9, mr=0.32+hh(3)*0.3; const ex=lx-mx, ez=lz-mz, ey=(y-0.02)/0.45;
-        const ds=(Math.sqrt(ex*ex+ey*ey+ez*ez)-mr)*0.45; rock=(j===0)?ds:smin(rock,ds,0.22); }                 /* pass 9: a mound of earth, five soft heaps grown together */
+        const a0=px*u[0]+py*u[1]+pz*u[2], b0=px*vv[0]+py*vv[1]+pz*vv[2], tw=G.tw[k]; const ax=tw[0]*a0-tw[1]*b0, bx=tw[1]*a0+tw[0]*b0;
+        let dA=-1e9, dB=-1e9; for(let f=0;f<6;f++){ const fa=f*Math.PI/3; const q=Math.cos(fa)*ax+Math.sin(fa)*bx; if(f&1){ if(q>dB)dB=q; } else { if(q>dA)dA=q; } }
+        const rp=r*(1-0.06*Math.max(0,Math.min(1,t/L))), over=Math.max(0,t-L)/1.28;                          /* the prism narrows a little toward the point */
+        const rA=rp-over, rB=rp*0.9-over;                                                                     /* r faces large, z faces small */
+        const dk=Math.max(Math.max(dA-rA,dB-rB), Math.max(-t-r*0.6, t-(L+tip)))*0.78; if(dk<d){ d=dk; m=(k%3===0)?2:7; } }
+      let rock=1e9; for(const R of G.rock){ const ex=lx-R[0], ez=lz-R[1]; const qx=R[2]*ex+R[3]*ez, qz=-R[3]*ex+R[2]*ez;
+        const db=sdBox(qx,y-R[5],qz,R[4],R[5],R[6]); rock=Math.min(rock,db); }                                /* the matrix: angular, a few blocks of the mother rock */
       if(rock<d){ d=rock; m=1; }
       break; }
     default:{ const S=SOLIDS[P.subject]; if(S){
@@ -2096,7 +2127,7 @@ function resolve(){
   if(S.subject>=0)o.subject=S.subject; if(S.hour>=0)o.hour=S.hour; if(S.ground>=0)o.ground=S.ground; if(S.dither>=0)o.dither=S.dither;
   if(S.weather>=0)o.weather=S.weather; if(S.cam>=0)o.cam=S.cam;
   if(S.frame===1)o.border=true; else if(S.frame===2)o.border=false;
-  const P=applyTune(applyLive(buildPlate(S.seed,o), LIVE), TUNE);
+  const P=keepInFrame(applyTune(applyLive(buildPlate(S.seed,o), LIVE), TUNE));   /* pass 12: nothing leaves the frame */
   const si = S.scheme>=0 ? S.scheme : (rng()*(SCHEME_KEYS.length+2))|0;
   const {key,scheme}=schemeOf(si,S.seed);
   return {P, si, key, scheme};
