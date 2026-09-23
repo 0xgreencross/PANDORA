@@ -404,10 +404,10 @@ const F1=[1,0,0], F2=[0,K_DOD,-PHI*K_DOD], F3=[0,PHI*K_DOD,K_DOD];
 
 /* ───────────────────────────── the plate (per seed) ─────────────────────── */
 const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS','DODECA','EQUILIBRIUM','GNOMON','PHYLLO','TRIACONTA','ICOSA','OCTA','HEXA','TETRA','ICOSIDODECA','BUCKY','KELVIN','RHOMBIC','CUBOCTA','TRUNCUBE','TRUNTETRA','PRISM','COMPOUND','TREE','NEST','ARCADE','WHORL','CIRCLE','ARMILLARY','PARTITION','TOWERS','DOMES','CRYSTAL'];
-const SUBJ_OK=[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,43];   /* DOMES (42) was killed in pass 7 */ /* the subjects a seed may roll: the curator's list (HELIX, TWINS, WHEEL were killed; their slots hold OBELISK, TRILITHON, ZIGGURAT) */
+const SUBJ_OK=[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,43];   /* DOMES (42) killed in pass 7, GNOMON (18) in pass 14 */ /* the subjects a seed may roll: the curator's list (HELIX, TWINS, WHEEL were killed; their slots hold OBELISK, TRILITHON, ZIGGURAT) */
 /* THE ANGLES A MONUMENT MAY FACE THE CAMERA AT, per subject, in degrees of
    world azimuth: arcs the curator kept in the angle room. Empty = any. */
-const AZ_OK={3:[[30,150]], 4:[[30,150],[210,330]], 6:[[30,150],[210,330]], 8:[[30,150],[210,330]], 10:[[30,150],[210,330]], 11:[[210,330]], 14:[[30,150],[210,330]]};
+const AZ_OK={3:[[30,150]], 4:[[30,150],[210,330]], 6:[[30,150],[210,330]], 8:[[30,150],[210,330]], 9:[[20,70],[110,160],[200,250],[290,340]], 10:[[30,150],[210,330]], 11:[[210,330]], 14:[[30,150],[210,330]]};   /* the ziggurat: three-quarter views only (pass 14) */
 function azFor(sub,r){ const arcs=AZ_OK[sub]; if(!arcs) return r*TAU;
   const tot=arcs.reduce((a,[x,y])=>a+(y-x),0); let u=r*tot;
   for(const [x,y] of arcs){ if(u<=y-x) return (x+u)*Math.PI/180; u-=y-x; } return arcs[0][0]*Math.PI/180; }
@@ -473,6 +473,7 @@ function buildPlate(seed, o){
   P.sunSweep = (P.subject===6);               /* the sundial's light orbits */
   /* the camera: azimuth, elevation, and distance are the composition */
   P.camEl = (6+rng()*18)*Math.PI/180;       /* low: a monument is looked UP at. LOW (3 deg) was killed, HIGH (26) kept */
+  if(P.subject===5) P.camEl=(4+(P.camEl*180/Math.PI-6)/18*5)*Math.PI/180;   /* pass 14: the obelisk is seen from near the floor, 4..9 degrees */
   P.camDist = 1;                              /* scaled per subject below */
   P.horizon = rng()<0.5 ? 0.34 : 0.54;        /* where the horizon sits in the frame; the high horizon of LOW was killed */
   P.bob = rng()<0.6 ? 0.015+rng()*0.025 : 0;  /* the camera breathes, barely (pass 2: 0.04..0.10 was too much) */
@@ -585,21 +586,29 @@ function applyLive(P,L){
    its edges at eight phases, and the camera steps back until the band is
    clear. Lamps (3) and the ground (0) are not the subject. Deterministic. */
 function keepInFrame(P){
-  const G=48, band=0.055, TH=[0,1,2,3,4,5,6,7].map(k=>k/8*TAU);
-  const foot=(P.fit&&P.fit.wr)?P.fit.wr+0.2:P.ext/2.4;   /* the subject's footprint: ground this near its centre, at the edge, means the base is cut */
-  for(let iter=0;iter<14;iter++){
-    let out=false;
+  const G=48, TH=[0,1,2,3,4,5,6,7].map(k=>k/8*TAU);
+  const foot=(P.fit&&P.fit.wr)?P.fit.wr+0.2:P.ext/2.4;   /* the subject's footprint: ground this near its centre, at the bottom edge, means the base is cut */
+  /* which bands the subject touches: 1 top, 2 bottom, 4 a side */
+  const touches=(band,ft)=>{ let m=0;
     for(const th of TH){ prepFrame(P,th); const C=camera(P,th,false); const fov=P.fov*(C.fovS||1), shift=(P.horizon-0.5)*2.0*fov*0.9;
-      for(let py=0;py<G&&!out;py++){ const edgeY=(py<G*band)||(py>=G*(1-band)); const v=-((py+0.5)/G*2-1)*fov-shift;
-        for(let px=0;px<G;px++){ const edgeX=(px<G*band)||(px>=G*(1-band)); if(!edgeX&&!edgeY) continue;
+      for(let py=0;py<G;py++){ const top=py<G*band, bot=py>=G*(1-band); const v=-((py+0.5)/G*2-1)*fov-shift;
+        for(let px=0;px<G;px++){ const side=(px<G*band)||(px>=G*(1-band)); if(!side&&!top&&!bot) continue;
           const u=((px+0.5)/G*2-1)*fov+P.camDx*0.35;
           let dx=C.fx+C.rx*u+C.ux*v, dy=C.fy+C.ry*u+C.uy*v, dz=C.fz+C.rz*u+C.uz*v; const dl=Math.sqrt(dx*dx+dy*dy+dz*dz); dx/=dl; dy/=dl; dz/=dl;
           const t=march(P,C.cx,C.cy,C.cz,dx,dy,dz,th); if(t<0||HIT_M===3) continue;
-          if(HIT_M!==0){ out=true; break; }
-          if(edgeY&&py>=G/2){ const hx=C.cx+dx*t, hz=C.cz+dz*t; if(Math.hypot(hx,hz)<foot){ out=true; break; } } } }
-      if(out) break; }
-    if(!out) return P;
-    P.camDist*=1.05; if(P.horizon<0.5) P.horizon=Math.min(0.5,P.horizon+0.025);   /* step back, and let the horizon rise a little */
+          let hit=HIT_M!==0;
+          if(!hit&&bot){ const hx=C.cx+dx*t, hz=C.cz+dz*t; hit=Math.hypot(hx,hz)<ft; }
+          if(hit){ if(top) m|=1; else if(bot) m|=2; else m|=4; } } } }
+    return m; };
+  /* pass 14: compose, don't just retreat. A base at the bottom edge lifts the horizon; a top or a side at the edge
+     steps the camera back; a subject adrift in the middle steps closer. */
+  for(let iter=0;iter<24;iter++){
+    const m=touches(0.08,foot);
+    if(m&1){ P.camDist*=1.05; continue; }
+    if(m&2){ if(P.horizon<0.62){ P.horizon=Math.min(0.62,P.horizon+0.03); continue; } P.camDist*=1.05; continue; }
+    if(m&4){ P.camDist*=1.05; continue; }
+    if(touches(0.16,foot*0.5)===0){ P.camDist*=0.96; continue; }
+    break;
   }
   return P;
 }
