@@ -104,63 +104,14 @@
   #os .seg i.on{ border-color:var(--acc); color:var(--acc); }
 </style>
 </head>
-<body>
-<div id="wrap">
-  <header><b>DITHERVOID // STORMGLASS</b><span id="hsub">WORKBENCH V5.2 · THE STORMGLASS: THE CHAIN WRITES THE SKY</span><button id="shape" aria-pressed="false" title="SHAPE">&#9633; 1:1</button><button id="frame" aria-pressed="false" title="FRAME" style="display:none">&#9635; AUTO</button><button id="art" aria-pressed="false" title="give the whole screen to the plate">&#9974; ART</button></header>
-  <div id="stagecol">
-    <div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div><div id="gosd">STANDBY</div></div>
-    <div id="plate"><span>SUBJECT <b id="p-sub">—</b></span><span>SCHEME <b id="p-sch">—</b></span><span>HOUR <b id="p-hour">—</b></span><span>GROUND <b id="p-gnd">—</b></span><span>SCREEN <b id="p-dit">—</b></span><span>INKS <b id="p-ink">—</b></span></div>
-  </div>
-  <div id="rail">
-    <div id="acts">
-      <button id="new" class="prime">&#9860; NEW GLASS</button>
-      <button id="draw">&#9654; PRINT</button>
-      <button id="save" disabled>&#10515; SAVE</button>
-      <button id="copy">&#10697; COPY DNA</button>
-    </div>
-    <div class="row"><label>DNA</label><input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="GLASS-…"></div>
-    <button id="recall" class="wide">&#8635; RECALL DNA</button>
-    <div class="row"><label>SEED</label><input id="seed" type="number" min="1" max="4294967295" step="1" value="696969"></div>
-    <div class="row"><label>SUBJECT</label><select id="subject"></select></div>
-    <div class="row"><label>SCHEME</label><select id="scheme"></select></div>
-    <div class="row"><label>HOUR</label><select id="hour"></select></div>
-    <div class="row"><label>GROUND</label><select id="ground"></select></div>
-    <div class="row"><label>SCREEN</label><select id="dither"></select></div>
-    <div class="row"><label>WEATHER</label><select id="weather"></select></div>
-    <div class="row"><label>CAMERA</label><select id="cam"></select></div>
-    <div class="row"><label>SCREEN LOOP</label><input id="tex" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="AUTO · a random PANDORA roll — or paste a PNDR card"></div>
-    <div class="row"><label>PRINT AT</label><select id="raster"><option value="135">135² · 8 px grain</option><option value="270">270² · 4 px grain</option><option value="540" selected>540² · 2 px grain</option></select></div>
-    <div class="row"><label>SHAPE</label><select id="aspect"><option value="1:1">1:1 &#183; the square plate</option><option value="9:16">9:16 &#183; the tall plate</option><option value="16:9">16:9 &#183; the wide plate</option></select></div>
-    <div class="row" style="display:none"><label>FRAME</label><select id="frameSel"><option value="0">AUTO &#183; the seed decides</option><option value="1">ON &#183; always ruled</option><option value="2">OFF &#183; never ruled</option></select></div>
-    <div id="live">
-      <div class="lhead">LIVE <span>what the chain knows when the plate is read</span><button id="live-now" title="fill every dial with a plausible now">NOW</button><button id="live-off" title="clear every dial: the seed's own plate">OFF</button></div>
-      <div class="lrow"><label>GAS</label><input type="range" id="lv-gas" min="-2" max="3" step="0.01" value="-1.4"><b id="lvv-gas">off</b><i data-k="gas">&#215;</i></div>
-      <div class="lrow"><label>HOUR</label><input type="range" id="lv-hour" min="0" max="24" step="0.25" value="12"><b id="lvv-hour">off</b><i data-k="hour">&#215;</i></div>
-      <div class="lrow"><label>MOON</label><input type="range" id="lv-moon" min="0" max="1" step="0.01" value="0.5"><b id="lvv-moon">off</b><i data-k="moon">&#215;</i></div>
-      <div class="lrow"><label>WIND</label><input type="range" id="lv-wind" min="-1" max="1" step="0.01" value="0"><b id="lvv-wind">off</b><i data-k="wind">&#215;</i></div>
-      <div class="lrow"><label>TIDE</label><input type="range" id="lv-tide" min="0" max="1" step="0.01" value="0"><b id="lvv-tide">off</b><i data-k="tide">&#215;</i></div>
-      <div class="lrow"><label>LEDGER</label><input type="range" id="lv-ledger" min="0" max="40" step="1" value="0"><b id="lvv-ledger">off</b><i data-k="ledger">&#215;</i></div>
-      <div class="lrow"><label>LINEAGE</label><input type="range" id="lv-lineage" min="0" max="365" step="1" value="0"><b id="lvv-lineage">off</b><i data-k="lineage">&#215;</i></div>
-      <div class="lrow"><label>LAMPS</label><input type="range" id="lv-lamps" min="0" max="7" step="1" value="0"><b id="lvv-lamps">off</b><i data-k="lamps">&#215;</i></div>
-      <div class="lrow"><label>WEIGHT</label><input type="range" id="lv-weight" min="0" max="1" step="0.01" value="0.5"><b id="lvv-weight">off</b><i data-k="weight">&#215;</i></div>
-      <div class="lrow"><label>AGE</label><input type="range" id="lv-age" min="0" max="365" step="1" value="0"><b id="lvv-age">off</b><i data-k="age">&#215;</i></div>
-      <div class="lrow"><label>PEG</label><input type="range" id="lv-peg" min="0" max="3" step="0.05" value="0"><b id="lvv-peg">off</b><i data-k="peg">&#215;</i></div>
-      <div class="lrow"><label>FLOOD</label><input type="range" id="lv-flood" min="0" max="0.6" step="0.01" value="0"><b id="lvv-flood">off</b><i data-k="flood">&#215;</i></div>
-      <div class="lrow"><label>HUNGER</label><input type="range" id="lv-hunger" min="0" max="100" step="0.5" value="0"><b id="lvv-hunger">off</b><i data-k="hunger">&#215;</i></div>
-      <div class="lrow"><label>PULSE</label><input type="range" id="lv-pulse" min="0" max="1" step="0.01" value="0"><b id="lvv-pulse">off</b><i data-k="pulse">&#215;</i></div>
-    </div>
-    <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
-    <div id="stat"></div>
-    <div id="note"><b>THE GLASS.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Most plates are ASSEMBLIES — monuments composed on the spot from a grammar of primitives, arrangements and whole-number motions, so no two come round twice; the named subjects are the rest. Weather (a fog bank, printed rain), a camera that sways, dollies, cranes or orbits, a second light, and a PANDORA loop on every plate: the largest part of every monument wears a v3 CHIMERA loop, wrapped to the form and modelled by the plate's light, rolled at random by the seed with nothing steered. Paste any PNDR card to make it wear that one instead.</div>
-  </div>
-</div>
+<body class="glass">
+<div id="wrap"><div id="stagecol"><div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div><div id="gosd">STANDBY</div></div></div><div id="ctl" style="display:none"><button id="art"></button><button id="shape"></button><button id="frame"></button><button id="new"></button><button id="draw"></button><button id="save" disabled></button><button id="copy"></button><button id="recall"></button><input id="dna" type="text"><input id="seed" type="number" min="1" max="4294967295" step="1" value="696969"><input id="tex" type="text"><select id="subject"></select><select id="scheme"></select><select id="hour"></select><select id="ground"></select><select id="dither"></select><select id="weather"></select><select id="cam"></select><select id="raster"><option value="135">135² · 8 px grain</option><option value="270">270² · 4 px grain</option><option value="540" selected>540² · 2 px grain</option></select><select id="aspect"><option value="1:1">1:1 &#183; the square plate</option><option value="9:16">9:16 &#183; the tall plate</option><option value="16:9">16:9 &#183; the wide plate</option></select><select id="frameSel"><option value="0">AUTO &#183; the seed decides</option><option value="1">ON &#183; always ruled</option><option value="2">OFF &#183; never ruled</option></select><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select><button id="live-now"></button><button id="live-off"></button><div><input type="range" id="lv-gas" min="-2" max="3" step="0.01" value="-1.4"><b id="lvv-gas"></b><i data-k="gas"></i></div><div><input type="range" id="lv-hour" min="0" max="24" step="0.25" value="12"><b id="lvv-hour"></b><i data-k="hour"></i></div><div><input type="range" id="lv-moon" min="0" max="1" step="0.01" value="0.5"><b id="lvv-moon"></b><i data-k="moon"></i></div><div><input type="range" id="lv-wind" min="-1" max="1" step="0.01" value="0"><b id="lvv-wind"></b><i data-k="wind"></i></div><div><input type="range" id="lv-tide" min="0" max="1" step="0.01" value="0"><b id="lvv-tide"></b><i data-k="tide"></i></div><div><input type="range" id="lv-ledger" min="0" max="40" step="1" value="0"><b id="lvv-ledger"></b><i data-k="ledger"></i></div><div><input type="range" id="lv-lineage" min="0" max="365" step="1" value="0"><b id="lvv-lineage"></b><i data-k="lineage"></i></div><div><input type="range" id="lv-lamps" min="0" max="7" step="1" value="0"><b id="lvv-lamps"></b><i data-k="lamps"></i></div><div><input type="range" id="lv-weight" min="0" max="1" step="0.01" value="0.5"><b id="lvv-weight"></b><i data-k="weight"></i></div><div><input type="range" id="lv-age" min="0" max="365" step="1" value="0"><b id="lvv-age"></b><i data-k="age"></i></div><div><input type="range" id="lv-peg" min="0" max="3" step="0.05" value="0"><b id="lvv-peg"></b><i data-k="peg"></i></div><div><input type="range" id="lv-flood" min="0" max="0.6" step="0.01" value="0"><b id="lvv-flood"></b><i data-k="flood"></i></div><div><input type="range" id="lv-hunger" min="0" max="100" step="0.5" value="0"><b id="lvv-hunger"></b><i data-k="hunger"></i></div><div><input type="range" id="lv-pulse" min="0" max="1" step="0.01" value="0"><b id="lvv-pulse"></b><i data-k="pulse"></i></div><div id="stat"></div><span id="p-sub"></span><span id="p-sch"></span><span id="p-hour"></span><span id="p-gnd"></span><span id="p-dit"></span><span id="p-ink"></span></div></div>
 
 <div id="os" role="dialog" aria-label="GLASS OS"><div class="win">
   <div class="bar"><b>DITHERVOID // STORMGLASS</b><button id="os-x" title="close">&#215;</button></div>
   <div class="row" id="os-shape"><span>SHAPE</span><div class="seg"><i data-ar="1:1">1:1</i><i data-ar="9:16">9:16</i><i data-ar="16:9">16:9</i></div></div>
   <div class="row" id="os-gif"><span>DOWNLOAD</span><b>the loop as a GIF</b></div>
   <div class="row" id="os-full"><span>FULL SCREEN</span><b>fill the screen</b></div>
-  <div class="row" id="os-link"><span>WORKBENCH</span><b>open this glass in the workbench</b></div>
   <div class="foot" id="os-foot"></div>
 </div></div>
 <script>
@@ -2666,7 +2617,6 @@ livePaint();
    window.GLASS (set by the contract's page, or by the site) or the URL says
    which plate: {seed, live, frames, ar, subject, cam, ...}. */
 (function(){
-  document.body.classList.add('glass');
   const G=window.GLASS||null;
   if(G){
     if(G.seed!=null) S.seed=(+G.seed)>>>0;
@@ -2690,7 +2640,6 @@ livePaint();
   os.querySelectorAll('#os-shape i').forEach(i=>i.addEventListener('click',()=>{ if(setAspect(i.dataset.ar)){ draw(); } paint(); }));
   document.getElementById('os-gif').addEventListener('click',()=>{ if(LAST&&LAST.bytes&&DONEKEY===stateKey()) saveGif(); else { doPrint(); paint(); } });
   document.getElementById('os-full').addEventListener('click',()=>{ const el=document.documentElement; const f=el.requestFullscreen||el.webkitRequestFullscreen; if(f) f.call(el); open(false); });
-  document.getElementById('os-link').addEventListener('click',()=>{ const q=new URLSearchParams({seed:S.seed,frames:S.frames,ar:S.ar}); for(const k of ['subject','hour','ground','weather','cam']) if(S[k]>=0) q.set(k,S[k]); const L={}; LIVEK.forEach(k=>{ if(LIVE[k]!=null) L[k]=LIVE[k]; }); if(Object.keys(L).length) q.set('live',JSON.stringify(L)); window.open('index.html?'+q.toString(),'_blank'); });
   setInterval(()=>{ if(os.classList.contains('open')) paint(); },800);
   /* THE STATUS. Reads what the engine writes (its OSD line and the progress
      bar) and says it with a percentage; once the print is in hand it fades. */
