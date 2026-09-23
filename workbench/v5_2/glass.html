@@ -82,7 +82,10 @@
   body.glass #stagecol{ min-height:100dvh; display:flex; align-items:center; justify-content:center; }
   body.glass #stage{ width:min(100vw, calc(100dvh * var(--arw) / var(--arh))); height:min(100dvh, calc(100vw * var(--arh) / var(--arw))); border:none; cursor:pointer; }
   body.glass[data-ar="9:16"] #stage{ max-height:none; margin:0; width:min(100vw, calc(100dvh * var(--arw) / var(--arh))); }
-  body.glass #osd{ font-size:10px; letter-spacing:.18em; opacity:.6; }
+  body.glass #osd{ display:none; }
+  /* the glass's own status: on while the plate is being drawn, gone once the print is in hand */
+  #gosd{ position:absolute; left:10px; bottom:8px; font-size:10px; letter-spacing:.18em; color:var(--ink); background:rgba(0,0,0,.6); padding:4px 8px; pointer-events:none; opacity:1; transition:opacity .5s ease; }
+  #gosd.off{ opacity:0; }
   body.glass #prog{ opacity:.8; }
   #os{ position:fixed; inset:0; z-index:20; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); }
   #os.open{ display:flex; }
@@ -105,7 +108,7 @@
 <div id="wrap">
   <header><b>DITHERVOID // STORMGLASS</b><span id="hsub">WORKBENCH V5.2 · THE STORMGLASS: THE CHAIN WRITES THE SKY</span><button id="shape" aria-pressed="false" title="SHAPE">&#9633; 1:1</button><button id="frame" aria-pressed="false" title="FRAME" style="display:none">&#9635; AUTO</button><button id="art" aria-pressed="false" title="give the whole screen to the plate">&#9974; ART</button></header>
   <div id="stagecol">
-    <div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div></div>
+    <div id="stage"><canvas id="view" width="540" height="540"></canvas><div id="prog"></div><div id="osd">STANDBY</div><div id="gosd">STANDBY</div></div>
     <div id="plate"><span>SUBJECT <b id="p-sub">—</b></span><span>SCHEME <b id="p-sch">—</b></span><span>HOUR <b id="p-hour">—</b></span><span>GROUND <b id="p-gnd">—</b></span><span>SCREEN <b id="p-dit">—</b></span><span>INKS <b id="p-ink">—</b></span></div>
   </div>
   <div id="rail">
@@ -2689,6 +2692,23 @@ livePaint();
   document.getElementById('os-full').addEventListener('click',()=>{ const el=document.documentElement; const f=el.requestFullscreen||el.webkitRequestFullscreen; if(f) f.call(el); open(false); });
   document.getElementById('os-link').addEventListener('click',()=>{ const q=new URLSearchParams({seed:S.seed,frames:S.frames,ar:S.ar}); for(const k of ['subject','hour','ground','weather','cam']) if(S[k]>=0) q.set(k,S[k]); const L={}; LIVEK.forEach(k=>{ if(LIVE[k]!=null) L[k]=LIVE[k]; }); if(Object.keys(L).length) q.set('live',JSON.stringify(L)); window.open('index.html?'+q.toString(),'_blank'); });
   setInterval(()=>{ if(os.classList.contains('open')) paint(); },800);
+  /* THE STATUS. Reads what the engine writes (its OSD line and the progress
+     bar) and says it with a percentage; once the print is in hand it fades. */
+  const g=document.getElementById('gosd'), eo=document.getElementById('osd'), ep=document.getElementById('prog');
+  let lastTxt='';
+  function status(){
+    const ready=!!(LAST&&LAST.bytes&&DONEKEY===stateKey());
+    if(ready){ g.classList.add('off'); return; }
+    g.classList.remove('off');
+    const o=eo.textContent||'', pct=parseInt(ep.style.width)||0;
+    let t;
+    if(/^ROLLING/.test(o)) t='ROLLING THE LOOP · '+pct+'%';
+    else if(/^DRAWING/.test(o)) t=o.replace(/\s*·\s*\d+ FRAMES$/,'')+' · '+pct+'%';
+    else if(/^(PRINT|DRAFT)/.test(o)) t='WRITING THE PRINT…';
+    else t=o||'STANDBY';
+    if(t!==lastTxt){ g.textContent=t; lastTxt=t; }
+  }
+  setInterval(status,100); status();
 })();
 </script>
 </body>
