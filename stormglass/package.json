@@ -1,0 +1,17 @@
+{
+  "name": "stormglass",
+  "version": "1.0.0",
+  "description": "DITHERVOID // STORMGLASS. One plate a day at a falling price, the chain writing the sky. Single ERC-721.",
+  "license": "CC0-1.0",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "solc": "^0.8.24"
+  }
+}

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DITHERVOID // STORMGLASS</title>
+<meta name="description" content="One plate a day at a falling price, the chain writing the sky, until it dies.">
+<style>
+  :root{--bg:#050506;--ink:#e8e8ec;--mut:#7d7d88;--acc:#c8ff3a;--bad:#ff5a5a;--hair:#1e1e24;--pane:#0b0b0e}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  header{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--hair);position:sticky;top:0;background:rgba(5,5,6,.92);z-index:5;flex-wrap:wrap}
+  @media(max-width:700px){ header nav{display:none} header{gap:10px} }
+  header b{letter-spacing:.24em;font-weight:600;font-size:12px}
+  header #state{letter-spacing:.18em;font-size:10px;color:var(--acc)}
+  header nav{margin-left:auto;display:flex;gap:14px;font-size:10px;letter-spacing:.16em;color:var(--mut)}
+  header nav a:hover{color:var(--ink)}
+  button{font:inherit;background:none;color:var(--ink);border:1px solid var(--ink);padding:9px 14px;cursor:pointer;letter-spacing:.1em;font-size:11px;white-space:nowrap}
+  button.prime{border-color:var(--acc);color:var(--acc)} button:disabled{opacity:.35;cursor:default}
+  input{font:inherit;background:var(--pane);color:var(--ink);border:1px solid var(--hair);padding:8px 10px;width:100%}
+  main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;padding:18px 16px;max-width:1240px;margin:0 auto}
+  @media(max-width:900px){ main{grid-template-columns:minmax(0,1fr)} }
+  .panel,.big,.note{min-width:0;overflow-wrap:anywhere}
+  #plateBox{position:relative;background:#000;border:1px solid var(--hair);aspect-ratio:1/1;width:min(100%, calc(100dvh - 120px));margin:0 auto}
+  #plate{width:100%;height:100%;border:0;display:block;background:#000}
+  #plateTag{position:absolute;left:10px;top:8px;font-size:10px;letter-spacing:.2em;color:var(--mut);background:rgba(0,0,0,.6);padding:3px 7px;pointer-events:none}
+  .panel{border:1px solid var(--hair);background:var(--pane);padding:16px;display:flex;flex-direction:column;gap:14px;align-self:start}
+  .k{font-size:10px;letter-spacing:.2em;color:var(--mut)}
+  .big{font-size:34px;line-height:1.1;letter-spacing:.02em;font-weight:500}
+  .big small{font-size:14px;color:var(--mut);letter-spacing:.1em}
+  .row{display:flex;gap:8px;align-items:center}
+  .note{color:var(--mut);font-size:11px;line-height:1.55}
+  .warn{color:var(--bad)}
+  hr{border:0;border-top:1px solid var(--hair);margin:2px 0}
+  section{max-width:1240px;margin:0 auto;padding:6px 16px 26px}
+  h2{font-size:10px;letter-spacing:.24em;color:var(--mut);font-weight:500;margin:18px 0 10px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+  .card{position:relative;background:#000;border:1px solid var(--hair);aspect-ratio:1/1;overflow:hidden;cursor:pointer}
+  .card img{width:100%;height:100%;display:block;image-rendering:pixelated}
+  .card i{position:absolute;left:0;right:0;bottom:0;font-style:normal;font-size:9px;letter-spacing:.14em;color:var(--mut);background:rgba(0,0,0,.6);padding:2px 5px}
+  .card.on{outline:2px solid var(--acc);outline-offset:-2px} .card.on i{color:var(--acc)}
+  .card.wait::after{content:"";position:absolute;inset:45% 45%;border:1px solid var(--hair);animation:sp 1.2s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  footer{border-top:1px solid var(--hair);padding:22px 16px;color:var(--mut);font-size:11px;line-height:1.7;max-width:1240px;margin:0 auto}
+  footer b{color:var(--ink);letter-spacing:.16em;font-weight:500}
+  #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111116;border:1px solid var(--hair);padding:8px 14px;font-size:11px;letter-spacing:.06em;display:none;max-width:92vw;z-index:9}
+  #work{position:absolute;width:270px;height:270px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none}
+</style></head>
+<body>
+<header><b>DITHERVOID // STORMGLASS</b><span id="state">READING THE CHAIN</span>
+  <nav><a href="#ledger">THE LEDGER</a><a href="#seats">SEATS</a><a href="#rules">THE RULES</a><a href="/">PANDORA</a></nav>
+  <button id="wallet">CONNECT</button></header>
+<main>
+  <div><div id="plateBox"><iframe id="plate" title="the plate"></iframe><div id="plateTag">STANDBY</div></div></div>
+  <div class="panel" id="panel"><div class="k">STANDBY</div><div class="note">Reading the chain…</div></div>
+</main>
+<section id="candidates" style="display:none"><h2>TOMORROW’S PLATE · THE BUYER CHOOSES ONE OF THIRTY-TWO</h2><div class="grid" id="candGrid"></div></section>
+<section id="ledger"><h2>THE LEDGER</h2><div class="grid" id="ledgerGrid"></div><div class="note" id="ledgerNote"></div></section>
+<section id="seats"><h2>SEATS</h2><div class="note" id="seatsNote">Connect to see your seats.</div><div class="row" style="margin-top:8px"><button id="claim" disabled>CLAIM</button></div></section>
+<footer id="rules"><b>THE RULES</b><br>
+One plate a day. Its price starts at the greater of the founding price and four times the median of the last seven sales, plus what the day’s witnesses paid, and halves every 2.4 hours; the day closes at 4:20pm in Miami. The first buy wins and chooses tomorrow’s plate from thirty-two. An unsold day is bought by the vault at the reference price if it can pay and held forever; if it cannot, the Tombstone is minted and the collection is dead.<br>
+Plate Zero is sold by candle: an ascending auction, every bid rerolling the plate, going out at a moment drawn from a block hash inside a six-hour window after the first day. The winning bid is the founding price, the price of a seat forever.<br>
+Witnesses pay any amount toward a day: a seat at the founding rate (one a day at most), a notch on the plate in the accent ink, and the day’s price rises by it. Seventy to the artist in the transaction, twenty to the seats, ten to the vault. Royalties 6.9% to the vault. No owner, no dials, nothing to expire: the engine, the print and the sky are on the chain. CC0. Greencross, always.<br><br>
+<a href="/">PANDORA</a> · <a href="/gardens.html">GARDENS</a> · <a href="/showcase.html">SHOWCASE</a> · <a href="/sealed.html">THE SEALED</a>
+</footer>
+<iframe id="work" title="worker" aria-hidden="true"></iframe>
+<div id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+<script>
+/* ═══ THE CONFIG. Set once the ledger is deployed. Empty means the page shows the design on a rehearsal. */
+const CFG={ chainId:0, contract:'', glass:'', rpc:'', explorer:'', demo:new URLSearchParams(location.search).has('demo') };
+const ABI=[
+  'function candleOpen() view returns (uint256)','function candleClose() view returns (uint256)','function candleSettled() view returns (bool)','function revealBlock() view returns (uint256)',
+  'function zeroSeed() view returns (uint32)','function bidsCount() view returns (uint256)','function bids(uint256) view returns (address bidder,uint128 amount,uint64 at,uint32 seed)',
+  'function FOUNDING() view returns (uint256)','function foundersEnd() view returns (uint256)','function today() view returns (uint256)','function lastId() view returns (uint256)','function dead() view returns (bool)','function tombId() view returns (uint256)',
+  'function plates(uint256) view returns (uint32 seed,uint64 open,uint64 close,uint128 price,uint128 witnessed,address buyer,uint8 pick,bool sold)',
+  'function onSale() view returns (uint256 id,uint256 price,uint256 close,bool open)','function startPrice(uint256) view returns (uint256)','function priceAt(uint256,uint256) view returns (uint256)','function referencePrice() view returns (uint256)','function median7() view returns (uint256)',
+  'function candidates(uint256) view returns (uint32[32])','function vault() view returns (uint256)','function seatPool() view returns (uint256)','function totalSeats() view returns (uint256)','function seats(address) view returns (uint256)','function pending(address) view returns (uint256)','function owed(address) view returns (uint256)',
+  'function ownerOf(uint256) view returns (address)','function witnessesOf(uint256) view returns (uint32[])','function handsOf(uint256) view returns (uint32[])',
+  'function bid() payable','function seal()','function settleCandle()','function pledge() payable','function sync()','function buy(uint8) payable','function witness() payable','function claim()','function withdraw()'
+];
+const GABI=['function sky(uint256) view returns (string)'];
+const $=id=>document.getElementById(id);
+const fmt=v=>{ const s=ethers.formatEther(v); const n=+s; return n>=1?n.toFixed(4):n>=0.01?n.toFixed(5):n>=0.0001?n.toFixed(6):s.slice(0,12); };
+const toast=m=>{ const t=$('toast'); t.textContent=m; t.style.display='block'; clearTimeout(toast.h); toast.h=setTimeout(()=>t.style.display='none',5000); };
+const HALF=8640, TWO=Math.LN2;
+const priceNow=(start,open,t)=>{ const dt=Math.max(0,t-open); return start*Math.pow(2,-dt/HALF); };
+const hms=s=>{ s=Math.max(0,s|0); const h=(s/3600)|0, m=((s%3600)/60)|0, x=s%60; return (h?h+'h ':'')+String(m).padStart(2,'0')+'m '+String(x).padStart(2,'0')+'s'; };
+const short=a=>a?a.slice(0,6)+'…'+a.slice(-4):'';
+
+/* ═══ THE CHAIN */
+let ro=null, storm=null, glass=null, signer=null, me=null, W=null;
+async function connectRead(){
+  if(!CFG.contract) return;
+  ro=new ethers.JsonRpcProvider(CFG.rpc); storm=new ethers.Contract(CFG.contract,ABI,ro); glass=new ethers.Contract(CFG.glass,GABI,ro);
+}
+async function connectWallet(){
+  if(!window.ethereum){ toast('no wallet in this browser'); return; }
+  const bp=new ethers.BrowserProvider(window.ethereum); await bp.send('eth_requestAccounts',[]);
+  const net=await bp.getNetwork(); if(CFG.chainId&&Number(net.chainId)!==CFG.chainId){ toast('switch your wallet to chain '+CFG.chainId); }
+  signer=await bp.getSigner(); me=await signer.getAddress(); W=new ethers.Contract(CFG.contract,ABI,signer);
+  $('wallet').textContent=short(me); await refreshSeats();
+}
+$('wallet').addEventListener('click',()=>connectWallet().catch(e=>toast(e.shortMessage||e.message)));
+async function send(name,fn){ if(!W){ await connectWallet(); if(!W) return; } try{ toast(name+' … confirm in your wallet'); const tx=await fn(W); toast(name+' sent'); await tx.wait(); toast(name+' done'); await tick(true); }catch(e){ toast((e.reason||e.shortMessage||e.message||String(e)).slice(0,160)); } }
+
+/* ═══ THE PLATE ON THE GLASS: the token page itself, fed the seed and the sky */
+let pageSrc=null;
+async function glassSrc(){ if(!pageSrc) pageSrc=await (await fetch('/glass/index.html')).text(); return pageSrc; }
+let shown='';
+async function showPlate(G,tag){
+  const key=JSON.stringify(G); if(key===shown) return; shown=key;
+  const src=await glassSrc();
+  $('plate').srcdoc=src.replace('<body class="glass">','<body class="glass"><script>window.GLASS='+JSON.stringify(G)+';<\/script>');
+  $('plateTag').textContent=tag||'';
+}
+/* the worker frame renders thumbnails through the glass page's side door, one at a time */
+const jobs={}; let jobId=0, workReady=false;
+window.addEventListener('message',e=>{ const m=e.data; if(!m||m.t!=='glass') return; if(m.hello){ workReady=true; return; } const j=jobs[m.id]; if(j){ delete jobs[m.id]; j(m); } });
+function thumb(G){ return new Promise(res=>{ const id=++jobId; jobs[id]=res; const post=()=>$('work').contentWindow.postMessage(Object.assign({t:'glass',id,frames:8,raster:135},G),'*'); if(workReady) post(); else setTimeout(post,1500); }); }
+async function fillCard(el,G){ el.classList.add('wait'); const r=await thumb(G); el.classList.remove('wait'); if(r.png){ const img=document.createElement('img'); img.src=r.png; el.prepend(img); } }
+(async()=>{ $('work').srcdoc=(await glassSrc()).replace('<body class="glass">','<body class="glass"><script>window.GLASS={seed:1,frames:24};<\/script>'); })();
+
+/* ═══ THE STATES */
+let ST={}, pick=null, lastSky={}, timer=null;
+const skyOf=async id=>{ try{ return JSON.parse(await glass.sky(id)); }catch(e){ return {}; } };
+async function read(){
+  if(CFG.demo) return demoState();
+  const s=storm;
+  const [settled, dead, today, lastId, candleClose, candleOpen, nBids, zeroSeed, FOUNDING, foundersEnd, revealBlock, vault, seatPool, totalSeats]=await Promise.all([s.candleSettled(),s.dead(),s.today(),s.lastId(),s.candleClose(),s.candleOpen(),s.bidsCount(),s.zeroSeed(),s.FOUNDING(),s.foundersEnd(),s.revealBlock(),s.vault(),s.seatPool(),s.totalSeats()]);
+  const blk=await ro.getBlockNumber(); const now=(await ro.getBlock('latest')).timestamp;
+  const st={settled,dead,today:Number(today),lastId:Number(lastId),candleClose:Number(candleClose),candleOpen:Number(candleOpen),nBids:Number(nBids),zeroSeed:Number(zeroSeed),FOUNDING,foundersEnd:Number(foundersEnd),revealBlock:Number(revealBlock),blk,now,vault,seatPool,totalSeats,skew:now-Math.floor(Date.now()/1000)};
+  if(st.nBids>0){ const b=await s.bids(st.nBids-1); st.leader={bidder:b.bidder,amount:b.amount,seed:Number(b.seed)}; }
+  if(settled&&!dead&&st.today>0){ const D=await s.plates(st.today); const [id,price,close,open]=await s.onSale(); st.day={id:Number(id),seed:Number(D.seed),open:Number(D.open),close:Number(D.close),sold:D.sold,buyer:D.buyer,witnessed:D.witnessed,price:D.price,onSale:open,priceNow:price,start:await s.startPrice(st.today),ref:await s.referencePrice()};
+    if(open) st.cands=(await s.candidates(st.today)).map(Number); }
+  if(dead) st.tombId=Number(await s.tombId());
+  return st;
+}
+function demoState(){
+  const now=Math.floor(Date.now()/1000); const phase=new URLSearchParams(location.search).get('demo')||'day';
+  const base={settled:phase!=='candle',dead:phase==='dead',today:phase==='candle'?0:12,lastId:phase==='candle'?0:11,candleOpen:now-20*3600,candleClose:0,nBids:3,zeroSeed:313454022,FOUNDING:ethers.parseEther('0.42'),foundersEnd:now+3600*5,revealBlock:0,blk:0,now,vault:ethers.parseEther('1.2'),seatPool:ethers.parseEther('0.31'),totalSeats:ethers.parseEther('17'),skew:0,leader:{bidder:'0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359',amount:ethers.parseEther('0.42'),seed:313454022}};
+  if(phase==='founders'){ base.foundersEnd=now+3600*7; }
+  if(phase==='day'||phase==='dead'){ base.foundersEnd=now-86400*12; }
+  if(phase==='day'||phase==='dead'){ const open=now-3*3600; base.day={id:12,seed:396693683,open,close:open+86400,sold:false,buyer:ethers.ZeroAddress,witnessed:ethers.parseEther('0.05'),price:0n,onSale:phase==='day',priceNow:ethers.parseEther(String(1.68*Math.pow(2,-3*3600/HALF))),start:ethers.parseEther('1.68'),ref:ethers.parseEther('0.42')};
+    base.cands=Array.from({length:32},(_,k)=>(396693683*(k+7)+k*7919)>>>0); }
+  if(phase==='dead'){ base.tombId=12; base.day.onSale=false; base.day.sold=true; }
+  return base;
+}
+function panel(html){ $('panel').innerHTML=html; }
+async function render(st){
+  ST=st; const now=()=>Math.floor(Date.now()/1000)+st.skew;
+  clearInterval(timer);
+  if(!st.settled){
+    const burn=st.candleOpen+24*3600; const windowEnd=st.candleOpen+30*3600;
+    $('state').textContent='THE CANDLE';
+    const sky=CFG.demo?{}:await skyOf(0);
+    await showPlate({seed:st.leader?st.leader.seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO · REROLLED BY EVERY BID');
+    const draw=()=>{ const t=now(); let line;
+      if(st.candleClose&&t>=st.candleClose) line='<div class="big warn">THE CANDLE IS OUT</div><div class="note">Anyone may settle it: the leader at the flame takes Plate Zero.</div><button class="prime" id="bSettle">SETTLE THE CANDLE</button>';
+      else if(t<burn) line='<div class="k">BURNING · SURE FOR</div><div class="big">'+hms(burn-t)+'</div>';
+      else if(st.candleClose) line='<div class="k">THE FLAME GOES OUT AT</div><div class="big">'+new Date(st.candleClose*1000).toLocaleTimeString()+' <small>'+hms(st.candleClose-t)+'</small></div>';
+      else line='<div class="k">INSIDE THE WINDOW</div><div class="big warn">IT MAY GO OUT ANY MOMENT</div><div class="note">Until '+new Date(windowEnd*1000).toLocaleTimeString()+' at the latest. Bids now wait for the flame; the hash that decides is already fixed. Anyone may seal it once block '+st.revealBlock+' is past (now '+st.blk+').</div>'+(st.blk>st.revealBlock?'<button id="bSeal">SEAL</button>':'');
+      panel('<div class="k">PLATE ZERO · SOLD BY CANDLE</div>'+line+'<hr><div class="k">LEADING BID</div><div class="big">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+'</small>':'<small>none yet · reserve 0.01 ETH</small>')+'</div><div class="note">'+st.nBids+' bids. Every bid rerolls the plate; the plate you see is the leader’s. Outbid before the window: refunded at once. The winning bid becomes the founding price, the price of a seat forever. Seventy to the artist, thirty to the vault.</div>'
+        +'<div class="row"><input id="bidAmt" placeholder="ETH, more than the leader" inputmode="decimal"><button class="prime" id="bBid">BID</button></div>');
+      const b=$('bBid'); if(b) b.onclick=()=>send('bid',W=>W.bid({value:ethers.parseEther($('bidAmt').value||'0')}));
+      const s2=$('bSeal'); if(s2) s2.onclick=()=>send('seal',W=>W.seal());
+      const s3=$('bSettle'); if(s3) s3.onclick=()=>send('settle',W=>W.settleCandle());
+    };
+    draw(); timer=setInterval(()=>{ const t=now(); if(t%5===0) draw(); else { const e=$('panel').querySelector('.big'); } },1000);
+    $('candidates').style.display='none'; return;
+  }
+  if(st.dead){
+    $('state').textContent='DEAD';
+    const sky=CFG.demo?{}:await skyOf(st.tombId);
+    await showPlate({seed:st.day?st.day.seed:1,subject:45,frames:36,live:sky},'THE TOMBSTONE · DAY '+st.tombId);
+    panel('<div class="k">THE COLLECTION IS DEAD</div><div class="big">DAY '+st.tombId+'</div><div class="note">The vault could not pay the reference price for an unsold day. The Tombstone is minted and held by the vault forever. Every plate before it lives on, reading the sky each time it is looked at.</div><hr><div class="k">THE VAULT HOLDS</div><div class="big">'+fmt(st.vault)+' <small>ETH</small></div>');
+    $('candidates').style.display='none'; return;
+  }
+  if(now()<st.foundersEnd||st.today===0){
+    $('state').textContent="FOUNDERS' DAY";
+    const sky=CFG.demo?{}:await skyOf(0);
+    await showPlate({seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO');
+    const draw=()=>{ const t=now(); const open=t>=st.foundersEnd;
+      panel('<div class="k">'+(open?'BETWEEN DAYS':"FOUNDERS' DAY")+'</div><div class="big">'+(open?'DAY ONE OPENS AT 4:20 MIAMI':hms(st.foundersEnd-t))+'</div><div class="note">Founding price '+fmt(st.FOUNDING)+' ETH. Pay anything today: seats at the founding rate, uncapped, and a notch on Plate Zero in the accent ink. No token. Seventy to the artist, twenty to the seats, ten to the vault.</div>'
+        +(open?'<button id="bSync">OPEN THE DAY</button>':'<div class="row"><input id="plAmt" placeholder="ETH" inputmode="decimal"><button class="prime" id="bPledge">PLEDGE</button></div>'));
+      const b=$('bPledge'); if(b) b.onclick=()=>send('pledge',W=>W.pledge({value:ethers.parseEther($('plAmt').value||'0')}));
+      const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>W.sync()); };
+    draw(); timer=setInterval(draw,1000); $('candidates').style.display='none'; return;
+  }
+  const D=st.day; $('state').textContent='DAY '+D.id;
+  lastSky=CFG.demo?{}:await skyOf(D.id);
+  await showPlate({seed:D.seed,frames:36,live:lastSky},'DAY '+D.id+(D.sold?' · SOLD':' · ON SALE'));
+  const start=+ethers.formatEther(D.start);
+  const draw=()=>{ const t=now();
+    if(t>=D.close){ panel('<div class="k">DAY '+D.id+'</div><div class="big">CLOSED</div><div class="note">4:20 in Miami has passed. The next call to the chain settles it: '+(D.sold?'the next day opens.':'the vault buys at '+fmt(D.ref)+' ETH if it can, or the Tombstone.')+'</div><button id="bSync">TURN THE DAY</button>'); const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>W.sync()); return; }
+    if(D.sold){ panel('<div class="k">DAY '+D.id+' · SOLD</div><div class="big">'+fmt(D.price)+' <small>ETH</small></div><div class="note">Taken by '+short(D.buyer)+'. The next plate opens at 4:20 in Miami, in '+hms(D.close-t)+'.</div>'); return; }
+    const p=priceNow(start,D.open,t);
+    panel('<div class="k">DAY '+D.id+' · ON SALE · CLOSES IN '+hms(D.close-t)+'</div><div class="big" id="px">'+p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small></div><div class="note">Started at '+start.toFixed(4)+', halving every 2.4 hours. First to pay takes it and chooses tomorrow’s plate below'+(pick==null?' (choose one first)':' · you chose '+pick)+'. Witnesses so far: '+fmt(D.witnessed)+' ETH.</div>'
+      +'<button class="prime" id="bBuy"'+(pick==null?' disabled':'')+'>BUY NOW</button><hr><div class="k">WITNESS THIS DAY</div><div class="note">Any amount: a seat at the founding rate (one a day at most), a notch on this plate in the accent, and the price rises by it.</div><div class="row"><input id="wAmt" placeholder="ETH" inputmode="decimal"><button id="bWit">WITNESS</button></div>');
+    const b=$('bBuy'); if(b) b.onclick=()=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; send('buy',W=>W.buy(pick,{value:pay})); };
+    const w=$('bWit'); if(w) w.onclick=()=>send('witness',W=>W.witness({value:ethers.parseEther($('wAmt').value||'0')}));
+  };
+  draw(); timer=setInterval(()=>{ const t=now(); const e=$('px'); if(e&&!D.sold&&t<D.close){ const p=priceNow(start,D.open,t); e.innerHTML=p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small>'; } if(t%10===0) draw(); },1000);
+  if(D.onSale&&st.cands){ $('candidates').style.display='block'; const g=$('candGrid'); if(g.dataset.day!==String(D.id)){ g.dataset.day=String(D.id); g.innerHTML=''; pick=null;
+      st.cands.forEach((seed,k)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+k+'</i>'; el.onclick=()=>{ pick=k; g.querySelectorAll('.card').forEach(c=>c.classList.remove('on')); el.classList.add('on'); draw(); }; g.appendChild(el); });
+      (async()=>{ for(const [k,seed] of st.cands.entries()) await fillCard(g.children[k],{seed,live:lastSky}); })(); } }
+  else $('candidates').style.display='none';
+}
+async function renderLedger(st){
+  const g=$('ledgerGrid'); const n=st.lastId; if(!st.settled||g.dataset.n===String(n)) return; g.dataset.n=String(n); g.innerHTML='';
+  const ids=[]; for(let i=n;i>=0;i--) ids.push(i);
+  $('ledgerNote').textContent=(n+1)+' plates. Median of the last seven sales: '+(CFG.demo?'0.42':fmt(await storm.median7()))+' ETH. The vault holds '+fmt(st.vault)+' ETH.';
+  for(const id of ids){ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+(id===0?'ZERO':st.dead&&id===st.tombId?'TOMB':'DAY '+id)+'</i>'; g.appendChild(el);
+    el.onclick=()=>{ window.open(CFG.explorer?CFG.explorer+'/nft/'+CFG.contract+'/'+id:'#','_blank'); }; }
+  (async()=>{ for(const [k,id] of ids.entries()){ let seed=1,subject=null; if(CFG.demo){ seed=(313454022*(id+1))>>>0; if(id===0) subject=44; if(st.dead&&id===st.tombId) subject=45; } else { const P=await storm.plates(id); seed=Number(P.seed); if(id===0) subject=44; if(st.dead&&id===st.tombId) subject=45; }
+    const G={seed,live:CFG.demo?{}:await skyOf(id)}; if(subject!=null) G.subject=subject; await fillCard(g.children[k],G); } })();
+}
+async function refreshSeats(){
+  if(!me||CFG.demo){ if(CFG.demo&&me){ $('seatsNote').textContent='2.0000 seats of 17 · 0.0364 ETH pending'; $('claim').disabled=false; } return; }
+  const [s,p,tot,o]=await Promise.all([storm.seats(me),storm.pending(me),storm.totalSeats(),storm.owed(me)]);
+  $('seatsNote').textContent=(+ethers.formatEther(s)).toFixed(4)+' seats of '+(+ethers.formatEther(tot)).toFixed(4)+' · '+fmt(p)+' ETH pending'+(o>0n?' · '+fmt(o)+' ETH owed to you (withdraw)':'');
+  $('claim').disabled=p===0n; $('claim').onclick=()=>send('claim',W=>W.claim());
+}
+async function tick(force){ try{ const st=await read(); await render(st); await renderLedger(st); if(me) await refreshSeats(); }catch(e){ console.error(e); $('state').textContent='CANNOT READ THE CHAIN'; panel('<div class="k">THE CHAIN</div><div class="note warn">'+String(e.shortMessage||e.message||e).slice(0,200)+'</div>'); } }
+(async()=>{
+  if(!CFG.contract&&!CFG.demo){ $('state').textContent='NOT YET ON THE CHAIN'; panel('<div class="k">THE LEDGER</div><div class="big">NOT YET</div><div class="note">The contracts are written and proven; the deploy comes next. Add ?demo=candle, ?demo=founders, ?demo=day or ?demo=dead to walk the states.</div>'); await showPlate({seed:424242,frames:36},'A REHEARSAL PLATE'); return; }
+  if(!CFG.demo) await connectRead();
+  await tick(); setInterval(()=>tick(),30000);
+})();
+</script>
+</body></html>
