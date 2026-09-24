@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E9.2 vs E11 · the screens side by side</title>
+<style>
+  body{margin:0;background:#050506;color:#e8e8ec;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace}
+  header{padding:12px 16px;border-bottom:1px solid #1e1e24;letter-spacing:.18em;font-size:11px}
+  header span{color:#7d7d88;margin-left:14px;letter-spacing:.1em}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 16px;border-bottom:1px solid #1e1e24}
+  .cell{position:relative;aspect-ratio:1/1;background:#000;border:1px solid #1e1e24}
+  .cell iframe{width:100%;height:100%;border:0;display:block}
+  .cell b{position:absolute;left:8px;top:6px;font-size:10px;letter-spacing:.2em;background:rgba(0,0,0,.6);padding:3px 7px;font-weight:500}
+  .cell b.e11{color:#c8ff3a}
+  input{font:inherit;background:#0b0b0e;color:#e8e8ec;border:1px solid #1e1e24;padding:5px 8px;width:260px;margin-left:14px}
+  a{color:#c8ff3a;text-decoration:none;margin-left:14px}
+</style></head><body>
+<header>E9.2 CHIMERA (left, v5.2) · E11 PRESS (right, v5.3)<span>same seed, same plate, only the loop on the screen differs</span>
+<input id="seeds" placeholder="seeds, comma separated"><a href="#" id="go">SHOW</a></header>
+<div id="rows"></div>
+<script>
+const q=new URLSearchParams(location.search); const seeds=(q.get('seeds')||'9001,77,1001,5005').split(',').map(s=>s.trim()).filter(Boolean);
+document.getElementById('seeds').value=seeds.join(',');
+document.getElementById('go').onclick=e=>{ e.preventDefault(); location.search='?seeds='+encodeURIComponent(document.getElementById('seeds').value)+'&v='+Date.now(); };
+const rows=document.getElementById('rows'); const v=q.get('v')||'1';
+for(const s of seeds){
+  const r=document.createElement('div'); r.className='row';
+  r.innerHTML='<div class="cell"><b>E9.2 · SEED '+s+'</b><iframe data-src="/glass/index.html?seed='+s+'&frames=24&v='+v+'" title="e92"></iframe></div>'
+    +'<div class="cell"><b class="e11">E11 · SEED '+s+'</b><iframe data-src="/workbench/v5_3/glass.html?seed='+s+'&frames=24&v='+v+'" title="e11"></iframe></div>';
+  rows.appendChild(r);
+}
+/* one row at a time, when it comes into view, so eight engines do not fight for the cores */
+const io=new IntersectionObserver(es=>{ for(const e of es){ if(!e.isIntersecting) continue; e.target.querySelectorAll('iframe[data-src]').forEach(f=>{ f.src=f.dataset.src; f.removeAttribute('data-src'); }); io.unobserve(e.target); } },{rootMargin:'200px'});
+document.querySelectorAll('.row').forEach(r=>io.observe(r));
+</script></body></html>
