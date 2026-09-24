@@ -121,8 +121,9 @@
       <div class="lrow"><label>FLOOD</label><input type="range" id="lv-flood" min="0" max="0.6" step="0.01" value="0"><b id="lvv-flood">off</b><i data-k="flood">&#215;</i></div>
       <div class="lrow"><label>HUNGER</label><input type="range" id="lv-hunger" min="0" max="100" step="0.5" value="0"><b id="lvv-hunger">off</b><i data-k="hunger">&#215;</i></div>
       <div class="lrow"><label>PULSE</label><input type="range" id="lv-pulse" min="0" max="1" step="0.01" value="0"><b id="lvv-pulse">off</b><i data-k="pulse">&#215;</i></div>
+      <div class="lrow"><label>WITNESSES</label><input type="range" id="lv-witnesses" min="0" max="60" step="1" value="0"><b id="lvv-witnesses">off</b><i data-k="witnesses">&#215;</i></div>
     </div>
-    <div class="row"><label>FRAMES</label><select id="frames"><option>24</option><option selected>36</option><option>48</option><option>60</option></select></div>
+    <div class="row"><label>FRAMES</label><select id="frames"><option>8</option><option>12</option><option>16</option><option>24</option><option selected>36</option><option>48</option><option>60</option><option>80</option></select></div>
     <div id="stat"></div>
     <div id="note"><b>THE GLASS.</b> Every loop is a small sculpture in an empty landscape, lit by one sun, drawn as a print: the parts move with whole-number periods so the loop closes by construction, the forms are outlined like an engraving, and the picture is printed in three to six inks from the palettes this box has always carried. AUTO lets the seed decide; set anything to overrule it. The draft arrives at once and sharpens in place; SAVE writes the print at 1080². Most plates are ASSEMBLIES — monuments composed on the spot from a grammar of primitives, arrangements and whole-number motions, so no two come round twice; the named subjects are the rest. Weather (a fog bank, printed rain), a camera that sways, dollies, cranes or orbits, a second light, and a PANDORA loop on every plate: the largest part of every monument wears a v3 CHIMERA loop, wrapped to the form and modelled by the plate's light, rolled at random by the seed with nothing steered. Paste any PNDR card to make it wear that one instead.</div>
   </div>
@@ -403,7 +404,7 @@ const E1=[1/Math.SQRT2,K_3,S6], E2=[0,K_3,-2*S6], E3=[-1/Math.SQRT2,K_3,S6];   /
 const F1=[1,0,0], F2=[0,K_DOD,-PHI*K_DOD], F3=[0,PHI*K_DOD,K_DOD];
 
 /* ───────────────────────────── the plate (per seed) ─────────────────────── */
-const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS','DODECA','EQUILIBRIUM','GNOMON','PHYLLO','TRIACONTA','ICOSA','OCTA','HEXA','TETRA','ICOSIDODECA','BUCKY','KELVIN','RHOMBIC','CUBOCTA','TRUNCUBE','TRUNTETRA','PRISM','COMPOUND','TREE','NEST','ARCADE','WHORL','CIRCLE','ARMILLARY','PARTITION','TOWERS','DOMES','CRYSTAL'];
+const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS','DODECA','EQUILIBRIUM','GNOMON','PHYLLO','TRIACONTA','ICOSA','OCTA','HEXA','TETRA','ICOSIDODECA','BUCKY','KELVIN','RHOMBIC','CUBOCTA','TRUNCUBE','TRUNTETRA','PRISM','COMPOUND','TREE','NEST','ARCADE','WHORL','CIRCLE','ARMILLARY','PARTITION','TOWERS','DOMES','CRYSTAL','ZERO','TOMB'];   /* 44 ZERO and 45 TOMB are never rolled: Plate Zero and the Tombstone are asked for by name */
 const SUBJ_OK=[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,43];   /* DOMES (42) killed in pass 7, GNOMON (18) in pass 14 */ /* the subjects a seed may roll: the curator's list (HELIX, TWINS, WHEEL were killed; their slots hold OBELISK, TRILITHON, ZIGGURAT) */
 /* THE ANGLES A MONUMENT MAY FACE THE CAMERA AT, per subject, in degrees of
    world azimuth: arcs the curator kept in the angle room. Empty = any. */
@@ -479,6 +480,7 @@ function buildPlate(seed, o){
   P.bob = rng()<0.6 ? 0.015+rng()*0.025 : 0;  /* the camera breathes, barely (pass 2: 0.04..0.10 was too much) */
   if(P.cam===0) P.bob=0;                      /* STILL means still */
   if(P.cam===5) P.bob=0.02+P.camA*0.3;        /* FLOAT always rises and falls */
+  if(P.subject===45){ P.cam=0; P.bob=0; }      /* the Tombstone is still */
   P.fov = 0.55+rng()*0.25;                    /* tan(half angle) */
   /* the sky */
   P.moon = rng()<0.42;
@@ -511,7 +513,7 @@ function buildPlate(seed, o){
   const rb=rng();
   P.border = false;                                       /* pass 7: no rule, no margin, ever (the draw rb stays, so no seed shifts) */
   /* the live defaults: exactly the v5.1 plate until applyLive says otherwise */
-  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0; P.screenGlow=0.35; P.flood=0; P.flooded=false; P.hunger=0;
+  P.night=false; P.moonPhase=0.5; P.wind=0; P.tide=0; P.wy=0; P.notches=0; P.hands=[]; P.wit=[]; P.lineage=[]; P.lampN=P.lamp?1:0; P.pulse=0; P.peg=0; P.screenGlow=0.35; P.flood=0; P.flooded=false; P.hunger=0;
   P.stormAt=((seed>>>0)%997)/997*TAU;          /* where in the loop the strike lands; no rng draw */
   return P;
 }
@@ -534,6 +536,7 @@ function buildPlate(seed, o){
      peg     stablecoin depeg, percent  -> the counterfeit: a second, misregistered impression
      flood   ETH drawdown vs 7-day TWAP -> the water rises over the base, on every ground
      hunger  blob base fee, gwei        -> the screen loop's corruption climbs (main thread, like the pulse)
+     witnesses one 32-bit hash per witness -> the first notches on the plate, in the accent: those who paid to be there the day it was born (a count when absent)
    ═══════════════════════════════════════════════════════════════════════ */
 function applyLive(P,L){
   if(!L) return P;
@@ -559,6 +562,11 @@ function applyLive(P,L){
      they sell. The workbench only has a count, so it makes the hashes up. */
   if(L.hands!=null&&L.hands.length!=null){ P.hands=Array.prototype.slice.call(L.hands,0,200).map(x=>x>>>0); P.notches=P.hands.length; }
   else if(L.ledger!=null){ P.notches=Math.max(0,Math.min(200,L.ledger|0)); P.hands=[]; for(let i=0;i<P.notches;i++)P.hands.push(mix32(i,0x4A11)); }
+  /* THE WITNESSES. They paid to be present the day the plate was born, and their
+     notches come first, cut in the accent ink; every hand after them follows in
+     the lightest ink. One row, read left to right, is the plate's whole life. */
+  if(L.witnesses!=null&&L.witnesses.length!=null){ P.wit=Array.prototype.slice.call(L.witnesses,0,200).map(x=>x>>>0); }
+  else if(L.witnesses!=null){ const n=Math.max(0,Math.min(200,L.witnesses|0)); P.wit=[]; for(let i=0;i<n;i++)P.wit.push(mix32(i,0x7717)); }
   /* THE LINEAGE. Plate N exists because the winner of N-1 chose it from 32;
      that winner's plate exists because of the choice before. The picks, oldest
      first, each 0..31. A number here is the workbench asking for that many. */
@@ -728,6 +736,15 @@ function buildGolden(P){
         G.w.push([dx,dy,dz]); G.u.push([ux,uy,uz]); G.v.push([vx,vy,vz]); G.L.push(L); G.r.push(r); G.o.push([Math.cos(oa)*ro, 0.12, Math.sin(oa)*ro]);
         const ty=0.12+dy*(L+r*1.3); if(ty>top)top=ty; const rr=ro+Math.cos(el)*(L+r*1.3)+r; if(rr>wr)wr=rr; }
       P.fit={ext:Math.max(2.8,Math.min(5.0,Math.max(wr*2*1.15,top*1.25))), ty:Math.min(1.8,top*0.5)}; break; }
+    case 44:{ /* ZERO — Plate Zero's monument: a standing ring of stone, a zero cut through to the sky.
+         The rim wears the loop; a thinner lip lines the hole in the accent. Half a turn a loop
+         (a ring is its own mirror). The candle rerolls the rest of the plate under it. */
+      const R=1.30+b*0.25, hole=R*(0.50+a*0.10), t=0.15+c*0.06; G.R=R; G.hole=hole; G.t=t; G.lip=0.09+d*0.04; G.cy=R+0.14;
+      P.fit={ext:Math.max(3.6,Math.min(5.2,(R+0.2)*2*1.25)), ty:G.cy, wr:R+0.2}; break; }
+    case 45:{ /* TOMB — the Tombstone: the death plate's monument. A headstone with a rounded head, leaning a
+         little, on a stone step; its face wears the loop, the epitaph. A small stone lies at its foot. */
+      const w=0.72+b*0.16, h=1.55+c*0.35, t=0.16+a*0.05; G.w=w; G.h=h; G.t=t; G.lean=(d-0.5)*0.14; G.foot=[(e-0.5)*0.9, 0.16+0.10, w*0.55+0.35];
+      P.fit={ext:Math.max(3.2,Math.min(4.6,Math.max(h*1.55,(w+0.5)*2*1.2))), ty:h*0.5+0.16, wr:w+0.6}; break; }
   }
   P.gold=G;
 }
@@ -927,6 +944,10 @@ function prepFrame(P,th){
       const G=P.gold; for(let k=0;k<G.K;k++){ const a=th*(k%2?-1:1); const n=G.n[k]; v[k*3]=Math.cos(a)*n[0]+Math.sin(a)*n[2]; v[k*3+1]=n[1]; v[k*3+2]=-Math.sin(a)*n[0]+Math.cos(a)*n[2]; } break; }
     case 40:{ /* PARTITION — faces the camera, and sways */
       const a=P.camAz-Math.PI/2+Math.sin(th)*0.10; c[0]=Math.cos(a); s[0]=Math.sin(a); break; }
+    case 44:{ /* ZERO — half a turn a loop, starting face-on to the camera */
+      const a=P.camAz-Math.PI/2+th*0.5; c[0]=Math.cos(a); s[0]=Math.sin(a); break; }
+    case 45:{ /* TOMB — faces the camera and never moves */
+      c[0]=Math.cos(P.camAz-Math.PI/2); s[0]=Math.sin(P.camAz-Math.PI/2); break; }
     case 42:{ /* DOMES — the cut faces the camera; a bead circles inside the innermost shell */
       c[0]=Math.cos(P.camAz-Math.PI/2); s[0]=Math.sin(P.camAz-Math.PI/2); v[0]=Math.cos(th)*0.5; v[1]=Math.sin(th)*0.5; break; }
     default:{ const S=SOLIDS[P.subject]; if(S){ c[0]=Math.cos(th/S.sym+P.a); s[0]=Math.sin(th/S.sym+P.a); v[0]=Math.cos(th)*(P.fit.wr+0.6); v[1]=P.fit.cy*0.55+Math.sin(th*2)*0.4; v[2]=Math.sin(th)*(P.fit.wr+0.6); } break; }
@@ -1191,6 +1212,27 @@ function sceneSDF(P,x,y,z){
         if(dk<d){ d=dk; m=(k%2)?1:7; } }
       const ds=sdSphere(lx-v[0],y-cy-0.35-v[1]*0.3,lz,0.16); if(ds<d){ d=ds; m=2; }
       const dp=sdCylY(x,y-0.08,z,G.r[0]+0.3,0.08); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 44:{ /* ZERO — the standing ring */
+      const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z, ly=y-G.cy;
+      const rho=Math.sqrt(lx*lx+ly*ly);
+      const rim=Math.max(Math.abs(rho-(G.R+G.hole)*0.5)-(G.R-G.hole)*0.5, Math.abs(lz)-G.t);                /* a ring of square section, standing */
+      if(rim<d){ d=rim; m=7; }
+      const lip=Math.max(Math.abs(rho-(G.hole-G.lip*0.5))-G.lip*0.5, Math.abs(lz)-G.t*1.25);                /* the lip round the hole, a little proud */
+      if(lip<d){ d=lip; m=2; }
+      const cradle=sdBox(lx,y-0.14-0.12,lz,G.R*0.42,0.12,G.t+0.16); if(cradle<d){ d=cradle; m=1; }          /* the cradle it stands in */
+      const dp=sdCylY(x,y-0.07,z,G.R*0.75,0.07); if(dp<d){ d=dp; m=1; }
+      break; }
+    case 45:{ /* TOMB — the headstone */
+      const G=P.gold, lx=c[0]*x+s[0]*z, lz0=-s[0]*x+c[0]*z;
+      const cl=Math.cos(G.lean), sl=Math.sin(G.lean), by=y-0.16, ly=cl*by-sl*lz0, lz=sl*by+cl*lz0;          /* leaning back a little */
+      const w=G.w, h=G.h, t=G.t;
+      const body=sdBox(lx,ly-(h-w)*0.5,lz,w,(h-w)*0.5,t);
+      const head=Math.max(Math.sqrt(lx*lx+(ly-(h-w))*(ly-(h-w)))-w, Math.abs(lz)-t);                       /* the rounded head */
+      const stone=Math.min(body,head); if(stone<d){ d=stone; m=7; }                                          /* the face wears the loop: the epitaph */
+      const step=sdBox(lx,y-0.08,lz0,w+0.42,0.08,t+0.36); if(step<d){ d=step; m=1; }
+      const step2=sdBox(lx,y-0.16-0.06,lz0,w+0.16,0.06,t+0.14); if(step2<d){ d=step2; m=1; }
+      const f=G.foot, dk=sdBox(x-f[0],y-f[1]*0.5-0.16,z-f[2],0.14,f[1]*0.5,0.11); if(dk<d){ d=dk; m=2; }    /* the small stone at its foot */
       break; }
     case 43:{ /* CRYSTAL — quartz on its matrix */
       const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
@@ -1732,7 +1774,8 @@ function inkFrame(P,W,H,lum,mat,line,out,texbuf,th,dep,N){
       else if(e<m+b) out[y*W+x]=K-1;          /* the rule, in the lightest ink */
     }
   }
-  if(P.notches>0){
+  const WIT=P.wit||[], NTOT=WIT.length+(P.notches|0);
+  if(NTOT>0){
     /* THE LEDGER. One notch per time the piece has changed hands, cut along
        the bottom edge in the lightest ink, left to right, forever. Each notch
        is its holder's: the height, the lean and the dot come from that
@@ -1741,10 +1784,10 @@ function inkFrame(P,W,H,lum,mat,line,out,texbuf,th,dep,N){
     const m=Math.max(3,Math.round(W*0.03)), tw=Math.max(1,Math.round(W/270)), th2=Math.max(4,Math.round(W*0.016)), sp=tw*5;
     const y1=H-1-Math.max(1,Math.round(m*0.2));   /* low enough that the tallest notch and its dot stay inside the margin, under the rule */
     const maxN=Math.floor((W-2*m)/sp);
-    const n=Math.min(P.notches,maxN);
+    const n=Math.min(NTOT,maxN);
     /* a light core in a dark sleeve, so the tally reads on a bright ground and
-       on a dark one alike */
-    for(let k=0;k<n;k++){ const x0=m+k*sp, h=(P.hands&&P.hands[k]!=null)?P.hands[k]>>>0:0;
+       on a dark one alike; the witnesses' cores are cut in the accent */
+    for(let k=0;k<n;k++){ const x0=m+k*sp, isW=k<WIT.length, h=isW?WIT[k]:((P.hands&&P.hands[k-WIT.length]!=null)?P.hands[k-WIT.length]>>>0:0), ink=isW?K:K-1;
       const hh=Math.max(2,Math.round(th2*(0.55+0.45*((h&3)/3))));     /* four heights */
       const lean=((h>>2)&3)===1?-1:((h>>2)&3)===2?1:0;                 /* left, right or straight */
       const dot=((h>>4)&1)===1;                                        /* a dot above, or not */
@@ -1755,7 +1798,7 @@ function inkFrame(P,W,H,lum,mat,line,out,texbuf,th,dep,N){
           const core=inCore&&((yy>=0&&yy<hh)||(dot&&yy>=hh+1&&yy<hh+1+tw));
           const sleeve=(yy<hh+1)||(dot&&yy>=hh+1);
           if(!sleeve)continue;
-          out[y*W+x]=core?K-1:0; } } }
+          out[y*W+x]=core?ink:0; } } }
   }
   if(P.lineage&&P.lineage.length>0){
     /* THE LINEAGE STRIP. Provenance of decisions, printed: one column per
@@ -2075,8 +2118,8 @@ const ARS={'1:1':1, '9:16':16/9, '16:9':9/16};
 /* THE LIVE STATE, as the workbench simulates it. null means "the seed's own";
    on chain, tokenURI fills every field from the block. */
 const TUNE={}; window.TUNE=TUNE;
-const LIVE={gas:null,hour:null,moon:null,wind:null,tide:null,ledger:null,lineage:null,lamps:null,weight:null,age:null,pulse:null,peg:null,flood:null,hunger:null};
-const LIVEK=['gas','hour','moon','wind','tide','ledger','lineage','lamps','weight','age','pulse','peg','flood','hunger'];
+const LIVE={gas:null,hour:null,moon:null,wind:null,tide:null,ledger:null,lineage:null,lamps:null,weight:null,age:null,pulse:null,peg:null,flood:null,hunger:null,witnesses:null};
+const LIVEK=['gas','hour','moon','wind','tide','ledger','lineage','lamps','weight','age','pulse','peg','flood','hunger','witnesses'];
 const LVFMT={
   gas:v=>{ const g=Math.pow(10,v); return (g<0.1?g.toFixed(3):g<1?g.toFixed(2):g<10?g.toFixed(1):Math.round(g))+' gwei \u00b7 '+WEATHERS[gasBand(g)]; },
   hour:v=>{ const h=Math.floor(v), m=Math.round((v-h)*60); return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); },
@@ -2084,7 +2127,7 @@ const LVFMT={
   wind:v=>(v<-0.05?'\u2190 ':v>0.05?'\u2192 ':'')+Math.abs(Math.round(v*100))+'%',
   tide:v=>Math.round(v*100)+'%', ledger:v=>v+' hands', lineage:v=>v+' ancestors', lamps:v=>v+' lit', weight:v=>Math.round(v*100)+'%',
   age:v=>v+' days', pulse:v=>Math.round(v*100)+'%', peg:v=>(+v).toFixed(2)+'% off peg'+(v<0.5?' \u00b7 holds':' \u00b7 COUNTERFEIT'),
-  flood:v=>'ETH \u2212'+Math.round(v*100)+'% vs 7d'+(v<0.2?' \u00b7 dry':' \u00b7 FLOOD'), hunger:v=>(+v).toFixed(1)+' gwei blob' };
+  flood:v=>'ETH \u2212'+Math.round(v*100)+'% vs 7d'+(v<0.2?' \u00b7 dry':' \u00b7 FLOOD'), hunger:v=>(+v).toFixed(1)+' gwei blob', witnesses:v=>v+' present' };
 function liveRead(k){ const e=$('lv-'+k); if(!e)return null; const v=+e.value; return k==='gas'?Math.pow(10,v):v; }
 function livePaint(){
   for(const k of LIVEK){ const row=$('lv-'+k).parentNode, b=$('lvv-'+k);
