@@ -1,0 +1,56 @@
+{
+ "glass": {
+  "seed": 3136644160,
+  "frames": 36,
+  "subject": 44,
+  "live": {
+   "gas": 0,
+   "hunger": 0,
+   "hour": 17.16,
+   "moon": 0.5088,
+   "tide": 0.9648,
+   "wind": 0.84,
+   "flood": 0,
+   "peg": 0,
+   "pulse": 0,
+   "age": 2,
+   "lamps": 0,
+   "weight": 1,
+   "witnesses": [
+    4232974315
+   ],
+   "hands": [
+    681076157
+   ],
+   "lineage": []
+  }
+ },
+ "meta": {
+  "name": "DITHERVOID // STORMGLASS · PLATE ZERO",
+  "description": "One plate a day at a falling price, the chain writing the sky, until it dies. Plate Zero, sold by candle: the founding plate, rerolled by every bid. Seed 3136644160. The engine and the print are on the chain; what you see is read at the moment you look. CC0. Greencross, always.",
+  "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAwIDEwMDAiPjxyZWN0IHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjEwMDAiIGZpbGw9IiMwMDAiLz48ZyBmb250LWZhbWlseT0iTWVubG8sQ29uc29sYXMsbW9ub3NwYWNlIiBmaWxsPSIjZThlOGVjIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dGV4dCB4PSI1MDAiIHk9IjQ0MCIgZm9udC1zaXplPSIyNiIgbGV0dGVyLXNwYWNpbmc9IjgiPkRJVEhFUlZPSUQgLy8gU1RPUk1HTEFTUzwvdGV4dD48dGV4dCB4PSI1MDAiIHk9IjUzMCIgZm9udC1zaXplPSI2NCIgbGV0dGVyLXNwYWNpbmc9IjYiPlBMQVRFIFpFUk88L3RleHQ+PHRleHQgeD0iNTAwIiB5PSI2MDAiIGZvbnQtc2l6ZT0iMjIiIGZpbGw9IiM4YThhOTQiIGxldHRlci1zcGFjaW5nPSI0Ij5TRUVEIDMxMzY2NDQxNjA8L3RleHQ+PHRleHQgeD0iNTAwIiB5PSI5NDAiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM4YThhOTQiIGxldHRlci1zcGFjaW5nPSI0Ij5USEUgUExBVEUgTElWRVMgSU4gVEhFIEFOSU1BVElPTjwvdGV4dD48L2c+PC9zdmc+",
+  "animation_url": "data:text/html;base64,PCFkb2N0eXBlIGh0bW...",
+  "attributes": [
+   {
+    "trait_type": "PLATE",
+    "value": "PLATE ZERO"
+   },
+   {
+    "trait_type": "PRICE",
+    "value": "0.3000 ETH"
+   },
+   {
+    "trait_type": "WITNESSES",
+    "value": 1
+   },
+   {
+    "trait_type": "PICK",
+    "value": 0
+   },
+   {
+    "trait_type": "HELD BY THE VAULT",
+    "value": "NO"
+   }
+  ]
+ }
+}

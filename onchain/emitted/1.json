@@ -1,0 +1,55 @@
+{
+ "glass": {
+  "seed": 396693683,
+  "frames": 36,
+  "live": {
+   "gas": 0,
+   "hunger": 0,
+   "hour": 17.16,
+   "moon": 0.5088,
+   "tide": 0.9648,
+   "wind": -0.5,
+   "flood": 0,
+   "peg": 0,
+   "pulse": 0,
+   "age": 2,
+   "lamps": 0,
+   "weight": 1,
+   "witnesses": [
+    681076157
+   ],
+   "hands": [],
+   "lineage": [
+    25
+   ]
+  }
+ },
+ "meta": {
+  "name": "DITHERVOID // STORMGLASS · DAY 1",
+  "description": "One plate a day at a falling price, the chain writing the sky, until it dies. A monument on an empty plain, lit by one sun, printed with the PANDORA loop it wears. Every plate carries the picks that led to it. Seed 396693683. The engine and the print are on the chain; what you see is read at the moment you look. CC0. Greencross, always.",
+  "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAwIDEwMDAiPjxyZWN0IHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjEwMDAiIGZpbGw9IiMwMDAiLz48ZyBmb250LWZhbWlseT0iTWVubG8sQ29uc29sYXMsbW9ub3NwYWNlIiBmaWxsPSIjZThlOGVjIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj48dGV4dCB4PSI1MDAiIHk9IjQ0MCIgZm9udC1zaXplPSIyNiIgbGV0dGVyLXNwYWNpbmc9IjgiPkRJVEhFUlZPSUQgLy8gU1RPUk1HTEFTUzwvdGV4dD48dGV4dCB4PSI1MDAiIHk9IjUzMCIgZm9udC1zaXplPSI2NCIgbGV0dGVyLXNwYWNpbmc9IjYiPkRBWSAxPC90ZXh0Pjx0ZXh0IHg9IjUwMCIgeT0iNjAwIiBmb250LXNpemU9IjIyIiBmaWxsPSIjOGE4YTk0IiBsZXR0ZXItc3BhY2luZz0iNCI+U0VFRCAzOTY2OTM2ODM8L3RleHQ+PHRleHQgeD0iNTAwIiB5PSI5NDAiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM4YThhOTQiIGxldHRlci1zcGFjaW5nPSI0Ij5USEUgUExBVEUgTElWRVMgSU4gVEhFIEFOSU1BVElPTjwvdGV4dD48L2c+PC9zdmc+",
+  "animation_url": "data:text/html;base64,PCFkb2N0eXBlIGh0bW...",
+  "attributes": [
+   {
+    "trait_type": "PLATE",
+    "value": "DAY 1"
+   },
+   {
+    "trait_type": "PRICE",
+    "value": "0.9823 ETH"
+   },
+   {
+    "trait_type": "WITNESSES",
+    "value": 1
+   },
+   {
+    "trait_type": "PICK",
+    "value": 11
+   },
+   {
+    "trait_type": "HELD BY THE VAULT",
+    "value": "NO"
+   }
+  ]
+ }
+}
