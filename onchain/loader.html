@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DITHERVOID // STORMGLASS</title><style>html,body{margin:0;background:#000;height:100%}</style></head><body><script>
+window.GLASS=__GLASS__;
+(async()=>{var b=Uint8Array.from(atob("__B64__"),function(c){return c.charCodeAt(0)});
+var d=new DecompressionStream("gzip"),w=d.writable.getWriter();w.write(b);w.close();
+var h=await new Response(d.readable).text();var G=window.GLASS;document.open();document.write(h);document.close();window.GLASS=G;})();
+</script></body></html>
