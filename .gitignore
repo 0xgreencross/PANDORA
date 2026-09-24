@@ -1,3 +1,8 @@
 # INFINITE SCROLL reservoir — lives on the laptop, never in git.
 # ~1.4GB at 300 loops; regenerable from the stream at any time.
 infinite/reservoir/
+stormglass/node_modules
+stormglass/artifacts
+stormglass/cache
+stormglass/typechain-types
+stormglass/.burner
