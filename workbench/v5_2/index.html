@@ -337,8 +337,6 @@ function sdConeY(px,py,pz,r,h){
   return Math.max(side,Math.max(base,cap));
 }
 function smin(a,b,k){ const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*0.25; }
-/* an ellipsoid, the usual bound (exact enough for marching) */
-function sdEllip(px,py,pz,rx,ry,rz){ const k0=Math.sqrt((px/rx)*(px/rx)+(py/ry)*(py/ry)+(pz/rz)*(pz/rz)); const k1=Math.sqrt((px/(rx*rx))*(px/(rx*rx))+(py/(ry*ry))*(py/(ry*ry))+(pz/(rz*rz))*(pz/(rz*rz))); return k1>1e-9?k0*(k0-1)/k1:-Math.min(rx,ry,rz); }
 /* THE GOLDEN SOLIDS (pass 4). Each is the intersection of its face planes,
    folded through the octant by abs(); r is the inradius, the distance from
    the centre to a face. In the frame the solids are written in, a vertex of
@@ -406,7 +404,7 @@ const E1=[1/Math.SQRT2,K_3,S6], E2=[0,K_3,-2*S6], E3=[-1/Math.SQRT2,K_3,S6];   /
 const F1=[1,0,0], F2=[0,K_DOD,-PHI*K_DOD], F3=[0,PHI*K_DOD,K_DOD];
 
 /* ───────────────────────────── the plate (per seed) ─────────────────────── */
-const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS','DODECA','EQUILIBRIUM','GNOMON','PHYLLO','TRIACONTA','ICOSA','OCTA','HEXA','TETRA','ICOSIDODECA','BUCKY','KELVIN','RHOMBIC','CUBOCTA','TRUNCUBE','TRUNTETRA','PRISM','COMPOUND','TREE','NEST','ARCADE','WHORL','CIRCLE','ARMILLARY','PARTITION','TOWERS','DOMES','CRYSTAL','ZERO','TOMB','SKULL'];   /* 44 ZERO and 45 TOMB are never rolled: Plate Zero and the Tombstone are asked for by name */
+const SUBJECTS=['MONOLITH','ORRERY','TOTEM','PENDULA','GATE','OBELISK','SUNDIAL','BREATHER','TRILITHON','ZIGGURAT','STELAE','LANTERN','SCREEN','ASSEMBLY','DOLMEN','GLASS','DODECA','EQUILIBRIUM','GNOMON','PHYLLO','TRIACONTA','ICOSA','OCTA','HEXA','TETRA','ICOSIDODECA','BUCKY','KELVIN','RHOMBIC','CUBOCTA','TRUNCUBE','TRUNTETRA','PRISM','COMPOUND','TREE','NEST','ARCADE','WHORL','CIRCLE','ARMILLARY','PARTITION','TOWERS','DOMES','CRYSTAL','ZERO','TOMB'];   /* 44 ZERO and 45 TOMB are never rolled: Plate Zero and the Tombstone are asked for by name */
 const SUBJ_OK=[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,43];   /* DOMES (42) killed in pass 7, GNOMON (18) in pass 14 */ /* the subjects a seed may roll: the curator's list (HELIX, TWINS, WHEEL were killed; their slots hold OBELISK, TRILITHON, ZIGGURAT) */
 /* THE ANGLES A MONUMENT MAY FACE THE CAMERA AT, per subject, in degrees of
    world azimuth: arcs the curator kept in the angle room. Empty = any. */
@@ -450,7 +448,7 @@ function buildPlate(seed, o){
   /* THE CURATED SUBJECTS (tuning pass 1, 2026-09-17). HELIX, TWINS and WHEEL
      were killed in the rooms; the seed can no longer roll them. One draw, as
      before, so the rest of the seed's rolls are untouched. */
-  P.subject = (o.subject!=null)? o.subject : (rs<0.03 ? 46 : rs<0.25 ? 13 : SUBJ_OK[(rng()*SUBJ_OK.length)|0]);   /* pass 16: the first 3% of the roll is the SKULL, carved from the assemblies so no named seed moves */   /* pass 8: a quarter assemblies (their kill rate stays a third; the named roll is near zero) */
+  P.subject = (o.subject!=null)? o.subject : (rs<0.25 ? 13 : SUBJ_OK[(rng()*SUBJ_OK.length)|0]);   /* pass 8: a quarter assemblies (their kill rate stays a third; the named roll is near zero) */
   if(P.subject===13){ P.asm=buildAssembly(rng); measureAssembly(P); }
   const r1=rng(), r2=rng();
   P.weather = (o.weather!=null)? o.weather : (r1<0.50?0:(r1<0.74?1:(r1<0.92?2:3)));
@@ -499,7 +497,6 @@ function buildPlate(seed, o){
   P.linePer = 4+((rng()*3)|0);                 /* 4..6 px at the print raster */
   /* the subject's own dials */
   P.a = rng(); P.b = rng(); P.c = rng(); P.d = rng(); P.e = rng();
-  if(P.subject===46){ P.sunAz=P.camAz+(P.b-0.5)*1.6; }   /* a skull is its face: the sun stays on the camera's side (set after the dials, no draw) */
   if(P.subject===18) buildGnomon(P);            /* the golden subjects lay themselves out from the dials: no extra draws */
   if(P.subject===19) buildPhyllo(P);
   if(SOLIDS[P.subject]) fitSolid(P);
@@ -748,12 +745,6 @@ function buildGolden(P){
          little, on a stone step; its face wears the loop, the epitaph. A small stone lies at its foot. */
       const w=0.72+b*0.16, h=1.55+c*0.35, t=0.16+a*0.05; G.w=w; G.h=h; G.t=t; G.lean=(d-0.5)*0.14; G.foot=[(e-0.5)*0.9, 0.16+0.10, w*0.55+0.35];
       P.fit={ext:Math.max(3.2,Math.min(4.6,Math.max(h*1.55,(w+0.5)*2*1.2))), ty:h*0.5+0.16, wr:w+0.6}; break; }
-    case 46:{ /* SKULL — a skull on a plinth, three-quarter to the camera, nodding once a loop. The cranium,
-         brow, face and cheekbones are blended ellipsoids; the sockets and the nasal cavity are cut out; the
-         jaw hangs below with its teeth. The dials set width, height, jaw, sockets, the angle and the lean,
-         so no two are alike. The cranium wears the loop. */
-      G.wa=0.90+a*0.20; G.ha=0.92+c*0.18; G.jw=0.85+b*0.30; G.es=0.90+b*0.30; G.yaw=(d-0.5)*0.9; G.lean=-0.04+e*0.14; G.nt=6+((e*3)|0);
-      G.cy=0.16+1.16; P.fit={ext:Math.max(3.0,Math.min(4.2,2.75*Math.max(G.wa,G.ha))), ty:G.cy-0.05, wr:1.0}; break; }
   }
   P.gold=G;
 }
@@ -957,9 +948,6 @@ function prepFrame(P,th){
       const a=P.camAz-Math.PI/2+th*0.5; c[0]=Math.cos(a); s[0]=Math.sin(a); break; }
     case 45:{ /* TOMB — faces the camera and never moves */
       c[0]=Math.cos(P.camAz-Math.PI/2); s[0]=Math.sin(P.camAz-Math.PI/2); break; }
-    case 46:{ /* SKULL — three-quarter to the camera; a nod that closes on the loop */
-      const G=P.gold, a=P.camAz-Math.PI/2+G.yaw, nod=G.lean+0.05*Math.sin(th);
-      c[0]=Math.cos(a); s[0]=Math.sin(a); c[1]=Math.cos(nod); s[1]=Math.sin(nod); break; }
     case 42:{ /* DOMES — the cut faces the camera; a bead circles inside the innermost shell */
       c[0]=Math.cos(P.camAz-Math.PI/2); s[0]=Math.sin(P.camAz-Math.PI/2); v[0]=Math.cos(th)*0.5; v[1]=Math.sin(th)*0.5; break; }
     default:{ const S=SOLIDS[P.subject]; if(S){ c[0]=Math.cos(th/S.sym+P.a); s[0]=Math.sin(th/S.sym+P.a); v[0]=Math.cos(th)*(P.fit.wr+0.6); v[1]=P.fit.cy*0.55+Math.sin(th*2)*0.4; v[2]=Math.sin(th)*(P.fit.wr+0.6); } break; }
@@ -1245,35 +1233,6 @@ function sceneSDF(P,x,y,z){
       const step=sdBox(lx,y-0.08,lz0,w+0.42,0.08,t+0.36); if(step<d){ d=step; m=1; }
       const step2=sdBox(lx,y-0.16-0.06,lz0,w+0.16,0.06,t+0.14); if(step2<d){ d=step2; m=1; }
       const f=G.foot, dk=sdBox(x-f[0],y-f[1]*0.5-0.16,z-f[2],0.14,f[1]*0.5,0.11); if(dk<d){ d=dk; m=2; }    /* the small stone at its foot */
-      break; }
-    case 46:{ /* SKULL */
-      const G=P.gold, lx0=c[0]*x+s[0]*z, lz0=-s[0]*x+c[0]*z, ly0=y-G.cy;
-      const lx=lx0, ly=c[1]*ly0-s[1]*lz0, lz=s[1]*ly0+c[1]*lz0;                                       /* the nod, about the skull's own x */
-      const wa=G.wa, ha=G.ha, ax=Math.abs(lx);
-      /* THE BONE. The braincase behind and above; the face a rounded block in front of it, so the
-         sockets have a plane to sit in; cheekbones out to the sides. */
-      let b=sdEllip(lx,ly-0.34*ha,lz+0.16,0.74*wa,0.80*ha,0.86);
-      b=smin(b,sdBox(lx,ly+0.20,lz-0.34,0.50*wa,0.48,0.22)-0.08,0.14);                                /* the face block: a flatter plane for the sockets */
-      b=smin(b,sdSphere(ax-0.62*wa,ly+0.30,lz-0.34,0.18),0.08);                                        /* the cheekbones */
-      b=smin(b,sdBox(lx,ly+0.66,lz-0.40,0.34*G.jw,0.11,0.24)-0.07,0.06);                              /* the maxilla */
-      /* THE HOLLOWS. Sockets cut as hard-rimmed bores, so they read as holes even with the sun behind;
-         the nasal cavity a teardrop bore; the temples pressed in. */
-      const sr=0.25*G.es, sx=ax-0.31*wa, sy=ly+0.08;
-      const sock=Math.max(Math.sqrt(sx*sx+sy*sy)-sr, 0.30-lz);                                         /* a bore along z from the face inward */
-      b=Math.max(b,-sock);
-      const nx=lx, ny=ly+0.50; const nr=0.09+0.07*Math.max(0,Math.min(1,(ny+0.16)/0.32));
-      const nose=Math.max(Math.sqrt(nx*nx*1.4+ny*ny*0.7)-nr*1.6, 0.40-lz);
-      b=Math.max(b,-nose);
-      b=Math.max(b,-sdSphere(ax-1.00*wa,ly-0.02,lz+0.05,0.30));
-      if(b<d){ d=b; m=(lz<-0.10)?7:1; }                                                                 /* the back of the skull wears the loop; the face is bone */
-      /* THE JAW, hanging a little open, and the teeth along a curve */
-      const jw=G.jw;
-      const jaw=sdBox(lx,ly+1.08,lz-0.28,0.40*jw,0.11,0.30)-0.09; if(jaw<d){ d=jaw; m=1; }
-      const nt=G.nt, pitch=0.72*jw/nt;
-      for(let i=0;i<nt;i++){ const tx=(i-(nt-1)*0.5)*pitch; const tz=0.66-tx*tx*0.9;
-        const up=sdBox(lx-tx,ly+0.83,lz-tz,pitch*0.36,0.07,0.05)-0.015; if(up<d){ d=up; m=2; }
-        const lo=sdBox(lx-tx,ly+1.00,lz-tz+0.01,pitch*0.34,0.05,0.05)-0.015; if(lo<d){ d=lo; m=2; } }   /* the jaw hangs a little open: the dark gap reads from any light */
-      const dp=sdCylY(x,y-0.08,z,0.95,0.08); if(dp<d){ d=dp; m=1; }
       break; }
     case 43:{ /* CRYSTAL — quartz on its matrix */
       const G=P.gold, lx=c[0]*x+s[0]*z, lz=-s[0]*x+c[0]*z;
