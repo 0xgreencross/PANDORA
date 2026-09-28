@@ -107,7 +107,7 @@
     <div class="row" style="display:none"><label>FRAME</label><select id="frameSel"><option value="0">AUTO &#183; the seed decides</option><option value="1">ON &#183; always ruled</option><option value="2">OFF &#183; never ruled</option></select></div>
     <div id="live">
       <div class="lhead">LIVE <span>what the chain knows when the plate is read</span><button id="live-now" title="fill every dial with a plausible now">NOW</button><button id="live-off" title="clear every dial: the seed's own plate">OFF</button></div>
-      <div class="lrow"><label>GAS</label><input type="range" id="lv-gas" min="-2" max="3" step="0.01" value="-1.4"><b id="lvv-gas">off</b><i data-k="gas">&#215;</i></div>
+      <div class="lrow"><label>GAS</label><input type="range" id="lv-gas" min="-1.7" max="2" step="0.01" value="-1.05"><b id="lvv-gas">off</b><i data-k="gas">&#215;</i></div>
       <div class="lrow"><label>HOUR</label><input type="range" id="lv-hour" min="0" max="24" step="0.25" value="12"><b id="lvv-hour">off</b><i data-k="hour">&#215;</i></div>
       <div class="lrow"><label>MOON</label><input type="range" id="lv-moon" min="0" max="1" step="0.01" value="0.5"><b id="lvv-moon">off</b><i data-k="moon">&#215;</i></div>
       <div class="lrow"><label>WIND</label><input type="range" id="lv-wind" min="-1" max="1" step="0.01" value="0"><b id="lvv-wind">off</b><i data-k="wind">&#215;</i></div>
@@ -119,7 +119,7 @@
       <div class="lrow"><label>AGE</label><input type="range" id="lv-age" min="0" max="365" step="1" value="0"><b id="lvv-age">off</b><i data-k="age">&#215;</i></div>
       <div class="lrow"><label>PEG</label><input type="range" id="lv-peg" min="0" max="3" step="0.05" value="0"><b id="lvv-peg">off</b><i data-k="peg">&#215;</i></div>
       <div class="lrow"><label>FLOOD</label><input type="range" id="lv-flood" min="0" max="0.6" step="0.01" value="0"><b id="lvv-flood">off</b><i data-k="flood">&#215;</i></div>
-      <div class="lrow"><label>HUNGER</label><input type="range" id="lv-hunger" min="0" max="100" step="0.5" value="0"><b id="lvv-hunger">off</b><i data-k="hunger">&#215;</i></div>
+      <div class="lrow"><label>HUNGER</label><input type="range" id="lv-hunger" min="-3.5" max="1" step="0.01" value="-2.4"><b id="lvv-hunger">off</b><i data-k="hunger">&#215;</i></div>
       <div class="lrow"><label>PULSE</label><input type="range" id="lv-pulse" min="0" max="1" step="0.01" value="0"><b id="lvv-pulse">off</b><i data-k="pulse">&#215;</i></div>
       <div class="lrow"><label>WITNESSES</label><input type="range" id="lv-witnesses" min="0" max="60" step="1" value="0"><b id="lvv-witnesses">off</b><i data-k="witnesses">&#215;</i></div>
     </div>
@@ -425,20 +425,26 @@ const wxStorm=P=>P.weather===5;
 /* a small integer hash the engines agree on, for made-up hands and picks */
 function mix32(i,k){ let x=(Math.imul(i,374761393)+Math.imul(k,668265263))|0; x=Math.imul(x^(x>>>13),1274126177)|0; return (x^(x>>>16))>>>0; }
 function gasBand(gwei){
+  /* THE POSTS (pass 20). Set from the base fee of every block of the last twelve months (2,628,608
+     blocks, 23,446,101 to 26,074,708, read through eth_feeHistory): median 0.11 gwei, p90 0.52, p95 1.0,
+     p99 3.5, the year's top 547. The old posts (0.1 / 1 / 10 / 30 / 100) put the sky in SNOW or CLEAR
+     95% of the time and never in RAIN or STORM. These give, over the year: SNOW 8%, CLEAR 38%,
+     OVERCAST 28%, FOG 15%, RAIN 8%, STORM 2%, and about eight changes of weather a day. The storm
+     glass's fill (glassFill) stands on the same posts: move one, move the other. */
   if(!(gwei>0)) return 0;
-  if(gwei<0.1)  return 6;   /* SNOW */
-  if(gwei<1)    return 0;   /* CLEAR */
-  if(gwei<10)   return 4;   /* OVERCAST */
-  if(gwei<30)   return 1;   /* FOG */
-  if(gwei<100)  return 2;   /* RAIN */
-  return 5;                 /* STORM */
+  if(gwei<0.04) return 6;   /* SNOW: the chain at its coldest */
+  if(gwei<0.1)  return 0;   /* CLEAR */
+  if(gwei<0.2)  return 4;   /* OVERCAST */
+  if(gwei<0.5)  return 1;   /* FOG */
+  if(gwei<2)    return 2;   /* RAIN */
+  return 5;                 /* STORM: a twentyfold surge over the median, a few hours a week */
 }
 /* THE STORMGLASS'S FILL. How high the crystals climb inside the rare subject: the gas, continuous in
    its logarithm, through the same posts gasBand stands on (move one, move the other). Without a live
    reading, the middle of the rolled band. */
 function glassFill(P){
-  if(P.gasv!=null && P.gasv>0){ const g=P.gasv; if(g<0.1) return 0.30;                    /* snow: a cold glass, crystals and stars */
-    const A=[[-1,0.16],[0,0.22],[1,0.42],[1.4771,0.56],[2,0.74],[3,0.95]], l=Math.log10(g);
+  if(P.gasv!=null && P.gasv>0){ const g=P.gasv; if(g<0.04) return 0.30;                   /* snow: a cold glass, crystals and stars */
+    const A=[[-1.3979,0.16],[-1,0.22],[-0.699,0.42],[-0.301,0.56],[0.301,0.74],[1.301,0.95]], l=Math.log10(g);   /* 0.04 · 0.1 · 0.2 · 0.5 · 2 · 20 gwei */
     for(let i=1;i<A.length;i++){ if(l<=A[i][0]){ const t=(l-A[i-1][0])/(A[i][0]-A[i-1][0]); return A[i-1][1]+(A[i][1]-A[i-1][1])*t; } }
     return 0.95; }
   return [0.19,0.49,0.65,0.72,0.32,0.95,0.30][P.weather]||0.19;                            /* CLEAR FOG RAIN FOG+RAIN OVERCAST STORM SNOW */
@@ -2207,8 +2213,8 @@ const LVFMT={
   wind:v=>(v<-0.05?'\u2190 ':v>0.05?'\u2192 ':'')+Math.abs(Math.round(v*100))+'%',
   tide:v=>Math.round(v*100)+'%', ledger:v=>v+' hands', lineage:v=>v+' ancestors', lamps:v=>v+' lit', weight:v=>Math.round(v*100)+'%',
   age:v=>v+' days', pulse:v=>Math.round(v*100)+'%', peg:v=>(+v).toFixed(2)+'% off peg'+(v<0.5?' \u00b7 holds':' \u00b7 COUNTERFEIT'),
-  flood:v=>'ETH \u2212'+Math.round(v*100)+'% vs 7d'+(v<0.2?' \u00b7 dry':' \u00b7 FLOOD'), hunger:v=>(+v).toFixed(1)+' gwei blob', witnesses:v=>v+' present' };
-function liveRead(k){ const e=$('lv-'+k); if(!e)return null; const v=+e.value; return k==='gas'?Math.pow(10,v):v; }
+  flood:v=>'ETH \u2212'+Math.round(v*100)+'% vs 7d'+(v<0.2?' \u00b7 dry':' \u00b7 FLOOD'), hunger:v=>{ const g=Math.pow(10,v); return (g<0.01?g.toFixed(4):g<1?g.toFixed(3):g.toFixed(2))+' gwei blob'; }, witnesses:v=>v+' present' };
+function liveRead(k){ const e=$('lv-'+k); if(!e)return null; const v=+e.value; return (k==='gas'||k==='hunger')?Math.pow(10,v):v; }
 function livePaint(){
   for(const k of LIVEK){ const row=$('lv-'+k).parentNode, b=$('lvv-'+k);
     const on=(LIVE[k]!=null); row.classList.toggle('off',!on);
@@ -2391,7 +2397,10 @@ function v3JobFor(R,N,texCard){
   /* THE HUNGER. The blob base fee is what the rollups pay to feed the machine,
      in every block since Dencun. From 1 gwei up the machine eats the image
      faster, on top of the pulse. */
-  if(LIVE.hunger!=null){ const g=Math.max(0,+LIVE.hunger); const h=Math.max(0,Math.min(1,Math.log10(1+g)/2)); corr=Math.min(100,Math.round(corr+h*(100-corr)*0.7)); }
+  /* pass 20: the blob fee of the last twelve months sits at 0.004 gwei on the median day, 0.02 at p90,
+     0.14 at p99, and passes 1 gwei one block in two thousand; the old curve (log10(1+g)/2) never woke.
+     Now nothing below 0.003 gwei, a third of the way at 0.03, two thirds at 0.3, all of it at 3. */
+  if(LIVE.hunger!=null){ const g=Math.max(0,+LIVE.hunger); const h=Math.max(0,Math.min(1,Math.log10(Math.max(g,1e-9)/0.003)/3)); corr=Math.min(100,Math.round(corr+h*(100-corr)*0.7)); }
   return { seed, mode, voidamt, locality, chromacap, scheme:{stops:scheme.stops,glitch:scheme.glitch},
     corr, N, fx, ov, epoch, ver, wb:{fam:null,prim:null,cam:null,mod:null,gain:{}}, gr:null };
 }
@@ -2710,10 +2719,10 @@ $('live-now').addEventListener('click',()=>{
   /* a plausible now: today's gas, the clock in UTC, the moon by the calendar,
      a light wind, ETH near where it is, a piece that has not moved */
   const d=new Date();
-  const set=(k,v)=>{ const e=$('lv-'+k); e.value=String(k==='gas'?Math.log10(v):v); LIVE[k]=v; };
-  set('gas',0.041); set('hour',d.getUTCHours()+d.getUTCMinutes()/60);
+  const set=(k,v)=>{ const e=$('lv-'+k); e.value=String((k==='gas'||k==='hunger')?Math.log10(v):v); LIVE[k]=v; };
+  set('gas',0.09); set('hour',d.getUTCHours()+d.getUTCMinutes()/60);
   set('moon',((d.getTime()/86400000-9.5)%29.53+29.53)%29.53/29.53);
-  set('wind',0.3); set('tide',0.44); set('ledger',0); set('lineage',0); set('peg',0); set('flood',0); set('hunger',1); set('lamps',1); set('weight',0.3); set('age',0); set('pulse',0.1);
+  set('wind',0.3); set('tide',0.44); set('ledger',0); set('lineage',0); set('peg',0); set('flood',0); set('hunger',0.004); set('lamps',1); set('weight',0.3); set('age',0); set('pulse',0.1);
   livePaint(); draw();
 });
 $('live-off').addEventListener('click',()=>{ LIVEK.forEach(k=>LIVE[k]=null); livePaint(); draw(); });
