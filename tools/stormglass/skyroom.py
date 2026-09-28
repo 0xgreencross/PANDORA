@@ -10,13 +10,13 @@ OUT='/home/claude/P/tools/stormglass/skyroom.html'
 def live(**kw): return json.dumps(kw,separators=(',',':'))
 ROWS=[
  dict(key='gas', title='GAS · the base fee sets the weather', src='block.basefee, in gwei',
-      now='under 0.1 snow · under 1 clear · under 10 overcast · under 30 fog · under 100 rain · above, storm',
-      prop='under 0.3 snow · under 2 clear · under 8 overcast · under 20 fog · under 60 rain · above, storm',
-      q='seed=9001', steps=[(0.05,'0.05 gwei · SNOW'),(0.3,'0.3 gwei · CLEAR'),(1,'1 gwei · OVERCAST'),(3,'3 gwei · OVERCAST'),(10,'10 gwei · FOG'),(30,'30 gwei · RAIN'),(100,'100 gwei · STORM')],
+      now='pass 20, from twelve months of blocks: under 0.04 snow · under 0.1 clear · under 0.2 overcast · under 0.5 fog · under 2 rain · above, storm (8 / 38 / 28 / 15 / 8 / 2 percent of the year)',
+      prop='',
+      q='seed=9001', steps=[(0.03,'0.03 gwei · SNOW'),(0.07,'0.07 gwei · CLEAR'),(0.15,'0.15 gwei · OVERCAST'),(0.3,'0.3 gwei · FOG'),(1,'1 gwei · RAIN'),(3,'3 gwei · STORM'),(20,'20 gwei · STORM')],
       lv=lambda v: live(gas=v)),
  dict(key='hunger', title='HUNGER · the blob fee corrupts the screen', src='block.blobbasefee, in gwei',
-      now='a log curve: +70% of the corruption headroom near 100 gwei, nothing at 0', prop='nothing under 1 gwei, full at 30',
-      q='seed=77&subject=12', steps=[(0,'0 gwei'),(1,'1 gwei'),(3,'3 gwei'),(10,'10 gwei'),(30,'30 gwei'),(100,'100 gwei'),(300,'300 gwei')],
+      now='pass 20, from twelve months of blocks (median 0.004 gwei, p99 0.14): nothing under 0.003 gwei, a third at 0.03, two thirds at 0.3, all at 3', prop='',
+      q='seed=77&subject=12', steps=[(0.001,'0.001 gwei'),(0.004,'0.004 gwei · a median day'),(0.02,'0.02 gwei · p90'),(0.1,'0.1 gwei'),(0.3,'0.3 gwei'),(1,'1 gwei'),(3,'3 gwei')],
       lv=lambda v: live(hunger=v)),
  dict(key='flood', title='FLOOD · ETH falling floods the ground', src='ETH against its own seven-day mean, from the pool',
       now='the water starts at a 20% fall and covers the base at 50%', prop='starts at 12%, covers the base at 40%',
