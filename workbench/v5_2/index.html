@@ -117,8 +117,8 @@
       <div class="lrow"><label>LAMPS</label><input type="range" id="lv-lamps" min="0" max="7" step="1" value="0"><b id="lvv-lamps">off</b><i data-k="lamps">&#215;</i></div>
       <div class="lrow"><label>WEIGHT</label><input type="range" id="lv-weight" min="0" max="1" step="0.01" value="0.5"><b id="lvv-weight">off</b><i data-k="weight">&#215;</i></div>
       <div class="lrow"><label>AGE</label><input type="range" id="lv-age" min="0" max="365" step="1" value="0"><b id="lvv-age">off</b><i data-k="age">&#215;</i></div>
-      <div class="lrow"><label>PEG</label><input type="range" id="lv-peg" min="0" max="3" step="0.05" value="0"><b id="lvv-peg">off</b><i data-k="peg">&#215;</i></div>
-      <div class="lrow"><label>FLOOD</label><input type="range" id="lv-flood" min="0" max="0.6" step="0.01" value="0"><b id="lvv-flood">off</b><i data-k="flood">&#215;</i></div>
+      <div class="lrow"><label>PEG</label><input type="range" id="lv-peg" min="0" max="0.6" step="0.005" value="0"><b id="lvv-peg">off</b><i data-k="peg">&#215;</i></div>
+      <div class="lrow"><label>FLOOD</label><input type="range" id="lv-flood" min="0" max="0.25" step="0.005" value="0"><b id="lvv-flood">off</b><i data-k="flood">&#215;</i></div>
       <div class="lrow"><label>HUNGER</label><input type="range" id="lv-hunger" min="-3.5" max="1" step="0.01" value="-2.4"><b id="lvv-hunger">off</b><i data-k="hunger">&#215;</i></div>
       <div class="lrow"><label>PULSE</label><input type="range" id="lv-pulse" min="0" max="1" step="0.01" value="0"><b id="lvv-pulse">off</b><i data-k="pulse">&#215;</i></div>
       <div class="lrow"><label>WITNESSES</label><input type="range" id="lv-witnesses" min="0" max="60" step="1" value="0"><b id="lvv-witnesses">off</b><i data-k="witnesses">&#215;</i></div>
@@ -571,7 +571,11 @@ function applyLive(P,L){
   /* THE FLOOD. ETH against its own seven-day average, read from the pool's
      stored observations: a fall of a fifth starts the water, and at half the
      whole base of the monument is under. On every ground, not only water. */
-  P.flood=0; if(L.flood!=null){ const d=Math.max(0,+L.flood); P.flood=Math.max(0,Math.min(1,(d-0.20)/0.30)); }
+  /* pass 21, from a year of daily ETH prices (CoinGecko, 366 days): the fall against the trailing seven-day
+     mean is 0.3% on the median day, 3% at p80, 5.5% at p90, 7.3% at p95, 13% at p99, 20% at the year's worst;
+     a 20% fall never happened, so the old posts (20% to 50%) kept the ground dry all year. Now the water
+     starts at a 4% fall (one day in seven) and covers the base at 16% (the worst week of the year). */
+  P.flood=0; if(L.flood!=null){ const d=Math.max(0,+L.flood); P.flood=Math.max(0,Math.min(1,(d-0.04)/0.12)); }
   if(P.flood>0){ P.wy=Math.max(P.wy, 0.15+P.flood*0.85); P.flooded=true; }
   /* THE HOLDER'S NOTCH. On chain the contract hands over one hash per holder,
      in order; every notch is cut in that holder's own shape and stays after
@@ -597,7 +601,10 @@ function applyLive(P,L){
   /* THE COUNTERFEIT. How far the dollar's shadow is off its peg, read from the
      USDC/USDT pool: under half a percent nothing; from there to three percent
      the plate prints twice, misregistered, like a banknote off a bad press. */
-  if(L.peg!=null){ const d=Math.abs(+L.peg); P.peg=Math.max(0,Math.min(1,(d-0.5)/2.5)); }
+  /* pass 21, from a year of daily USDT and USDC prices: USDT per USDC sits 0.03% off par on the median day,
+     0.08% at p90, 0.18% at p99, 0.32% on the worst day (June 2026); the old posts (0.5% to 3%) never printed.
+     Now the counterfeit shows from 0.06% off (a day in five, faintly) and is full at 0.5%. */
+  if(L.peg!=null){ const d=Math.abs(+L.peg); P.peg=Math.max(0,Math.min(1,(d-0.06)/0.44)); }
   return P;
 }
 
@@ -2212,8 +2219,8 @@ const LVFMT={
   moon:v=>['NEW','WAXING','FIRST Q','GIBBOUS','FULL','GIBBOUS','LAST Q','WANING','NEW'][Math.round(v*8)],
   wind:v=>(v<-0.05?'\u2190 ':v>0.05?'\u2192 ':'')+Math.abs(Math.round(v*100))+'%',
   tide:v=>Math.round(v*100)+'%', ledger:v=>v+' hands', lineage:v=>v+' ancestors', lamps:v=>v+' lit', weight:v=>Math.round(v*100)+'%',
-  age:v=>v+' days', pulse:v=>Math.round(v*100)+'%', peg:v=>(+v).toFixed(2)+'% off peg'+(v<0.5?' \u00b7 holds':' \u00b7 COUNTERFEIT'),
-  flood:v=>'ETH \u2212'+Math.round(v*100)+'% vs 7d'+(v<0.2?' \u00b7 dry':' \u00b7 FLOOD'), hunger:v=>{ const g=Math.pow(10,v); return (g<0.01?g.toFixed(4):g<1?g.toFixed(3):g.toFixed(2))+' gwei blob'; }, witnesses:v=>v+' present' };
+  age:v=>v+' days', pulse:v=>Math.round(v*100)+'%', peg:v=>(+v).toFixed(3)+'% off peg'+(v<0.06?' \u00b7 holds':' \u00b7 COUNTERFEIT'),
+  flood:v=>'ETH \u2212'+(v*100).toFixed(1)+'% vs 7d'+(v<0.04?' \u00b7 dry':' \u00b7 FLOOD'), hunger:v=>{ const g=Math.pow(10,v); return (g<0.01?g.toFixed(4):g<1?g.toFixed(3):g.toFixed(2))+' gwei blob'; }, witnesses:v=>v+' present' };
 function liveRead(k){ const e=$('lv-'+k); if(!e)return null; const v=+e.value; return (k==='gas'||k==='hunger')?Math.pow(10,v):v; }
 function livePaint(){
   for(const k of LIVEK){ const row=$('lv-'+k).parentNode, b=$('lvv-'+k);
