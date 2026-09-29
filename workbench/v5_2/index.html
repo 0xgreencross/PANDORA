@@ -486,6 +486,7 @@ function buildPlate(seed, o){
      oldest trick in the print-maker's book */
   P.camAz = azFor(P.subject, rng());          /* one draw, into the arcs the curator kept */
   P.sunAz = rng()<0.5 ? P.camAz+Math.PI+(rng()-0.5)*1.4 : rng()*TAU;
+  P.sunAz0 = P.sunAz;                        /* pass 22: the seed's sun is the NOON sun; a live hour swings it round from there */
   P.sunEl = el;
   P.sunSweep = (P.subject===6);               /* the sundial's light orbits */
   /* the camera: azimuth, elevation, and distance are the composition */
@@ -562,6 +563,12 @@ function applyLive(P,L){
     const h=((+L.hour%24)+24)%24;
     const el=Math.sin((h-6)/12*Math.PI)*70*Math.PI/180;   /* +70 deg at noon, -70 at midnight */
     P.sunEl=el; P.night=(el<0.02);
+    /* pass 22: the sun also MOVES. It used to rise and set in the one place the seed chose, so a morning
+       shadow and an evening shadow lay the same way; the curator caught it. The seed's azimuth is the noon
+       sun; the sun stands a quarter turn to one side of it at six in the morning and a quarter turn to the
+       other at six in the evening, and carries on round under the ground through the night. The sundial's
+       sweep is its own. */
+    if(P.sunAz0!=null && !P.sunSweep) P.sunAz=P.sunAz0+(h-12)/12*Math.PI;   /* east on the viewer's left, west on the right, as in Miami facing south */
     if(P.night) P.moon=true;
   }
   if(L.moon!=null){ P.moonPhase=Math.max(0,Math.min(1,+L.moon)); }
@@ -651,7 +658,7 @@ function applyTune(P,T){
   if(T.el!=null) P.camEl=(+T.el)*Math.PI/180;
   /* the angle the monument faces the camera: the sun and moon keep their place
      relative to the camera, so only the monument turns */
-  if(T.az!=null){ const az=(+T.az)*Math.PI/180, d=az-P.camAz; P.camAz=az; P.sunAz+=d; P.moonAz+=d; P.lampAz+=d; }
+  if(T.az!=null){ const az=(+T.az)*Math.PI/180, d=az-P.camAz; P.camAz=az; P.sunAz+=d; if(P.sunAz0!=null) P.sunAz0+=d; P.moonAz+=d; P.lampAz+=d; }
   if(T.horizon!=null) P.horizon=+T.horizon;
   if(T.dx!=null) P.camDx=+T.dx;
   if(T.bob!=null) P.bob=+T.bob;
