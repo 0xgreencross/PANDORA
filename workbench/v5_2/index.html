@@ -2730,13 +2730,18 @@ LIVEK.forEach(k=>{
   e.parentNode.querySelector('i').addEventListener('click',()=>{ liveSet(k,null); draw(); });
 });
 $('live-now').addEventListener('click',()=>{
-  /* a plausible now: today's gas, the clock in UTC, the moon by the calendar,
-     a light wind, ETH near where it is, a piece that has not moved */
+  /* a plausible now, the way GLASS.sky would print it: today's gas, the clock in Miami,
+     the moon and the tide by the contract's own lunation (a mean month from the new moon
+     of 2000-01-06 18:14 UTC, four decimals), a light wind, ETH near where it is, a piece
+     that has not moved */
   const d=new Date();
   const set=(k,v)=>{ const e=$('lv-'+k); e.value=String((k==='gas'||k==='hunger')?Math.log10(v):v); LIVE[k]=v; };
-  set('gas',0.09); set('hour',d.getUTCHours()+d.getUTCMinutes()/60);
-  set('moon',((d.getTime()/86400000-9.5)%29.53+29.53)%29.53/29.53);
-  set('wind',0.3); set('tide',0.44); set('ledger',0); set('lineage',0); set('peg',0); set('flood',0); set('hunger',0.004); set('lamps',1); set('weight',0.3); set('age',0); set('pulse',0.1);
+  const mia=new Date(d.toLocaleString('en-US',{timeZone:'America/New_York'}));
+  const phase1e4=Math.floor(((Math.floor(d.getTime()/1000)-947182440)%2551443)*10000/2551443);
+  const u=(phase1e4*2)%10000, tide1e4=10000-2*(u<5000?u:10000-u);
+  set('gas',0.09); set('hour',mia.getHours()+mia.getMinutes()/60);
+  set('moon',phase1e4/10000); set('tide',tide1e4/10000);
+  set('wind',0.3); set('ledger',0); set('lineage',0); set('peg',0); set('flood',0); set('hunger',0.004); set('lamps',1); set('weight',0.3); set('age',0); set('pulse',0.1);
   livePaint(); draw();
 });
 $('live-off').addEventListener('click',()=>{ LIVEK.forEach(k=>LIVE[k]=null); livePaint(); draw(); });
