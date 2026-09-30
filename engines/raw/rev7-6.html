@@ -1,0 +1,2405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="description" content="DITHERVOID PANDORA — generative glitch loop engine. 37 corruption sigils, 8 signal sources, infinite colorways, DNA cards. Tap the box.">
+<meta name="theme-color" content="#050508">
+<meta property="og:type" content="website">
+<meta property="og:title" content="DITHERVOID PANDORA">
+<meta property="og:description" content="Generative glitch loop engine. 37 corruption sigils · 8 sources · ∞ colorways · DNA cards. Every tap mints a loop no one has seen and no one will see again.">
+<meta property="og:url" content="https://0xgreencross.github.io/PANDORA/">
+<meta property="og:image" content="https://0xgreencross.github.io/PANDORA/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DITHERVOID PANDORA">
+<meta name="twitter:description" content="Tap the box. 37 sigils · 8 sources · ∞ colorways · DNA cards.">
+<meta name="twitter:image" content="https://0xgreencross.github.io/PANDORA/og.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PANDORA">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23050508%22/%3E%3Crect x=%229%22 y=%229%22 width=%2214%22 height=%2214%22 fill=%22none%22 stroke=%22%23FF1F9C%22 stroke-width=%222%22 stroke-dasharray=%223 2%22 transform=%22rotate(45 16 16)%22/%3E%3C/svg%3E">
+<title>DITHERVOID // PANDORA</title>
+<style>
+  /* Silkscreen by Jason Kottke — SIL Open Font License 1.1 (embedded, subset) */
+  @font-face{font-family:'Silkscreen';font-weight:400;font-style:normal;font-display:block;
+    src:url(data:font/woff2;base64,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) format('woff2');}
+  @font-face{font-family:'Silkscreen';font-weight:700;font-style:normal;font-display:block;
+    src:url(data:font/woff2;base64,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) format('woff2');}
+  :root{--void:#050508;--panel:#0e0e16;--panel2:#141420;--line:#26263a;--line2:#3a3a54;
+    --mag:#FF1F9C;--cyan:#19F0FF;--sulph:#E8FF2E;
+    --txt:#eeeef6;--mut:#9c9cb6;--faint:#6a6a84;
+    --fD:'Silkscreen',"Arial Narrow",system-ui,sans-serif;
+    --fT:'Silkscreen',"Courier New",monospace;
+    --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{position:fixed;inset:0;overflow:hidden;overscroll-behavior:none;}
+  body{background:radial-gradient(120% 60% at 50% -12%,#10101e 0%,var(--void) 55%);
+    color:var(--txt);font:8px/1.5 var(--fD);letter-spacing:0;
+    font-synthesis:none;text-rendering:geometricPrecision;-webkit-text-size-adjust:100%;
+    touch-action:manipulation;user-select:none;-webkit-user-select:none;}
+  #app{height:100dvh;padding:var(--sat) 10px calc(var(--sab) + 8px);display:flex;flex-direction:column;
+    gap:7px;max-width:520px;margin:0 auto;}
+
+  header{display:flex;justify-content:space-between;align-items:baseline;padding:7px 2px 0;}
+  .brand{font-weight:700;font-size:16px;letter-spacing:0;text-transform:uppercase;}
+  .brand b{color:var(--mag);font-weight:800;} .brand i{color:var(--cyan);font-style:normal;font-weight:800;}
+  .brand span{color:var(--faint);font-size:8px;letter-spacing:0;font-weight:400;}
+  .ver{font-family:var(--fT);font-size:8px;color:var(--faint);letter-spacing:0;text-align:right;line-height:1.5;}
+
+  .monitor{flex:0 0 auto;align-self:center;width:min(100%,37dvh);}
+  .screen-wrap{position:relative;width:100%;aspect-ratio:1/1;background:#000;overflow:hidden;cursor:pointer;
+    border:1px solid var(--line2);border-radius:6px;
+    box-shadow:0 0 0 1px #000,0 14px 44px rgba(0,0,0,.65),0 0 28px rgba(25,240,255,.05);}
+  canvas#view{display:block;width:100%;height:100%;image-rendering:pixelated;}
+  #result{display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:1;
+    image-rendering:pixelated;-webkit-touch-callout:default;-webkit-user-select:none;user-select:none;}
+  .reg{position:absolute;width:13px;height:13px;border:1px solid rgba(232,255,46,.55);pointer-events:none;z-index:3;}
+  .reg.tl{top:6px;left:6px;border-right:0;border-bottom:0;} .reg.tr{top:6px;right:6px;border-left:0;border-bottom:0;}
+  .reg.bl{bottom:6px;left:6px;border-right:0;border-top:0;} .reg.br{bottom:6px;right:6px;border-left:0;border-top:0;}
+  .osd{position:absolute;left:9px;bottom:7px;z-index:4;font-family:var(--fT);font-size:8px;letter-spacing:0;
+    color:var(--sulph);text-shadow:0 0 8px rgba(232,255,46,.55);}
+  .rec{color:var(--mag);animation:bl 1.2s steps(2) infinite;} @keyframes bl{50%{opacity:.15;}}
+  .placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:10px;z-index:4;color:var(--faint);text-align:center;
+    font-family:var(--fT);font-size:8px;letter-spacing:0;}
+  .ph-block{width:36px;height:36px;border:1px dashed var(--line2);animation:ph 2.4s ease-in-out infinite;}
+  @keyframes ph{50%{transform:rotate(45deg) scale(.8);border-color:var(--mag);}}
+
+  .telem{display:flex;justify-content:space-between;gap:8px;font-family:var(--fT);font-size:8px;
+    letter-spacing:0;color:var(--faint);padding:0 2px;white-space:nowrap;overflow:hidden;}
+  .telem b{color:var(--txt);font-weight:400;} .telem .lk{color:var(--cyan);}
+  .bar{height:4px;background:var(--panel);border-radius:2px;overflow:hidden;}
+  .bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--mag),var(--cyan));transition:width .12s;}
+
+  .tabs{display:flex;border-bottom:1px solid var(--line);}
+  .tab{flex:1;appearance:none;background:none;border:none;cursor:pointer;
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;text-transform:uppercase;
+    color:var(--mut);padding:12px 0 11px;border-bottom:2px solid transparent;}
+  .tab[aria-selected="true"]{color:var(--cyan);border-bottom-color:var(--cyan);
+    text-shadow:0 0 14px rgba(25,240,255,.55);}
+
+  #panels{flex:1 1 auto;min-height:0;position:relative;overflow:hidden;}
+  .panel{position:absolute;inset:0;display:none;flex-direction:column;gap:8px;
+    overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-top:2px;}
+  .panel.on{display:flex;}
+
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field>label{font-weight:700;font-size:8px;letter-spacing:0;color:var(--mut);
+    text-transform:uppercase;display:flex;gap:10px;align-items:baseline;}
+  .field>label .v{margin-left:auto;font-family:var(--fT);font-size:8px;color:var(--cyan);letter-spacing:0;}
+  #lab-corr{color:var(--mag);font-size:8px;} #lab-dur{color:var(--sulph);font-family:var(--fT);font-size:8px;letter-spacing:0;}
+
+  .seg{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;padding-bottom:1px;}
+  .seg::-webkit-scrollbar{display:none;}
+  .seg button{appearance:none;cursor:pointer;flex:0 0 auto;
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;padding:11px 12px;
+    color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:4px;}
+  .seg button[aria-pressed="true"]{color:#05050a;background:var(--sulph);border-color:var(--sulph);
+    box-shadow:0 0 16px rgba(232,255,46,.3);}
+
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;}
+  input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;
+    background:linear-gradient(90deg,var(--mag),var(--cyan));}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-9.5px;
+    border-radius:50%;background:#0a0a12;border:2px solid var(--cyan);box-shadow:0 0 10px rgba(25,240,255,.55);}
+
+  .seedrow{flex-direction:row;align-items:center;gap:7px;}
+  .seedrow label{flex:0 0 auto;}
+  #seed{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line2);color:var(--txt);
+    font-family:var(--fT);font-size:16px;padding:9px 10px;border-radius:4px;letter-spacing:0;}
+  #seed,#dna{appearance:none;-webkit-appearance:none;user-select:text;-webkit-user-select:text;flex:1;min-width:0;padding:0 10px;
+    height:40px;background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    color:var(--cyan);font-family:var(--fT);text-transform:uppercase;outline:none;}
+  #seed:focus,#dna:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(25,240,255,.2);}
+  #seed{font-size:16px;}
+  #dna{font-size:8px;letter-spacing:0;}
+  #dna::placeholder,#seed::placeholder{color:var(--faint);}
+  .labnote{font-size:8px;line-height:1.9;color:var(--faint);letter-spacing:0;}
+  .dice{appearance:none;background:var(--panel);border:1px solid var(--line2);color:var(--txt);
+    width:44px;height:40px;border-radius:4px;font-size:17px;cursor:pointer;}
+
+  .toggles{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:5px;height:100%;}
+  .tg{display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;min-height:0;
+    background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line2);border-radius:4px;}
+  .tg span{font-family:var(--fD);font-weight:400;font-size:8px;letter-spacing:0;color:#c2c2da;}
+  .tg .dot{width:8px;height:8px;border-radius:50%;background:#30304a;flex:0 0 auto;}
+  .tg[data-on="1"]{background:var(--panel2);border-color:var(--line2);
+    box-shadow:inset 0 0 20px rgba(25,240,255,.08);}
+  .tg[data-on="1"] span{color:#fff;text-shadow:0 0 10px rgba(25,240,255,.55);}
+  .tg[data-on="1"] .dot{background:var(--cyan);box-shadow:0 0 9px var(--cyan);}
+  .tg.gb{border-left-color:#585874;} .tg.gh{border-left-color:var(--cyan);}
+  .tg.go2{border-left-color:var(--mag);} .tg.gv{border-left-color:var(--sulph);}
+  .tg.gd{border-left-color:#f5f5ff;}
+
+  .actions{flex:0 0 auto;display:flex;gap:7px;}
+  .actions button{appearance:none;cursor:pointer;border:none;border-radius:5px;
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;text-transform:uppercase;
+    padding:16px 0;}
+  #go{flex:1.7;color:#05050a;background:linear-gradient(95deg,var(--mag),var(--cyan));}
+  #go:disabled{opacity:.5;}
+  #oblivion{flex:0 0 56px;color:var(--mag);background:var(--panel);border:1px solid var(--mag);font-size:17px;
+    text-shadow:0 0 10px rgba(255,31,156,.65);}
+  #oblivion:disabled{opacity:.4;}
+  #download{flex:1.1;color:var(--sulph);background:var(--panel);border:1px solid var(--sulph);}
+  #xsave{flex:0 0 58px;color:var(--cyan);background:var(--panel);border:1px solid var(--line2);font-size:16px;}
+  #xsave[disabled]{opacity:.35;}
+  #xsave.ready{border-color:var(--cyan);box-shadow:0 0 14px rgba(25,240,255,.25);}
+  #download[disabled]{opacity:.35;color:var(--mut);border-color:var(--line);}
+  #download.ready{color:#05050a;background:linear-gradient(95deg,var(--sulph),var(--cyan));border-color:transparent;
+    box-shadow:0 0 20px rgba(232,255,46,.3);}
+
+  #saveview{display:none;position:fixed;inset:0;z-index:99;background:rgba(4,4,8,.97);
+    flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:22px;}
+  #saveview .sv-head{font-family:var(--fD);font-weight:700;font-size:16px;letter-spacing:0;color:var(--sulph);}
+  #sv-img{max-width:min(88vw,440px);max-height:52dvh;image-rendering:pixelated;border:1px solid var(--line2);
+    border-radius:4px;-webkit-touch-callout:default !important;-webkit-user-select:none;user-select:none;}
+  #saveview .sv-tip{font-size:8px;line-height:2;letter-spacing:0;color:var(--txt);text-align:center;}
+  #saveview .sv-tip b{color:var(--cyan);font-weight:700;}
+  #saveview .sv-tip.dim{color:var(--mut);font-size:8px;}
+  #saveview .sv-close{appearance:none;cursor:pointer;border-radius:4px;
+    font-family:var(--fD);font-weight:700;font-size:8px;letter-spacing:0;
+    padding:13px 28px;color:var(--txt);background:var(--panel);border:1px solid var(--line2);}
+  @media (min-width:900px) and (pointer:fine){
+    #app{max-width:1080px;display:grid;column-gap:26px;row-gap:9px;
+      grid-template-columns:minmax(430px,56%) 1fr;
+      grid-template-rows:auto auto auto 1fr auto;
+      grid-template-areas:
+        "hd   hd"
+        "mon  tabs"
+        "mon  panels"
+        "tlm  panels"
+        "bar  act";
+      align-content:start;}
+    header{grid-area:hd;}
+    .monitor{grid-area:mon;width:100%;max-width:min(100%,74dvh);align-self:start;}
+    .telem{grid-area:tlm;font-size:8px;}
+    .bar{grid-area:bar;}
+    .tabs{grid-area:tabs;}
+    #panels{grid-area:panels;}
+    .actions{grid-area:act;}
+    .brand{font-size:16px;} .tab{font-size:8px;padding:13px 0 12px;}
+    .actions button{font-size:16px;padding:17px 0;} #oblivion{font-size:19px;flex:0 0 68px;}
+    .toggles{gap:6px;} .tg span{font-size:8px;}
+    .tg:hover{border-color:var(--line2);background:var(--panel2);}
+    .seg button:hover{color:var(--txt);border-color:var(--line2);}
+    .tab:hover{color:var(--txt);}
+    #download:not([disabled]):hover,#oblivion:hover{filter:brightness(1.25);}
+    #go:hover{filter:brightness(1.12);}
+    .screen-wrap:hover .osd{color:#fff;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand"><b>DITHER</b><i>VOID</i> <span>// PANDORA</span></div>
+    <div class="ver">REV 7.6 · CHIMERA<br>𝕏-SAFE · HIJACK</div>
+  </header>
+
+  <div class="monitor">
+    <div class="screen-wrap">
+      <canvas id="view" width="1080" height="1080"></canvas>
+      <img id="result" alt="generated glitch loop">
+      <div class="reg tl"></div><div class="reg tr"></div><div class="reg bl"></div><div class="reg br"></div>
+      <div class="osd"><span class="rec">●</span> <span id="osd">STANDBY</span></div>
+      <div class="placeholder" id="ph">
+        <div class="ph-block"></div>
+        <span>PANDORA SEALED — TAP TO OPEN</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="telem">
+    <div>SIG <b class="lk" id="t-sig">—</b></div>
+    <div>MODE <b id="t-mode">—</b></div>
+    <div>SEED <b id="t-seed">—</b></div>
+    <div>FRM <b id="t-frame">0/0</b></div>
+    <div><b id="t-size">—</b></div>
+  </div>
+  <div class="bar"><i id="prog"></i></div>
+
+  <nav class="tabs">
+    <button class="tab" data-p="p-signal" aria-selected="true">SIGNAL</button>
+    <button class="tab" data-p="p-sigils" aria-selected="false">SIGILS·37</button>
+    <button class="tab" data-p="p-lab" aria-selected="false">LAB</button>
+  </nav>
+
+  <main id="panels">
+    <section id="p-signal" class="panel on">
+      <div class="field">
+        <label>PALETTE</label>
+        <div class="seg" id="scheme"></div>
+      </div>
+      <div class="field">
+        <label>SOURCE</label>
+        <div class="seg" id="mode"></div>
+      </div>
+      <div class="field">
+        <label>CORRUPTION <span id="lab-corr"></span><span class="v" id="v-corr">62</span></label>
+        <input type="range" id="corr" min="0" max="100" value="62">
+      </div>
+      <div class="field">
+        <label>FRAMES <span id="lab-dur"></span><span class="v" id="v-frames">36</span></label>
+        <input type="range" id="frames" min="8" max="80" step="4" value="36">
+      </div>
+    </section>
+    <section id="p-sigils" class="panel">
+      <div class="toggles">
+          <div class="tg gb" data-fx="chroma" data-on="1"><span>CHROMA</span><i class="dot"></i></div>
+          <div class="tg gb" data-fx="tracking" data-on="1"><span>TRACK</span><i class="dot"></i></div>
+          <div class="tg gb" data-fx="pixelsort" data-on="1"><span>SORT</span><i class="dot"></i></div>
+          <div class="tg gb" data-fx="grain" data-on="1"><span>GRAIN</span><i class="dot"></i></div>
+          <div class="tg gb" data-fx="blocks" data-on="1"><span>BLOCKS</span><i class="dot"></i></div>
+          <div class="tg gb" data-fx="scanlines" data-on="1"><span>SCAN</span><i class="dot"></i></div>
+          <div class="tg gb" data-fx="echo" data-on="1"><span>ECHO</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="wave"><span>RIPPLE</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="slice"><span>SLICE</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="vroll"><span>V-ROLL</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="mosh"><span>MOSH</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="ghost"><span>GHOST</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="melt"><span>MELT</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="bleed"><span>BLEED</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="invert"><span>NEGA</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="crush"><span>CRUSH</span><i class="dot"></i></div>
+          <div class="tg gh" data-fx="dropout"><span>DROP</span><i class="dot"></i></div>
+          <div class="tg go2" data-fx="chrono"><span>CHRONO</span><i class="dot"></i></div>
+          <div class="tg go2" data-fx="mirror"><span>MIRROR</span><i class="dot"></i></div>
+          <div class="tg go2" data-fx="flay"><span>FLAY</span><i class="dot"></i></div>
+          <div class="tg go2" data-fx="autoph"><span>AUTOPH</span><i class="dot"></i></div>
+          <div class="tg go2" data-fx="weave"><span>WEAVE</span><i class="dot"></i></div>
+          <div class="tg go2" data-fx="entropy"><span>ENTRPY</span><i class="dot"></i></div>
+          <div class="tg go2" data-fx="meta"><span>PLAGUE</span><i class="dot"></i></div>
+          <div class="tg go2" data-fx="tect"><span>TECTON</span><i class="dot"></i></div>
+          <div class="tg gv" data-fx="panes"><span>PANES</span><i class="dot"></i></div>
+          <div class="tg gv" data-fx="hilb"><span>HILBRT</span><i class="dot"></i></div>
+          <div class="tg gv" data-fx="splice"><span>DNA</span><i class="dot"></i></div>
+          <div class="tg gv" data-fx="moire"><span>MOIRE</span><i class="dot"></i></div>
+          <div class="tg gv" data-fx="braid"><span>BRAID</span><i class="dot"></i></div>
+          <div class="tg gv" data-fx="lungs"><span>LUNGS</span><i class="dot"></i></div>
+          <div class="tg gd" data-fx="tunnel"><span>TUNNEL</span><i class="dot"></i></div>
+          <div class="tg gd" data-fx="kaleido"><span>KALEID</span><i class="dot"></i></div>
+          <div class="tg gd" data-fx="bloom"><span>BLOOM</span><i class="dot"></i></div>
+          <div class="tg gd" data-fx="embers"><span>EMBERS</span><i class="dot"></i></div>
+          <div class="tg gd" data-fx="runes"><span>RUNES</span><i class="dot"></i></div>
+          <div class="tg gd" data-fx="chimera"><span>CHIMERA</span><i class="dot"></i></div>
+      </div>
+    </section>
+    <section id="p-lab" class="panel">
+      <div class="field seedrow">
+        <label>SEED</label>
+        <input id="seed" type="text" inputmode="numeric" autocomplete="off">
+        <button id="dice" class="dice" title="randomize seed">⚄</button>
+      </div>
+      <div class="field seedrow">
+        <label>DNA</label>
+        <input id="dna" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PNDR-…">
+        <button id="dnacopy" class="dice" title="copy card">⧉</button>
+        <button id="dnaload" class="dice" title="reproduce from card">▶</button>
+      </div>
+      <p class="labnote">DNA cards resurrect the exact loop — seed, colorway, source, corruption, frames, all sigils, motion. Share the card, share the artwork.</p>
+    </section>
+  </main>
+
+  <div class="actions">
+    <button id="go">▶ TRANSMIT</button>
+    <button id="oblivion" title="total oblivion">☠</button>
+    <button id="download" disabled>⤓ SAVE</button>
+    <button id="xsave" disabled title="X-safe version, guaranteed under the 15MB GIF cap">𝕏</button>
+  </div>
+</div>
+
+<div id="saveview">
+  <div class="sv-head">SAVE TO PHOTOS</div>
+  <img id="sv-img" alt="finished loop — long-press to save">
+  <div class="sv-tip"><b>Touch and hold the image</b> until the menu appears,<br>then choose <b>Save to Photos</b> / <b>Add to Photos</b>.</div>
+  <div class="sv-tip dim">No menu? Open this page in <b>Safari</b>, generate again, long-press there.</div>
+  <button class="sv-close" id="sv-close">✕ CLOSE</button>
+</div>
+<script>
+"use strict";
+/* ============================================================================
+   DITHERVOID // OBLIVION ENGINE
+   Self-contained glitch GIF engine. Analog video decay x digital rot.
+   - seeded, reproducible, seamless loops
+   - native GIF89a encoder (LZW verified pixel-exact)
+   ========================================================================== */
+
+/* ---------- tiny DOM ---------- */
+const $ = id => document.getElementById(id);
+const view = $('view');
+const vctx = view.getContext('2d', { willReadFrequently:false });
+const W = 1080, H = 1080;          // output resolution
+const FW = 360;                    // coarse field resolution (chunky upscale)
+
+/* ---------- seeded RNG (mulberry32) ---------- */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+
+/* ---------- seeded perlin noise (2D) ---------- */
+function makePerlin(rng){
+  const perm=new Uint8Array(256); for(let i=0;i<256;i++)perm[i]=i;
+  for(let i=255;i>0;i--){ const j=(rng()*(i+1))|0; const t=perm[i];perm[i]=perm[j];perm[j]=t; }
+  const p=new Uint8Array(512); for(let i=0;i<512;i++)p[i]=perm[i&255];
+  const fade=t=>t*t*t*(t*(t*6-15)+10);
+  const lerp=(a,b,t)=>a+t*(b-a);
+  function grad(h,x,y){ switch(h&7){case 0:return x+y;case 1:return -x+y;case 2:return x-y;case 3:return -x-y;case 4:return x;case 5:return -x;case 6:return y;default:return -y;} }
+  return function(x,y){
+    const X=Math.floor(x)&255, Y=Math.floor(y)&255;
+    x-=Math.floor(x); y-=Math.floor(y);
+    const u=fade(x), v=fade(y);
+    const aa=p[p[X]+Y], ba=p[p[X+1]+Y], ab=p[p[X]+Y+1], bb=p[p[X+1]+Y+1];
+    return lerp(lerp(grad(aa,x,y),grad(ba,x-1,y),u),
+                lerp(grad(ab,x,y-1),grad(bb,x-1,y-1),u),v);
+  };
+}
+
+/* ---------- palettes (gradient stops + extreme/glitch colors) ---------- */
+const hex = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+
+/* ============================================================================
+   GENESIS COLORWAYS — infinite procedural neon palettes, deterministic per
+   seed. Hue anchors walk the wheel by golden-ratio jumps; saturation pinned
+   fluorescent-high; value ramps from void-black to white heat. No two seeds
+   share a colorway.
+   ========================================================================== */
+function hsv2rgb(h,s,v){
+  h=((h%1)+1)%1; const i=(h*6)|0, f=h*6-i;
+  const p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s);
+  let r,g,b;
+  switch(i%6){case 0:r=v;g=t;b=p;break;case 1:r=q;g=v;b=p;break;case 2:r=p;g=v;b=t;break;
+    case 3:r=p;g=q;b=v;break;case 4:r=t;g=p;b=v;break;default:r=v;g=p;b=q;}
+  return [(r*255)|0,(g*255)|0,(b*255)|0];
+}
+const toHex=c=>'#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+function genesisScheme(seed){
+  const r=mulberry32((seed^0x5EEDC01A)>>>0);
+  const GOLD=0.61803398875;
+  let h=r();
+  const nA=2+(r()*3|0);                        // 2-4 fluorescent anchors
+  const anchors=[];
+  for(let i=0;i<nA;i++){
+    anchors.push(hsv2rgb(h, 0.86+r()*0.14, 0.9+r()*0.1));
+    h+=GOLD+(r()-0.5)*0.12;                    // golden-ratio hue walk + jitter
+  }
+  const baseHue=r();
+  const stops=[ toHex(hsv2rgb(baseHue,0.5+r()*0.4,0.02+r()*0.03)) ];   // tinted void
+  stops.push( toHex(hsv2rgb(anchors.length?baseHue:0, 0.8, 0.10+r()*0.10)) );
+  for(let i=0;i<nA;i++) stops.push(toHex(anchors[i]));
+  if(r()<0.55) stops.push(toHex(hsv2rgb(h,0.55+r()*0.35,1)));           // saturated hot tip (no white)
+  const glitch=anchors.map(toHex); glitch.push(toHex(hsv2rgb(h+GOLD,0.9,1))); glitch.push(stops[0]);
+  return {stops, glitch, genesis:true, fam:(anchors.length?((Math.atan2(anchors[0][1]-128,anchors[0][0]-128)+4)%6|0):0)};
+}
+const SCHEMES = {
+  DITHERVOID:{ stops:['#050507','#0b0030','#7a0050','#ff1f9c','#19f0ff','#e8ff2e','#fbfff0'],
+               glitch:['#ff1f9c','#19f0ff','#e8ff2e','#ffffff','#04030a'] },
+  TOXIC:     { stops:['#02050a','#06210f','#0a5d2b','#39ff14','#b6ff3a','#eaffea'],
+               glitch:['#39ff14','#b6ff3a','#00ffd5','#ffffff','#02060a'] },
+  INFRARED:  { stops:['#070202','#2a0306','#7a0410','#ff2a1a','#ff7a00','#ffe08a','#fff6e8'],
+               glitch:['#ff2a1a','#ff7a00','#ffd000','#ffffff','#0a0202'] },
+  VAPOR:     { stops:['#0a0418','#2a0a4a','#7a1f8c','#ff5fc8','#5fd0ff','#aeffff','#fff2ff'],
+               glitch:['#ff5fc8','#5fd0ff','#c08bff','#ffffff','#0a0418'] },
+  ULTRAVIO:  { stops:['#030212','#170a52','#3a1fb0','#6a5cff','#19c6ff','#9bffff','#f4f0ff'],
+               glitch:['#6a5cff','#19c6ff','#c64bff','#ffffff','#030212'] },
+  BONE:      { stops:['#040406','#1c1c22','#42424c','#8a8a96','#c8c8d0','#ffffff'],
+               glitch:['#ffffff','#c8c8d0','#000000','#9a9aa6','#1c1c22'] },
+  ACIDBURN:  { stops:['#020602','#0a3300','#3fbf00','#aaff00','#eaff00','#ffff8a','#ffffe8'],
+               glitch:['#aaff00','#eaff00','#39ff14','#ffffff','#020602'] },
+  HOTLINE:   { stops:['#0c0212','#3a005a','#b3009c','#ff2fd6','#ff71ce','#ffb3f6','#fff0fc'],
+               glitch:['#ff2fd6','#ff71ce','#b967ff','#ffffff','#0c0212'] },
+  LAZER:     { stops:['#02040c','#001a66','#0044ff','#00aaff','#00ffee','#8affff','#eaffff'],
+               glitch:['#00aaff','#00ffee','#0044ff','#ffffff','#02040c'] },
+  NUKEGLOW:  { stops:['#060402','#4a2a00','#c66a00','#ff9500','#ffd000','#ffff2e','#fffbe0'],
+               glitch:['#ff9500','#ffd000','#ffff2e','#ffffff','#060402'] },
+  POISONFROG:{ stops:['#020208','#003a4a','#00c2a0','#2eff9e','#c8ff2e','#ff2fd6','#fff2ff'],
+               glitch:['#2eff9e','#ff2fd6','#c8ff2e','#ffffff','#020208'] },
+  BLACKLIGHT:{ stops:['#050008','#20004a','#6a00e0','#b400ff','#ff2fff','#ff9eff','#ffeaff'],
+               glitch:['#b400ff','#ff2fff','#6a00e0','#ffffff','#050008'] },
+  EMBERGRID: { stops:['#080202','#4a0010','#e00040','#ff2e6a','#ff7a2e','#ffe02e','#fff6e0'],
+               glitch:['#ff2e6a','#ff7a2e','#ffe02e','#ffffff','#080202'] },
+  CATHODE:   { stops:['#010401','#003300','#00aa00','#00ff41','#7aff9e','#e0ffe8'],
+               glitch:['#00ff41','#7aff9e','#00aa00','#ffffff','#010401'] },
+};
+/* NO-WHITE DOCTRINE: strip the white component from any pale stop and
+   renormalize its residual hue to full saturation — ramp tops go HOT, not pale.
+   (Pure greys inherit the previous stop's hue; last resort is brand magenta.) */
+function deWhiteHex(h6, prevH6){
+  const c=hex(h6); const m=Math.min(c[0],c[1],c[2]);
+  if(m<=160)return h6;
+  let sat=[c[0]-m,c[1]-m,c[2]-m];
+  let mx=Math.max(sat[0],sat[1],sat[2]);
+  if(mx<12&&prevH6){ const p=hex(prevH6); const pm=Math.min(p[0],p[1],p[2]);
+    sat=[p[0]-pm,p[1]-pm,p[2]-pm]; mx=Math.max(sat[0],sat[1],sat[2]); }
+  if(mx<12){ sat=[255,31,156]; mx=255; }
+  const k=255/mx;
+  return toHex(sat.map(v=>{v=(v*k)|0; return v>255?255:v;}));
+}
+for(const key in SCHEMES){ const sc=SCHEMES[key];
+  sc.stops=sc.stops.map((st,i)=>deWhiteHex(st, i?sc.stops[i-1]:null));
+  sc.glitch=sc.glitch.map(st=>deWhiteHex(st, sc.stops[sc.stops.length-1]));
+}
+const SCHEME_KEYS = Object.keys(SCHEMES);
+const MODES = ['PLASMA','RINGS','GLYPHS','SCANS','LATTICE','ORBITALS','STRATA','TENDRILS'];
+
+/* build a 256-entry smooth gradient LUT from stops */
+function buildGradient(stops){
+  const cols = stops.map(hex);
+  const lut = new Uint8Array(256*3);
+  const seg = cols.length-1;
+  for(let i=0;i<256;i++){
+    const f=i/255*seg; let a=Math.floor(f); if(a>=seg)a=seg-1; const t=f-a;
+    const c0=cols[a], c1=cols[a+1];
+    lut[i*3]  = (c0[0]+(c1[0]-c0[0])*t)|0;
+    lut[i*3+1]= (c0[1]+(c1[1]-c0[1])*t)|0;
+    lut[i*3+2]= (c0[2]+(c1[2]-c0[2])*t)|0;
+  }
+  return lut;
+}
+/* build a small power-of-two palette (gradient samples + glitch extremes) + nearest LUT */
+function buildPalette(scheme, vibe){
+  let grad = buildGradient(scheme.stops);
+  if(vibe){                                     // per-seed tone curve on the gradient
+    const g2=new Uint8Array(768), nb=vibe.gradBands;
+    for(let i=0;i<256;i++){
+      let j=Math.round(255*Math.pow(i/255, vibe.gradGamma));
+      if(nb) j=Math.round(Math.round(j/255*(nb-1))/(nb-1)*255);
+      if(j<0)j=0; if(j>255)j=255;
+      g2[i*3]=grad[j*3]; g2[i*3+1]=grad[j*3+1]; g2[i*3+2]=grad[j*3+2];
+    }
+    grad=g2;
+  }
+  for(let i=0;i<256;i++){ const o=i*3;                 // NO-WHITE hard cap
+    const m=Math.min(grad[o],grad[o+1],grad[o+2]);
+    if(m>160){ const k=160/m;
+      grad[o]=(grad[o]*k)|0; grad[o+1]=(grad[o+1]*k)|0; grad[o+2]=(grad[o+2]*k)|0; }
+  }
+  const pal=[];
+  const N=52;                                   // gradient samples
+  for(let i=0;i<N;i++){ const g=(i/(N-1)*255)|0; pal.push([grad[g*3],grad[g*3+1],grad[g*3+2]]); }
+  for(const h of scheme.glitch) pal.push(hex(h));
+  while(pal.length<64) pal.push(pal[pal.length-1]); // pad to 64
+  if(pal.length>64) pal.length=64;
+  // nearest-color LUT over 5-5-5 RGB cube for O(1) quantization
+  const near=new Uint8Array(32768);
+  for(let r=0;r<32;r++)for(let g=0;g<32;g++)for(let b=0;b<32;b++){
+    const R=r<<3|r>>2, G=g<<3|g>>2, B=b<<3|b>>2; let best=0,bd=1e9;
+    for(let i=0;i<pal.length;i++){const p=pal[i];const dr=p[0]-R,dg=p[1]-G,db=p[2]-B;const d=dr*dr+dg*dg+db*db;if(d<bd){bd=d;best=i;}}
+    near[(r<<10)|(g<<5)|b]=best;
+  }
+  return {grad,pal,near};
+}
+
+/* ---------- Bayer 8x8 ordered dither matrix (0..63) ---------- */
+const BAYER=(()=>{const m=[[0,32,8,40,2,34,10,42],[48,16,56,24,50,18,58,26],[12,44,4,36,14,46,6,38],[60,28,52,20,62,30,54,22],[3,35,11,43,1,33,9,41],[51,19,59,27,49,17,57,25],[15,47,7,39,13,45,5,37],[63,31,55,23,61,29,53,21]];const f=new Float32Array(64);for(let y=0;y<8;y++)for(let x=0;x<8;x++)f[y*8+x]=(m[y][x]/64-0.5);return f;})();
+
+/* ============================================================================
+   GIF89a ENCODER  (global palette, Netscape loop) — LZW verified pixel-exact
+   streaming writer: encodes + frees each frame as it goes (low peak memory)
+   ========================================================================== */
+function Sink(cap){ this.b=new Uint8Array(cap||65536); this.n=0; }
+Sink.prototype.u8=function(v){ if(this.n>=this.b.length){const g=new Uint8Array(this.b.length*2);g.set(this.b);this.b=g;} this.b[this.n++]=v&0xff; };
+Sink.prototype.u16=function(v){ this.u8(v); this.u8(v>>8); };
+Sink.prototype.str=function(s){ for(let i=0;i<s.length;i++)this.u8(s.charCodeAt(i)); };
+Sink.prototype.done=function(){ return this.b.subarray(0,this.n); };
+
+function lzwEncode(minCodeSize, data){
+  const clearCode=1<<minCodeSize, eoiCode=clearCode+1;
+  let codeSize=minCodeSize+1, nextCode=clearCode+2;
+  const dict=new Map(); const out=new Sink(1<<16); let cur=0,curBits=0;
+  const emit=code=>{ cur|=code<<curBits; curBits+=codeSize; while(curBits>=8){out.u8(cur&0xff);cur>>>=8;curBits-=8;} };
+  emit(clearCode);
+  if(data.length===0){ emit(eoiCode); if(curBits>0)out.u8(cur&0xff); return out.done(); }
+  let prefix=data[0];
+  for(let i=1;i<data.length;i++){
+    const c=data[i], key=(prefix<<8)|c, v=dict.get(key);
+    if(v!==undefined){ prefix=v; }
+    else{
+      emit(prefix);
+      if(nextCode===4096){ emit(clearCode); dict.clear(); nextCode=clearCode+2; codeSize=minCodeSize+1; }
+      else{ if(nextCode>=(1<<codeSize)&&codeSize<12)codeSize++; dict.set(key,nextCode); nextCode++; }
+      prefix=c;
+    }
+  }
+  emit(prefix); emit(eoiCode); if(curBits>0)out.u8(cur&0xff); return out.done();
+}
+function gifBegin(sink,width,height,palette,loop){
+  let bits=Math.max(1,Math.ceil(Math.log2(palette.length)));
+  const size=1<<bits, pal=palette.slice(); while(pal.length<size)pal.push([0,0,0]);
+  sink.str('GIF89a'); sink.u16(width); sink.u16(height);
+  sink.u8(0x80|((bits-1)<<4)|(bits-1)); sink.u8(0); sink.u8(0);
+  for(let i=0;i<size;i++){ sink.u8(pal[i][0]); sink.u8(pal[i][1]); sink.u8(pal[i][2]); }
+  sink.u8(0x21);sink.u8(0xFF);sink.u8(0x0B);sink.str('NETSCAPE2.0');sink.u8(0x03);sink.u8(0x01);sink.u16(loop|0);sink.u8(0x00);
+  return Math.max(2,bits); // minCodeSize
+}
+function gifFrame(sink,width,height,indices,delay,minCodeSize){
+  sink.u8(0x21);sink.u8(0xF9);sink.u8(0x04);sink.u8(0x00);sink.u16(delay|0);sink.u8(0x00);sink.u8(0x00);
+  sink.u8(0x2C);sink.u16(0);sink.u16(0);sink.u16(width);sink.u16(height);sink.u8(0x00);
+  sink.u8(minCodeSize);
+  const lzw=lzwEncode(minCodeSize,indices); let p=0;
+  while(p<lzw.length){const len=Math.min(255,lzw.length-p);sink.u8(len);for(let i=0;i<len;i++)sink.u8(lzw[p+i]);p+=len;}
+  sink.u8(0x00);
+}
+function gifEnd(sink){ sink.u8(0x3B); return sink.done(); }
+
+/* ============================================================================
+   SCENE STATE  (seeded per generation)
+   ========================================================================== */
+function buildScene(seed, mode, dnaOnly){
+  const rng=mulberry32(seed^0x9e3779b9);
+  const noise=makePerlin(rng);
+  const noise2=makePerlin(mulberry32(seed^0x85ebca6b));
+  // interference centers
+  const centers=[]; const nc=3+(rng()*3|0);
+  for(let i=0;i<nc;i++)centers.push({x:.5+(rng()-.5)*.5,y:.5+(rng()-.5)*.5,r:.18+rng()*.22,k:1+(rng()*3|0),ph:rng()*6.283,freq:14+rng()*26,sp:1+(rng()*3|0)});
+  // scan traces
+  const traces=[]; for(let i=0;i<3;i++)traces.push({amp:.12+rng()*.18,f:2+rng()*5,k:1+(rng()*3|0),ph:rng()*6.283,col:rng()});
+  // datablock events
+  const blocks=[]; const nb=8+(rng()*10|0);
+  for(let i=0;i<nb;i++)blocks.push({x:(rng()*W)|0,y:(rng()*H)|0,w:60+(rng()*420|0),h:18+(rng()*120|0),
+    amp:30+rng()*240,k:1+(rng()*3|0),ph:rng()*6.283,chan:(rng()*3|0)});
+  // pixel-sort bands
+  const bands=[]; const ns=4+(rng()*6|0);
+  for(let i=0;i<ns;i++)bands.push({y:(rng()*H)|0,h:20+(rng()*90|0),k:1+(rng()*3|0),ph:rng()*6.283,seg:80+(rng()*260|0)});
+  // tracking tear rows
+  const tears=[]; const nt=2+(rng()*4|0);
+  for(let i=0;i<nt;i++)tears.push({y:rng(),k:1+(rng()*3|0),ph:rng()*6.283,amp:20+rng()*70});
+  // plasma params
+  const plasma={s:1.4+rng()*2.2, warp:1.2+rng()*2.0, orbit:.4+rng()*.7, rot:rng()*6.283, oct:3+(rng()*2|0)};
+
+  // ---- heavy-corruption params (all integer-k so every envelope is 2π-periodic) ----
+  const TAU=6.283185307179586;
+  const waves=[]; for(let i=0;i<4;i++)waves.push({freq:0.004+rng()*0.03, amp:8+rng()*60, k:1+(rng()*3|0), ph:rng()*TAU});
+  const mosh=[]; const nm=10+(rng()*14|0);
+  for(let i=0;i<nm;i++)mosh.push({sx:(rng()*W)|0,sy:(rng()*H)|0,dx:(rng()*W)|0,dy:(rng()*H)|0,w:40+(rng()*220|0),h:40+(rng()*220|0),k:1+(rng()*3|0),ph:rng()*TAU});
+  const invBands=[]; const ni=3+(rng()*5|0);
+  for(let i=0;i<ni;i++)invBands.push({y:(rng()*H)|0,h:24+(rng()*140|0),k:1+(rng()*3|0),ph:rng()*TAU,mode:(rng()*3|0)});
+  const slices=[]; const nsl=6+(rng()*10|0);
+  for(let i=0;i<nsl;i++)slices.push({y:(rng()*H)|0,h:10+(rng()*70|0),amp:40+rng()*420,k:1+(rng()*3|0),ph:rng()*TAU});
+  const dropouts=[]; const nd=5+(rng()*9|0);
+  for(let i=0;i<nd;i++)dropouts.push({x:(rng()*W)|0,y:(rng()*H)|0,w:30+(rng()*260|0),h:14+(rng()*120|0),k:1+(rng()*3|0),ph:rng()*TAU,white:rng()<0.3});
+  const ghost={dx:(rng()<.5?-1:1), dy:(rng()<.5?-1:1), k:1+(rng()*2|0), ph:rng()*TAU, amp:6+rng()*30};
+  const vroll={k:1+(rng()*3|0), ph:rng()*TAU, amp:30+rng()*200};
+  const melt={k:1+(rng()*2|0), ph:rng()*TAU};
+  const bleed={k:1+(rng()*2|0), ph:rng()*TAU};
+  const crush={k:1+(rng()*3|0), ph:rng()*TAU};
+  const extra={waves,mosh,invBands,slices,dropouts,ghost,vroll,melt,bleed,crush};
+
+  // ---- OBLIVION channels (invented) — seeded fields + integer-k phases ----
+  const CF=136; const chronoField=dnaOnly?null:new Float32Array(CF*CF);
+  if(!dnaOnly)for(let y=0;y<CF;y++)for(let x=0;x<CF;x++){let v=noise2(x*0.06,y*0.06); if(v>1)v=1; if(v<-1)v=-1; chronoField[y*CF+x]=v;}
+  const MC=30; const metaField=dnaOnly?null:new Float32Array(MC*MC), metaGid=dnaOnly?null:new Uint8Array(MC*MC);
+  for(let cy=0;cy<MC;cy++)for(let cx=0;cx<MC;cx++){
+    const gv=(rng()*8)|0;                                   // rng stream preserved
+    if(!dnaOnly){
+      let v=noise(cx*0.33+7.7,cy*0.33+3.1)*0.5+0.5; if(v<0)v=0; if(v>1)v=1;
+      metaField[cy*MC+cx]=v; metaGid[cy*MC+cx]=gv;
+    }
+  }
+  const PL=34, TL=135;
+  const tk=new Uint8Array(PL*PL), tph=new Float32Array(PL*PL);
+  for(let i=0;i<PL*PL;i++){tk[i]=1+(rng()*3|0); tph[i]=rng()*TAU;}
+  const extra2={
+    chrono:{k:1+(rng()*2|0), ph:rng()*TAU, CF, field:chronoField},
+    mirror:{fx:0.006+rng()*0.02, fy:0.006+rng()*0.02, k:1+(rng()*2|0), ph:rng()*TAU, sinX:null, cosX:null},
+    flay:{k:1+(rng()*2|0), ph:rng()*TAU},
+    autoph:{k:1+(rng()*2|0), ph:rng()*TAU},
+    weave:{k:1+(rng()*2|0), ph:rng()*TAU},
+    entropy:{k:1+(rng()*3|0), ph:rng()*TAU},
+    meta:{k:1+(rng()*2|0), ph:rng()*TAU, MC, field:metaField, gid:metaGid},
+    tect:{k:tk, ph:tph, PL, TL,
+      pox:new Int8Array(PL*PL), poy:new Int8Array(PL*PL),
+      ox:new Int8Array(TL*TL), oy:new Int8Array(TL*TL), fb:new Uint8Array(TL*TL)}
+  };
+
+  // ---- PER-SEED PERSONALITY ("vibe"): every stage draws its own waveform
+  //      shape, tempo, orientation, spatial frequency and gain, so the same
+  //      toggle combo reads differently on every seed. ----
+  const shape4=()=>{const t=rng(); return t<0.4?0:(t<0.7?1:(t<0.9?2:3));};
+  const g={};
+  for(const ch of ['chroma','tracking','pixelsort','grain','blocks','wave','slice','vroll','mosh','ghost','melt','bleed','invert','crush','dropout','chrono','mirror','flay','autoph','weave','entropy','meta','tect','panes','hilb','splice','moire','braid','lungs','tunnel','kaleido','bloom','embers','runes','chimera'])
+    g[ch]=0.45+rng()*1.45;
+  const vibe={
+    g,
+    trackOn:rng()<0.88, trackF:0.008+rng()*0.085, trackK:1+(rng()*4|0), trackPh:rng()*TAU,
+    trackShape:shape4(), trackMul:0.25+rng()*1.9, trackStep: rng()<0.35 ? 4+(rng()*22|0) : 0,
+    agcOn:rng()<0.8, agcK:1+(rng()*3|0), agcPh:rng()*TAU, agcF:0.004+rng()*0.028,
+    agcAmp:0.04+rng()*0.15, agcVert:rng()<0.3,
+    chromaAng:rng()*TAU, chromaK:1+(rng()*4|0), chromaPh:rng()*TAU, chromaShape:shape4(),
+    grainStat:rng()<0.25,                    // some seeds: static (per-loop frozen) grain
+    gradGamma:0.6+rng()*1.1,
+    gradBands: rng()<0.3 ? 3+(rng()*5|0) : 0,
+    ditherMul:0.5+rng()*1.1,
+    echoN:3+(rng()*4|0), echoDecay:0.45+rng()*0.35
+  };
+  // per-wave personality for the sync-ripple channel (orientation + waveform)
+  for(const w of waves){ w.shape=shape4(); w.vert=rng()<0.32; w.harm=rng()<0.4?2+(rng()*2|0):1; }
+
+  // ---- VALHALLA channel params ----
+  // pane rapture: seeded voronoi shards, rigid drift + lift
+  const PW=270, NC=14+(rng()*26|0);
+  const pcx=new Float32Array(NC), pcy=new Float32Array(NC);
+  const pk=new Uint8Array(NC), pph=new Float32Array(NC),
+        pax=new Float32Array(NC), pay=new Float32Array(NC), plift=new Float32Array(NC);
+  for(let i=0;i<NC;i++){pcx[i]=rng()*PW;pcy[i]=rng()*PW;pk[i]=1+(rng()*4|0);pph[i]=rng()*TAU;
+    pax[i]=(rng()-0.5)*80;pay[i]=(rng()-0.5)*80;plift[i]=rng()*44;}
+  const cellId=dnaOnly?null:new Uint8Array(PW*PW), seam=dnaOnly?null:new Uint8Array(PW*PW);
+  if(!dnaOnly){
+    for(let y=0;y<PW;y++)for(let x=0;x<PW;x++){
+      let best=0,bd=1e9;
+      for(let i=0;i<NC;i++){const dx=x-pcx[i],dy=y-pcy[i];const d=dx*dx+dy*dy;if(d<bd){bd=d;best=i;}}
+      cellId[y*PW+x]=best;
+    }
+    for(let y=0;y<PW;y++)for(let x=0;x<PW;x++){
+      const c=cellId[y*PW+x];
+      if((x+1<PW&&cellId[y*PW+x+1]!==c)||(y+1<PW&&cellId[(y+1)*PW+x]!==c))seam[y*PW+x]=1;
+    }
+  }
+  // hilbert crawl / dna splice / self-moire / time braid / raster lungs
+  const lungPhase=dnaOnly?null:new Float32Array(W);
+  {const f=0.004+rng()*0.02, sp=1.5+rng()*4;
+   if(!dnaOnly)for(let x=0;x<W;x++){let v=noise(x*f+11.3,4.7); if(v>1)v=1; if(v<-1)v=-1; lungPhase[x]=v*sp;}}
+  const valhalla={
+    panes:{PW,NC,cellId,seam,pk,pph,pax,pay,plift,shape:shape4()},
+    hilb:{k:1+(rng()*3|0),ph:rng()*TAU,shape:shape4(),dir:rng()<0.5?1:-1},
+    splice:{k:1+(rng()*3|0),ph:rng()*TAU,shape:shape4()},
+    moire:{k:1+(rng()*3|0),ph:rng()*TAU,k2:1+(rng()*2|0),ph2:rng()*TAU,thr:90+(rng()*70|0),shape:shape4()},
+    braid:{k:1+(rng()*2|0),ph:rng()*TAU},
+    lungs:{k:1+(rng()*3|0),ph:rng()*TAU,h0:(0.3+rng()*0.4)*H,amp:0.06+rng()*0.22,phase:lungPhase,shape:shape4()}
+  };
+
+  // ---- REV 4: motion grammar + palette strategy + composition + pass order ----
+  const shuf=a=>{const r=a.slice();for(let i=r.length-1;i>0;i--){const j=(rng()*(i+1))|0;const t=r[i];r[i]=r[j];r[j]=t;}return r;};
+  const strobes=[]; if(rng()<0.3){const ns=1+(rng()*2|0); for(let i=0;i<ns;i++)strobes.push({pos:rng()*TAU,type:rng()<0.5?0:1});}
+  const motion={
+    quant: rng()<0.25 ? 5+(rng()*9|0) : 0,             // stop-motion time steps
+    tw: rng()<0.5 ? 0 : 0.25+rng()*0.6,                // time-warp depth (speed ramping)
+    twk:1+(rng()*2|0), twph:rng()*TAU,
+    strobes
+  };
+  const palRoll=rng();
+  const palMode = palRoll<0.5 ? 0 : (palRoll<0.7 ? 1 : 2); // 0 gradient, 1 duotone, 2 hue-cycle
+  if(palMode===1){ vibe.gradBands=2+(rng()*2|0); vibe.gradGamma*=0.8; }
+  const palCycles=1+(rng()*3|0);
+  const mask={
+    type: rng()<0.5 ? 0 : 1+(rng()*4|0),               // 0 none | circle diamond hbar ring
+    cx:0.3+rng()*0.4, cy:0.3+rng()*0.4, size:0.2+rng()*0.28,
+    k:1+(rng()*2|0), ph:rng()*TAU, style:(rng()*2|0)   // 0 dim outside, 1 invert inside
+  };
+  const lattice={gs:44+(rng()*84|0), lw:2+(rng()*5|0), thr:0.3+rng()*0.35, k:1+(rng()*3|0), sp:0.35+rng()*0.9, ph:rng()*TAU};
+  const figScale = rng()<0.3 ? 0.4+rng()*0.3 : 1;   // 30% of seeds: small figure, vast void
+  const orbs=[]; const nOrb=2+(rng()*4|0);
+  for(let i=0;i<nOrb;i++)orbs.push({ax:0.14+rng()*0.28, ay:0.14+rng()*0.28, kx:1+(rng()*3|0), ky:1+(rng()*3|0),
+    phx:rng()*TAU, phy:rng()*TAU, r:(0.09+rng()*0.18)*figScale, ring:rng()<0.4});
+  const strata={bh:0.035+rng()*0.085, f:2+rng()*7, amp:0.05+rng()*0.18, k:1+(rng()*3|0)};
+  const tendr={cx:0.36+rng()*0.28, cy:0.36+rng()*0.28, n:3+(rng()*7|0), k:1+(rng()*2|0), k2:1+(rng()*3|0), R0:(0.26+rng()*0.28)*figScale, m:2+(rng()*5|0)};
+  const order={
+    heavy:shuf(['wave','slice','vroll','mosh','ghost','melt','bleed','invert','crush','dropout']),
+    obl:shuf(['weave','entropy','autoph','meta']),
+    val:shuf(['panes','hilb','splice','lungs','moire'])
+  };
+  const rev4={motion,palMode,palCycles,mask,lattice,orbs,strata,tendr,order};
+
+  // ---- DEMIURGE channel params (REV 6) ----
+  const tunnel={rot:(rng()-0.5)*0.55, zoom:1.07+rng()*0.15, decay:0.66+rng()*0.22, taps:6};
+  const kaleido={folds:3+(rng()*6|0), k:1+(rng()*2|0), ph:rng()*TAU,
+    cx:W*(0.44+rng()*0.12), cy:H*(0.44+rng()*0.12)};
+  const bloom={thr:140+(rng()*70|0), rad:2+(rng()*3|0), gain:0.55+rng()*0.75};
+  const embersArr=[]; const nEm=350+(rng()*850|0);
+  for(let i=0;i<nEm;i++){
+    embersArr.push({cx:rng()*W, cy:rng()*H,
+      r1:20+rng()*160, k1:1+(rng()*3|0), p1:rng()*TAU,
+      r2:8+rng()*60,  k2:1+(rng()*4|0), p2:rng()*TAU,
+      r3:20+rng()*160, k3:1+(rng()*3|0), p3:rng()*TAU,
+      r4:8+rng()*60,  k4:1+(rng()*4|0), p4:rng()*TAU,
+      col:rng(), sz:1+(rng()*2|0)});
+  }
+  const runeRows=[]; const nRows=1+(rng()*3|0);
+  for(let i=0;i<nRows;i++){
+    const len=10+(rng()*14|0), glyphs=[];
+    for(let gI=0;gI<len;gI++){const bits=new Uint8Array(35);
+      for(let b=0;b<35;b++)bits[b]=rng()<0.42?1:0; glyphs.push(bits);}
+    runeRows.push({y:(rng()*0.85*H)|0, s:26+(rng()*40|0), speed:(1+(rng()*2|0))*(rng()<0.5?1:-1),
+      glyphs, k:1+(rng()*2|0), ph:rng()*TAU});
+  }
+  const demi={tunnel,kaleido,bloom,embers:embersArr,runes:runeRows};
+
+  // ---- per-seed alphabet ----
+  const glyphset=makeGlyphSet(rng);
+
+  // ---- CHIMERA: a compiled effect unique to this seed. 2-4 atomic ops, each
+  //      = region selector x transform x rhythm envelope. The combination space
+  //      is effectively unrepeatable; the op list IS the effect. ----
+  const chimeraOps=[]; const nOps=2+(rng()*3|0);
+  for(let i=0;i<nOps;i++){
+    const op={ sel:(rng()*6)|0, tr:(rng()*8)|0, shape:shape4(),
+      k:1+(rng()*3|0), ph:rng()*TAU, gate:0.1+rng()*0.35,
+      p1:rng(), p2:rng(), p3:rng(), mask:null };
+    if(op.sel===5 && !dnaOnly){                            // seeded patch mask (coarse)
+      const CM=136, m=new Uint8Array(CM*CM), f=0.05+op.p1*0.08, th=op.p2*0.6-0.3;
+      for(let y=0;y<CM;y++)for(let x=0;x<CM;x++)m[y*CM+x]=noise(x*f+i*13.7,y*f+i*7.1)>th?1:0;
+      op.mask=m;
+    }
+    chimeraOps.push(op);
+  }
+
+  return {rng,noise,noise2,centers,traces,blocks,bands,tears,plasma,extra,extra2,vibe,valhalla,rev4,demi,
+    glyphset, chimeraOps,
+    mode: mode==='RANDOM' ? MODES[(rng()*MODES.length)|0] : mode };
+}
+
+/* waveform shaper: bends a signed sine into pulse / square-ish / folded rhythms.
+   Pure function of its input, so periodicity (and loop seams) are preserved. */
+function shp(s,t){
+  if(t===1) return s*s*s;
+  if(t===2){ const a=s<0?-s:s; return (s<0?-1:1)*Math.pow(a,0.35); }
+  if(t===3){ const a=s<0?-s:s; return s*(1.8-1.6*a); }
+  return s;
+}
+
+/* ---------- glyph atlas (5x7) for GLYPHS mode ---------- */
+/* ============================================================================
+   GLYPH GRAMMARS — every seed mints its own alphabet. One grammar family per
+   scene (coherent script), 10-14 characters synthesized within it:
+   0 GEOMETRIC (mirror-symmetric emblems)   1 CIRCUIT (orthogonal trace walks)
+   2 ORGANIC (dilated blobs)                3 RELIC (spine+crossbar ornaments)
+   4 DENSE (texture with symmetric voids)
+   ========================================================================== */
+function makeGlyph(fam,rng){
+  const a=new Uint8Array(35);
+  const put=(x,y)=>{ if(x>=0&&x<5&&y>=0&&y<7)a[y*5+x]=1; };
+  if(fam===0){
+    for(let y=0;y<7;y++)for(let x=0;x<3;x++){const v=rng()<0.45?1:0; a[y*5+x]=v; a[y*5+(4-x)]=v;}
+    if(rng()<0.5)for(let y=0;y<3;y++)for(let x=0;x<5;x++)a[(6-y)*5+x]=a[y*5+x];
+  } else if(fam===1){
+    let x=(rng()*5)|0, y=(rng()*7)|0; put(x,y);
+    const steps=10+(rng()*14|0);
+    for(let i=0;i<steps;i++){
+      if(rng()<0.5)x+=rng()<0.5?1:-1; else y+=rng()<0.5?1:-1;
+      x=x<0?0:x>4?4:x; y=y<0?0:y>6?6:y; put(x,y);
+      if(rng()<0.15)put(x+(rng()<0.5?1:-1), y);
+    }
+  } else if(fam===2){
+    for(let i=0;i<2+(rng()*2|0);i++)put((rng()*5)|0,(rng()*7)|0);
+    for(let d=0;d<2;d++){const b=a.slice();
+      for(let y=0;y<7;y++)for(let x=0;x<5;x++){
+        if(!b[y*5+x])continue;
+        if(rng()<0.6)put(x+1,y); if(rng()<0.6)put(x-1,y);
+        if(rng()<0.6)put(x,y+1); if(rng()<0.6)put(x,y-1);
+      }}
+  } else if(fam===3){
+    const cy=1+(rng()*4|0);
+    for(let y=0;y<7;y++)if(rng()<0.85)a[y*5+2]=1;
+    for(let x=0;x<5;x++)if(rng()<0.85)a[cy*5+x]=1;
+    for(let i=0;i<3;i++){const ox=(rng()*2)|0, oy=(rng()*7)|0; a[oy*5+ox]=1; a[oy*5+(4-ox)]=1;}
+  } else {
+    for(let i=0;i<35;i++)a[i]=rng()<0.78?1:0;
+    for(let i=0;i<4;i++){const x=(rng()*3)|0, y=(rng()*7)|0; a[y*5+x]=0; a[y*5+(4-x)]=0;}
+  }
+  let c=0; for(let i=0;i<35;i++)c+=a[i];
+  if(c<4){ a[12]=1;a[16]=1;a[17]=1;a[18]=1;a[22]=1; }     // never blank by accident
+  return a;
+}
+function makeGlyphSet(rng){
+  const fam=(rng()*5)|0;
+  const set=[new Uint8Array(35)];                          // index 0 stays blank
+  const n=9+(rng()*5|0);
+  for(let g=0;g<n;g++)set.push(makeGlyph(fam,rng));
+  return set;
+}
+
+/* ============================================================================
+   BASE RENDER  (writes full-res rgb Uint8Array)
+   ========================================================================== */
+function renderBase(rgb, scene, t, theta, grad){
+  const m=scene.mode;
+  if(m==='PLASMA'||m==='RINGS'||m==='LATTICE'||m==='ORBITALS'||m==='STRATA'||m==='TENDRILS'){
+    // coarse scalar field then chunky upscale
+    const field=renderBase._f || (renderBase._f=new Float32Array(FW*FW));
+    const cs=Math.cos(theta), sn=Math.sin(theta);
+    if(m==='PLASMA'){
+      const P=scene.plasma, no=scene.noise, no2=scene.noise2;
+      const ox=cs*P.orbit, oy=sn*P.orbit, rc=Math.cos(theta+P.rot)*P.orbit, rs=Math.sin(theta+P.rot)*P.orbit;
+      for(let y=0;y<FW;y++){const fy=y/FW;
+        for(let x=0;x<FW;x++){const fx=x/FW;
+          const wx=no2(fx*P.s+ox, fy*P.s+oy);
+          const wy=no2(fx*P.s+5.2+ox, fy*P.s+1.7+oy);
+          let v=0,amp=1,fr=P.s*1.3;
+          let sx=fx*fr+wx*P.warp+rc, sy=fy*fr+wy*P.warp+rs;
+          for(let o=0;o<P.oct;o++){ v+=no(sx,sy)*amp; sx*=1.98; sy*=1.98; amp*=0.5; }
+          field[y*FW+x]=v*0.6+0.5;
+        }}
+    } else if(m==='RINGS'){ // interference
+      const C=scene.centers;
+      for(let y=0;y<FW;y++){const fy=y/FW;
+        for(let x=0;x<FW;x++){const fx=x/FW; let v=0;
+          for(let i=0;i<C.length;i++){const c=C[i];
+            const cx=c.x+Math.cos(theta*c.k+c.ph)*c.r, cy=c.y+Math.sin(theta*c.k+c.ph)*c.r;
+            const dx=fx-cx, dy=fy-cy; const d=Math.sqrt(dx*dx+dy*dy);
+            v+=Math.sin(d*c.freq+theta*c.sp);
+          }
+          field[y*FW+x]=(v/C.length)*0.5+0.5;
+        }}
+    } else if(m==='LATTICE'){ // circuit-board grid, pulse traveling through cells
+      const L=scene.rev4.lattice, no=scene.noise;
+      const gsC=Math.max(4,(L.gs*FW/W)|0), lwC=Math.max(1,(L.lw*FW/W)|0);
+      for(let y=0;y<FW;y++){const cy=(y/gsC)|0, iy=y-cy*gsC;
+        for(let x=0;x<FW;x++){const cx=(x/gsC)|0, ix=x-cx*gsC;
+          const pulse=0.5+0.5*Math.sin(theta*L.k-(cx+cy)*L.sp+L.ph);
+          let v;
+          if(ix<lwC||iy<lwC){ v=0.5+0.5*pulse; }                     // conductor lines
+          else{
+            const cv=no(cx*0.7+3.1,cy*0.7+8.8)*0.5+0.5;
+            v = cv<L.thr ? 0.22+0.62*pulse*(0.4+cv) : 0.05+0.10*cv;  // live pads vs void
+          }
+          field[y*FW+x]=v;
+        }}
+    } else if(m==='ORBITALS'){ // hard-edged bodies on lissajous orbits, XOR overlaps
+      const O=scene.rev4.orbs;
+      const bx=renderBase._bx||(renderBase._bx=new Float32Array(8));
+      const by=renderBase._by||(renderBase._by=new Float32Array(8));
+      for(let i=0;i<O.length;i++){const b=O[i];
+        bx[i]=0.5+b.ax*Math.sin(theta*b.kx+b.phx);
+        by[i]=0.5+b.ay*Math.cos(theta*b.ky+b.phy);}
+      for(let y=0;y<FW;y++){const fy=y/FW;
+        for(let x=0;x<FW;x++){const fx=x/FW;
+          let v=0.05, hits=0, edge=false;
+          for(let i=0;i<O.length;i++){const b=O[i];
+            const dx=fx-bx[i], dy=fy-by[i], d2=dx*dx+dy*dy, r2=b.r*b.r;
+            if(b.ring){ if(Math.abs(d2-r2)<b.r*0.055) edge=true; }
+            else if(d2<r2){ hits++; if(d2>r2*0.82) edge=true; }
+          }
+          if(hits===1)v=0.55; else if(hits>=2)v=0.95;
+          if(edge)v=Math.max(v,0.85);
+          field[y*FW+x]=v;
+        }}
+    } else if(m==='STRATA'){ // displaced geological bands
+      const S=scene.rev4.strata, no=scene.noise;
+      for(let y=0;y<FW;y++){const fy=y/FW;
+        const band=(fy/S.bh)|0, inb=fy-band*S.bh;
+        const off=S.amp*Math.sin(theta*S.k+band*2.399);
+        for(let x=0;x<FW;x++){const fx=x/FW;
+          let v=no((fx+off)*S.f, band*0.73+4.2)*0.5+0.5;
+          v = v<0.5 ? v*0.62 : 0.36+(v-0.5)*1.25;                    // contrast crunch
+          if(inb<S.bh*0.09) v=Math.min(1,v+0.4);                     // stratum seam glow
+          field[y*FW+x]=v;
+        }}
+    } else { // TENDRILS — radial anatomy from a seeded heart
+      const T=scene.rev4.tendr, no=scene.noise;
+      for(let y=0;y<FW;y++){const fy=y/FW;
+        for(let x=0;x<FW;x++){const fx=x/FW;
+          const dx=fx-T.cx, dy=fy-T.cy;
+          const r=Math.sqrt(dx*dx+dy*dy), ang=Math.atan2(dy,dx);
+          const edge=T.R0*(0.72+0.25*Math.sin(ang*T.n+theta*T.k)+0.16*Math.sin(ang*T.m-theta*T.k2));
+          let v;
+          if(r<edge) v=0.32+0.62*(1-r/Math.max(edge,1e-4));
+          else if(r<edge*1.07) v=0.92;                               // rim
+          else v=0.05+0.08*(no(fx*3.3,fy*3.3)*0.5+0.5);
+          field[y*FW+x]=v;
+        }}
+    }
+    // upscale (nearest -> chunky) + color
+    for(let y=0;y<H;y++){const sy=(y*FW/H)|0;
+      for(let x=0;x<W;x++){const sx=(x*FW/W)|0;
+        let v=field[sy*FW+sx]; if(v<0)v=0; else if(v>1)v=1; const gi=(v*255)|0;
+        const o=(y*W+x)*3; rgb[o]=grad[gi*3]; rgb[o+1]=grad[gi*3+1]; rgb[o+2]=grad[gi*3+2];
+      }}
+  }
+  else if(m==='GLYPHS'){
+    const cell=24, cols=Math.ceil(W/cell), no=scene.noise;
+    const cs=Math.cos(theta)*.5, sn=Math.sin(theta)*.5;
+    // precompute per-cell brightness + glyph id + palette-band hue
+    const bright=renderBase._b || (renderBase._b=new Float32Array(46*46));
+    const gid=renderBase._g || (renderBase._g=new Int8Array(46*46));
+    const hue=renderBase._h || (renderBase._h=new Float32Array(46*46));
+    for(let cy=0;cy<cols;cy++)for(let cx=0;cx<cols;cx++){
+      let v=no(cx*0.18+cs, cy*0.18+sn)*0.6+0.5;
+      v+= no(cx*0.5+sn, cy*0.5+cs)*0.18; if(v<0)v=0; else if(v>1)v=1;
+      bright[cy*46+cx]=v; gid[cy*46+cx]=(v*(scene.glyphset.length-1))|0;
+      let hh=no(cx*0.11+7.3, cy*0.11-2.1)*0.5+0.5; if(hh<0)hh=0; else if(hh>1)hh=1;
+      hue[cy*46+cx]=hh;                            // static color patch per cell
+    }
+    // lit glyphs sample the SATURATED band of the active palette (0.22–0.88 of
+    // the gradient), never the white-hot tip — color follows the colorway.
+    for(let y=0;y<H;y++){const cy=(y/cell)|0, iy=((y%cell)*7/cell)|0;
+      for(let x=0;x<W;x++){const cx=(x/cell)|0, ix=((x%cell)*5/cell)|0;
+        const ci=cy*46+cx, v=bright[ci]; const on=scene.glyphset[gid[ci]][iy*5+ix];
+        const gi=on?(((0.22+v*0.42+hue[ci]*0.24)*255)|0) : ((v*0.18)*255)|0;
+        const o=(y*W+x)*3; rgb[o]=grad[gi*3]; rgb[o+1]=grad[gi*3+1]; rgb[o+2]=grad[gi*3+2];
+      }}
+  }
+  else { // SCANS — oscilloscope traces
+    const T=scene.traces;
+    const yt=renderBase._yt || (renderBase._yt=[new Float32Array(W),new Float32Array(W),new Float32Array(W)]);
+    for(let i=0;i<3;i++){const tr=T[i];
+      for(let x=0;x<W;x++){const fx=x/W;
+        let w=Math.sin(fx*tr.f*6.283+theta*tr.k+tr.ph);
+        w+=0.4*Math.sin(fx*tr.f*2.1*6.283-theta*tr.k+tr.ph*1.7);
+        yt[i][x]=0.5+tr.amp*w;
+      }}
+    for(let y=0;y<H;y++){const fy=y/H;
+      for(let x=0;x<W;x++){
+        // background: faint vertical gradient
+        let gi=(fy*42)|0, best=-1, bd=999;
+        for(let i=0;i<3;i++){const d=Math.abs(fy-yt[i][x]); if(d<bd){bd=d;best=i;}}
+        if(bd<0.006){ gi=(120+T[best].col*135)|0; }
+        else if(bd<0.02){ gi=(40+(0.02-bd)*1800)|0; }
+        if(gi>255)gi=255; if(gi<0)gi=0;
+        const o=(y*W+x)*3; rgb[o]=grad[gi*3]; rgb[o+1]=grad[gi*3+1]; rgb[o+2]=grad[gi*3+2];
+      }}
+  }
+}
+
+/* ============================================================================
+   ANALOG PASS  (chroma split + tracking + scanlines + grain)  src->dst
+   ========================================================================== */
+function analogPass(src,dst,scene,theta,corr,fx){
+  const V=scene.vibe;
+  // chroma split along a seeded axis with seeded waveform + tempo
+  const cMag = fx.chroma ? shp(Math.sin(theta*V.chromaK+V.chromaPh),V.chromaShape)*(3+corr*0.95)*V.g.chroma : 0;
+  const chroma = Math.round(cMag*Math.cos(V.chromaAng));
+  const cV     = Math.round(cMag*Math.sin(V.chromaAng)*0.35);
+  const trackAmp = (fx.tracking&&V.trackOn) ? (1+corr*0.55)*V.trackMul*V.g.tracking : 0;
+  const tears = scene.tears;
+  const grainAmt = fx.grain ? (corr*1.9)*V.g.grain : 0;
+  const seedRow = V.grainStat ? 777 : (theta*1000)|0;   // some seeds freeze the static
+  // vertical AGC needs a per-column multiplier
+  let colMul=null;
+  if(V.agcOn&&V.agcVert){
+    colMul=analogPass._cm||(analogPass._cm=new Float32Array(W));
+    for(let x=0;x<W;x++)colMul[x]=1+V.agcAmp*Math.sin(theta*V.agcK+V.agcPh+x*V.agcF);
+  }
+  for(let y=0;y<H;y++){
+    // per-row horizontal shift (tracking) — seeded frequency/waveform/tempo
+    let shift = trackAmp ? shp(Math.sin(theta*V.trackK+V.trackPh + y*V.trackF),V.trackShape)*trackAmp*1.4 : 0;
+    if(trackAmp){
+      for(let i=0;i<tears.length;i++){const tr=tears[i];
+        const dy=Math.abs(y/H - tr.y);
+        if(dy<0.03){ const env=Math.max(0,Math.sin(theta*tr.k+tr.ph)); shift += (1-dy/0.03)*tr.amp*env*(0.4+corr*0.05); }
+      }
+      if(V.trackStep) shift=Math.round(shift/V.trackStep)*V.trackStep;  // quantized lurch, not smooth wave
+    }
+    const sh=Math.round(shift);
+    // AGC wobble: seeded tempo/spatial frequency, horizontal or vertical, or off
+    const bar = (V.agcOn&&!V.agcVert) ? 1+(V.agcAmp+corr*0.003)*Math.sin(theta*V.agcK+V.agcPh + y*V.agcF) : 1;
+    const scan = fx.scanlines ? ((y&1)?0.82:1.0) : 1.0;
+    const rowMul = bar*scan;
+    for(let x=0;x<W;x++){
+      const o=(y*W+x)*3;
+      // sample R / G / B with chroma offset + tracking shift
+      let xr=x - sh - chroma, xb=x - sh + chroma, xg=x - sh;
+      let yr=y + cV, yb=y - cV;
+      if(xr<0)xr=0; else if(xr>=W)xr=W-1;
+      if(xb<0)xb=0; else if(xb>=W)xb=W-1;
+      if(xg<0)xg=0; else if(xg>=W)xg=W-1;
+      if(yr<0)yr=0; else if(yr>=H)yr=H-1;
+      if(yb<0)yb=0; else if(yb>=H)yb=H-1;
+      let R=src[(yr*W+xr)*3];
+      let G=src[(y*W+xg)*3+1];
+      let B=src[(yb*W+xb)*3+2];
+      if(grainAmt){
+        // cheap hash grain, frame-correlated for shimmer
+        let n=((x*374761393+y*668265263+seedRow*982451653)>>>0); n=(n^(n>>>13))>>>0;
+        const g=((n&255)/255-0.5)*grainAmt;
+        R+=g; G+=g; B+=g;
+      }
+      const m = colMul ? rowMul*colMul[x] : rowMul;
+      R*=m; G*=m; B*=m;
+      dst[o]  = R<0?0:R>255?255:R;
+      dst[o+1]= G<0?0:G>255?255:G;
+      dst[o+2]= B<0?0:B>255?255:B;
+    }
+  }
+}
+
+/* ============================================================================
+   DIGITAL PASS  (datablock displacement + pixel sort)  in-place on buf
+   ========================================================================== */
+function digitalPass(buf,snap,scene,theta,corr,fx){
+  const g=scene.vibe.g;
+  if(fx.blocks){
+    const bcorr=Math.min(150,corr*g.blocks);
+    snap.set(buf); // read displaced source from snapshot
+    const B=scene.blocks;
+    for(let i=0;i<B.length;i++){const b=B[i];
+      const env=Math.sin(theta*b.k+b.ph); if(Math.abs(env)<0.12)continue;
+      const off=Math.round(env*b.amp*(0.3+bcorr*0.06));
+      if(off===0)continue;
+      const x0=b.x, y0=b.y, w=Math.min(b.w,W-x0), h=Math.min(b.h,H-y0);
+      for(let yy=0;yy<h;yy++){const ay=y0+yy;
+        for(let xx=0;xx<w;xx++){
+          let sx=x0+xx+off; if(sx<0)sx+=W; else if(sx>=W)sx-=W;
+          const so=(ay*W+sx)*3, doff=(ay*W+x0+xx)*3;
+          if(b.chan===3){ buf[doff]=snap[so];buf[doff+1]=snap[so+1];buf[doff+2]=snap[so+2]; }
+          else { buf[doff+b.chan]=snap[so+b.chan]; } // single-channel tear
+        }
+      }
+    }
+  }
+  if(fx.pixelsort){
+    // snapshot-based luminance sort across periodic bands (clean source, no clobber)
+    pixelSortCorrect(buf,snap,scene,theta,Math.min(150,corr*g.pixelsort));
+  }
+}
+function pixelSortCorrect(buf,snap,scene,theta,corr){
+  const Bd=scene.bands; snap.set(buf); const gate=0.25-(corr||0)*0.002;
+  for(let i=0;i<Bd.length;i++){const bd=Bd[i];
+    const env=Math.sin(theta*bd.k+bd.ph); if(env<gate)continue;
+    const h=Math.min(bd.h,H-bd.y);
+    for(let yy=0;yy<h;yy++){const ay=bd.y+yy; if(ay<0||ay>=H)continue;
+      for(let x0=0;x0<W;x0+=bd.seg){
+        const segEnd=Math.min(x0+bd.seg,W); const n=segEnd-x0;
+        const order=new Array(n);
+        for(let k=0;k<n;k++){const o=(ay*W+x0+k)*3; const r=snap[o],g=snap[o+1],b=snap[o+2];
+          order[k]=[(r*0.299+g*0.587+b*0.114),k]; }
+        order.sort((a,b)=>a[0]-b[0]);
+        for(let k=0;k<n;k++){const sk=order[k][1]; const so=(ay*W+x0+sk)*3, doff=(ay*W+x0+k)*3;
+          buf[doff]=snap[so];buf[doff+1]=snap[so+1];buf[doff+2]=snap[so+2]; }
+      }
+    }
+  }
+}
+
+/* ============================================================================
+   DITHER + QUANTIZE  -> palette indices
+   ========================================================================== */
+function quantize(buf,indices,near,dAmt,tect){
+  for(let y=0;y<H;y++){const brow=(y&7)*8, trow=(y>>3)*135;
+    for(let x=0;x<W;x++){
+      const o=(y*W+x)*3; let d;
+      let bonus=0;
+      if(tect){
+        const t=trow+(x>>3);
+        d=BAYER[(((y&7)+tect.oy[t])&7)*8+(((x&7)+tect.ox[t])&7)]*dAmt;
+        if(tect.fb[t]&&(((x&7)===0)||((y&7)===0)))bonus=34;
+      } else {
+        d=BAYER[brow+(x&7)]*dAmt;
+      }
+      let r=buf[o]+d+bonus, g=buf[o+1]+d+bonus, b=buf[o+2]+d+bonus;
+      r=r<0?0:r>255?255:r; g=g<0?0:g>255?255:g; b=b<0?0:b>255?255:b;
+      indices[y*W+x]=near[((r>>3)<<10)|((g>>3)<<5)|(b>>3)];
+    }
+  }
+}
+
+/* ============================================================================
+   HEAVY CORRUPTION  — 10 extra effects. Every animated term uses sin/cos of an
+   INTEGER multiple of theta, so each one stays 2pi-periodic => seamless loop.
+   corr (0..100) drives intensity; C=corr/100.
+   ========================================================================== */
+function fxWave(buf,snap,scene,theta,corr){            // 1. sync ripple — seeded orientation/waveform
+  const C=corr/100; snap.set(buf); const ws=scene.extra.waves;
+  // horizontal-shifting waves (per row)
+  let anyH=false, anyV=false;
+  for(const w of ws){ if(w.vert)anyV=true; else anyH=true; }
+  if(anyH){
+    for(let y=0;y<H;y++){
+      let s=0;
+      for(let i=0;i<ws.length;i++){const w=ws[i]; if(w.vert)continue;
+        s+=shp(Math.sin(y*w.freq*w.harm+theta*w.k+w.ph),w.shape)*w.amp;}
+      let sh=Math.round(s*(0.3+C*1.8)); if(!sh)continue;
+      const row=y*W;
+      for(let x=0;x<W;x++){ let sx=(x-sh)%W; if(sx<0)sx+=W; const so=(row+sx)*3,o=(row+x)*3;
+        buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; }
+    }
+  }
+  if(anyV){                                            // vertical-shifting waves (per column)
+    snap.set(buf);
+    const colSh=fxWave._cs||(fxWave._cs=new Int16Array(W));
+    for(let x=0;x<W;x++){
+      let s=0;
+      for(let i=0;i<ws.length;i++){const w=ws[i]; if(!w.vert)continue;
+        s+=shp(Math.sin(x*w.freq*w.harm+theta*w.k+w.ph),w.shape)*w.amp;}
+      colSh[x]=Math.round(s*(0.3+C*1.8));
+    }
+    for(let y=0;y<H;y++){const row=y*W;
+      for(let x=0;x<W;x++){const sh=colSh[x]; if(!sh)continue;
+        let sy=(y-sh)%H; if(sy<0)sy+=H;
+        const so=(sy*W+x)*3, o=(row+x)*3;
+        buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; }
+    }
+  }
+}
+function fxSlice(buf,snap,scene,theta,corr){           // 2. wrap-around slice shear
+  const C=corr/100; snap.set(buf); const S=scene.extra.slices;
+  for(let i=0;i<S.length;i++){const s=S[i];
+    const off=Math.round(Math.sin(theta*s.k+s.ph)*s.amp*(0.3+C*1.8)); if(!off)continue;
+    const h=Math.min(s.h,H-s.y);
+    for(let yy=0;yy<h;yy++){const row=(s.y+yy)*W;
+      for(let x=0;x<W;x++){ let sx=(x-off)%W; if(sx<0)sx+=W; const so=(row+sx)*3,o=(row+x)*3;
+        buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; } }
+  }
+}
+function fxVroll(buf,snap,scene,theta,corr){           // 3. vertical hold wobble
+  const C=corr/100; const v=scene.extra.vroll;
+  const off=Math.round(Math.sin(theta*v.k+v.ph)*v.amp*(0.3+C*1.6)); if(!off)return;
+  snap.set(buf);
+  for(let y=0;y<H;y++){ let sy=((y-off)%H+H)%H; const so=sy*W*3, o=y*W*3;
+    for(let i=0;i<W*3;i++) buf[o+i]=snap[so+i]; }
+}
+function fxMosh(buf,snap,scene,theta,corr){            // 4. macroblock teleport (datamosh)
+  const C=corr/100; snap.set(buf); const M=scene.extra.mosh; const gate=0.55-C*0.5;
+  for(let i=0;i<M.length;i++){const m=M[i]; if(Math.sin(theta*m.k+m.ph)<gate)continue;
+    const w=Math.min(m.w,W-Math.max(m.sx,m.dx)), h=Math.min(m.h,H-Math.max(m.sy,m.dy)); if(w<=0||h<=0)continue;
+    const wb=w*3;
+    for(let yy=0;yy<h;yy++){ const so=((m.sy+yy)*W+m.sx)*3, dst=((m.dy+yy)*W+m.dx)*3;
+      for(let xx=0;xx<wb;xx++) buf[dst+xx]=snap[so+xx]; }
+  }
+}
+function fxGhost(buf,snap,scene,theta,corr){           // 5. spatial double-image
+  const C=corr/100; snap.set(buf); const g=scene.extra.ghost;
+  const dx=Math.round(g.dx*Math.sin(theta*g.k+g.ph)*g.amp*(0.5+C*2.2));
+  const dy=Math.round(g.dy*Math.cos(theta*g.k+g.ph)*g.amp*(0.5+C*2.2));
+  const a=0.35+C*0.45;
+  for(let y=0;y<H;y++){ const sy=y-dy; if(sy<0||sy>=H)continue;
+    for(let x=0;x<W;x++){ const sx=x-dx; if(sx<0||sx>=W)continue;
+      const so=(sy*W+sx)*3,o=(y*W+x)*3;
+      const r=snap[so]*a;   if(r>buf[o])buf[o]=r;
+      const gg=snap[so+1]*a;if(gg>buf[o+1])buf[o+1]=gg;
+      const bb=snap[so+2]*a;if(bb>buf[o+2])buf[o+2]=bb; }
+  }
+}
+function fxMelt(buf,scene,theta,corr){                 // 6. vertical neon drip
+  const C=corr/100; const m=scene.extra.melt;
+  const env=0.5+0.5*Math.sin(theta*m.k+m.ph);
+  const decay=0.85+(0.10+C*0.04)*env;
+  for(let x=0;x<W;x++){ let cr=0,cg=0,cb=0;
+    for(let y=0;y<H;y++){const o=(y*W+x)*3;
+      cr*=decay; cg*=decay; cb*=decay;
+      if(buf[o]>cr)cr=buf[o]; else buf[o]=cr;
+      if(buf[o+1]>cg)cg=buf[o+1]; else buf[o+1]=cg;
+      if(buf[o+2]>cb)cb=buf[o+2]; else buf[o+2]=cb; }
+  }
+}
+function fxBleed(buf,scene,theta,corr){                // 7. horizontal chroma smear
+  const C=corr/100; const b=scene.extra.bleed;
+  const env=0.5+0.5*Math.sin(theta*b.k+b.ph);
+  const decay=0.80+(0.10+C*0.08)*env;
+  for(let y=0;y<H;y++){const row=y*W*3;
+    let cr=0; for(let x=0;x<W;x++){const o=row+x*3;   cr*=decay; if(buf[o]>cr)cr=buf[o]; else buf[o]=cr;}
+    let cb=0; for(let x=W-1;x>=0;x--){const o=row+x*3+2; cb*=decay; if(buf[o]>cb)cb=buf[o]; else buf[o]=cb;}
+  }
+}
+function fxInvert(buf,scene,theta,corr){               // 8. moving negative / channel-rot bands
+  const C=corr/100; const IB=scene.extra.invBands; const gate=0.3-C*0.28;
+  for(let i=0;i<IB.length;i++){const b=IB[i]; const env=Math.sin(theta*b.k+b.ph); if(env<gate)continue;
+    const yoff=Math.round(Math.sin(theta*b.k+b.ph)*(10+C*70));
+    for(let yy=0;yy<b.h;yy++){ const ay=((b.y+yoff+yy)%H+H)%H; const row=ay*W;
+      for(let x=0;x<W;x++){const o=(row+x)*3;
+        if(b.mode===0){buf[o]=255-buf[o];buf[o+1]=255-buf[o+1];buf[o+2]=255-buf[o+2];}
+        else if(b.mode===1){const t=buf[o];buf[o]=buf[o+1];buf[o+1]=buf[o+2];buf[o+2]=t;}
+        else{buf[o]=255-buf[o];buf[o+2]=255-buf[o+2];} }
+    }
+  }
+}
+function fxCrush(buf,scene,theta,corr){                // 9. bit-crush / posterize pulse
+  const C=corr/100; const cr=scene.extra.crush;
+  const env=0.5+0.5*Math.sin(theta*cr.k+cr.ph);
+  const levels=Math.max(2, Math.round(16-(C*env)*13));
+  const step=255/(levels-1);
+  for(let i=0;i<buf.length;i++){ let v=Math.round(buf[i]/step)*step; buf[i]=v>255?255:v; }
+}
+function fxDropout(buf,scene,theta,corr){              // 10. signal-loss blocks
+  const C=corr/100; const D=scene.extra.dropouts; const gate=0.62-C*0.5;
+  for(let i=0;i<D.length;i++){const d=D[i]; if(Math.sin(theta*d.k+d.ph)<gate)continue;
+    const val=d.white?255:0; const w=Math.min(d.w,W-d.x),h=Math.min(d.h,H-d.y);
+    for(let yy=0;yy<h;yy++){const row=(d.y+yy)*W;
+      for(let x=0;x<w;x++){const o=(row+d.x+x)*3; buf[o]=val;buf[o+1]=val;buf[o+2]=val;} }
+  }
+}
+const HEAVY_FX={
+  wave:(b,s,sc,t,c)=>fxWave(b,s,sc,t,c),   slice:(b,s,sc,t,c)=>fxSlice(b,s,sc,t,c),
+  vroll:(b,s,sc,t,c)=>fxVroll(b,s,sc,t,c), mosh:(b,s,sc,t,c)=>fxMosh(b,s,sc,t,c),
+  ghost:(b,s,sc,t,c)=>fxGhost(b,s,sc,t,c), melt:(b,s,sc,t,c)=>fxMelt(b,sc,t,c),
+  bleed:(b,s,sc,t,c)=>fxBleed(b,sc,t,c),   invert:(b,s,sc,t,c)=>fxInvert(b,sc,t,c),
+  crush:(b,s,sc,t,c)=>fxCrush(b,sc,t,c),   dropout:(b,s,sc,t,c)=>fxDropout(b,sc,t,c)
+};
+function heavyCorruption(buf,snap,scene,theta,corr,fx){
+  const g=scene.vibe.g, cc=ch=>Math.min(150,corr*g[ch]);
+  for(const name of scene.rev4.order.heavy){
+    if(fx[name]) HEAVY_FX[name](buf,snap,scene,theta,cc(name));
+  }
+}
+
+/* ============================================================================
+   OBLIVION CHANNELS — invented for this engine. These don't imitate analog or
+   codec failure; they attack parts of the pipeline glitch art normally leaves
+   alone: the loop's own time axis, the dither matrix's geometry, the image's
+   relationship with itself. All envelopes are integer-k periodic => seamless.
+   ========================================================================== */
+
+/* 1. CHRONOSHEAR — regions of the frame live at different moments of the same
+   loop. A static field assigns each zone a time-offset; pixels are re-colored
+   through the palette as if sampled earlier/later in the cycle. */
+function fxChrono(buf,scene,theta,corr,grad){
+  const C=corr/100, p=scene.extra2.chrono;
+  const env=Math.sin(theta*p.k+p.ph);
+  const amp=(40+180*C)*env;
+  if(amp<1&&amp>-1)return;
+  const F=p.field, CF=p.CF;
+  for(let y=0;y<H;y++){const fyo=((y*CF/H)|0)*CF;
+    for(let x=0;x<W;x++){
+      const o=(y*W+x)*3;
+      const L=buf[o]*0.299+buf[o+1]*0.587+buf[o+2]*0.114;
+      let gi=(L+F[fyo+((x*CF/W)|0)]*amp)|0; gi=((gi%256)+256)%256;
+      buf[o]  =(buf[o]  +2*grad[gi*3])/3;
+      buf[o+1]=(buf[o+1]+2*grad[gi*3+1])/3;
+      buf[o+2]=(buf[o+2]+2*grad[gi*3+2])/3;
+    }
+  }
+}
+
+/* 2. MIRRORTIME — the loop interferes with its own time-reversal. The frame at
+   theta is blended against the frame at -theta through a drifting interference
+   lattice: past and future occupying one raster. */
+function combineMirror(a,c,scene,theta){
+  const m=scene.extra2.mirror;
+  if(!m.sinX){ m.sinX=new Float32Array(W); m.cosX=new Float32Array(W);
+    for(let x=0;x<W;x++){m.sinX[x]=Math.sin(x*m.fx);m.cosX[x]=Math.cos(x*m.fx);} }
+  for(let y=0;y<H;y++){
+    const B=y*m.fy+theta*m.k+m.ph, sB=Math.sin(B), cB=Math.cos(B);
+    const row=y*W*3;
+    for(let x=0;x<W;x++){
+      const t=0.5+0.5*(m.sinX[x]*cB+m.cosX[x]*sB);
+      const o=row+x*3;
+      a[o]  +=(c[o]  -a[o]  )*t;
+      a[o+1]+=(c[o+1]-a[o+1])*t;
+      a[o+2]+=(c[o+2]-a[o+2])*t;
+    }
+  }
+}
+
+/* 3. MOTION FLAY — the render is replaced by its own time-derivative: the
+   difference between now and 1/8th of a loop from now, amplified. Stillness
+   goes black; only change survives as electric edges. */
+function combineFlay(a,c,scene,theta,corr){
+  const C=corr/100, p=scene.extra2.flay;
+  const env=0.5+0.5*Math.sin(theta*p.k+p.ph);
+  const mix=env*(0.35+0.55*C), gain=2.2+C*3.5;
+  for(let i=0;i<a.length;i++){
+    let d=a[i]-c[i]; if(d<0)d=-d; d*=gain; if(d>255)d=255;
+    a[i]+=(d-a[i])*mix;
+  }
+}
+
+/* 4. AUTOPHAGY — the image eats itself: every pixel is displaced along the
+   gradient of its own luminance, so bright structures cannibalize their
+   surroundings and edges curl inward. */
+function fxAutophagy(buf,snap,scene,theta,corr){
+  const C=corr/100, p=scene.extra2.autoph;
+  const env=Math.sin(theta*p.k+p.ph); const d=env*(6+26*C);
+  if(d<0.5&&d>-0.5)return;
+  snap.set(buf);
+  for(let y=0;y<H;y++){
+    const yu=y>1?y-2:y, yd=y+2<H?y+2:y;
+    for(let x=0;x<W;x++){
+      const xl=x>1?x-2:x, xr=x+2<W?x+2:x;
+      const oL=(y*W+xl)*3,oR=(y*W+xr)*3,oU=(yu*W+x)*3,oD=(yd*W+x)*3;
+      const gx=(snap[oR]*0.299+snap[oR+1]*0.587+snap[oR+2]*0.114)-(snap[oL]*0.299+snap[oL+1]*0.587+snap[oL+2]*0.114);
+      const gy=(snap[oD]*0.299+snap[oD+1]*0.587+snap[oD+2]*0.114)-(snap[oU]*0.299+snap[oU+1]*0.587+snap[oU+2]*0.114);
+      let sx=x+((gx/255)*d|0), sy=y+((gy/255)*d|0);
+      if(sx<0)sx=0; else if(sx>=W)sx=W-1;
+      if(sy<0)sy=0; else if(sy>=H)sy=H-1;
+      const so=(sy*W+sx)*3, o=(y*W+x)*3;
+      buf[o]=snap[so]; buf[o+1]=snap[so+1]; buf[o+2]=snap[so+2];
+    }
+  }
+}
+
+/* 5. RASTER WEAVE — scanlines are riffle-shuffled like a deck of cards; the
+   shuffle depth breathes with the loop, so the raster braids through itself
+   and unbraids back to identity. */
+let WEAVE_MAPS=null;
+function weaveMaps(){
+  if(WEAVE_MAPS)return WEAVE_MAPS;
+  const maps=[new Int32Array(H)];
+  for(let y=0;y<H;y++)maps[0][y]=y;
+  for(let p=1;p<=5;p++){const prev=maps[p-1], m=new Int32Array(H), half=H>>1;
+    for(let y=0;y<H;y++){const src=y<half ? y*2 : (y-half)*2+1; m[y]=prev[src];}
+    maps.push(m);
+  }
+  WEAVE_MAPS=maps; return maps;
+}
+function fxWeave(buf,snap,scene,theta,corr){
+  const C=corr/100, p=scene.extra2.weave;
+  const maxP=Math.max(1,Math.round(1+C*4));
+  let pw=Math.round((0.5+0.5*Math.sin(theta*p.k+p.ph))*maxP);
+  if(pw<=0)return; if(pw>5)pw=5;
+  const map=weaveMaps()[pw];
+  snap.set(buf);
+  for(let y=0;y<H;y++){const so=map[y]*W*3, o=y*W*3; buf.set(snap.subarray(so,so+W*3),o);}
+}
+
+/* 6. ENTROPY TEAR — self-referential: each scanline measures its own visual
+   roughness, and that measurement is the force that tears it sideways. Busy
+   rows lurch, flat rows hold still. The image's complexity attacks it. */
+function fxEntropy(buf,snap,scene,theta,corr){
+  const C=corr/100, p=scene.extra2.entropy;
+  const env=Math.sin(theta*p.k+p.ph);
+  if(env<0.15&&env>-0.15)return;
+  snap.set(buf);
+  const gain=env*(0.05+C*0.5);
+  for(let y=0;y<H;y++){
+    const row=y*W*3; let s=0;
+    for(let x=8;x<W;x+=8){const o=row+x*3, po=o-24;
+      s+=Math.abs(snap[o]-snap[po])+Math.abs(snap[o+1]-snap[po+1])+Math.abs(snap[o+2]-snap[po+2]);}
+    let sh=Math.round((s/(W/8))*gain);
+    if(sh>200)sh=200; else if(sh<-200)sh=-200;
+    if(!sh)continue;
+    for(let x=0;x<W;x++){let sx=(x-sh)%W; if(sx<0)sx+=W;
+      const so=row+sx*3, o=row+x*3;
+      buf[o]=snap[so]; buf[o+1]=snap[so+1]; buf[o+2]=snap[so+2];}
+  }
+}
+
+/* 7. GLYPH PLAGUE — an infection in the raster: as the epidemic envelope
+   swells, cells succumb in order of susceptibility and are replaced by
+   inverted 1-bit glyph tissue; it spreads, peaks, and recedes every loop. */
+function fxMeta(buf,scene,theta,corr){
+  const C=corr/100, p=scene.extra2.meta;
+  const th=(0.5+0.5*Math.sin(theta*p.k+p.ph))*C;
+  if(th<=0.02)return;
+  const MC=p.MC, cell=(W/MC)|0;
+  for(let cy=0;cy<MC;cy++)for(let cx=0;cx<MC;cx++){
+    const ci=cy*MC+cx;
+    if(p.field[ci]>=th)continue;
+    const G=scene.glyphset[p.gid[ci]%scene.glyphset.length];
+    const x0=cx*cell, y0=cy*cell;
+    for(let yy=0;yy<cell;yy++){const iy=(yy*7/cell)|0, ay=y0+yy;
+      for(let xx=0;xx<cell;xx++){const ix=(xx*5/cell)|0;
+        const o=(ay*W+x0+xx)*3;
+        if(G[iy*5+ix]){buf[o]=255-buf[o];buf[o+1]=255-buf[o+1];buf[o+2]=255-buf[o+2];}
+        else{buf[o]=(buf[o]*3)>>2;buf[o+1]=(buf[o+1]*3)>>2;buf[o+2]=(buf[o+2]*3)>>2;}
+      }
+    }
+  }
+}
+
+/* 8. DITHER TECTONICS — corruption of the quantizer itself. The Bayer matrix
+   is broken into plates that drift like crust; where plates disagree, fault
+   lines glow. The image is untouched — its rendering substrate is what slips. */
+function buildTect(scene,theta,corr){
+  const C=corr/100, p=scene.extra2.tect, PL=p.PL, TL=p.TL;
+  const amp=1+3*C;
+  for(let i=0;i<PL*PL;i++){
+    p.pox[i]=Math.round(amp*Math.sin(theta*p.k[i]+p.ph[i]));
+    p.poy[i]=Math.round(amp*Math.cos(theta*p.k[i]+p.ph[i]*1.37));
+  }
+  for(let ty=0;ty<TL;ty++){const py=(ty>>2)*PL;
+    for(let tx=0;tx<TL;tx++){const pi=py+(tx>>2), t=ty*TL+tx;
+      p.ox[t]=p.pox[pi]; p.oy[t]=p.poy[pi];}}
+  for(let ty=0;ty<TL;ty++)for(let tx=0;tx<TL;tx++){
+    const t=ty*TL+tx;
+    const r=tx+1<TL?t+1:t, d=ty+1<TL?t+TL:t;
+    p.fb[t]=(p.ox[t]!==p.ox[r]||p.oy[t]!==p.oy[r]||p.ox[t]!==p.ox[d]||p.oy[t]!==p.oy[d])?1:0;
+  }
+  return p;
+}
+
+const OBL_FX={
+  weave:(b,s,sc,t,c)=>fxWeave(b,s,sc,t,c), entropy:(b,s,sc,t,c)=>fxEntropy(b,s,sc,t,c),
+  autoph:(b,s,sc,t,c)=>fxAutophagy(b,s,sc,t,c), meta:(b,s,sc,t,c)=>fxMeta(b,sc,t,c)
+};
+function oblivionPixel(buf,snap,scene,theta,corr,fx){
+  const g=scene.vibe.g, cc=ch=>Math.min(150,corr*g[ch]);
+  for(const name of scene.rev4.order.obl){
+    if(fx[name]) OBL_FX[name](buf,snap,scene,theta,cc(name));
+  }
+}
+
+/* ============================================================================
+   VALHALLA CHANNELS — structural corruptions. No waves, no rows: shattered
+   rigid panes, space-filling-curve crawls, content-keyed column genetics,
+   self-interference moiré, three-phase time braids, anatomical breathing.
+   All motion is shp(sin(integer·theta)) => strictly periodic => seamless.
+   ========================================================================== */
+
+/* 1. PANE RAPTURE — the frame is tessellated into seeded voronoi shards; each
+   pane drifts rigidly with its own tempo and lifts in brightness, seams stay
+   dark. The image survives intact but no longer agrees on where it is. */
+function fxPanes(buf,snap,scene,theta,corr){
+  const C=corr/100, p=scene.valhalla.panes, PW=p.PW;
+  snap.set(buf);
+  const NC=p.NC;
+  const dx=fxPanes._dx||(fxPanes._dx=new Int16Array(64));
+  const dy=fxPanes._dy||(fxPanes._dy=new Int16Array(64));
+  const lf=fxPanes._lf||(fxPanes._lf=new Float32Array(64));
+  for(let i=0;i<NC;i++){
+    const e=shp(Math.sin(theta*p.pk[i]+p.pph[i]),p.shape);
+    dx[i]=Math.round(e*p.pax[i]*(0.25+C));
+    dy[i]=Math.round(e*p.pay[i]*(0.25+C));
+    lf[i]=1+Math.max(0,e)*p.plift[i]*C*0.02;
+  }
+  const xc=fxPanes._xc||(fxPanes._xc=new Uint16Array(W));
+  if(!fxPanes._xcInit){for(let x=0;x<W;x++)xc[x]=(x*PW/W)|0; fxPanes._xcInit=true;}
+  for(let y=0;y<H;y++){
+    const crow=((y*PW/H)|0)*PW, row=y*W;
+    for(let x=0;x<W;x++){
+      const ci=crow+xc[x], id=p.cellId[ci], o=(row+x)*3;
+      let sx=(x-dx[id])%W; if(sx<0)sx+=W;              // toroidal: shards wrap,
+      let sy=(y-dy[id])%H; if(sy<0)sy+=H;              // no gap ever exposed
+      const so=(sy*W+sx)*3, L=lf[id];
+      const r=snap[so]*L, g=snap[so+1]*L, b=snap[so+2]*L;
+      buf[o]=r>255?255:r; buf[o+1]=g>255?255:g; buf[o+2]=b>255?255:b;
+    }
+  }
+}
+
+/* 2. HILBERT CRAWL — the raster is threaded onto a generalized space-filling
+   curve; tiles caterpillar along it. Displacement follows fractal adjacency,
+   not rows or columns: smears fold at right angles like migrating circuitry. */
+function gilbertOrder(w,h){
+  const order=[];
+  const sgn=v=>v<0?-1:(v>0?1:0);
+  function gen(x,y,ax,ay,bx,by){
+    const ww=Math.abs(ax+ay), hh=Math.abs(bx+by);
+    const dax=sgn(ax),day=sgn(ay),dbx=sgn(bx),dby=sgn(by);
+    if(hh===1){ for(let i=0;i<ww;i++){order.push(y*w+x); x+=dax;y+=day;} return; }
+    if(ww===1){ for(let i=0;i<hh;i++){order.push(y*w+x); x+=dbx;y+=dby;} return; }
+    let ax2=(ax/2)|0, ay2=(ay/2)|0, bx2=(bx/2)|0, by2=(by/2)|0;
+    const w2=Math.abs(ax2+ay2), h2=Math.abs(bx2+by2);
+    if(2*ww>3*hh){
+      if((w2%2)&&(ww>2)){ax2+=dax;ay2+=day;}
+      gen(x,y,ax2,ay2,bx,by);
+      gen(x+ax2,y+ay2,ax-ax2,ay-ay2,bx,by);
+    }else{
+      if((h2%2)&&(hh>2)){bx2+=dbx;by2+=dby;}
+      gen(x,y,bx2,by2,ax2,ay2);
+      gen(x+bx2,y+by2,ax,ay,bx-bx2,by-by2);
+      gen(x+(ax-dax)+(bx2-dbx), y+(ay-day)+(by2-dby), -bx2,-by2, -(ax-ax2),-(ay-ay2));
+    }
+  }
+  if(w>=h) gen(0,0,w,0,0,h); else gen(0,0,0,h,w,0);
+  return Int32Array.from(order);
+}
+let HILB=null;
+function fxHilbert(buf,snap,scene,theta,corr){
+  const C=corr/100, p=scene.valhalla.hilb, T=135, TS=8;
+  if(!HILB)HILB=gilbertOrder(T,T);
+  const L=HILB.length;
+  const s=Math.round(shp(Math.sin(theta*p.k+p.ph),p.shape)*p.dir*C*L*0.10);
+  if(!s)return;
+  snap.set(buf);
+  for(let i=0;i<L;i++){
+    let j=(i+s)%L; if(j<0)j+=L;
+    const dc=HILB[i], sc=HILB[j];
+    const dx=(dc%T)*TS, dyy=((dc/T)|0)*TS, sx=(sc%T)*TS, syy=((sc/T)|0)*TS;
+    for(let r=0;r<TS;r++){
+      const so=((syy+r)*W+sx)*3, doo=((dyy+r)*W+dx)*3;
+      buf.set(snap.subarray(so,so+TS*3),doo);
+    }
+  }
+}
+
+/* 3. DNA SPLICE — columns are re-ordered by a key that morphs between spatial
+   position and each column's own visual roughness: the image periodically
+   re-sequences itself by its own genetics, then re-assembles. */
+function fxSplice(buf,snap,scene,theta,corr){
+  const C=corr/100, p=scene.valhalla.splice;
+  const mix=Math.max(0,shp(Math.sin(theta*p.k+p.ph),p.shape))*C;
+  if(mix<0.03)return;
+  snap.set(buf);
+  const rough=fxSplice._r||(fxSplice._r=new Float32Array(W));
+  const idx=fxSplice._i||(fxSplice._i=new Array(W));
+  for(let x=0;x<W;x++){
+    let s=0;
+    for(let y=8;y<H;y+=16){const o=(y*W+x)*3, po=o-8*W*3;
+      s+=Math.abs(snap[o]-snap[po])+Math.abs(snap[o+1]-snap[po+1]);}
+    rough[x]=s; idx[x]=x;
+  }
+  let mn=1e9,mx=-1e9;
+  for(let x=0;x<W;x++){if(rough[x]<mn)mn=rough[x];if(rough[x]>mx)mx=rough[x];}
+  const span=(mx-mn)||1;
+  const key=fxSplice._k||(fxSplice._k=new Float32Array(W));
+  for(let x=0;x<W;x++)key[x]=x*(1-mix)+((rough[x]-mn)/span)*W*mix;
+  idx.sort((a,b)=>key[a]-key[b]);
+  for(let x=0;x<W;x++){
+    const sxx=idx[x]; if(sxx===x)continue;
+    for(let y=0;y<H;y++){const so=(y*W+sxx)*3,o=(y*W+x)*3;
+      buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2];}
+  }
+}
+
+/* 4. SELF-MOIRÉ — the frame interferes with a rotated, rescaled copy of its
+   own thresholded self; where the two disagree, pixels invert. Op-art fringes
+   grow out of the artwork's own anatomy — no overlay, pure self-reference. */
+function fxMoire(buf,snap,scene,theta,corr){
+  const C=corr/100, p=scene.valhalla.moire;
+  const a=shp(Math.sin(theta*p.k+p.ph),p.shape)*(0.04+0.11*C);
+  const sc=1+0.05*Math.sin(theta*p.k2+p.ph2);
+  snap.set(buf);
+  const ca=Math.cos(a)/sc, sa=Math.sin(a)/sc, cx=(W-1)/2, cy=(H-1)/2, T=p.thr;
+  for(let y=0;y<H;y++){
+    const ry=y-cy;
+    for(let x=0;x<W;x++){
+      const rx=x-cx;
+      const sx=(cx+rx*ca-ry*sa)|0, sy=(cy+rx*sa+ry*ca)|0;
+      if(sx<0||sy<0||sx>=W||sy>=H)continue;
+      const o=(y*W+x)*3, so=(sy*W+sx)*3;
+      const L =snap[o]*0.299+snap[o+1]*0.587+snap[o+2]*0.114;
+      const L2=snap[so]*0.299+snap[so+1]*0.587+snap[so+2]*0.114;
+      if((L>T)!==(L2>T)){ buf[o]=255-buf[o]; buf[o+1]=255-buf[o+1]; buf[o+2]=255-buf[o+2]; }
+    }
+  }
+}
+
+/* 5. TIME BRAID — three phases of the loop (θ, θ+⅓, θ−⅓) coexist in one frame,
+   partitioned by the image's own dominant color channel: the artwork's anatomy
+   decides which parts live in which moment. (applied at source stage) */
+function combineBraid(a,c1,c2,scene,theta,corr){
+  const C=corr/100, p=scene.valhalla.braid;
+  const mixv=(0.5+0.5*Math.sin(theta*p.k+p.ph))*(0.4+0.6*C);
+  for(let i=0;i<a.length;i+=3){
+    const r=a[i],g=a[i+1],b=a[i+2];
+    if(g>=r&&g>=b){ a[i]+=(c1[i]-r)*mixv; a[i+1]+=(c1[i+1]-g)*mixv; a[i+2]+=(c1[i+2]-b)*mixv; }
+    else if(b>=r){  a[i]+=(c2[i]-r)*mixv; a[i+1]+=(c2[i+1]-g)*mixv; a[i+2]+=(c2[i+2]-b)*mixv; }
+  }
+}
+
+/* 6. RASTER LUNGS — every column breathes vertically around a seeded horizon,
+   each with its own phase offset: the frame inhales and exhales anatomically
+   instead of waving. */
+function fxLungs(buf,snap,scene,theta,corr){
+  const C=corr/100, p=scene.valhalla.lungs;
+  snap.set(buf);
+  const h0=p.h0;
+  for(let x=0;x<W;x++){
+    const sc=1+shp(Math.sin(theta*p.k+p.ph+p.phase[x]),p.shape)*p.amp*(0.4+C);
+    const inv=1/sc;
+    for(let y=0;y<H;y++){
+      let sy=Math.round((y-h0)*inv+h0);
+      if(sy<0)sy=0; else if(sy>=H)sy=H-1;
+      const so=(sy*W+x)*3, o=(y*W+x)*3;
+      buf[o]=snap[so]; buf[o+1]=snap[so+1]; buf[o+2]=snap[so+2];
+    }
+  }
+}
+
+const VAL_FX={
+  panes:fxPanes, hilb:fxHilbert, splice:fxSplice, lungs:fxLungs, moire:fxMoire
+};
+function valhallaPixel(buf,snap,scene,theta,corr,fx){
+  const g=scene.vibe.g, cc=ch=>Math.min(150,corr*g[ch]);
+  for(const name of scene.rev4.order.val){
+    if(fx[name]) VAL_FX[name](buf,snap,scene,theta,cc(name));
+  }
+}
+
+/* source stage: base render + time-axis attacks (mirror/flay/braid) + chronoshear */
+/* ============================================================================
+   DEMIURGE CHANNELS — reality fabrication. Recursive light, mirrored space,
+   true glow, living swarms, an alphabet that doesn't exist.
+   ========================================================================== */
+
+/* 1. FEEDBACK TUNNEL — the loop stares into itself: theta-delayed frames are
+   re-projected through cumulative zoom+rotation and lighten-stacked, producing
+   recursive corridors of phosphor. Finite-tap formulation + tail-primed ring
+   keeps it exactly periodic. */
+function compositeTunnel(buf, ring, T, corr){
+  const C=Math.min(1.5,corr/100), taps=ring.length;
+  const ca=compositeTunnel._ca||(compositeTunnel._ca=new Float32Array(8));
+  const sa=compositeTunnel._sa||(compositeTunnel._sa=new Float32Array(8));
+  const is=compositeTunnel._is||(compositeTunnel._is=new Float32Array(8));
+  const wt=compositeTunnel._wt||(compositeTunnel._wt=new Float32Array(8));
+  for(let k=1;k<=taps;k++){
+    const ang=T.rot*k, s=Math.pow(T.zoom,k);
+    ca[k-1]=Math.cos(ang)/s; sa[k-1]=Math.sin(ang)/s;
+    wt[k-1]=Math.pow(T.decay,k)*(0.5+0.7*C);
+  }
+  const CX=W/2, CY=H/2;
+  for(let y=0;y<H;y++){const dy=y-CY;
+    for(let x=0;x<W;x++){const dx=x-CX; const o=(y*W+x)*3;
+      let R=buf[o],G=buf[o+1],B=buf[o+2];
+      for(let k=0;k<taps;k++){
+        const sxf=CX+dx*ca[k]-dy*sa[k], syf=CY+dx*sa[k]+dy*ca[k];
+        if(sxf<0||syf<0||sxf>=W||syf>=H)continue;
+        const ci=(((syf*FW/H)|0)*FW+((sxf*FW/W)|0))*3, r=ring[taps-1-k], w=wt[k];
+        const er=r[ci]*w;   if(er>R)R=er;
+        const eg=r[ci+1]*w; if(eg>G)G=eg;
+        const eb=r[ci+2]*w; if(eb>B)B=eb;
+      }
+      buf[o]=R;buf[o+1]=G;buf[o+2]=B;
+    }
+  }
+}
+
+/* 2. KALEIDOMANCY — space itself is folded N ways around a seeded axis and
+   set spinning; the corruption stack then attacks the mirrored world. */
+let KAL_R=null, KAL_B=null, KAL_COS=null, KAL_SIN=null, KAL_C=-1;
+function kaleidoLUT(cx,cy){
+  const sig=cx*100000+cy;
+  if(KAL_R&&KAL_C===sig)return;
+  KAL_C=sig;
+  if(!KAL_R){KAL_R=new Float32Array(W*H); KAL_B=new Uint16Array(W*H);
+    KAL_COS=new Float32Array(2048); KAL_SIN=new Float32Array(2048);
+    for(let b=0;b<2048;b++){const a=b/2048*TAU; KAL_COS[b]=Math.cos(a); KAL_SIN[b]=Math.sin(a);}}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const dx=x-cx, dy=y-cy, i=y*W+x;
+    KAL_R[i]=Math.sqrt(dx*dx+dy*dy);
+    let a=Math.atan2(dy,dx); if(a<0)a+=TAU;
+    KAL_B[i]=(a/TAU*2048)|0;
+  }
+}
+function fxKaleido(buf,snap,scene,theta,corr){
+  const K=scene.demi.kaleido;
+  kaleidoLUT(K.cx,K.cy);
+  snap.set(buf);
+  const rot=theta*K.k+K.ph, sector=TAU/K.folds;
+  const fold=fxKaleido._f||(fxKaleido._f=new Uint16Array(2048));
+  for(let b=0;b<2048;b++){
+    let a=(b/2048*TAU+rot)%sector; if(a<0)a+=sector;
+    if(a>sector/2)a=sector-a;                      // mirror fold
+    fold[b]=((a/TAU*2048)|0)&2047;
+  }
+  const cx=K.cx, cy=K.cy;
+  for(let i=0;i<W*H;i++){
+    const f=fold[KAL_B[i]], r=KAL_R[i];
+    let sx=(cx+r*KAL_COS[f])|0, sy=(cy+r*KAL_SIN[f])|0;
+    if(sx<0)sx=0; else if(sx>=W)sx=W-1;
+    if(sy<0)sy=0; else if(sy>=H)sy=H-1;
+    const so=(sy*W+sx)*3, o=i*3;
+    buf[o]=snap[so]; buf[o+1]=snap[so+1]; buf[o+2]=snap[so+2];
+  }
+}
+
+/* 3. PHOSPHOR BLOOM — bright signal physically bleeds light: coarse threshold,
+   separable blur, additive recomposite. Neon finally glows. */
+function fxBloom(buf,scene,theta,corr){
+  const B=scene.demi.bloom, C=Math.min(1.5,corr/100);
+  const N2=FW*FW;
+  const bR=fxBloom._r||(fxBloom._r=new Float32Array(N2));
+  const bG=fxBloom._g||(fxBloom._g=new Float32Array(N2));
+  const bB=fxBloom._b||(fxBloom._b=new Float32Array(N2));
+  const tR=fxBloom._tr||(fxBloom._tr=new Float32Array(N2));
+  const tG=fxBloom._tg||(fxBloom._tg=new Float32Array(N2));
+  const tB=fxBloom._tb||(fxBloom._tb=new Float32Array(N2));
+  const thr=B.thr, inv=1/(255-thr);
+  for(let y=0;y<FW;y++){const sy=((y*H/FW)|0)*W;
+    for(let x=0;x<FW;x++){const so=(sy+((x*W/FW)|0))*3, i=y*FW+x;
+      const L=buf[so]*0.299+buf[so+1]*0.587+buf[so+2]*0.114;
+      const e=L>thr?(L-thr)*inv:0;
+      bR[i]=buf[so]*e; bG[i]=buf[so+1]*e; bB[i]=buf[so+2]*e;
+    }}
+  const rad=B.rad, div=1/(rad*2+1);
+  for(let y=0;y<FW;y++){const row=y*FW;              // horizontal box
+    let sR=0,sG=0,sB=0;
+    for(let x=-rad;x<=rad;x++){const xx=x<0?0:x; sR+=bR[row+xx];sG+=bG[row+xx];sB+=bB[row+xx];}
+    for(let x=0;x<FW;x++){
+      tR[row+x]=sR*div; tG[row+x]=sG*div; tB[row+x]=sB*div;
+      const xo=x-rad<0?0:x-rad, xn=x+rad+1>=FW?FW-1:x+rad+1;
+      sR+=bR[row+xn]-bR[row+xo]; sG+=bG[row+xn]-bG[row+xo]; sB+=bB[row+xn]-bB[row+xo];
+    }}
+  for(let x=0;x<FW;x++){                             // vertical box
+    let sR=0,sG=0,sB=0;
+    for(let y=-rad;y<=rad;y++){const yy=y<0?0:y; sR+=tR[yy*FW+x];sG+=tG[yy*FW+x];sB+=tB[yy*FW+x];}
+    for(let y=0;y<FW;y++){
+      bR[y*FW+x]=sR*div; bG[y*FW+x]=sG*div; bB[y*FW+x]=sB*div;
+      const yo=y-rad<0?0:y-rad, yn=y+rad+1>=FW?FW-1:y+rad+1;
+      sR+=tR[yn*FW+x]-tR[yo*FW+x]; sG+=tG[yn*FW+x]-tG[yo*FW+x]; sB+=tB[yn*FW+x]-tB[yo*FW+x];
+    }}
+  const gain=B.gain*(0.5+C);
+  for(let y=0;y<H;y++){const cyo=((y*FW/H)|0)*FW;
+    for(let x=0;x<W;x++){const ci=cyo+((x*FW/W)|0), o=(y*W+x)*3;
+      let r=buf[o]+bR[ci]*gain, g=buf[o+1]+bG[ci]*gain, b=buf[o+2]+bB[ci]*gain;
+      buf[o]=r>255?255:r; buf[o+1]=g>255?255:g; buf[o+2]=b>255?255:b;
+    }}
+}
+
+/* 4. EMBER SWARM — hundreds of luminous particles on integer epicyclic orbits
+   (exactly loop-periodic), each trailing a short comet streak. */
+function fxEmbers(buf,scene,theta,corr,grad){
+  const P=scene.demi.embers, C=Math.min(1.5,corr/100);
+  const nDraw=Math.min(P.length, (P.length*(0.4+0.6*C))|0);
+  for(let i=0;i<nDraw;i++){const p=P[i];
+    for(let t=0;t<3;t++){                              // head + 2 trail samples
+      const th=theta-t*0.09;
+      const px=(p.cx+p.r1*Math.cos(th*p.k1+p.p1)+p.r2*Math.cos(th*p.k2+p.p2))|0;
+      const py=(p.cy+p.r3*Math.sin(th*p.k3+p.p3)+p.r4*Math.sin(th*p.k4+p.p4))|0;
+      if(px<1||py<1||px>=W-1||py>=H-1)continue;
+      const gi=(p.col*255)|0, fade=t===0?1:(t===1?0.55:0.28);
+      const cr=grad[gi*3]*1.25*fade, cg=grad[gi*3+1]*1.25*fade, cb=grad[gi*3+2]*1.25*fade;
+      const sz=t===0?p.sz:1;
+      for(let yy=0;yy<sz;yy++)for(let xx=0;xx<sz;xx++){
+        const o=((py+yy)*W+px+xx)*3;
+        let r=buf[o]+cr, g=buf[o+1]+cg, b=buf[o+2]+cb;
+        buf[o]=r>255?255:r; buf[o+1]=g>255?255:g; buf[o+2]=b>255?255:b;
+      }
+    }
+  }
+}
+
+/* 5. RUNE MARQUEE — scrolling bands of a seeded alphabet that has never
+   existed. Integer wraps per loop => the marquee is perfectly seamless. */
+function fxRunes(buf,scene,theta,corr){
+  const rows=scene.demi.runes, C=Math.min(1.5,corr/100);
+  for(let ri=0;ri<rows.length;ri++){const R=rows[ri];
+    const env=Math.sin(theta*R.k+R.ph); if(env<0.15-C*0.3)continue;
+    const s=R.s, rh=(s*1.4)|0, total=R.glyphs.length*s;
+    const off=Math.round(R.speed*total*theta/TAU);
+    const y1=Math.min(H,R.y+rh);
+    for(let y=R.y;y<y1;y++){
+      const iy=(((y-R.y)*7)/rh)|0, row=y*W;
+      for(let x=0;x<W;x++){
+        let gx=(x+off)%total; if(gx<0)gx+=total;
+        const gi2=(gx/s)|0, ix=(((gx-gi2*s)*5)/s)|0;
+        if(R.glyphs[gi2][iy*5+ix]){
+          const o=(row+x)*3;
+          buf[o]=255-buf[o]; buf[o+1]=255-buf[o+1]; buf[o+2]=255-buf[o+2];
+        }
+      }
+    }
+  }
+}
+
+/* ============================================================================
+   CHIMERA — executes this seed's compiled effect. Region selectors:
+   0 whole frame · 1 y-bands · 2 x-bands · 3 radial rings · 4 luminance-gated
+   (content decides) · 5 seeded noise patches. Transforms: 0 wrap-shift ·
+   1 invert · 2 channel-rotate · 3 posterize · 4 mirror-x · 5 palette remap ·
+   6 directional smear · 7 pinch. All envelopes shp(sin(int·theta)) => seamless.
+   ========================================================================== */
+function fxChimera(buf,snap,scene,theta,corr,grad){
+  const C=Math.min(1.5,corr/100), ops=scene.chimeraOps;
+  for(let oi=0;oi<ops.length;oi++){
+    const op=ops[oi];
+    const env=shp(Math.sin(theta*op.k+op.ph),op.shape);
+    const ae=env<0?-env:env; if(ae<op.gate)continue;
+    const tr=op.tr;
+    // region membership test
+    const bh=(40+op.p3*200)|0, cxp=op.p1*W, cyp=op.p2*H, rw=(50+op.p3*160)|0, lthr=60+op.p1*140;
+    const inR=(x,y,o)=>{
+      switch(op.sel){
+        case 0: return true;
+        case 1: return (((y/bh)|0)&1)===0;
+        case 2: return (((x/bh)|0)&1)===0;
+        case 3: { const dx=x-cxp, dy=y-cyp;
+          return ((((Math.sqrt(dx*dx+dy*dy)/rw)|0)&1)===0); }
+        case 4: return (snap[o]*0.299+snap[o+1]*0.587+snap[o+2]*0.114)>lthr;
+        default: return op.mask ? op.mask[((y*136/H)|0)*136+((x*136/W)|0)]===1 : true;
+      }
+    };
+    if(tr===6){                                            // smear: row-sequential
+      snap.set(buf);
+      const decay=0.80+0.14*(1-ae*C);
+      for(let y=0;y<H;y++){const row=y*W*3;
+        let cr=0,cg=0,cb=0;
+        for(let x=0;x<W;x++){const o=row+x*3;
+          cr*=decay;cg*=decay;cb*=decay;
+          if(!inR(x,y,o)){cr=snap[o];cg=snap[o+1];cb=snap[o+2];continue;}
+          if(snap[o]>cr)cr=snap[o]; else buf[o]=cr;
+          if(snap[o+1]>cg)cg=snap[o+1]; else buf[o+1]=cg;
+          if(snap[o+2]>cb)cb=snap[o+2]; else buf[o+2]=cb;
+        }}
+      continue;
+    }
+    snap.set(buf);
+    const dx=Math.round(env*(op.p1-0.5)*2*300*C), dy=Math.round(env*(op.p2-0.5)*2*300*C);
+    const levels=Math.max(2,Math.round(9-ae*C*7)), step=255/(levels-1);
+    const pinch=1+env*op.p3*0.5*C;
+    for(let y=0;y<H;y++){
+      for(let x=0;x<W;x++){
+        const o=(y*W+x)*3;
+        if(!inR(x,y,o))continue;
+        switch(tr){
+          case 0:{ let sx=(x-dx)%W; if(sx<0)sx+=W; let sy=(y-dy)%H; if(sy<0)sy+=H;
+            const so=(sy*W+sx)*3; buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; break; }
+          case 1: buf[o]=255-snap[o]; buf[o+1]=255-snap[o+1]; buf[o+2]=255-snap[o+2]; break;
+          case 2: buf[o]=snap[o+1]; buf[o+1]=snap[o+2]; buf[o+2]=snap[o]; break;
+          case 3:{ let r=Math.round(snap[o]/step)*step, g=Math.round(snap[o+1]/step)*step, b=Math.round(snap[o+2]/step)*step;
+            buf[o]=r>255?255:r; buf[o+1]=g>255?255:g; buf[o+2]=b>255?255:b; break; }
+          case 4:{ const so=(y*W+(W-1-x))*3; buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; break; }
+          case 5:{ const L=snap[o]*0.299+snap[o+1]*0.587+snap[o+2]*0.114;
+            let gi=(L*0.5+op.p1*128+env*60)|0; gi=((gi%256)+256)%256;
+            buf[o]=(snap[o]+2*grad[gi*3])/3; buf[o+1]=(snap[o+1]+2*grad[gi*3+1])/3; buf[o+2]=(snap[o+2]+2*grad[gi*3+2])/3; break; }
+          default:{ let sx=(cxp+(x-cxp)/pinch)|0, sy=(cyp+(y-cyp)/pinch)|0;
+            if(sx<0)sx=0; else if(sx>=W)sx=W-1; if(sy<0)sy=0; else if(sy>=H)sy=H-1;
+            const so=(sy*W+sx)*3; buf[o]=snap[so];buf[o+1]=snap[so+1];buf[o+2]=snap[so+2]; }
+        }
+      }
+    }
+  }
+}
+
+function demiurgePixel(buf,snap,scene,theta,corr,fx,grad){
+  const g=scene.vibe.g, cc=ch=>Math.min(150,corr*g[ch]);
+  if(fx.chimera)fxChimera(buf,snap,scene,theta,cc('chimera'),grad);
+  if(fx.embers)fxEmbers(buf,scene,theta,cc('embers'),grad);
+  if(fx.runes) fxRunes(buf,scene,theta,cc('runes'));
+  if(fx.bloom) fxBloom(buf,scene,theta,cc('bloom'));
+}
+
+/* composition mask: a seeded monolith shape (breathes with the loop) that dims
+   the outside or inverts the inside — instant figure/ground composition */
+function fxMaskComp(buf,scene,theta){
+  const M=scene.rev4.mask; if(!M.type)return;
+  const s=M.size*(1+0.12*Math.sin(theta*M.k+M.ph));
+  const cx=M.cx*W, cy=M.cy*H, s2=(s*W)*(s*W), sD=s*W, rIn=(s*0.72*W)*(s*0.72*W);
+  for(let y=0;y<H;y++){const dy=y-cy, ady=dy<0?-dy:dy;
+    for(let x=0;x<W;x++){const dx=x-cx, adx=dx<0?-dx:dx;
+      let inside;
+      if(M.type===1) inside=(dx*dx+dy*dy)<s2;
+      else if(M.type===2) inside=(adx+ady)<sD*1.2;
+      else if(M.type===3) inside=ady<sD*0.5;
+      else { const d2=dx*dx+dy*dy; inside=d2<s2&&d2>rIn; }
+      const o=(y*W+x)*3;
+      if(M.style===0){ if(!inside){buf[o]=(buf[o]*42)>>8;buf[o+1]=(buf[o+1]*42)>>8;buf[o+2]=(buf[o+2]*42)>>8;} }
+      else { if(inside){buf[o]=255-buf[o];buf[o+1]=255-buf[o+1];buf[o+2]=255-buf[o+2];} }
+    }
+  }
+}
+
+function renderSource(rgbA,rgbC,scene,i,theta,grad,fx,corr){
+  renderBase(rgbA,scene,i,theta,grad);
+  if(fx.mirror){ renderBase(rgbC,scene,i,TAU-theta,grad); combineMirror(rgbA,rgbC,scene,theta); }
+  if(fx.flay){   renderBase(rgbC,scene,i,theta+TAU/8,grad); combineFlay(rgbA,rgbC,scene,theta,corr); }
+  if(fx.braid){
+    const rgbD=renderSource._d||(renderSource._d=new Uint8Array(W*H*3));
+    renderBase(rgbC,scene,i,theta+TAU/3,grad);
+    renderBase(rgbD,scene,i,theta-TAU/3,grad);
+    combineBraid(rgbA,rgbC,rgbD,scene,theta,Math.min(150,corr*scene.vibe.g.braid));
+  }
+  if(fx.chrono)  fxChrono(rgbA,scene,theta,Math.min(150,corr*scene.vibe.g.chrono),grad);
+  fxMaskComp(rgbA,scene,theta);
+  if(fx.kaleido){
+    const scr=renderSource._k||(renderSource._k=new Uint8Array(W*H*3));
+    fxKaleido(rgbA,scr,scene,theta,Math.min(150,corr*scene.vibe.g.kaleido));
+  }
+}
+
+/* ============================================================================
+   ECHO TRAIL  (phosphor persistence) — lighten-blend theta-delayed copies.
+   History is coarse (FW²) so trails read as soft bloom; current frame stays
+   sharp. Seamless because the ring is primed with the loop's tail frames.
+   ========================================================================== */
+function downsampleCoarse(full, coarse){
+  for(let y=0;y<FW;y++){ const sy=((y*H/FW)|0)*W;
+    for(let x=0;x<FW;x++){ const sx=(x*W/FW)|0; const so=(sy+sx)*3, o=(y*FW+x)*3;
+      coarse[o]=full[so]; coarse[o+1]=full[so+1]; coarse[o+2]=full[so+2]; }
+  }
+}
+function compositeEcho(buf, ring, weights){
+  const n=ring.length;
+  for(let y=0;y<H;y++){ const cyo=((y*FW/H)|0)*FW;
+    for(let x=0;x<W;x++){ const cx=(x*FW/W)|0; const co=(cyo+cx)*3, o=(y*W+x)*3;
+      let R=buf[o],G=buf[o+1],B=buf[o+2];
+      for(let e=0;e<n;e++){ const r=ring[e], w=weights[e];
+        const er=r[co]*w;   if(er>R)R=er;
+        const eg=r[co+1]*w; if(eg>G)G=eg;
+        const eb=r[co+2]*w; if(eb>B)B=eb;
+      }
+      buf[o]=R; buf[o+1]=G; buf[o+2]=B;   // each term <=255, max stays in range
+    }
+  }
+}
+
+
+/* ============================================================================
+   GENERATION ORCHESTRATION
+   ========================================================================== */
+const state={ scheme:'DITHERVOID', mode:'RANDOM', corr:62, frames:36,
+  fx:{chroma:true,tracking:true,pixelsort:true,grain:true,blocks:true,scanlines:true,echo:true,
+      wave:false,slice:false,vroll:false,mosh:false,ghost:false,melt:false,bleed:false,invert:false,crush:false,dropout:false,
+      chrono:false,mirror:false,flay:false,autoph:false,weave:false,entropy:false,meta:false,tect:false,
+      panes:false,hilb:false,splice:false,moire:false,braid:false,lungs:false,
+      tunnel:false,kaleido:false,bloom:false,embers:false,runes:false,chimera:false} };
+let busy=false, RUN=0, lastURL=null, lastBlob=null, lastName='', lastDataURL='';
+let xBytes=null, xDim=0, xName='', xBlob=null, xURL=null, xDataURL='';
+const TAU=6.283185307179586;
+const FPS=25, DELAY=4;                 // 25fps locked  (4 centiseconds = 40ms/frame)
+
+/* can this device hand a GIF file to the native share sheet? (iOS -> Save Image -> Photos) */
+const canShareFiles=(()=>{ try{
+  return !!(navigator.canShare && navigator.canShare({files:[new File([new Uint8Array([0])],'p.gif',{type:'image/gif'})]}));
+}catch(e){ return false; } })();
+
+const rgbA=new Uint8Array(W*H*3), rgbB=new Uint8Array(W*H*3), rgbC=new Uint8Array(W*H*3), snap=new Uint8Array(W*H*3);
+const preview=vctx.createImageData(W,H);
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function generate(){
+  if(busy)return; busy=true;
+  const run=++RUN;    // this render's epoch; a hijack tap stale-ifies it
+  $('go').disabled=true; $('oblivion').disabled=true; $('download').setAttribute('disabled','');
+  $('ph').style.display='none'; $('result').style.display='none';
+  $('download').classList.remove('ready');
+
+  const seed=(parseInt($('seed').value,10)>>>0)||1;
+  let schemeKey = state.scheme;
+  if(schemeKey==='RANDOM'){
+    const rr=mulberry32((seed^0x77aa11)>>>0)();
+    schemeKey = rr<0.4 ? 'GENESIS' : SCHEME_KEYS[(mulberry32(seed)()*SCHEME_KEYS.length)|0];
+  }
+  const scheme = schemeKey==='GENESIS' ? genesisScheme(seed) : SCHEMES[schemeKey];
+  const scene=buildScene(seed, state.mode);
+  const {grad,pal,near}=buildPalette(scheme, scene.vibe);
+  const N=state.frames, corr=state.corr, dAmt=(14+corr*0.20)*scene.vibe.ditherMul, fx=state.fx;
+
+  $('t-sig').textContent=schemeKey;
+  $('t-mode').textContent=scene.mode;
+  $('t-seed').textContent=seed;
+  $('t-size').textContent=W+'²';
+  $('osd').textContent='RENDERING';
+
+  /* ---- REV 4 time machinery: quantized time (stop-motion) + time-warp (speed
+     ramping). Both are periodic reparameterizations, so the loop still closes. */
+  /* FLOW doctrine: time is always continuous — no stop-motion quantization,
+     no strobe frames. Seeded time-warp (fluid speed ramping) is kept. */
+  const MV={...scene.rev4.motion, quant:0, strobes:[]};
+  const tEff=th=>{
+    let t=th;
+    if(MV.quant){ const st=TAU/MV.quant; t=Math.floor(t/st)*st; }
+    if(MV.tw) t=t+MV.tw*Math.sin(t*MV.twk+MV.twph);
+    return t;
+  };
+  /* hue-cycle palette strategy: gradient rotates through itself over one loop */
+  const gradR=scene.rev4.palMode===2 ? new Uint8Array(768) : null;
+  const gradFor=th=>{
+    if(!gradR)return grad;
+    const shift=Math.round(256*scene.rev4.palCycles*th/TAU)%256;
+    for(let i=0;i<256;i++){const j=((i+shift)&255)*3, k=i*3;
+      gradR[k]=grad[j]; gradR[k+1]=grad[j+1]; gradR[k+2]=grad[j+2];}
+    return gradR;
+  };
+
+  /* ---- echo-trail ring (primed with the loop's tail frames -> seamless) ---- */
+  const ECN=scene.vibe.echoN, EDECAY=scene.vibe.echoDecay;
+  let ring=[], weights=[], coarseCur=null;
+  if(fx.echo){
+    for(let j=0;j<ECN;j++){ weights.push(Math.pow(EDECAY,ECN-j)); ring.push(new Uint8Array(FW*FW*3)); }
+    coarseCur=new Uint8Array(FW*FW*3);
+    for(let e=ECN;e>=1;e--){ const pi=((N-e)%N+N)%N, pth=pi/N*TAU;
+      renderSource(rgbA,rgbC,scene,pi,tEff(pth),gradFor(pth),fx,corr); downsampleCoarse(rgbA, ring[ECN-e]); }
+  }
+
+  /* ---- feedback-tunnel ring (tail-primed like echo -> exactly periodic) ---- */
+  let ring2=null, coarse2=null;
+  if(fx.tunnel){
+    const T=scene.demi.tunnel;
+    ring2=[]; for(let j=0;j<T.taps;j++)ring2.push(new Uint8Array(FW*FW*3));
+    coarse2=new Uint8Array(FW*FW*3);
+    for(let e=T.taps;e>=1;e--){ const pi=((N-e)%N+N)%N, pth=pi/N*TAU;
+      renderSource(rgbA,rgbC,scene,pi,tEff(pth),gradFor(pth),fx,corr); downsampleCoarse(rgbA, ring2[T.taps-e]); }
+  }
+
+  /* ---- stream-encode: encode + free each frame as we go ---- */
+  const sink=new Sink(1<<20);
+  const minCodeSize=gifBegin(sink,W,H,pal,0);
+  /* parallel X-safe encoders: identical frames at 720/540/405, nearest-sampled
+     from the master indices — the largest result under 14.8MB ships as 𝕏 */
+  const XDIMS=[720,540,405];
+  const XS=XDIMS.map(d=>{const sk=new Sink(1<<18);
+    return {d, sink:sk, mcs:gifBegin(sk,d,d,pal,0), idx:new Uint8Array(d*d)};});
+  if(xURL){URL.revokeObjectURL(xURL);xURL=null;}
+  xBytes=null; xBlob=null; xDataURL=''; xDim=0;
+  $('xsave').setAttribute('disabled',''); $('xsave').classList.remove('ready');
+  const indices=new Uint8Array(W*H);
+
+  for(let i=0;i<N;i++){
+    const raw=i/N*TAU, theta=tEff(raw);
+    renderSource(rgbA, rgbC, scene, i, theta, gradFor(raw), fx, corr);
+    if(fx.tunnel){
+      downsampleCoarse(rgbA, coarse2);                       // clean capture
+      compositeTunnel(rgbA, ring2, scene.demi.tunnel, Math.min(150,corr*scene.vibe.g.tunnel));
+      const rec=ring2.shift(); ring2.push(coarse2); coarse2=rec;
+    }
+    if(fx.echo){
+      downsampleCoarse(rgbA, coarseCur);          // capture clean coarse of this frame
+      compositeEcho(rgbA, ring, weights);          // blend in trails from past frames
+      const reclaimed=ring.shift(); ring.push(coarseCur); coarseCur=reclaimed; // advance ring (no alloc)
+    }
+    analogPass(rgbA, rgbB, scene, theta, corr, fx);
+    digitalPass(rgbB, snap, scene, theta, corr, fx);
+    heavyCorruption(rgbB, snap, scene, theta, corr, fx);
+    oblivionPixel(rgbB, snap, scene, theta, corr, fx);
+    valhallaPixel(rgbB, snap, scene, theta, corr, fx);
+    demiurgePixel(rgbB, snap, scene, theta, corr, fx, grad);
+    /* strobe frames: seeded single-frame inversions / flashes, loop-periodic */
+    for(let sb=0;sb<MV.strobes.length;sb++){
+      let d=Math.abs(raw-MV.strobes[sb].pos); if(d>TAU/2)d=TAU-d;
+      if(d<Math.PI/N){
+        if(MV.strobes[sb].type===0){ for(let q=0;q<rgbB.length;q++)rgbB[q]=255-rgbB[q]; }
+        else { for(let q=0;q<rgbB.length;q++){const v=rgbB[q]+170; rgbB[q]=v>255?255:v;} }
+        break;
+      }
+    }
+    quantize(rgbB, indices, near, dAmt, fx.tect?buildTect(scene,theta,corr):null);
+
+    // live preview from quantized indices
+    const pd=preview.data;
+    for(let q=0;q<W*H;q++){const c=pal[indices[q]]; const k=q*4; pd[k]=c[0];pd[k+1]=c[1];pd[k+2]=c[2];pd[k+3]=255;}
+    vctx.putImageData(preview,0,0);
+
+    gifFrame(sink, W, H, indices, DELAY, minCodeSize);   // encode + discard
+    for(const xs of XS){const d=xs.d, xi=xs.idx;
+      for(let y=0;y<d;y++){const sy=((y*H/d)|0)*W, row=y*d;
+        for(let x=0;x<d;x++)xi[row+x]=indices[sy+((x*W/d)|0)];}
+      gifFrame(xs.sink, d, d, xi, DELAY, xs.mcs);
+    }
+
+    $('t-frame').textContent=(i+1)+'/'+N;
+    $('prog').style.width=((i+1)/N*92)+'%';
+    await sleep(0);
+    if(run!==RUN)return;                               // hijacked: die silently
+  }
+
+  $('osd').textContent='ENCODING';
+  await sleep(0);
+  if(run!==RUN)return;                                 // hijacked: die silently
+  const bytes=gifEnd(sink);
+  $('prog').style.width='100%';
+
+  if(lastURL)URL.revokeObjectURL(lastURL);
+  lastBlob=new Blob([bytes],{type:'image/gif'});
+  lastURL=URL.createObjectURL(lastBlob);
+  lastName='DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'.gif';
+  $('dna').value=packCard(seed, schemeKey, scene.mode, corr, N, fx, 'FLOW');
+
+  const LIMIT=14900000;  // 15MB platform cap, safe under both MB and MiB readings
+  for(const xs of XS){
+    const xb=gifEnd(xs.sink);
+    if(!xBytes && xb.length<=LIMIT){ xBytes=xb; xDim=xs.d; }
+  }
+  const kb=(bytes.length/1024), dur=(N/FPS).toFixed(2);
+  const mainSz=kb>1024?(kb/1024).toFixed(1)+'MB':kb.toFixed(0)+'KB';
+  let xInfo='';
+  if(xBytes){
+    xName='DITHERVOID_'+schemeKey+'_'+scene.mode+'_'+seed+'_X'+xDim+'.gif';
+    xInfo=' · 𝕏 '+xDim+'² '+(xBytes.length/1048576).toFixed(1)+'MB';
+    $('xsave').removeAttribute('disabled'); $('xsave').classList.add('ready');
+  }
+  $('t-size').textContent=W+'² '+mainSz+xInfo+' · '+dur+'s';
+  $('osd').textContent='LOOP · '+mainSz;
+
+  // play the finished loop right in the monitor. data: URL (not blob:) so an iOS
+  // long-press offers "Save to Photos"; blob is kept for share/download.
+  lastDataURL=bytesToDataURL(bytes);
+  const img=$('result'); img.src=lastDataURL; img.style.display='block';
+  $('download').removeAttribute('disabled');
+  if(canShareFiles||isIOS){
+    $('download').classList.add('ready');
+  }else{
+    triggerDownload();   // desktop: auto-download
+  }
+
+  setTimeout(()=>{$('prog').style.width='0%';},700);
+  $('go').disabled=false; $('oblivion').disabled=false; busy=false;
+}
+
+/* iOS detection (incl. iPadOS reporting as MacIntel) */
+const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+
+/* save: tiered. 1) native share sheet (-> Save Image -> Photos). If the webview
+   blocks it (sandboxed in-app viewers reject share silently), 2) full-screen
+   save view where a long-press on the data-URL image offers Save to Photos.
+   Desktop: plain download. Never fails silently. */
+async function saveAsset(blob,name,dataURL,url){
+  if(!blob)return;
+  if(navigator.share){
+    try{
+      const file=new File([blob], name, {type:'image/gif'});
+      if(!navigator.canShare || navigator.canShare({files:[file]})){
+        await navigator.share({ files:[file], title:name });
+        return;                                   // sheet opened; user saved or cancelled
+      }
+    }catch(err){
+      if(err && err.name==='AbortError') return;  // user closed the sheet — done
+      /* NotAllowedError / TypeError / anything else: fall through to save view */
+    }
+  }
+  if(isIOS){ openSaveView(dataURL||url); } else { triggerDownloadURL(url,name); }
+}
+async function saveLoop(){ return saveAsset(lastBlob,lastName,lastDataURL,lastURL); }
+async function saveX(){
+  if(!xBytes)return;
+  if(!xBlob){ xBlob=new Blob([xBytes],{type:'image/gif'}); xURL=URL.createObjectURL(xBlob); }
+  if(!xDataURL && isIOS) xDataURL=bytesToDataURL(xBytes);   // lazy: built on demand
+  return saveAsset(xBlob,xName,xDataURL,xURL);
+}
+function openSaveView(src){
+  $('sv-img').src=src||lastDataURL||lastURL;
+  $('saveview').style.display='flex';
+}
+function closeSaveView(){ $('saveview').style.display='none'; }
+function triggerDownloadURL(url,name){
+  if(!url)return;
+  const a=document.createElement('a');
+  a.href=url; a.download=name; a.rel='noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function triggerDownload(){ triggerDownloadURL(lastURL,lastName); }
+/* base64 data URL (chunked btoa avoids call-stack limits on large GIFs) */
+function bytesToDataURL(bytes){
+  let bin=''; const CH=0x8000;
+  for(let i=0;i<bytes.length;i+=CH){ bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+CH)); }
+  return 'data:image/gif;base64,'+btoa(bin);
+}
+
+/* ============================================================================
+   UI WIRING
+   ========================================================================== */
+function buildSeg(host, items, key, dim){
+  host.innerHTML='';
+  items.forEach(it=>{
+    const b=document.createElement('button');
+    b.textContent=it.label; b.dataset.v=it.v;
+    b.setAttribute('aria-pressed', state[key]===it.v ? 'true':'false');
+    b.onclick=()=>{ state[key]=it.v; [...host.children].forEach(c=>c.setAttribute('aria-pressed', c.dataset.v===it.v?'true':'false')); };
+    host.appendChild(b);
+  });
+}
+buildSeg($('scheme'), [
+  {v:'DITHERVOID',label:'VOID'},{v:'TOXIC',label:'TOXIC'},{v:'INFRARED',label:'INFRA'},
+  {v:'VAPOR',label:'VAPOR'},{v:'ULTRAVIO',label:'ULTRA'},{v:'BONE',label:'BONE'},
+  {v:'ACIDBURN',label:'ACID'},{v:'HOTLINE',label:'HOTLNE'},{v:'LAZER',label:'LAZER'},
+  {v:'NUKEGLOW',label:'NUKE'},{v:'POISONFROG',label:'FROG'},{v:'BLACKLIGHT',label:'BLKLT'},
+  {v:'EMBERGRID',label:'EMBER'},{v:'CATHODE',label:'CRT'},
+  {v:'GENESIS',label:'GEN∞'},{v:'RANDOM',label:'RND'},
+],'scheme');
+buildSeg($('mode'), [
+  {v:'RANDOM',label:'AUTO'},{v:'PLASMA',label:'PLASMA'},{v:'RINGS',label:'RINGS'},
+  {v:'GLYPHS',label:'GLYPHS'},{v:'SCANS',label:'SCANS'},{v:'LATTICE',label:'LATTIC'},
+  {v:'ORBITALS',label:'ORBIT'},{v:'STRATA',label:'STRATA'},{v:'TENDRILS',label:'TENDRL'},
+],'mode');
+
+function bindSlider(id,labId,key,fmt){
+  const el=$(id); const out=$(labId);
+  const upd=()=>{ state[key]=+el.value; out.textContent=fmt?fmt(el.value):el.value; };
+  el.addEventListener('input',upd); upd();
+}
+bindSlider('corr','v-corr','corr');
+bindSlider('frames','v-frames','frames');
+const updDur=()=>{ $('lab-dur').textContent=(+$('frames').value/FPS).toFixed(2)+'s @ '+FPS+'fps'; };
+$('frames').addEventListener('input',updDur); updDur();
+$('corr').addEventListener('input',()=>{$('lab-corr').textContent=state.corr>75?'SEVERE':state.corr>40?'ACTIVE':state.corr>10?'LIGHT':'CLEAN';});
+$('corr').dispatchEvent(new Event('input'));
+
+document.querySelectorAll('.tg').forEach(tg=>{
+  tg.addEventListener('click',()=>{ const on=tg.dataset.on==='1'?0:1; tg.dataset.on=on; state.fx[tg.dataset.fx]=!!on; });
+});
+
+function randSeed(){ $('seed').value = (Math.random()*4294967295>>>0); }
+/* ============================================================================
+   DNA CARDS — a short code that IS the artwork's genome. Carries seed,
+   resolved colorway, source, corruption, frames, and all 37 sigil states,
+   guarded by CRC-8. Renders are byte-deterministic from these parameters, so
+   anyone holding the card can resurrect the exact loop, forever.
+   Format: PNDR-XXXX-XXXX-XXXX-XXXX-XXXXX  (base32, no I/L/O/U ambiguity)
+   ========================================================================== */
+const CARD_CH=['chroma','tracking','pixelsort','grain','blocks','scanlines','echo',
+  'wave','slice','vroll','mosh','ghost','melt','bleed','invert','crush','dropout',
+  'chrono','mirror','flay','autoph','weave','entropy','meta','tect',
+  'panes','hilb','splice','moire','braid','lungs',
+  'tunnel','kaleido','bloom','embers','runes','chimera'];
+const CARD_SCHEMES=[...SCHEME_KEYS,'GENESIS'];
+const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+function crc8(bytes){let c=0;
+  for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c&0x80)?((c<<1)^0x07)&0xff:(c<<1)&0xff;}
+  return c;}
+const CARD_MOTION=['AUTO','FLOW','STEP'];
+function packCard(seed,schemeKey,modeKey,corr,frames,fx,motion){
+  const si=CARD_SCHEMES.indexOf(schemeKey), mi=MODES.indexOf(modeKey);
+  const mo=Math.max(0,CARD_MOTION.indexOf(motion||'AUTO'));
+  if(si<0||mi<0)return '';
+  let v=0n;
+  const push=(val,bits)=>{v=(v<<BigInt(bits))|(BigInt(val)&((1n<<BigInt(bits))-1n));};
+  push(2,4); push(seed>>>0,32); push(si,5); push(mi,4); push(corr,7); push(frames,7); push(mo,2);
+  for(const ch of CARD_CH)push(fx[ch]?1:0,1);          // 98 bits
+  v<<=6n;                                              // pad to 13 bytes
+  const bytes=[];
+  for(let i=12;i>=0;i--)bytes[12-i]=Number((v>>BigInt(i*8))&0xffn);
+  bytes.push(crc8(bytes));                             // 14 bytes = 112 bits
+  let bv=0n; for(const b of bytes)bv=(bv<<8n)|BigInt(b);
+  bv<<=3n;                                             // pad to 115 bits (23 chars)
+  let out='';
+  for(let i=22;i>=0;i--)out+=B32[Number((bv>>BigInt(i*5))&31n)];
+  return 'PNDR-'+out.slice(0,4)+'-'+out.slice(4,8)+'-'+out.slice(8,12)+'-'+out.slice(12,16)+'-'+out.slice(16,20)+'-'+out.slice(20);
+}
+function unpackCard(str){
+  let s=String(str||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
+  if(s.startsWith('PNDR'))s=s.slice(4);
+  s=s.replace(/I|L/g,'1').replace(/O/g,'0').replace(/U/g,'V');
+  if(s.length!==21 && s.length!==23)return null;
+  let bv=0n;
+  for(const c of s){const d=B32.indexOf(c); if(d<0)return null; bv=(bv<<5n)|BigInt(d);}
+  const nBytes = s.length===21 ? 13 : 14;
+  bv>>=BigInt(s.length*5 - nBytes*8);                  // drop pad bits
+  const bytes=[];
+  for(let i=nBytes-1;i>=0;i--)bytes[nBytes-1-i]=Number((bv>>BigInt(i*8))&0xffn);
+  const crc=bytes.pop();
+  if(crc8(bytes)!==crc)return null;
+  let v=0n; for(const b of bytes)v=(v<<8n)|BigInt(b);
+  const TOT = s.length===21 ? 96 : 104;                // v1 payload 96b, v2 98b+6 pad
+  let used=0;
+  const pull=bits=>{const r=Number((v>>BigInt(TOT-used-bits))&((1n<<BigInt(bits))-1n))>>>0; used+=bits; return r;};
+  const ver=pull(4);
+  if(!((ver===1&&s.length===21)||(ver===2&&s.length===23)))return null;
+  const seed=pull(32), si=pull(5), mi=pull(4), corr=pull(7), frames=pull(7);
+  const mo=ver===2?pull(2):0;
+  if(si>=CARD_SCHEMES.length||mi>=MODES.length||corr>100||frames<8||frames>80||mo>2)return null;
+  const fx={}; for(const ch of CARD_CH)fx[ch]=pull(1)===1;
+  return {seed, scheme:CARD_SCHEMES[si], mode:MODES[mi], corr, frames, fx, motion:CARD_MOTION[mo]};
+}
+function applyCard(c){
+  $('seed').value=c.seed;
+  setSeg('scheme','scheme',c.scheme);
+  setSeg('mode','mode',c.mode);
+  $('corr').value=c.corr; $('corr').dispatchEvent(new Event('input'));
+  $('frames').value=c.frames; $('frames').dispatchEvent(new Event('input'));
+  document.querySelectorAll('.tg').forEach(tg=>{
+    const f=tg.dataset.fx; if(!(f in c.fx))return;
+    const on=c.fx[f]?1:0; tg.dataset.on=on; state.fx[f]=!!on;
+  });
+}
+$('dnacopy').addEventListener('click',async()=>{
+  const t=$('dna').value; if(!t)return;
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ $('dna').focus(); $('dna').select(); try{document.execCommand('copy');}catch(_){} }
+  $('dnacopy').textContent='✓'; setTimeout(()=>{$('dnacopy').textContent='⧉';},900);
+});
+$('dnaload').addEventListener('click',()=>{
+  if(busy)return;
+  const c=unpackCard($('dna').value);
+  if(!c){ $('dna').style.borderColor='var(--mag)';
+    setTimeout(()=>{$('dna').style.borderColor='';},900); return; }
+  applyCard(c);
+  generate();
+});
+$('dice').addEventListener('click',randSeed);
+randSeed();
+
+$('go').addEventListener('click',generate);
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(o=>o.setAttribute('aria-selected', o===t?'true':'false'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on', p.id===t.dataset.p));
+  });
+});
+$('download').addEventListener('click',saveLoop);
+$('xsave').addEventListener('click',saveX);
+$('download').textContent = (canShareFiles||isIOS) ? '⤓ PHOTOS' : '⤓ SAVE';
+$('sv-close').addEventListener('click',closeSaveView);
+$('saveview').addEventListener('click',e=>{ if(e.target===$('saveview'))closeSaveView(); });
+
+/* ============================================================================
+   SINGULARITY MINT — every tap proposes a batch of candidate universes and
+   keeps the one MAXIMALLY DISTANT from everything recently generated. DNA
+   distance spans source, colorway family, palette strategy, mask, motion
+   class, corruption band, and armed-channel overlap. History persists across
+   sessions where storage exists; exact parameter repeats are rejected outright.
+   Manual TRANSMIT stays fully deterministic: same seed + dials = same loop.
+   ========================================================================== */
+const STORM=['wave','slice','vroll','mosh','ghost','melt','bleed','invert','crush','dropout',
+             'chrono','mirror','flay','autoph','weave','entropy','meta','tect',
+             'panes','hilb','splice','moire','braid','lungs',
+             'tunnel','kaleido','bloom','embers','runes','chimera'];
+let DNA_HISTORY=[], SEEN_HASHES=new Set();
+const HIST_MAX=40;
+(async()=>{ try{
+  if(typeof window!=='undefined' && window.storage){
+    const rec=await window.storage.get('pandora-dna-v1');
+    if(rec&&rec.value){ const d=JSON.parse(rec.value);
+      DNA_HISTORY=d.hist||[]; SEEN_HASHES=new Set(d.seen||[]); }
+  }
+}catch(e){} })();
+function persistDNA(){ try{
+  if(typeof window!=='undefined' && window.storage)
+    window.storage.set('pandora-dna-v1', JSON.stringify({hist:DNA_HISTORY, seen:[...SEEN_HASHES].slice(-4000)}));
+}catch(e){} }
+
+function cryptoSeed(){
+  try{ const u=new Uint32Array(1); crypto.getRandomValues(u); return u[0]>>>0; }
+  catch(e){ return (Math.random()*4294967295)>>>0; }
+}
+function paramHash(c){ return c.seed+'|'+c.scheme+'|'+c.mode+'|'+c.corr+'|'+c.frames+'|'+c.channels.join(','); }
+function makeCandidate(){
+  const seed=cryptoSeed();
+  const scheme = Math.random()<0.45 ? 'GENESIS'
+    : SCHEME_KEYS[(Math.random()*SCHEME_KEYS.length)|0];
+  const mode = MODES[(Math.random()*MODES.length)|0];
+  const corr = 40+(Math.random()*61|0);
+  const frames = 24+8*((Math.random()*6)|0);            // 0.96s – 2.56s loops
+  const pick=STORM.slice();
+  for(let i=pick.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=pick[i];pick[i]=pick[j];pick[j]=t;}
+  const channels=pick.slice(0, 3+(Math.random()*7|0)).sort();
+  const sc=buildScene(seed, mode, true);                // cheap personality probe
+  const fam = scheme==='GENESIS' ? 'G'+genesisScheme(seed).fam : scheme;
+  const mo=sc.rev4.motion;
+  const dna={ mode:sc.mode, fam, palMode:sc.rev4.palMode, mask:sc.rev4.mask.type,
+    motion:(mo.quant?1:0)|(mo.tw?2:0)|(mo.strobes.length?4:0),
+    band:(corr/25)|0, ch:channels,
+    chi:sc.chimeraOps.map(o=>o.sel+'-'+o.tr).join('|'), gfam:sc.glyphset.length };
+  return {seed,scheme,mode,corr,frames,channels,dna};
+}
+function dnaDist(a,b){
+  let d=0;
+  if(a.mode!==b.mode)d+=3;
+  if(a.fam!==b.fam)d+=3;
+  if(a.palMode!==b.palMode)d+=1;
+  if(a.mask!==b.mask)d+=1.5;
+  if(a.motion!==b.motion)d+=1.5;
+  if(a.band!==b.band)d+=1;
+  if(a.chi!==b.chi)d+=1;
+  const A=new Set(a.ch), B=new Set(b.ch);
+  let inter=0; for(const x of A)if(B.has(x))inter++;
+  const uni=A.size+B.size-inter;
+  d+=4*(1-(uni?inter/uni:1));
+  return d;
+}
+function mintDNA(){
+  let best=null, bestScore=-1;
+  for(let t=0;t<24;t++){
+    const c=makeCandidate();
+    if(SEEN_HASHES.has(paramHash(c)))continue;          // absolute never-repeat guard
+    let minD=1e9;
+    for(const h of DNA_HISTORY){const d=dnaDist(c.dna,h); if(d<minD)minD=d;}
+    if(DNA_HISTORY.length===0)minD=1e9-t;
+    if(minD>bestScore){bestScore=minD;best=c;}
+  }
+  if(!best)best=makeCandidate();                        // astronomically unlikely
+  DNA_HISTORY.push(best.dna); if(DNA_HISTORY.length>HIST_MAX)DNA_HISTORY.shift();
+  SEEN_HASHES.add(paramHash(best));
+  persistDNA();
+  return best;
+}
+function applyCandidate(c, corrOverride){
+  setSeg('scheme','scheme', c.scheme);
+  setSeg('mode','mode', c.mode);
+  $('corr').value = corrOverride!==undefined ? corrOverride : c.corr;
+  $('corr').dispatchEvent(new Event('input'));
+  $('frames').value=c.frames; $('frames').dispatchEvent(new Event('input'));
+  $('seed').value=c.seed;
+  const on=new Set(c.channels);
+  document.querySelectorAll('.tg').forEach(tg=>{
+    const f=tg.dataset.fx; if(!STORM.includes(f))return;
+    const v=on.has(f)?1:0; tg.dataset.on=v; state.fx[f]=!!v;
+  });
+}
+$('oblivion').addEventListener('click',()=>{
+  if(busy)return;
+  applyCandidate(mintDNA(), 100);
+  generate();
+});
+
+/* TAP THE MONITOR = open the box: full roulette (colorway, source, corruption,
+   seed, random channel storm) and transmit immediately. Long-press on the
+   finished loop still opens the iOS save callout (no click fires on hold). */
+function setSeg(hostId,key,v){
+  state[key]=v;
+  [...$(hostId).children].forEach(c=>c.setAttribute('aria-pressed', c.dataset.v===v?'true':'false'));
+}
+function pandorize(){
+  if(busy)return;
+  applyCandidate(mintDNA());
+  generate();
+}
+/* tap the box any time — even mid-render. A running transmission is
+   abandoned on the spot and a fresh universe is minted. */
+document.querySelector('.screen-wrap').addEventListener('click',()=>{
+  if(busy){ RUN++; busy=false; }                       // kill the zombie's claim
+  pandorize();
+});
+
+// keyboard: space / enter to transmit
+document.addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='Enter') && e.target.tagName!=='INPUT'){ e.preventDefault(); generate(); }});
+</script></body>
+</html>
