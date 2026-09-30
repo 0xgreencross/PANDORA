@@ -7,11 +7,22 @@ his eye is the spec. Never call something "ready" without evidence.
 
 ## Prime laws
 1. REPO = TRUTH. github.com/0xgreencross/PANDORA, branch main. Pushing
-   index.html deploys dithervoid.art (GitHub Pages). Push in the SAME turn
+   deploys dithervoid.art (GitHub Pages; the box is /pandora/index.html). Push in the SAME turn
    as any approved change.
 2. NEVER touch /f3 (his private studio), /f1 (historical), /original
    (aesthetic source of truth) unless explicitly ordered.
-3. THE MANIFEST (public page, locked; amended by curator 2026-07-22):
+3. THE SITE MAP (curator's order, 2026-09-30): the ROOT is the STORMGLASS
+   project page (/index.html: the sales panel, the project, the sky, the
+   sale, the ledger, the rules). The BOX lives at /pandora/ with its rooms
+   (/pandora/gardens.html, showcase.html, sealed.html); the old root paths
+   are redirect stubs and the root forwards ?dna=, ?ui=, ?mint= to /pandora/
+   and ?s=&i= to /i/ (the token renderer address and the wall's QR codes
+   keep working). /engines/ is the archive: index.html, one wrapper page per
+   version (/engines/<slug>.html), the frozen bytes at /engines/raw/<slug>.html
+   (never edit a raw file: it is its commit, byte for byte), thumbs and
+   previews at /engines/img/. Built by /home/claude/site/build_*.py from
+   the manifest in build_engines.py; a new version = one line there.
+   THE MANIFEST of the box (locked; amended by curator 2026-07-22), now at /pandora/:
    monitor, CORRUPTION, VOID, CHROMA toggle, PALETTE grid (wrapped, never
    past an edge), SPLICE (52px button), DOWNLOAD/X/GARDEN/MINT row,
    SEED+DNA+RESURRECT, .brand header with ROOMS NAV (GARDENS · SHOWCASE ·
