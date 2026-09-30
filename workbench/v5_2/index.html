@@ -924,6 +924,20 @@ let MAT=1;
 const LOC=[0,0,0];
 function L7(x,y,z){ LOC[0]=x; LOC[1]=y; LOC[2]=z; return 7; }
 const FR={ th:0, c:new Float64Array(64), s:new Float64Array(64), v:new Float64Array(64), w:new Float64Array(96), lp:new Float64Array(24), nl:0 };
+/* THE WHOLE TURN (pass 24). A solid that turns a fraction of a turn a loop closes by its own symmetry,
+   but the loop painted on it has no such symmetry: at the wrap the skin stood a fraction of a turn off
+   (GLASS-B7S1H-N0Q68-D01CO). The plate's loop is now as long as the part's whole turn: the card's frame
+   count stays the guest loop's length, and the guest loop plays turnsFor(P) times while the part turns
+   once. Everything else on the plate already moves in whole turns a loop, so it only repeats. Measured
+   with the skin frozen (tools/stormglass/wrapgate.js): 16 subjects stood 0.7 to 17 percent of their
+   pixels off at one loop and 0.00 at the whole turn. EQUILIBRIUM and NEST stood under 2 percent off and
+   the curator left them at one loop; ZERO turns half a turn but its face mirrors onto itself and closes. */
+function turnsFor(P){
+  const S=SOLIDS[P.subject]; if(S) return S.sym;
+  switch(P.subject){ case 16: return 5; case 20: return 3; case 15: return 2;
+    case 13:{ for(const M of P.asm.mods) if(M.wears && M.arr===0 && M.mot===6 && M.cnt>1 && (M.rate&1)) return 2; return 1; } }
+  return 1;
+}
 function prepFrame(P,th){
   FR.th=th;
   const c=FR.c, s=FR.s, v=FR.v;
@@ -1639,8 +1653,8 @@ function renderLum(P,W,H,th,lum,mat,dep,texbuf){
           const lnx=r00*NRM[0]+r01*NRM[1]+r02*NRM[2], lny=r10*NRM[0]+r11*NRM[1]+r12*NRM[2], lnz=r20*NRM[0]+r21*NRM[1]+r22*NRM[2];
           const ax=Math.abs(lnx), ay=Math.abs(lny), az=Math.abs(lnz);
           const T=P.texTile;
-          if(ax>=ay&&ax>=az){ u=(lz0*(lnx>0?1:-1))/T; v=-ly0/T; }
-          else if(ay>=az){ u=lx0/T; v=lz0/T; }
+          if(ax>=ay*(1-1e-6)&&ax>=az*(1-1e-6)){ u=(lz0*(lnx>0?1:-1))/T; v=-ly0/T; }   /* pass 24: a face whose normal ties two planes exactly (the (1,1,1) faces of the icosahedron, the octahedron, the tetrahedron, the cuboctahedron...) picked its plane pixel by pixel on rounding noise: salt on the face, and a different salt every turn. The tie is broken the same way every time. */
+          else if(ay>=az*(1-1e-6)){ u=lx0/T; v=lz0/T; }
           else { u=(lx0*(lnz>0?-1:1))/T; v=-ly0/T; }
           u=((u%1)+1)%1; v=((v%1)+1)%1;
         }
@@ -2061,6 +2075,19 @@ function gifFrame(sink,width,height,indices,delay,minCodeSize){
   sink.u8(0x00);
 }
 function gifEnd(sink){ sink.u8(0x3B); return sink.done(); }
+/* THE TIGHT WRITER (pass 24). A frame carries only the pixels that changed since the last one: the
+   rest is one transparent index inside the smallest box that holds the change, and the frame before
+   stays on the screen (disposal 1). Same pixels, a third to a half of the bytes. */
+function gifFrameAt(sink,left,top,width,height,indices,delay,minCodeSize,tIdx){
+  sink.u8(0x21);sink.u8(0xF9);sink.u8(0x04);sink.u8(tIdx>=0?0x05:0x04);sink.u16(delay|0);sink.u8(tIdx>=0?tIdx:0);sink.u8(0x00);
+  sink.u8(0x2C);sink.u16(left);sink.u16(top);sink.u16(width);sink.u16(height);sink.u8(0x00);
+  sink.u8(minCodeSize);
+  const lzw=lzwEncode(minCodeSize,indices); let p=0;
+  while(p<lzw.length){const len=Math.min(255,lzw.length-p);sink.u8(len);for(let i=0;i<len;i++)sink.u8(lzw[p+i]);p+=len;}
+  sink.u8(0x00);
+}
+/* the print's palette: the inks, and one slot past them for the transparent index when there is room */
+function printPal(pal){ const p=pal.slice(0,256); return p.length<256 ? {pal:p.concat([[0,0,0]]), tIdx:p.length} : {pal:p, tIdx:-1}; }
 /*ENC-END*/
 
 /* ═══ V3, EMBEDDED. The whole CHIMERA engine rides along as text, so one
@@ -2176,24 +2203,44 @@ self.onmessage=function(e){
   /* when J.print is set this rung IS the print, so each frame is enlarged and
      encoded here, in the same pass that drew it */
   const PR=J.print||null;
-  let px=null, mcs=0;
+  let px=null, mcs=0, prev=null;
   if(PR){ px=new Uint8Array(PR.outW*PR.outH); mcs=PR.mcs; }
-  for(let q=0;q<J.frames.length;q++){
-    const i=J.frames[q], th=i/N*TAU;
-    const idx=new Uint8Array(W*H);
+  const drawFrame=(i,idx)=>{
+    const th=i/N*TAU;
     if(TEX.frames) TEX.i=i%TEX.N;
     renderLum(P,W,H,th,lum,mat,dep,tex);
     if(P.outline) outlineMask(W,H,dep,mat,line); else line.fill(0);
     inkFrame(P,W,H,lum,mat,line,idx,tex,th,dep,N);
+  };
+  /* the frame before this worker's run, drawn once more and kept as the reference */
+  if(PR && PR.tIdx>=0 && J.pred>=0){ prev=new Uint8Array(W*H); drawFrame(J.pred,prev); }
+  for(let q=0;q<J.frames.length;q++){
+    const i=J.frames[q];
+    const idx=new Uint8Array(W*H);
+    drawFrame(i,idx);
     let chunk=null;
     if(PR){
-      const k=PR.k, outW=PR.outW, outH=PR.outH;
-      let o=0;
-      for(let y=0;y<outH;y++){ const sy=Math.min(H-1,(y/k)|0)*W;
-        for(let x=0;x<outW;x++) px[o++]=idx[sy+((x/k)|0)]; }
-      const cs=new Sink(1<<16);
-      gifFrame(cs,outW,outH,px,PR.delay,mcs);
+      const k=PR.k, outW=PR.outW, outH=PR.outH, cs=new Sink(1<<16);
+      if(PR.tIdx>=0 && prev){
+        /* the box that holds every changed pixel, at the plate's raster */
+        let x0=W, y0=H, x1=-1, y1=-1;
+        for(let y=0;y<H;y++){ const r=y*W; for(let x=0;x<W;x++){ if(idx[r+x]!==prev[r+x]){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } } }
+        if(x1<0){ px[0]=PR.tIdx; gifFrameAt(cs,0,0,1,1,px.subarray(0,1),PR.delay,mcs,PR.tIdx); }   /* nothing moved: a frame of pure time */
+        else{
+          const bw=(x1-x0+1), bh=(y1-y0+1), ow=bw*k, oh=Math.min(outH-y0*k,bh*k);
+          let o=0;
+          for(let y=0;y<oh;y++){ const yy=y0+((y/k)|0), r=yy*W;
+            for(let x=0;x<ow;x++){ const xx=x0+((x/k)|0); px[o++]= idx[r+xx]===prev[r+xx] ? PR.tIdx : idx[r+xx]; } }
+          gifFrameAt(cs,x0*k,y0*k,ow,oh,px.subarray(0,ow*oh),PR.delay,mcs,PR.tIdx);
+        }
+      } else {
+        let o=0;
+        for(let y=0;y<outH;y++){ const sy=Math.min(H-1,(y/k)|0)*W;
+          for(let x=0;x<outW;x++) px[o++]=idx[sy+((x/k)|0)]; }
+        gifFrameAt(cs,0,0,outW,outH,px,PR.delay,mcs,-1);
+      }
       chunk=cs.done().slice().buffer;
+      if(PR.tIdx>=0){ if(!prev) prev=new Uint8Array(W*H); prev.set(idx); }
     }
     const msg={t:'frame',i:i,W:W,H:H,job:J.job,buf:idx.buffer};
     const tr=[idx.buffer];
@@ -2360,7 +2407,7 @@ function draw(force, wantPrint){
     /* THE PRINT RASTER is the curator's. Every rung divides 1080, so the file
        is the chosen rung doubled, quadrupled or octupled by nearest neighbour
        - a 2, 4 or 8 pixel grain - and the ladder simply stops there. */
-    RUN={ job, P, pal, N, card, rung:0, frames:null, have:0, W:0,
+    RUN={ job, P, pal, N:N*turnsFor(P), NB:N, card, rung:0, frames:null, have:0, W:0,
           tex:{frames:tex.frames, W:tex.W, N:tex.N},
           printing:!!wantPrint || draftOf(S.raster)===S.raster,   /* the draft IS the print at 540 and under */
           ladder: wantPrint ? ladderFor(S.raster) : browseLadder(S.raster) };
@@ -2481,14 +2528,20 @@ function rung(job){
   RUN.print=null;
   if(isPrint){
     const k=MASTER/W;
+    const pp=printPal(RUN.pal);
     RUN.print={ k:k, outW:MASTER, outH:Math.max(1,Math.round(H*k)),
-                delay:DELAY_CS, mcs:gifMinCodeSize(RUN.pal) };
+                delay:DELAY_CS, mcs:gifMinCodeSize(pp.pal), tIdx:(k===Math.floor(k))?pp.tIdx:-1 };
   }
-  $('osd').textContent='DRAWING '+dimLabel(W,H)+' · '+RUN.N+' FRAMES';
+  $('osd').textContent='DRAWING '+dimLabel(W,H)+' · '+RUN.N+' FRAMES'+(RUN.N!==RUN.NB?' ('+RUN.NB+' × '+(RUN.N/RUN.NB)+' TURNS)':'');
   $('prog').style.width='0%';
   const ws=pool(), N=RUN.N;
   /* interleave, so every worker carries an even share of the loop */
-  const lists=ws.map(()=>[]); for(let i=0;i<N;i++) lists[i%ws.length].push(i);
+  const lists=ws.map(()=>[]);
+  if(RUN.print && RUN.print.tIdx>=0){
+    /* the print is written as differences, so every worker takes a run of consecutive frames and
+       draws the frame before its run once more, unsent, as the reference for its first one */
+    const per=Math.ceil(N/ws.length); for(let i=0;i<N;i++) lists[Math.min(ws.length-1,(i/per)|0)].push(i);
+  } else for(let i=0;i<N;i++) lists[i%ws.length].push(i);
   let done=0;
   ws.forEach((w,k)=>{
     w.onmessage=e=>{
@@ -2503,7 +2556,8 @@ function rung(job){
         if(++done===ws.length) rungDone(job);
       }
     };
-    const msg={job, P:RUN.P, N, W, H, frames:lists[k], print:RUN.print};
+    const msg={job, P:RUN.P, N:RUN.NB, W, H, frames:lists[k], print:RUN.print,   /* th counts from the guest loop's length; the frame list runs the whole turn */
+                pred:(RUN.print&&RUN.print.tIdx>=0&&lists[k].length&&lists[k][0]>0)?lists[k][0]-1:-1 };
     if(RUN.tex){ msg.tex={W:RUN.tex.W, N:RUN.tex.N, frames:RUN.tex.frames.map(f=>f.slice().buffer)}; }
     w.postMessage(msg);
   });
@@ -2580,7 +2634,7 @@ function encodePrint(){
      order. The slow path below still exists for a rung that was drawn without
      them. */
   if(LAST.gif && LAST.gif.length===N && LAST.gif.every(c=>c&&c.length)){
-    const head=new Sink(2048); gifBegin(head,out,outH0,pal.slice(0,256),0);
+    const head=new Sink(2048); gifBegin(head,out,outH0,printPal(pal).pal,0);
     const h=head.done();
     let total=h.length+1;
     for(let f=0;f<N;f++) total+=LAST.gif[f].length;
@@ -2598,7 +2652,7 @@ function encodePrint(){
      reshaped */
   const outH=Math.max(1,Math.round(H*k));
   const sink=new Sink(1<<20);
-  const mcs=gifBegin(sink,out,outH,pal.slice(0,256),0);
+  const mcs=gifBegin(sink,out,outH,printPal(pal).pal,0);
   const px=new Uint8Array(out*outH);
   for(let f=0;f<N;f++){
     const src=frames[f]; let o=0;
