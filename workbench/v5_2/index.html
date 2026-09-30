@@ -895,7 +895,13 @@ function prepAssembly(P,th){
         case 1:{ /* RING */ const ang=k/M.cnt*TAU+(M.mot===2?th*M.rate*M.sign:0)+M.phase; x+=Math.cos(ang)*M.radius; z+=Math.sin(ang)*M.radius; y=M.height+bob; yw+=ang; break; }
         case 2:{ /* ROW */ x+=(t-0.5)*M.radius*2.2; y=sy+0.02+(M.mot===3?Math.sin(ph+k*0.9)*M.amp:0); z+=swing*(k%2?1:-1); break; }
         case 3:{ /* ORBIT */ const ang=k/M.cnt*TAU+th*M.rate*M.sign; const el=M.tilt; x+=Math.cos(ang)*M.radius; z+=Math.sin(ang)*M.radius*Math.cos(el); y=M.height+Math.sin(ang)*M.radius*Math.sin(el)+1.2; break; }
-        case 4:{ /* HELIX */ const kk=k-screw; const ang=kk*TAU/Math.max(3,M.cnt*0.7)+M.phase; x+=Math.cos(ang)*M.radius; z+=Math.sin(ang)*M.radius; y=0.4+kk*M.rise+sy; yw+=ang; break; }
+        case 4:{ /* HELIX */ let kk=k-screw, f=1;
+          /* pass 26: THE SCREW CLOSES. A screwing helix slid every block down one place a loop, and the block that left the
+             bottom had nowhere to come back from: the shape itself popped at the wrap (seeds 1, 28, 39, 88, 303, 902). Now
+             the places wrap round (kk mod cnt) and a block shrinks to nothing over its last place at the bottom and grows back
+             in above the top, so the set of blocks at th=TAU is the set at th=0 and nothing appears from nowhere. */
+          if(M.mot===5){ kk=((kk%M.cnt)+M.cnt)%M.cnt; f=Math.min(kk,M.cnt-kk); if(f>1)f=1; if(f<0.03) continue; s*=f; sy*=f; }
+          const ang=kk*TAU/Math.max(3,M.cnt*0.7)+M.phase; x+=Math.cos(ang)*M.radius; z+=Math.sin(ang)*M.radius; y=0.4+kk*M.rise+sy; yw+=ang; break; }
         case 5:{ /* CLUSTER */ const r1=mulberry32((k*7919+mi*104729)>>>0); x+=(r1()-0.5)*M.radius*1.6; z+=(r1()-0.5)*M.radius*1.6; y=M.height*0.5+r1()*M.height+bob*(k%2?1:-1); s=M.size*(0.6+r1()*0.8); sy=s*M.aspect; break; }
         case 6:{ /* COLONNADE */ x+=(t-0.5)*M.radius*2.4; y=M.height*0.5; s=M.size; sy=M.height*0.5; z+=(k%2?0.3:-0.3)*swing*2; break; }
         default:{ /* ARCH: a standing ring */ y=M.radius+0.2; s=M.radius; sy=M.size; yw+=(M.mot===1?th*M.rate*M.sign:0); }
