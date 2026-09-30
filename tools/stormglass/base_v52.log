@@ -1,10 +1,10 @@
-seed     696969 raster 270 1:1   w-1 1080x1080 FOG+RAIN 1736KB md5 19e1a0c0f14198c11fa3dd250efc05fe 10452ms
-seed      23757 raster 270 9:16  w-1 1080x1920 FOG+RAIN 2665KB md5 0f56b464e31c1048c4d1e6cd0f690d18 12293ms
-seed       4242 raster 135 1:1   w-1    1080x1080 CLEAR 1057KB md5 dcd38d21fff50506be9502b284e93d26 5457ms
-seed      31337 raster 135 1:1   w 2     1080x1080 RAIN 1161KB md5 83aef5f5bd23185bc3e824e755f31f80 3111ms
-seed     424242 raster 540 16:9  w-1     1080x608 STORM 724KB md5 b4640f8effe2e9e96bcce2f1faea41ff 4898ms
-seed       9001 raster 270 9:16  w 4 1080x1920 OVERCAST 3443KB md5 494a0dd4756f323c62da083ffca02a7f 6442ms
-seed         77 raster 135 1:1   w-1     1080x1080 RAIN 1235KB md5 272728afef9c72baad1a41cf66d8eafb 3423ms
-seed  123456789 raster 135 16:9  w 1       1080x608 FOG 487KB md5 d9e2b18af3454c6f36c0feee77b0b5ff 2705ms
+seed     696969 raster 270 1:1   w-1 1080x1080 FOG+RAIN 7366KB md5 5d967ddae25972ed0303f46b82552925 19154ms
+seed      23757 raster 270 9:16  w-1 1080x1920 FOG+RAIN 1741KB md5 d0447d5e06f8a8af4d2a32068da50978 15366ms
+seed       4242 raster 135 1:1   w-1    1080x1080 CLEAR 501KB md5 fc447bf6b0fd98ab76eedb231ff5d049 7520ms
+seed      31337 raster 135 1:1   w 2     1080x1080 RAIN 665KB md5 03e55a22d6836383cf737226483cbf16 3916ms
+seed     424242 raster 540 16:9  w-1     1080x608 STORM 526KB md5 440863c77300fc28bfc2255d966f66b6 6451ms
+seed       9001 raster 270 9:16  w 4 1080x1920 OVERCAST 1883KB md5 7f94b2a59ffd3ff4d4e5e1a7d0bd31c8 6421ms
+seed         77 raster 135 1:1   w-1     1080x1080 RAIN 933KB md5 3f1cf18129e2d6ccb4e1e5d7d55b61d0 4735ms
+seed  123456789 raster 135 16:9  w 1       1080x608 FOG 173KB md5 c8137928a8796bac4c923bbea2fcd8ce 3667ms
 errors: none
 XDONE
