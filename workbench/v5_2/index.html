@@ -1599,6 +1599,53 @@ function skyLum(P,dx,dy,dz,sx,sy,sz){
   return l;
 }
 
+/* THE SKIN, LOOKED UP (pass 27: lifted out of renderLum verbatim, so the frame that is marched and the
+   frame that is only painted read the loop through the same text). P, the hit point, its material
+   (5 the screen, 7 the part that wears the loop) and the frame's phase; prepFrame(P,th) has run. */
+function skinIdx(P,hx,hy2,hz,m,th){
+  let texIdx=-1;
+  const tw=TEX.W; let u=-1, v=-1;
+  if(m===5){
+    const c0=FR.c[0], s0=FR.s[0]; const lx=c0*hx+s0*hz;
+    u=(lx+1.7)/3.4; v=1-((hy2-1.95)+1.7)/3.4;
+  } else if(m===7){
+    /* triplanar, IN THE PART'S OWN FRAME (pass 19): the face of the form that the surface
+       mostly faces chooses the plane, so the loop wraps a sphere and tiles a wall instead of
+       hanging in front of either like a poster; and because the frame turns with the part,
+       the loop is painted on it and turns with it, never sliding, never swapping planes. The
+       part reports its frame through LOC; the frame's rotation is read off LOC's change under
+       three world nudges (a rigid frame, so the nudges are exact), and the world normal is
+       turned into it. */
+    sceneSDF(P,hx,hy2,hz); const lx0=LOC[0], ly0=LOC[1], lz0=LOC[2]; const en=0.002;
+    sceneSDF(P,hx+en,hy2,hz); const r00=(LOC[0]-lx0)/en, r10=(LOC[1]-ly0)/en, r20=(LOC[2]-lz0)/en;
+    sceneSDF(P,hx,hy2+en,hz); const r01=(LOC[0]-lx0)/en, r11=(LOC[1]-ly0)/en, r21=(LOC[2]-lz0)/en;
+    sceneSDF(P,hx,hy2,hz+en); const r02=(LOC[0]-lx0)/en, r12=(LOC[1]-ly0)/en, r22=(LOC[2]-lz0)/en;
+    normalAt(P,hx,hy2,hz,th);
+    const lnx=r00*NRM[0]+r01*NRM[1]+r02*NRM[2], lny=r10*NRM[0]+r11*NRM[1]+r12*NRM[2], lnz=r20*NRM[0]+r21*NRM[1]+r22*NRM[2];
+    const ax=Math.abs(lnx), ay=Math.abs(lny), az=Math.abs(lnz);
+    const T=P.texTile;
+    if(ax>=ay*(1-1e-6)&&ax>=az*(1-1e-6)){ u=(lz0*(lnx>0?1:-1))/T; v=-ly0/T; }   /* pass 24: a face whose normal ties two planes exactly (the (1,1,1) faces of the icosahedron, the octahedron, the tetrahedron, the cuboctahedron...) picked its plane pixel by pixel on rounding noise: salt on the face, and a different salt every turn. The tie is broken the same way every time. */
+    else if(ay>=az*(1-1e-6)){ u=lx0/T; v=lz0/T; }
+    else { u=(lx0*(lnz>0?-1:1))/T; v=-ly0/T; }
+    u=((u%1)+1)%1; v=((v%1)+1)%1;
+  }
+  if(u>=0){
+    let tx=(u*tw)|0, ty=(v*tw)|0;
+    if(tx<0)tx=0; if(tx>=tw)tx=tw-1; if(ty<0)ty=0; if(ty>=tw)ty=tw-1;
+    texIdx=TEX.frames[TEX.i][ty*tw+tx];
+  }
+  return texIdx;
+}
+/* the hit points of the skin, kept by renderLum when a march is to be painted again */
+let SKINHIT=null, SKINM=null;
+/* PAINT A LATER TURN (pass 27). The plate's light, material and depth for frame b+kN are frame b's;
+   only the skin moves, because the part has turned by its own symmetry and the loop painted on it has
+   not. So the loop is looked up again at frame b's hit points under the later phase. */
+function paintSkin(P,W,H,th,mat,tex,hits,hm,out){
+  prepFrame(P,th);
+  out.set(tex);
+  for(let i=0;i<W*H;i++){ if(mat[i]!==6) continue; const t=skinIdx(P,hits[i*3],hits[i*3+1],hits[i*3+2],hm[i],th); if(t>=0) out[i]=t; }
+}
 /* ───────────────────────────── one frame ────────────────────────────────── */
 /* Fills lum (Float32 W*H in 0..1+), mat (Uint8), dep (Float32) for the frame.
    sun-accent pixels are flagged in mat as 3. */
@@ -1667,36 +1714,8 @@ function renderLum(P,W,H,th,lum,mat,dep,texbuf){
          a decal projected from the camera, so a bead, a bob or a block reads
          as painted with it from where you stand. */
       if(TEX.frames && TEX.frames[TEX.i]){
-        const tw=TEX.W; let u=-1, v=-1;
-        if(m===5){
-          const c0=FR.c[0], s0=FR.s[0]; const lx=c0*hx+s0*hz;
-          u=(lx+1.7)/3.4; v=1-((hy2-1.95)+1.7)/3.4;
-        } else if(m===7){
-          /* triplanar, IN THE PART'S OWN FRAME (pass 19): the face of the form that the surface
-             mostly faces chooses the plane, so the loop wraps a sphere and tiles a wall instead of
-             hanging in front of either like a poster; and because the frame turns with the part,
-             the loop is painted on it and turns with it, never sliding, never swapping planes. The
-             part reports its frame through LOC; the frame's rotation is read off LOC's change under
-             three world nudges (a rigid frame, so the nudges are exact), and the world normal is
-             turned into it. */
-          sceneSDF(P,hx,hy2,hz); const lx0=LOC[0], ly0=LOC[1], lz0=LOC[2]; const en=0.002;
-          sceneSDF(P,hx+en,hy2,hz); const r00=(LOC[0]-lx0)/en, r10=(LOC[1]-ly0)/en, r20=(LOC[2]-lz0)/en;
-          sceneSDF(P,hx,hy2+en,hz); const r01=(LOC[0]-lx0)/en, r11=(LOC[1]-ly0)/en, r21=(LOC[2]-lz0)/en;
-          sceneSDF(P,hx,hy2,hz+en); const r02=(LOC[0]-lx0)/en, r12=(LOC[1]-ly0)/en, r22=(LOC[2]-lz0)/en;
-          normalAt(P,hx,hy2,hz,th);
-          const lnx=r00*NRM[0]+r01*NRM[1]+r02*NRM[2], lny=r10*NRM[0]+r11*NRM[1]+r12*NRM[2], lnz=r20*NRM[0]+r21*NRM[1]+r22*NRM[2];
-          const ax=Math.abs(lnx), ay=Math.abs(lny), az=Math.abs(lnz);
-          const T=P.texTile;
-          if(ax>=ay*(1-1e-6)&&ax>=az*(1-1e-6)){ u=(lz0*(lnx>0?1:-1))/T; v=-ly0/T; }   /* pass 24: a face whose normal ties two planes exactly (the (1,1,1) faces of the icosahedron, the octahedron, the tetrahedron, the cuboctahedron...) picked its plane pixel by pixel on rounding noise: salt on the face, and a different salt every turn. The tie is broken the same way every time. */
-          else if(ay>=az*(1-1e-6)){ u=lx0/T; v=lz0/T; }
-          else { u=(lx0*(lnz>0?-1:1))/T; v=-ly0/T; }
-          u=((u%1)+1)%1; v=((v%1)+1)%1;
-        }
-        if(u>=0){
-          let tx=(u*tw)|0, ty=(v*tw)|0;
-          if(tx<0)tx=0; if(tx>=tw)tx=tw-1; if(ty<0)ty=0; if(ty>=tw)ty=tw-1;
-          texIdx=TEX.frames[TEX.i][ty*tw+tx];
-        }
+        texIdx=skinIdx(P,hx,hy2,hz,m,th);
+        if(SKINHIT&&texIdx>=0){ SKINHIT[i*3]=hx; SKINHIT[i*3+1]=hy2; SKINHIT[i*3+2]=hz; SKINM[i]=m; }
       } else if(m===5) m=1;
       if(m===5||m===7) m=1;
       if(m===0){ nx=0; ny=1; nz=0; hy2=P.wy; }
@@ -2246,14 +2265,8 @@ self.onmessage=function(e){
     if(P.outline) outlineMask(W,H,dep,mat,line); else line.fill(0);
     inkFrame(P,W,H,lum,mat,line,idx,tex,th,dep,N);
   };
-  /* the frame before this worker's run, drawn once more and kept as the reference */
-  if(PR && PR.tIdx>=0 && J.pred>=0){ prev=new Uint8Array(W*H); drawFrame(J.pred,prev); }
-  for(let q=0;q<J.frames.length;q++){
-    const i=J.frames[q];
-    const idx=new Uint8Array(W*H);
-    drawFrame(i,idx);
-    let chunk=null;
-    if(PR){
+  /* a frame of the print, written as GIF: whole, or as the box of what changed against ref */
+  const encodeFrame=(idx,prev)=>{
       const k=PR.k, outW=PR.outW, outH=PR.outH, cs=new Sink(1<<16);
       if(PR.tIdx>=0 && prev){
         /* the box that holds every changed pixel, at the plate's raster */
@@ -2273,7 +2286,46 @@ self.onmessage=function(e){
           for(let x=0;x<outW;x++) px[o++]=idx[sy+((x/k)|0)]; }
         gifFrameAt(cs,0,0,outW,outH,px,PR.delay,mcs,-1);
       }
-      chunk=cs.done().slice().buffer;
+      return cs.done().slice().buffer;
+  };
+  /* MARCH ONCE, PAINT s TIMES (pass 27). The job names base frames 0..N-1 and the turns s; frame b+kN is
+     frame b painted again. A print written as differences keeps a reference per turn: the frame before
+     this worker's first base, in every turn, drawn once more (marched once, painted s times) and unsent. */
+  if(J.bases){
+    const s=J.s, hits=new Float32Array(W*H*3), hm=new Uint8Array(W*H), pt=new Uint8Array(W*H);
+    const ink=(i,tb,idx)=>{ if(P.outline) outlineMask(W,H,dep,mat,line); else line.fill(0); inkFrame(P,W,H,lum,mat,line,idx,tb,i/N*TAU,dep,N); };
+    const march=(b)=>{ if(TEX.frames) TEX.i=b%TEX.N; SKINHIT=hits; SKINM=hm; renderLum(P,W,H,b/N*TAU,lum,mat,dep,tex); SKINHIT=null; SKINM=null; };
+    const paint=(i,idx)=>{ if(i<N){ ink(i,tex,idx); return; } if(TEX.frames) TEX.i=i%TEX.N; paintSkin(P,W,H,i/N*TAU,mat,tex,hits,hm,pt); ink(i,pt,idx); };
+    const tight=!!(PR&&PR.tIdx>=0);
+    const refs=new Array(s).fill(null);
+    if(tight && J.bases.length){
+      const a=J.bases[0], p=(a-1+N)%N; march(p);
+      for(let k=0;k<s;k++){ const f=a+k*N-1; if(f<0) continue; refs[k]=new Uint8Array(W*H); paint(f,refs[k]); }
+    }
+    for(let q=0;q<J.bases.length;q++){
+      const b=J.bases[q]; march(b);
+      for(let k=0;k<s;k++){
+        const i=b+k*N, idx=new Uint8Array(W*H);
+        paint(i,idx);
+        let chunk=null;
+        if(PR){ chunk=encodeFrame(idx,tight?refs[k]:null); if(tight){ if(!refs[k]) refs[k]=new Uint8Array(W*H); refs[k].set(idx); } }
+        const msg={t:'frame',i:i,W:W,H:H,job:J.job,buf:idx.buffer}; const tr=[idx.buffer];
+        if(chunk){ msg.gif=chunk; tr.push(chunk); }
+        self.postMessage(msg,tr);
+      }
+    }
+    self.postMessage({t:'done',job:J.job,W:W,H:H});
+    return;
+  }
+  /* the frame before this worker's run, drawn once more and kept as the reference */
+  if(PR && PR.tIdx>=0 && J.pred>=0){ prev=new Uint8Array(W*H); drawFrame(J.pred,prev); }
+  for(let q=0;q<J.frames.length;q++){
+    const i=J.frames[q];
+    const idx=new Uint8Array(W*H);
+    drawFrame(i,idx);
+    let chunk=null;
+    if(PR){
+      chunk=encodeFrame(idx,prev);
       if(PR.tIdx>=0){ if(!prev) prev=new Uint8Array(W*H); prev.set(idx); }
     }
     const msg={t:'frame',i:i,W:W,H:H,job:J.job,buf:idx.buffer};
@@ -2571,7 +2623,12 @@ function rung(job){
   const ws=pool(), N=RUN.N;
   /* interleave, so every worker carries an even share of the loop */
   const lists=ws.map(()=>[]);
-  if(RUN.print && RUN.print.tIdx>=0){
+  const S_T=RUN.N/RUN.NB;                     /* the turns: frame b+kN is frame b painted again (pass 27) */
+  if(S_T>1){
+    const NB=RUN.NB;
+    if(RUN.print && RUN.print.tIdx>=0){ const per=Math.ceil(NB/ws.length); for(let b=0;b<NB;b++) lists[Math.min(ws.length-1,(b/per)|0)].push(b); }
+    else for(let b=0;b<NB;b++) lists[b%ws.length].push(b);
+  } else if(RUN.print && RUN.print.tIdx>=0){
     /* the print is written as differences, so every worker takes a run of consecutive frames and
        draws the frame before its run once more, unsent, as the reference for its first one */
     const per=Math.ceil(N/ws.length); for(let i=0;i<N;i++) lists[Math.min(ws.length-1,(i/per)|0)].push(i);
@@ -2590,7 +2647,8 @@ function rung(job){
         if(++done===ws.length) rungDone(job);
       }
     };
-    const msg={job, P:RUN.P, N:RUN.NB, W, H, frames:lists[k], print:RUN.print,   /* th counts from the guest loop's length; the frame list runs the whole turn */
+    const msg= S_T>1 ? {job, P:RUN.P, N:RUN.NB, W, H, bases:lists[k], s:S_T, print:RUN.print}   /* pass 27: base frames, each marched once and painted s times */
+               : {job, P:RUN.P, N:RUN.NB, W, H, frames:lists[k], print:RUN.print,   /* th counts from the guest loop's length; the frame list runs the whole turn */
                 pred:(RUN.print&&RUN.print.tIdx>=0&&lists[k].length&&lists[k][0]>0)?lists[k][0]-1:-1 };
     if(RUN.tex){ msg.tex={W:RUN.tex.W, N:RUN.tex.N, frames:RUN.tex.frames.map(f=>f.slice().buffer)}; }
     w.postMessage(msg);
