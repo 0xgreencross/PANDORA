@@ -39,15 +39,15 @@ describe("THE CANDLE", function () {
   beforeEach(async () => { ({ storm, glass } = await H.deployAll()); [, a, b, c, d] = await ethers.getSigners(); });
 
   it("refuses under the reserve and under the leader; refunds the outbid at once; rerolls the plate", async () => {
-    await expect(storm.connect(a).bid({ value: ETH("0.009") })).to.be.revertedWith("bid more");
+    await expect(storm.connect(a).bid({ value: ETH("0.049") })).to.be.revertedWith("bid more");
     const s0 = await storm.zeroSeed();
-    await storm.connect(a).bid({ value: ETH("0.01") });
+    await storm.connect(a).bid({ value: ETH("0.05") });
     const s1 = await storm.zeroSeed(); expect(s1).to.not.equal(s0);
-    await expect(storm.connect(b).bid({ value: ETH("0.01") })).to.be.revertedWith("bid more");
+    await expect(storm.connect(b).bid({ value: ETH("0.05") })).to.be.revertedWith("bid more");
     const before = await bal(a.address);
-    await storm.connect(b).bid({ value: ETH("0.02") });
-    expect(await bal(a.address)).to.equal(before + ETH("0.01"));           // a refunded in b's transaction
-    expect(await bal(await storm.getAddress())).to.equal(ETH("0.02"));
+    await storm.connect(b).bid({ value: ETH("0.1") });
+    expect(await bal(a.address)).to.equal(before + ETH("0.05"));           // a refunded in b's transaction
+    expect(await bal(await storm.getAddress())).to.equal(ETH("0.1"));
     expect(await storm.bidsCount()).to.equal(2);
   });
 
@@ -94,7 +94,7 @@ describe("THE CANDLE", function () {
     await H.warpTo((await storm.candleClose()) + 1n);
     await storm.settleCandle();
     expect(await storm.ownerOf(0)).to.equal(ARTIST);
-    expect(await storm.FOUNDING()).to.equal(ETH("0.01"));
+    expect(await storm.FOUNDING()).to.equal(ETH("0.05"));
   });
 
   it("a bidder that refuses ether is owed, and can withdraw", async () => {
