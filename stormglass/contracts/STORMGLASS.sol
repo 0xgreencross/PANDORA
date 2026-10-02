@@ -50,7 +50,7 @@ interface IGlass {
 contract STORMGLASS {
     // ---------------------------------------------------------- the constants
     address public constant ARTIST   = 0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359;
-    uint256 public constant RESERVE  = 0.01 ether;   // the least a candle bid may be; FOUNDING if nobody bids
+    uint256 public constant RESERVE  = 0.05 ether;   // the least a candle bid may be; FOUNDING if nobody bids
     uint256 public constant HALF     = 8640;         // seconds per halving: 2.4 hours
     uint256 public constant CANDLE   = 24 hours;     // the candle burns at least this long
     uint256 public constant WINDOW   = 6 hours;      // and goes out inside this window after
