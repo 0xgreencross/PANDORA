@@ -190,7 +190,8 @@ contract GLASS {
         if (p.code.length == 0) return (false, 0);
         (bool ok, bytes memory r) = p.staticcall{gas: 30000}(abi.encodeWithSelector(0x3850c7bd));
         if (!ok || r.length < 224) return (false, 0);
-        return (true, abi.decode(r, (uint160)));
+        uint256 w0 = abi.decode(r, (uint256)); if (w0 > type(uint160).max) return (false, 0);   // a malformed answer is no answer
+        return (true, uint160(w0));
     }
 
     // ---------------------------------------------------------- tiny libs

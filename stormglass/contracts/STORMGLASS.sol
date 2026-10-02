@@ -28,7 +28,8 @@ pragma solidity 0.8.24;
 
   WITNESSES. Anyone may pay any amount toward the day's plate: it buys seats
   at the founding rate (at most one seat a day), cuts a notch on the plate in
-  the accent ink, and raises the day's price by what was paid.
+  the accent ink, and adds what was paid to the day's starting price (the
+  price then falls from the higher start, so a late witness moves it little).
 
   MONEY. Seventy to the artist, in the transaction. Twenty to the seats.
   Ten to the vault. Plate Zero: seventy to the artist, thirty to the vault.
@@ -179,13 +180,21 @@ contract STORMGLASS {
         if (n > 0 && !inWindow) _pay(bids[n - 1].bidder, lead);
     }
 
-    /* the moment the candle went out, drawn at the settle from the hash of revealBlock. If no
-       one settles for 256 blocks the hash is gone and the candle is taken to have burned the
-       whole window: a rule fixed in advance, not a hash the settler could choose. */
+    /* the moment the candle went out, drawn at the settle from the hash of revealBlock, read from
+       the chain's history contract (EIP-2935) once it is older than 256 blocks, so the draw stands
+       for about 27 hours. If no one settles even then, the candle is taken to have burned the whole
+       window: a rule fixed in advance, not a hash the settler could choose. */
+    address constant HISTORY = 0x0000F90827F1C53a10cb7A02335B175320002935;   // EIP-2935: the last 8191 block hashes
+    function _hashOf(uint256 b) private view returns (bytes32 h) {
+        h = blockhash(b);
+        if (h != bytes32(0) || HISTORY.code.length == 0) return h;
+        (bool ok, bytes memory r) = HISTORY.staticcall{gas: 30000}(abi.encode(b));
+        if (ok && r.length == 32) h = abi.decode(r, (bytes32));
+    }
     function settleCandle() external nonReentrant {
         require(!candleSettled, "settled");
         require(block.timestamp >= candleOpen + CANDLE + WINDOW && block.number > revealBlock, "the candle burns");
-        bytes32 h = blockhash(revealBlock);
+        bytes32 h = _hashOf(revealBlock);
         candleClose = h == bytes32(0) ? candleOpen + CANDLE + WINDOW - 1
                                       : candleOpen + CANDLE + (uint256(keccak256(abi.encodePacked(h, address(this)))) % WINDOW);
         candleSettled = true;
@@ -246,7 +255,8 @@ contract STORMGLASS {
             if (dead) break;
             _open(id + 1, _seedFor(D.seed, D.pick), D.close);
         }
-        if (today > sampledFor) { sampledFor = today; _sample(); }   // one sample a sync: a catch-up cannot refill the week (audit, Oct 2)
+        // one sample a day, and only once caught up: a long catch-up cannot fill the week in one block (audits, Oct 2)
+        if (!dead && block.timestamp < plates[today].close && today > sampledFor) { sampledFor = today; _sample(); }
     }
 
     function _open(uint256 id, uint32 seed, uint64 open) private {
@@ -339,7 +349,7 @@ contract STORMGLASS {
         emit Bought(id, msg.sender, price, pick);
     }
 
-    /* THE WITNESS. Any amount toward the day's plate: a seat (at most one a day), a notch, and the price rises by it. */
+    /* THE WITNESS. Any amount toward the day's plate: a seat (at most one a day), a notch, and it is added to the day's starting price. */
     function witness(uint256 day) external payable nonReentrant {
         _sync();
         (uint256 id, , , bool open) = onSale();
@@ -401,7 +411,7 @@ contract STORMGLASS {
         if (!ok) owed[to] += v;
     }
     /* gifts land in the vault (royalties go to the payee) */
-    receive() external payable { vault += msg.value; }
+    receive() external payable { require(!dead, "the glass is dead"); vault += msg.value; }
 
     // ═══════════════════════════════════════════════════════════ THE MARKS
     function _notch(uint32[] storage arr, address who) private {
@@ -413,6 +423,7 @@ contract STORMGLASS {
     function lineageOf(uint256 id) external view returns (uint8[] memory out) {
         // the picks that led to plate id: picks[0..id-1]
         uint256 n = id < picks.length ? id : picks.length;
+        if (n > 400) n = 400;   // the page draws the first 400 ancestors and no more; so tokenURI's cost stops growing
         out = new uint8[](n); for (uint256 i = 0; i < n; i++) out[i] = picks[i];
     }
     function bidsCount() external view returns (uint256) { return bids.length; }
