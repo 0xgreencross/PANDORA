@@ -35,6 +35,9 @@ describe("THE CLOCK", function () {
   });
 });
 
+/* the window is over and the block that draws the close is mined */
+async function burnOut() { await H.warp(30 * 3600 + 5); await H.mine(9010); }
+
 describe("THE CANDLE", function () {
   let storm, glass, a, b, c, d;
   beforeEach(async () => { ({ storm, glass } = await H.deployAll()); [, a, b, c, d] = await ethers.getSigners(); });
@@ -52,48 +55,44 @@ describe("THE CANDLE", function () {
     expect(await storm.bidsCount()).to.equal(2);
   });
 
-  it("cannot be settled while it burns; the window escrows; the leader at the flame wins; the rest are refunded; FOUNDING is set; 70/30", async () => {
+  it("cannot be settled while it burns; the window holds every bid; the leader at the drawn moment wins; the rest are refunded; FOUNDING is set; 70/30", async () => {
     await storm.connect(a).bid({ value: ETH("0.1") });
-    await storm.connect(b).bid({ value: ETH("0.2") });
+    await storm.connect(b).bid({ value: ETH("0.2") });                    // a refunded at once (before the window)
+    await expect(storm.connect(c).bid({ value: ETH("0.205") })).to.be.revertedWith("bid more");   // less than 5% above
     await expect(storm.settleCandle()).to.be.revertedWith("the candle burns");
-    // twenty-four hours pass, and the blocks with them
-    await H.warp(24 * 3600 - 7210); await H.mine(7215);
-    expect(await storm.candleClose()).to.equal(0);
-    // a bid inside the window seals the candle and is escrowed (b is NOT refunded)
+    await H.warp(24 * 3600 + 5); await H.mine(7215);                      // inside the window
     const bBefore = await bal(b.address);
     await storm.connect(c).bid({ value: ETH("0.3") });
-    expect(await bal(b.address)).to.equal(bBefore);
-    const close = await storm.candleClose();
-    const open = await storm.candleOpen();
-    expect(close).to.be.gte(open + 24n * 3600n); expect(close).to.be.lt(open + 30n * 3600n);
-    expect(await bal(await storm.getAddress())).to.equal(ETH("0.5"));     // b and c escrowed
-    // d bids too, still inside the window? only if before close
-    const t = await H.now();
-    let dBid = false;
-    if (BigInt(t) + 10n < close) { await storm.connect(d).bid({ value: ETH("0.4") }); dBid = true; }
-    await H.warpTo(close + 1n);
+    expect(await bal(b.address)).to.equal(bBefore);                       // the leader at the window's opening is held
+    await H.warp(3 * 3600);
+    await storm.connect(d).bid({ value: ETH("0.4") });                    // c is held too
+    expect(await bal(await storm.getAddress())).to.equal(ETH("0.9"));     // b, c and d held
+    await expect(storm.settleCandle()).to.be.revertedWith("the candle burns");
+    expect(await storm.candleClose()).to.equal(0);                         // nobody can know it yet
+    await burnOut();
     await expect(storm.connect(a).bid({ value: ETH("1") })).to.be.revertedWith("the candle is out");
-    const artistBefore = await bal(PAYEE);
-    const cBefore = await bal(c.address), bBefore2 = await bal(b.address);
+    const payBefore = await bal(PAYEE);
+    const before = { b: await bal(b.address), c: await bal(c.address), d: await bal(d.address) };
     await storm.settleCandle();
-    const winner = dBid ? d : c, winAmt = dBid ? ETH("0.4") : ETH("0.3");
-    expect(await storm.ownerOf(0)).to.equal(winner.address);
+    const close = await storm.candleClose(), open = await storm.candleOpen();
+    expect(close).to.be.gte(open + 24n * 3600n); expect(close).to.be.lt(open + 30n * 3600n);
+    const B = []; for (let i = 0; i < 4; i++) B.push(await storm.bids(i));
+    let w = -1; for (let i = 1; i < 4; i++) if (B[i][2] <= close) w = i;    // b (index 1) was leader at the opening
+    const who = [a, b, c, d][w], winAmt = B[w][1];
+    expect(await storm.ownerOf(0)).to.equal(who.address);
     expect(await storm.FOUNDING()).to.equal(winAmt);
-    expect(await bal(PAYEE)).to.equal(artistBefore + winAmt * 70n / 100n);
+    expect(await bal(PAYEE)).to.equal(payBefore + winAmt * 70n / 100n);
     expect(await bal(ARTIST)).to.equal(0n);                              // the artist address is not paid
     expect(await storm.vault()).to.equal(winAmt - winAmt * 70n / 100n);
-    expect(await bal(b.address)).to.equal(bBefore2 + ETH("0.2"));          // the pre-window leader, refunded at the end
-    if (dBid) expect(await bal(c.address)).to.equal(cBefore + ETH("0.3")); // c outbid inside the window, refunded at the end
+    for (const [i, x, k] of [[1, b, "b"], [2, c, "c"], [3, d, "d"]]) if (i !== w) expect(await bal(x.address)).to.equal(before[k] + B[i][1]);
     await conserved(storm);
-    const p0 = await storm.plates(0); expect(p0.sold).to.equal(true); expect(p0.buyer).to.equal(winner.address);
-    expect(await storm.picksCount()).to.equal(1);
+    const p0 = await storm.plates(0); expect(p0.sold).to.equal(true); expect(p0.buyer).to.equal(who.address);
+    expect(await storm.picksCount()).to.equal(1); expect(p0.pick).to.equal(await storm.picks(0));   // Plate Zero records the pick that chose day one
     await expect(storm.settleCandle()).to.be.revertedWith("settled");
   });
 
   it("nobody bids: the artist takes Plate Zero at the reserve", async () => {
-    await H.warp(24 * 3600 + 5); await H.mine(7210);
-    await storm.seal();
-    await H.warpTo((await storm.candleClose()) + 1n);
+    await burnOut();
     await storm.settleCandle();
     expect(await storm.ownerOf(0)).to.equal(ARTIST);
     expect(await storm.owner()).to.equal(ARTIST);
@@ -115,8 +114,7 @@ describe("THE CANDLE", function () {
 async function founded() {
   const S = await H.deployAll(); const [, a, b, c, d, e] = await ethers.getSigners();
   await S.storm.connect(a).bid({ value: ETH("0.3") });
-  await H.warp(24 * 3600 + 5); await H.mine(7210); await S.storm.seal();
-  await H.warpTo((await S.storm.candleClose()) + 1n);
+  await burnOut();
   await S.storm.settleCandle();
   return { ...S, a, b, c, d, e };
 }
@@ -164,9 +162,9 @@ describe("THE DAYS", function () {
     const open = await storm.closeAfter(await storm.foundersEnd());
     await H.warpTo(open + 3600n); await storm.sync();
     const [id, price, , isOpen] = await storm.onSale(); expect(id).to.equal(1); expect(isOpen).to.equal(true);
-    await expect(storm.connect(b).buy(7, { value: price / 2n })).to.be.revertedWith("the price is higher");
+    await expect(storm.connect(b).buy(1, 7, { value: price / 2n })).to.be.revertedWith("the price is higher");
     const artistBefore = await bal(PAYEE), vaultBefore = await storm.vault();
-    const tx = await storm.connect(b).buy(7, { value: ETH("2") });
+    const tx = await storm.connect(b).buy(1, 7, { value: ETH("2") });
     const rc = await tx.wait(); const paid = (await storm.plates(1)).price;
     expect(paid).to.be.lte(price); expect(paid).to.be.gt(price * 99n / 100n);   // the price at the block's own second
     const gas = rc.gasUsed * rc.gasPrice;
@@ -175,7 +173,7 @@ describe("THE DAYS", function () {
     expect(await storm.vault()).to.equal(vaultBefore + (paid - paid * 70n / 100n - paid * 20n / 100n));
     expect(await storm.pending(c.address)).to.equal(paid * 20n / 100n);
     expect(await storm.seats(b.address)).to.equal(paid * ETH("1") / ETH("0.3") > ETH("1") ? ETH("1") : paid * ETH("1") / ETH("0.3"));
-    await expect(storm.connect(c).buy(1, { value: ETH("1") })).to.be.revertedWith("nothing on sale");
+    await expect(storm.connect(c).buy(1, 1, { value: ETH("1") })).to.be.revertedWith("nothing on sale");
     const cands = await storm.candidates(1);
     await H.warpTo((await storm.plates(1)).close); await storm.sync();
     expect(await storm.today()).to.equal(2);
@@ -193,14 +191,14 @@ describe("THE DAYS", function () {
     const open = await storm.closeAfter(await storm.foundersEnd());
     await H.warpTo(open + 600n); await storm.sync();
     const p0 = (await storm.onSale())[1];
-    await storm.connect(c).witness({ value: ETH("0.1") });
+    await storm.connect(c).witness(1, { value: ETH("0.1") });
     const p1 = (await storm.onSale())[1];
     const D = await storm.plates(1); const dt = Number(BigInt(await H.now()) - D.open);
     const want = 0.1 * Math.pow(2, -dt / 8640);                              // what was paid, on the same falling curve
     expect(Number(p1 - p0) / 1e18).to.be.closeTo(want, 0.0005);
     expect((await storm.witnessesOf(1)).length).to.equal(1);
     expect(await storm.seats(c.address)).to.equal(ETH("0.1") * ETH("1") / ETH("0.3"));
-    await storm.connect(c).witness({ value: ETH("0.5") });                 // capped at one seat for the day
+    await storm.connect(c).witness(1, { value: ETH("0.5") });                 // capped at one seat for the day
     expect(await storm.seats(c.address)).to.equal(ETH("1"));
     expect((await storm.witnessesOf(1)).length).to.equal(2);
     await conserved(storm);
@@ -229,7 +227,7 @@ describe("THE DAYS", function () {
     expect(await storm.isTomb(4)).to.equal(true);
     expect(await storm.ownerOf(4)).to.equal(await storm.getAddress());
     expect((await storm.onSale())[3]).to.equal(false);
-    await expect(storm.connect(b).buy(0, { value: ETH("1") })).to.be.revertedWith("nothing on sale");
+    await expect(storm.connect(b).buy(4, 0, { value: ETH("1") })).to.be.revertedWith("nothing on sale");
     await expect(storm.transferFrom(await storm.getAddress(), b.address, 1)).to.be.reverted;
     await conserved(storm);
     expect(await storm.totalSupply()).to.equal(5);
@@ -240,7 +238,7 @@ describe("THE DAYS", function () {
     const { storm, b, c } = await founded();
     await storm.connect(c).pledge({ value: ETH("30") });                   // fills the vault: 10% of 30 = 3 + 0.09
     const open = await storm.closeAfter(await storm.foundersEnd());
-    await H.warpTo(open + 5n * 86400n + 100n); await storm.sync();
+    await H.warpTo(open + 6n * 86400n + 100n); await storm.sync();   // six days: one of them may be 25 hours (daylight saving ends)
     expect(await storm.today()).to.be.gte(6);
     for (let k = 1; k < Number(await storm.today()); k++) expect(await storm.ownerOf(k)).to.equal(await storm.getAddress());
     await conserved(storm);
@@ -265,7 +263,7 @@ describe("THE SEATS AND THE LEDGER", function () {
     await conserved(storm);
   });
 
-  it("every transfer cuts a hand on the plate; approvals work; the receiver check holds; royalties are 6.9% to the vault", async () => {
+  it("every transfer cuts a hand on the plate; approvals work; the receiver check holds; royalties are 6.9% to the payee", async () => {
     const { storm, a, b, c } = await founded();                             // a owns Plate Zero
     await storm.connect(a).transferFrom(a.address, b.address, 0);
     await storm.connect(b).approve(c.address, 0);
@@ -273,12 +271,14 @@ describe("THE SEATS AND THE LEDGER", function () {
     expect(await storm.ownerOf(0)).to.equal(c.address);
     expect((await storm.handsOf(0)).length).to.equal(2);
     await expect(storm.connect(a).transferFrom(c.address, a.address, 0)).to.be.revertedWith("not authorized");
-    await expect(storm.connect(c)["safeTransferFrom(address,address,uint256)"](c.address, await storm.getAddress(), 0)).to.be.revertedWith("receiver rejected");
+    await expect(storm.connect(c)["safeTransferFrom(address,address,uint256)"](c.address, await storm.getAddress(), 0)).to.be.revertedWith("the vault takes no plates");
     const [rcv, amt] = await storm.royaltyInfo(0, ETH("1"));
-    expect(rcv).to.equal(await storm.getAddress()); expect(amt).to.equal(ETH("0.069"));
+    expect(rcv).to.equal(PAYEE); expect(amt).to.equal(ETH("0.069"));
+    await expect(storm.connect(c).transferFrom(c.address, await storm.getAddress(), 0)).to.be.revertedWith("the vault takes no plates");
+    await expect(storm.getApproved(999)).to.be.revertedWith("no such plate");
     for (const i of ["0x01ffc9a7", "0x80ac58cd", "0x5b5e139f", "0x2a55205a"]) expect(await storm.supportsInterface(i)).to.equal(true);
     expect(await storm.supportsInterface("0xffffffff")).to.equal(false);
-    // a royalty payment lands in the vault
+    // a gift lands in the vault
     const v = await storm.vault();
     await a.sendTransaction({ to: await storm.getAddress(), value: ETH("0.069") });
     expect(await storm.vault()).to.equal(v + ETH("0.069"));
@@ -321,11 +321,10 @@ describe("THE GLASS", function () {
     const S = await H.deployAll({ ethPool: await ethPool.getAddress(), pegPool: await pegPool.getAddress() });
     const [, a, b] = await ethers.getSigners();
     await S.storm.connect(a).bid({ value: ETH("0.3") });
-    await H.warp(24 * 3600 + 5); await H.mine(7210); await S.storm.seal();
-    await H.warpTo((await S.storm.candleClose()) + 1n); await S.storm.settleCandle();
+    await burnOut(); await S.storm.settleCandle();
     const open = await S.storm.closeAfter(await S.storm.foundersEnd());
     await H.warpTo(open + 100n); await S.storm.sync();                         // samples the pool once
-    await S.storm.connect(b).buy(3, { value: ETH("2") });
+    await S.storm.connect(b).buy(1, 3, { value: ETH("2") });
     let d = H.decodeURI(await S.storm.tokenURI(1));
     expect(d.json.name).to.equal("DITHERVOID // STORMGLASS · DAY 1");
     expect(d.glass.subject).to.equal(undefined);
