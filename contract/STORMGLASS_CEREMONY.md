@@ -27,7 +27,9 @@ Compiler, pinned: solc 0.8.24+commit.e11b9ed9, cancun, optimizer 800, viaIR
   (Uniswap v3, 0.05%). Sepolia: zero (the flood stays dry).
 - USDC/USDT pool (the counterfeit): mainnet `0x3416cF6C708Da44DB2624D63ea0AAef7113527C6`
   (Uniswap v3, 0.01%). Sepolia: zero.
-- ARTIST is a constant: `0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359`.
+- ARTIST is a constant: greencross.eth `0x0DD399a7ED92283e4983C2974FE377070D67f4eB` (the artist, owner() for the
+  marketplaces, Plate Zero if nobody bids). PAYEE is a constant: `0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359`,
+  where the seventy percent is sent (curator, Oct 2). greencross.eth deploys.
 - Reserve 0.05 ETH (curator, Oct 2), halving 2.4h, candle 24h + window ≤ 6h, founders' day 24h,
   royalty 6.9% to the vault, 70/20/10.
 
