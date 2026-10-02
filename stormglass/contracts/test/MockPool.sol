@@ -17,3 +17,10 @@ contract Refuser {
     receive() external payable { revert("no"); }
 }
 interface STORMLike { function bid() external payable; function withdraw() external; function withdrawTo(address payable to) external; }
+/* answers every payment with a large return, so a caller that copies returned data pays for it */
+contract Bomber {
+    STORMLike immutable s;
+    constructor(address _s) { s = STORMLike(_s); }
+    function bid() external payable { s.bid{value: msg.value}(); }
+    fallback() external payable { assembly { return(0, 120000) } }
+}
