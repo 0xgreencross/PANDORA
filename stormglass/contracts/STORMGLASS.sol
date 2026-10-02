@@ -397,7 +397,7 @@ contract STORMGLASS {
     function _withdraw(address payable to) private { uint256 v = owed[msg.sender]; require(v > 0, "nothing owed"); owed[msg.sender] = 0; (bool ok, ) = to.call{value: v}(""); require(ok, "failed"); }
     function _pay(address to, uint256 v) private {
         if (v == 0) return;
-        (bool ok, ) = to.call{value: v, gas: 60000}("");
+        bool ok; assembly { ok := call(60000, to, v, 0, 0, 0, 0) }   // nothing the payee sends back is copied
         if (!ok) owed[to] += v;
     }
     /* gifts land in the vault (royalties go to the payee) */
