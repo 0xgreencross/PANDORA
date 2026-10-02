@@ -13,6 +13,7 @@ contract Refuser {
     constructor(address _s) { s = STORMLike(_s); }
     function bid() external payable { s.bid{value: msg.value}(); }
     function pull() external { s.withdraw(); }
+    function pullTo(address payable to) external { s.withdrawTo(to); }
     receive() external payable { revert("no"); }
 }
-interface STORMLike { function bid() external payable; function withdraw() external; }
+interface STORMLike { function bid() external payable; function withdraw() external; function withdrawTo(address payable to) external; }
