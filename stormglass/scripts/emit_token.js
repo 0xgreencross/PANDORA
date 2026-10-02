@@ -6,14 +6,13 @@ const { ethers } = require("hardhat"); const H = require("../test/helpers"); con
   const [d, a, b, c] = await ethers.getSigners();
   const S = await H.deployAll();
   await S.storm.connect(a).bid({ value: H.ETH("0.3") });
-  await H.warp(24 * 3600 - 7210); await H.mine(7215); await S.storm.seal();
-  await H.warpTo((await S.storm.candleClose()) + 1n); await S.storm.settleCandle();
+  await H.warp(30 * 3600 + 5); await H.mine(9010); await S.storm.settleCandle();
   await S.storm.connect(b).pledge({ value: H.ETH("0.6") });
   await S.storm.connect(a).transferFrom(a.address, c.address, 0);
   const open = await S.storm.closeAfter(await S.storm.foundersEnd());
   await H.warpTo(open + 3000n); await S.storm.sync();
-  await S.storm.connect(c).witness({ value: H.ETH("0.05") });
-  await S.storm.connect(b).buy(11, { value: H.ETH("2") });
+  await S.storm.connect(c).witness(1, { value: H.ETH("0.05") });
+  await S.storm.connect(b).buy(1, 11, { value: H.ETH("2") });
   for (const id of [0, 1]) {
     const dec = H.decodeURI(await S.storm.tokenURI(id));
     fs.writeFileSync(path.join(OUT, id + ".html"), dec.html);
