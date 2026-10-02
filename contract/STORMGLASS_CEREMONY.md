@@ -5,8 +5,9 @@ drives everything from the browser; on mainnet MetaMask signs every step.
 
 ## What goes on the chain, in order
 
-1. **Coats** (tiny): lays the token page on the chain, four chunks a transaction.
-2. **The page, 13 chunks** (4 transactions, ~21M gas each, ~66M in all): the whole
+1. **Coats** (tiny): lays the token page on the chain, two chunks a transaction.
+2. **The page, 14 chunks** (7 transactions, ~10.5M gas each, ~73M in all; mainnet
+   refuses any single transaction above 16.7M gas since Fusaka): the whole
    token page (`glass/index.html`, engine, OS, print) gzipped and wrapped in three
    base64 coats so that tokenURI never encodes anything large. Coat sha256 is in
    `onchain/manifest.json`; VERIFY checks it on the chain.
@@ -46,15 +47,15 @@ Compiler, pinned: solc 0.8.24+commit.e11b9ed9, cancun, optimizer 800, viaIR
    mined after it), SETTLE (the moment the candle went out is drawn now), PLEDGE, then
    SYNC after the next 4:20 Miami, WITNESS, BUY, READ tokenURI: the plate must render
    in the frame, from the chain alone.
-4. Flip `CFG` at the top of `stormglass/index.html` to the Sepolia record and walk
+4. Flip `CFG` at the top of the root `index.html` to the Sepolia record and walk
    the site.
 
 ## Mainnet (THE LEDGER)
 
 Same page, network mainnet, signer MetaMask. Check live gas first: the whole set
-is ~75M gas. The candle starts at deploy: choose the hour deliberately (it burns
-24h, then goes out inside the next 6h). Then flip `CFG` in `stormglass/index.html`,
-and only then put STORMGLASS at the root.
+is ~80M gas, no transaction above 11M. The candle starts at deploy: choose the
+hour deliberately (it burns 24h, then goes out inside the next 6h). Then flip
+`CFG` in the root `index.html` to the mainnet record and remove /workbench/.
 
 ## Before launch
 
