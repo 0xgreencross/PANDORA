@@ -63,7 +63,7 @@ HTML=r'''<!doctype html>
 
 <h2>4 · THE WALK (Sepolia)</h2>
 <div class="row">
-  <button id="w1">BID 0.01</button><button id="w2">BID 0.02</button><button id="w3">SEAL</button><button id="w4">SETTLE THE CANDLE</button>
+  <button id="w1">BID 0.05</button><button id="w2">BID 0.06</button><button id="w3">SEAL</button><button id="w4">SETTLE THE CANDLE</button>
   <button id="w5">PLEDGE 0.005</button><button id="w6">SYNC</button><button id="w7">WITNESS 0.001</button><button id="w8">BUY (pick 7)</button><button id="w9">STATE</button>
 </div>
 <div class="row"><div><label>TOKEN ID</label><input id="tid" value="0" style="min-width:80px"></div><button id="w10">READ tokenURI AND SHOW THE PLATE</button></div>
@@ -95,7 +95,17 @@ async function connect(){
     provider=new ethers.JsonRpcProvider($('rpc').value); signer=new ethers.Wallet(k,provider);
   } else {
     if(!window.ethereum){ log('no wallet in this browser','bad'); return; }
-    provider=new ethers.BrowserProvider(window.ethereum); await provider.send('eth_requestAccounts',[]); signer=await provider.getSigner();
+    provider=new ethers.BrowserProvider(window.ethereum); await provider.send('eth_requestAccounts',[]);
+    /* THE CHAIN GUARD: the wallet must stand on the network chosen above, or nothing is sent */
+    const want=net==='sepolia'?11155111n:1n;
+    if((await provider.getNetwork()).chainId!==want){
+      try{ await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x'+want.toString(16)}]}); }
+      catch(e){ signer=null; log('switch the wallet to '+(net==='sepolia'?'Sepolia':'Ethereum mainnet')+' and CONNECT again','bad'); return; }
+      provider=new ethers.BrowserProvider(window.ethereum);
+      if((await provider.getNetwork()).chainId!==want){ signer=null; log('the wallet is not on '+net+': nothing will be sent','bad'); return; }
+    }
+    signer=await provider.getSigner();
+    if(!window.__chainWatch){ window.__chainWatch=1; window.ethereum.on&&window.ethereum.on('chainChanged',()=>{ signer=null; $('who').textContent='the wallet changed network: CONNECT again'; log('the wallet changed network: CONNECT again before anything else','bad'); }); }
   }
   const addr=await signer.getAddress(); const n=await provider.getNetwork(); const b=await provider.getBalance(addr);
   $('who').textContent='signer '+addr+' · chain '+n.chainId+' · balance '+ethers.formatEther(b)+' ETH';
@@ -103,8 +113,9 @@ async function connect(){
   log('connected: '+addr+' on chain '+n.chainId+', '+ethers.formatEther(b)+' ETH','ok');
 }
 $('connect').addEventListener('click',()=>connect().catch(e=>log(String(e.message||e),'bad')));
-const factory=n=>new ethers.ContractFactory(ARTS[n].abi,ARTS[n].bytecode,signer);
-const at=(n,a)=>new ethers.Contract(a,ARTS[n].abi,signer);
+const need=()=>{ if(!signer) throw new Error('CONNECT first (on the network chosen above)'); return signer; };
+const factory=n=>new ethers.ContractFactory(ARTS[n].abi,ARTS[n].bytecode,need());
+const at=(n,a)=>new ethers.Contract(a,ARTS[n].abi,need());
 async function txlog(name,tx){ log(name+' sent '+tx.hash); const rc=await tx.wait(); log(name+' mined in block '+rc.blockNumber+', gas '+rc.gasUsed,'ok'); return rc; }
 $('s1').addEventListener('click',async()=>{ try{
   const c=await factory('Coats').deploy(); log('Coats sent '+c.deploymentTransaction().hash); await c.waitForDeployment();
@@ -143,8 +154,8 @@ $('s5').addEventListener('click',async()=>{ try{
 }catch(e){ log(String(e.message||e),'bad'); } });
 const S=()=>at('STORMGLASS',$('aStorm').value);
 const walk=(id,fn)=>$(id).addEventListener('click',async()=>{ try{ await fn(); }catch(e){ log(String(e.reason||e.message||e),'bad'); } });
-walk('w1',async()=>txlog('bid 0.01',await S().bid({value:ethers.parseEther('0.01')})));
-walk('w2',async()=>txlog('bid 0.02',await S().bid({value:ethers.parseEther('0.02')})));
+walk('w1',async()=>txlog('bid 0.05',await S().bid({value:ethers.parseEther('0.05')})));
+walk('w2',async()=>txlog('bid 0.06',await S().bid({value:ethers.parseEther('0.06')})));
 walk('w3',async()=>txlog('seal',await S().seal()));
 walk('w4',async()=>txlog('settleCandle',await S().settleCandle()));
 walk('w5',async()=>txlog('pledge',await S().pledge({value:ethers.parseEther('0.005')})));
