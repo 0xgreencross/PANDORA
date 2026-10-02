@@ -24,3 +24,16 @@ contract Bomber {
     function bid() external payable { s.bid{value: msg.value}(); }
     fallback() external payable { assembly { return(0, 120000) } }
 }
+/* a pool that turns bad after deploy: its first word grows past 160 bits */
+contract DirtyPool {
+    bool public dirty;
+    function spoil() external { dirty = true; }
+    fallback(bytes calldata) external returns (bytes memory) {
+        uint256 w = dirty ? type(uint256).max : uint256(79228162514264337593543950336);
+        return abi.encode(w, int24(0), uint16(0), uint16(0), uint16(0), uint8(0), true);
+    }
+}
+/* stands in for the EIP-2935 history contract (Hardhat answers it with a revert) */
+contract HistoryMock {
+    fallback(bytes calldata q) external returns (bytes memory) { return abi.encode(keccak256(abi.encodePacked("history", q))); }
+}
