@@ -149,7 +149,7 @@ $('s5').addEventListener('click',async()=>{ try{
   const coat=ethers.getBytes(await G.coat()); const sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',coat))).map(b=>b.toString(16).padStart(2,'0')).join('');
   log('coat on chain: '+coat.length+' bytes, sha256 '+sha+(sha===MAN.coat_sha256?' MATCHES the manifest':' DOES NOT MATCH'), sha===MAN.coat_sha256?'ok':'bad');
   const gs=await G.storm(), sg=await S.glass(); log('GLASS.storm '+gs+' / STORMGLASS.glass '+sg+((gs.toLowerCase()===$('aStorm').value.toLowerCase()&&sg.toLowerCase()===$('aGlass').value.toLowerCase())?' BOUND':' NOT BOUND'));
-  log('candleOpen '+(await S.candleOpen())+' revealBlock '+(await S.revealBlock())+' zeroSeed '+(await S.zeroSeed())+' ARTIST '+(await S.ARTIST()));
+  log('candleOpen '+(await S.candleOpen())+' revealBlock '+(await S.revealBlock())+' zeroSeed '+(await S.zeroSeed())+' ARTIST '+(await S.ARTIST())+' PAYEE '+(await S.PAYEE()));
   rec('verified',{coatSha:sha, coatBytes:coat.length});
 }catch(e){ log(String(e.message||e),'bad'); } });
 const S=()=>at('STORMGLASS',$('aStorm').value);
