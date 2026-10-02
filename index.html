@@ -221,7 +221,7 @@ const ABI=[
   'function onSale() view returns (uint256 id,uint256 price,uint256 close,bool open)','function startPrice(uint256) view returns (uint256)','function priceAt(uint256,uint256) view returns (uint256)','function referencePrice() view returns (uint256)','function median7() view returns (uint256)',
   'function candidates(uint256) view returns (uint32[32])','function vault() view returns (uint256)','function seatPool() view returns (uint256)','function totalSeats() view returns (uint256)','function seats(address) view returns (uint256)','function pending(address) view returns (uint256)','function owed(address) view returns (uint256)',
   'function ownerOf(uint256) view returns (address)','function witnessesOf(uint256) view returns (uint32[])','function handsOf(uint256) view returns (uint32[])',
-  'function bid() payable','function seal()','function settleCandle()','function pledge() payable','function sync()','function buy(uint8) payable','function witness() payable','function claim()','function withdraw()'
+  'function bid() payable','function settleCandle()','function pledge() payable','function sync()','function buy(uint256,uint8) payable','function witness(uint256) payable','function claim()','function withdraw()','function withdrawTo(address)'
 ];
 const GABI=['function sky(uint256) view returns (string)'];
 const $=id=>document.getElementById(id);
@@ -300,14 +300,12 @@ async function render(st){
     const sky=CFG.demo?{}:await skyOf(0);
     await showPlate({seed:st.leader?st.leader.seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO · REROLLED BY EVERY BID');
     const draw=()=>{ const t=now(); let line;
-      if(st.candleClose&&t>=st.candleClose) line='<div class="big warn">THE CANDLE IS OUT</div><div class="note">Anyone may settle it: the leader at the flame takes Plate Zero.</div><button class="prime" id="bSettle">SETTLE THE CANDLE</button>';
+      if(t>=windowEnd) line='<div class="big warn">THE CANDLE IS OUT</div><div class="note">The window has closed. The moment the flame went out is drawn at the settle, from block '+st.revealBlock+(st.blk>st.revealBlock?'':' (now '+st.blk+')')+'; the leader at that moment takes Plate Zero and every other held bid is returned.</div>'+(st.blk>st.revealBlock?'<button class="prime" id="bSettle">SETTLE THE CANDLE</button>':'');
       else if(t<burn) line='<div class="k">BURNING · SURE FOR</div><div class="big">'+hms(burn-t)+'</div>';
-      else if(st.candleClose) line='<div class="k">THE FLAME GOES OUT AT</div><div class="big">'+new Date(st.candleClose*1000).toLocaleTimeString()+' <small>'+hms(st.candleClose-t)+'</small></div>';
-      else line='<div class="k">INSIDE THE WINDOW</div><div class="big warn">IT MAY GO OUT ANY MOMENT</div><div class="note">Until '+new Date(windowEnd*1000).toLocaleTimeString()+' at the latest. Bids now wait for the flame; the hash that decides is already fixed. Anyone may seal it once block '+st.revealBlock+' is past (now '+st.blk+').</div>'+(st.blk>st.revealBlock?'<button id="bSeal">SEAL</button>':'');
-      panel('<div class="k">PLATE ZERO · SOLD BY CANDLE</div>'+line+'<hr><div class="k">LEADING BID</div><div class="big">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+'</small>':'<small>none yet · reserve 0.01 ETH</small>')+'</div><div class="note">'+st.nBids+' bids. Every bid rerolls the plate; the plate you see is the leader’s. Outbid before the window: refunded at once. The winning bid becomes the founding price, the price of a seat forever. Seventy to the artist, thirty to the vault.</div>'
-        +'<div class="row"><input id="bidAmt" placeholder="'+(st.leader?'ETH, more than the leader':'ETH, at least 0.05')+'" inputmode="decimal"><button class="prime" id="bBid">BID</button></div>');
+      else line='<div class="k">INSIDE THE WINDOW</div><div class="big warn">IT MAY ALREADY BE OUT</div><div class="note">Until '+new Date(windowEnd*1000).toLocaleTimeString()+' at the latest. The moment is drawn after the window, from a block no one has seen yet. Bids now are held until the settle; the leader at the drawn moment wins and every other held bid is returned.</div>';
+      panel('<div class="k">PLATE ZERO · SOLD BY CANDLE</div>'+line+'<hr><div class="k">LEADING BID</div><div class="big">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+'</small>':'<small>none yet · reserve 0.05 ETH</small>')+'</div><div class="note">'+st.nBids+' bids. Every bid rerolls the plate; the plate you see is the leader’s. Each bid at least 5% over the last. Outbid before the window: refunded at once. The winning bid becomes the founding price, the price of a seat forever. Seventy to the artist, thirty to the vault.</div>'
+        +'<div class="row"><input id="bidAmt" placeholder="'+(st.leader?'ETH, at least '+fmt(st.leader.amount+st.leader.amount/20n):'ETH, at least 0.05')+'" inputmode="decimal"><button class="prime" id="bBid">BID</button></div>');
       const b=$('bBid'); if(b) b.onclick=()=>send('bid',W=>W.bid({value:ethers.parseEther($('bidAmt').value||'0')}));
-      const s2=$('bSeal'); if(s2) s2.onclick=()=>send('seal',W=>W.seal());
       const s3=$('bSettle'); if(s3) s3.onclick=()=>send('settle',W=>W.settleCandle());
     };
     draw(); timer=setInterval(()=>{ const t=now(); if(t%5===0) draw(); else { const e=$('panel').querySelector('.big'); } },1000);
@@ -341,8 +339,8 @@ async function render(st){
     const p=priceNow(start,D.open,t);
     panel('<div class="k">DAY '+D.id+' · ON SALE · CLOSES IN '+hms(D.close-t)+'</div><div class="big" id="px">'+p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small></div><div class="note">Started at '+start.toFixed(4)+', halving every 2.4 hours. First to pay takes it and chooses tomorrow’s plate below'+(pick==null?' (choose one first)':' · you chose '+pick)+'. Witnesses so far: '+fmt(D.witnessed)+' ETH.</div>'
       +'<button class="prime" id="bBuy"'+(pick==null?' disabled':'')+'>BUY NOW</button><hr><div class="k">WITNESS THIS DAY</div><div class="note">Any amount: a seat at the founding rate (one a day at most), a notch on this plate in the accent, and the price rises by it.</div><div class="row"><input id="wAmt" placeholder="ETH" inputmode="decimal"><button id="bWit">WITNESS</button></div>');
-    const b=$('bBuy'); if(b) b.onclick=()=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; send('buy',W=>W.buy(pick,{value:pay})); };
-    const w=$('bWit'); if(w) w.onclick=()=>send('witness',W=>W.witness({value:ethers.parseEther($('wAmt').value||'0')}));
+    const b=$('bBuy'); if(b) b.onclick=()=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; send('buy',W=>W.buy(D.id,pick,{value:pay})); };
+    const w=$('bWit'); if(w) w.onclick=()=>send('witness',W=>W.witness(D.id,{value:ethers.parseEther($('wAmt').value||'0')}));
   };
   draw(); timer=setInterval(()=>{ const t=now(); const e=$('px'); if(e&&!D.sold&&t<D.close){ const p=priceNow(start,D.open,t); e.innerHTML=p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small>'; } if(t%10===0) draw(); },1000);
   if(D.onSale&&st.cands){ $('candidates').style.display='block'; const g=$('candGrid'); if(g.dataset.day!==String(D.id)){ g.dataset.day=String(D.id); g.innerHTML=''; pick=null;
