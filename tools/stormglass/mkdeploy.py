@@ -85,7 +85,7 @@ const $=id=>document.getElementById(id);
 const log=(m,c)=>{ const e=$('log'); const d=document.createElement('div'); if(c)d.className=c; d.textContent=new Date().toISOString().slice(11,19)+'  '+m; e.appendChild(d); e.scrollTop=e.scrollHeight; };
 const REC={}; const rec=(k,v)=>{ REC[k]=v; $('record').value=JSON.stringify(REC,null,1); };
 let provider=null, signer=null, net='sepolia';
-$('net').addEventListener('change',()=>{ net=$('net').value; $('ethPool').value=POOLS[net].eth; $('pegPool').value=POOLS[net].peg; if(net==='mainnet'){ $('signer').value='mm'; $('rpc').value='https://ethereum-rpc.publicnode.com'; } });
+$('net').addEventListener('change',()=>{ net=$('net').value; $('ethPool').value=POOLS[net].eth; $('pegPool').value=POOLS[net].peg; for(const k of ['aCoats','aGlass','aStorm','aChunks']) $(k).value=''; signer=null; $('who').textContent='network changed: CONNECT'; /* audit, Oct 2: nothing from another chain carries over */ if(net==='mainnet'){ $('signer').value='mm'; $('rpc').value='https://ethereum-rpc.publicnode.com'; } });
 $('net').dispatchEvent(new Event('change'));
 async function connect(){
   net=$('net').value;
@@ -123,6 +123,7 @@ $('s1').addEventListener('click',async()=>{ try{
 }catch(e){ log(String(e.message||e),'bad'); } });
 $('s2').addEventListener('click',async()=>{ try{
   const C=at('Coats',$('aCoats').value); const addrs=$('aChunks').value?$('aChunks').value.split(',').map(s=>s.trim()).filter(Boolean):[];
+  for(let i=0;i<addrs.length;i++){ if((await provider.getCode(addrs[i])).length<=4) throw new Error('chunk '+i+' has no code on this chain: clear CHUNKS and lay again'); }
   for(let i=addrs.length;i<CHUNKS.length;i+=4){
     const batch=CHUNKS.slice(i,i+4).map(t=>'0x'+Array.from(new TextEncoder().encode(t)).map(b=>b.toString(16).padStart(2,'0')).join(''));
     const rc=await txlog('lay '+i+'..'+(i+batch.length-1), await C.lay(batch));
@@ -140,6 +141,13 @@ $('s3').addEventListener('click',async()=>{ try{
   $('aGlass').value=await g.getAddress(); rec('glass',$('aGlass').value); rec('stormPredicted',predicted); log('GLASS at '+$('aGlass').value,'ok');
 }catch(e){ log(String(e.message||e),'bad'); } });
 $('s4').addEventListener('click',async()=>{ try{
+  /* the page and the binding are proven BEFORE the sale exists (audit, Oct 2) */
+  const G0=at('GLASS',$('aGlass').value); const coat0=ethers.getBytes(await G0.coat());
+  const sha0=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',coat0))).map(b=>b.toString(16).padStart(2,'0')).join('');
+  if(sha0!==MAN.coat_sha256) throw new Error('the GLASS does not hold the page (coat sha '+sha0+'): stop');
+  const next=ethers.getCreateAddress({from:await signer.getAddress(),nonce:await provider.getTransactionCount(await signer.getAddress(),'pending')});
+  if((await G0.storm()).toLowerCase()!==next.toLowerCase()) throw new Error('the GLASS is bound to '+(await G0.storm())+' but STORMGLASS would land at '+next+': something was sent in between; redo c');
+  log('page proven ('+coat0.length+' bytes) and the GLASS waits for '+next,'ok');
   if(net==='mainnet'&&!confirm('THE LEDGER. Deploy STORMGLASS on mainnet now?')) return;
   const s=await factory('STORMGLASS').deploy($('aGlass').value,$('ethPool').value,$('pegPool').value); log('STORMGLASS sent '+s.deploymentTransaction().hash); await s.waitForDeployment();
   $('aStorm').value=await s.getAddress(); rec('storm',$('aStorm').value); rec('deployTx',s.deploymentTransaction().hash); log('STORMGLASS at '+$('aStorm').value,'ok');
