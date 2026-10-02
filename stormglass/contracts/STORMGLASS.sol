@@ -115,6 +115,7 @@ contract STORMGLASS {
     uint160[7] public ethSamples;                     // the pool's sqrt price, sampled once a day
     uint8 public ethSampleN;
     uint8 private ethSampleI;
+    uint256 private sampledFor;                 // the last day sampled (one sample a sync)
 
     // ---------------------------------------------------------- ERC-721
     mapping(uint256 => address) private _owner;
@@ -143,6 +144,9 @@ contract STORMGLASS {
 
     constructor(address _glass, address _ethPool, address _pegPool) {
         require(IGlass(_glass).storm() == address(this), "the glass is not ours");
+        /* a pool is nothing, or a pool that answers (audit, Oct 2) */
+        require(_ethPool == address(0) || _poolOk(_ethPool), "the ETH pool does not answer");
+        require(_pegPool == address(0) || _poolOk(_pegPool), "the peg pool does not answer");
         glass = IGlass(_glass);
         ethPool = IUniV3Slot0(_ethPool);
         pegPool = IUniV3Slot0(_pegPool);
@@ -243,13 +247,13 @@ contract STORMGLASS {
             if (dead) break;
             _open(today + 1, _seedFor(D.seed, D.pick), D.close);
         }
+        if (today > sampledFor) { sampledFor = today; _sample(); }   // one sample a sync: a catch-up cannot refill the week (audit, Oct 2)
     }
 
     function _open(uint256 id, uint32 seed, uint64 open) private {
         uint64 close = uint64(closeAfter(open));
         plates[id] = Day(seed, open, close, 0, 0, address(0), 0, false);
         today = id;
-        _sample();
         emit DayOpened(id, seed, open, close);
     }
 
@@ -410,9 +414,15 @@ contract STORMGLASS {
     function salesCount() external view returns (uint256) { return salePrices.length; }
     function _sample() private {
         if (address(ethPool) == address(0)) return;
-        try ethPool.slot0() returns (uint160 sp, int24, uint16, uint16, uint16, uint8, bool) {
-            ethSamples[ethSampleI] = sp; ethSampleI = uint8((ethSampleI + 1) % 7); if (ethSampleN < 7) ethSampleN++;
-        } catch {}
+        (bool ok, bytes memory r) = address(ethPool).staticcall{gas: 30000}(abi.encodeWithSelector(0x3850c7bd));
+        if (!ok || r.length < 224) return;
+        uint160 sp = abi.decode(r, (uint160));
+        ethSamples[ethSampleI] = sp; ethSampleI = uint8((ethSampleI + 1) % 7); if (ethSampleN < 7) ethSampleN++;
+    }
+    function _poolOk(address p) private view returns (bool) {
+        if (p.code.length == 0) return false;
+        (bool ok, bytes memory r) = p.staticcall{gas: 30000}(abi.encodeWithSelector(0x3850c7bd));
+        return ok && r.length >= 224;
     }
     function ethSampleAvg() external view returns (uint256) {
         if (ethSampleN == 0) return 0;

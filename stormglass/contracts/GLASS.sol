@@ -55,7 +55,16 @@ contract GLASS {
     string private constant MID  = ';\n(async()=>{var b=Uint8Array.from(atob("';
     string private constant TAIL = '"),function(c){return c.charCodeAt(0)});\nvar d=new DecompressionStream("gzip"),w=d.writable.getWriter();w.write(b);w.close();\nvar h=await new Response(d.readable).text();var G=window.GLASS;document.open();document.write(h);document.close();window.GLASS=G;})();\n</script></body></html>';
 
+    /* THE PAGE, FINGERPRINTED (audit, Oct 2). The chunks' code hashes, chained in order: a chunk
+       missing, empty, swapped or foreign, and the glass refuses to be made. */
+    bytes32 public constant PAGE = 0xbe83f6847b496001b44f2ea8d83a32be2c88bef3c88c46e4fdd98cfa9b0932dd;
     constructor(address _storm, address[] memory chunks_) {
+        bytes32 acc;
+        for (uint256 i = 0; i < chunks_.length; i++) {
+            require(chunks_[i].code.length > 1, "a chunk is missing");
+            acc = keccak256(abi.encodePacked(acc, chunks_[i].codehash));
+        }
+        require(acc == PAGE, "not the page");
         storm = _storm; _chunks = chunks_;
     }
     function chunks() external view returns (address[] memory) { return _chunks; }
@@ -161,29 +170,46 @@ contract GLASS {
     function _flood(IStorm S) private view returns (uint256) {
         address p = S.ethPool(); if (p == address(0)) return 0;
         uint256 avg = S.ethSampleAvg(); if (avg == 0) return 0;
-        try ISlot0(p).slot0() returns (uint160 sp, int24, uint16, uint16, uint16, uint8, bool) {
-            uint256 now_ = uint256(sp) >> 64; if (now_ <= avg) return 0;
-            uint256 r = avg * avg * 10000 / (now_ * now_);       // (avg/now)^2 -> the price ratio
-            return 10000 - r;
-        } catch { return 0; }
+        (bool ok, uint160 sp) = _slot0(p); if (!ok) return 0;
+        uint256 now_ = uint256(sp) >> 64; if (now_ <= avg) return 0;
+        uint256 r = avg * avg * 10000 / (now_ * now_);       // (avg/now)^2 -> the price ratio
+        return 10000 - r;
     }
     /* USDT per USDC from the pool, the deviation from one in percent, 1e4 = 1.00% */
     function _peg(IStorm S) private view returns (uint256) {
         address p = S.pegPool(); if (p == address(0)) return 0;
-        try ISlot0(p).slot0() returns (uint160 sp, int24, uint16, uint16, uint16, uint8, bool) {
-            uint256 q = uint256(sp) >> 48;                          // ~2^48 at par
-            uint256 price1e6 = q * q * 1e6 >> 96;                    // (sp/2^96)^2 scaled 1e6
-            uint256 dev = price1e6 > 1e6 ? price1e6 - 1e6 : 1e6 - price1e6;
-            return dev * 100 * 10000 / 1e6;                          // percent, four decimals
-        } catch { return 0; }
+        (bool ok, uint160 sp) = _slot0(p); if (!ok) return 0;
+        uint256 q = uint256(sp) >> 48;                          // ~2^48 at par
+        uint256 price1e6 = q * q * 1e6 >> 96;                    // (sp/2^96)^2 scaled 1e6
+        uint256 dev = price1e6 > 1e6 ? price1e6 - 1e6 : 1e6 - price1e6;
+        return dev * 100 * 10000 / 1e6;                          // percent, four decimals
+    }
+    /* a pool read that cannot revert, run out of gas or mis-decode (audit, Oct 2): gas capped,
+       the answer's length checked; anything else reads as nothing to read */
+    function _slot0(address p) private view returns (bool, uint160) {
+        if (p.code.length == 0) return (false, 0);
+        (bool ok, bytes memory r) = p.staticcall{gas: 30000}(abi.encodeWithSelector(0x3850c7bd));
+        if (!ok || r.length < 224) return (false, 0);
+        return (true, abi.decode(r, (uint160)));
     }
 
     // ---------------------------------------------------------- tiny libs
+    /* the lists are written once into a buffer sized up front (audit, Oct 2): re-copying the list
+       for every entry made a plate's cost grow with the square of its age */
     function _list32(uint32[] memory v) private pure returns (bytes memory out) {
-        out = "["; for (uint256 i = 0; i < v.length; i++) out = abi.encodePacked(out, _s(i == 0, "", ","), _u(v[i])); out = abi.encodePacked(out, "]");
+        out = new bytes(2 + v.length * 11); uint256 p = 0; out[p++] = "[";
+        for (uint256 i = 0; i < v.length; i++) { if (i > 0) out[p++] = ","; p = _put(out, p, v[i]); }
+        out[p++] = "]"; assembly { mstore(out, p) }
     }
     function _list8(uint8[] memory v) private pure returns (bytes memory out) {
-        out = "["; for (uint256 i = 0; i < v.length; i++) out = abi.encodePacked(out, _s(i == 0, "", ","), _u(v[i])); out = abi.encodePacked(out, "]");
+        out = new bytes(2 + v.length * 4); uint256 p = 0; out[p++] = "[";
+        for (uint256 i = 0; i < v.length; i++) { if (i > 0) out[p++] = ","; p = _put(out, p, v[i]); }
+        out[p++] = "]"; assembly { mstore(out, p) }
+    }
+    function _put(bytes memory out, uint256 p, uint256 v) private pure returns (uint256) {
+        uint256 n = 1; for (uint256 t = v / 10; t != 0; t /= 10) n++;
+        for (uint256 k = n; k > 0; k--) { out[p + k - 1] = bytes1(uint8(48 + v % 10)); v /= 10; }
+        return p + n;
     }
     function _s(bool c, string memory a, string memory b) private pure returns (string memory) { return c ? a : b; }
     /* v scaled by 10^scale, printed with `places` decimals (places <= scale) */
