@@ -19,7 +19,7 @@ const rpc=async(m,p=[])=>{ const r=await fetch('http://127.0.0.1:8545',{method:'
   await step('#s2','all 14 chunks laid');
   await step('#s3','GLASS at');
   await step('#s4','STORMGLASS at'); if(!(await pg.textContent('#log')).includes('page proven')) throw new Error('the page was not proven before d');
-  await step('#s5','MATCHES the manifest');
+  await step('#s5','the compiled code'); { const L=await pg.textContent('#log'); if(!L.includes('MATCHES the manifest')||!L.includes('STORMGLASS MATCHES the compiled code')||L.includes('DIFFERS')) throw new Error('VERIFY failed: '+L.slice(-500)); }
   console.log((await pg.textContent('#log')).split('\n').filter(l=>/BOUND|MATCHES|gas/.test(l)).join('\n'));
   await step('#w1','bid 0.05 mined'); await step('#w2','bid 0.06 mined');
   await rpc('evm_increaseTime',[30*3600+10]); await rpc('hardhat_mine',['0x2332','0x1']);   // past the window, past revealBlock

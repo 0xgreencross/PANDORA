@@ -6,7 +6,13 @@ ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ART=os.path.join(ROOT,'stormglass','artifacts','contracts')
 def art(name):
     a=json.load(open(os.path.join(ART,name+'.sol',name+'.json')))
-    return {'abi':a['abi'],'bytecode':a['bytecode']}
+    dbg=json.load(open(os.path.join(ART,name+'.sol',name+'.dbg.json')))
+    bi=json.load(open(os.path.normpath(os.path.join(ART,name+'.sol',dbg['buildInfo']))))
+    ev=bi['output']['contracts'][a['sourceName']][name]['evm']['deployedBytecode']
+    assert '0x'+ev['object']==a['deployedBytecode']
+    imm=[[r['start'],r['length']] for refs in ev.get('immutableReferences',{}).values() for r in refs]
+    # VERIFY compares the code on the chain with this, the immutables (set at construction) masked
+    return {'abi':a['abi'],'bytecode':a['bytecode'],'runtime':a['deployedBytecode'],'imm':imm}
 arts={n:art(n) for n in ['Coats','GLASS','STORMGLASS']}
 man=json.load(open(os.path.join(ROOT,'onchain','manifest.json')))
 chunks=[open(os.path.join(ROOT,'onchain','chunks','%02d.bin'%i),'rb').read().decode('ascii') for i in range(len(man['chunks']))]
@@ -75,7 +81,7 @@ HTML=r'''<!doctype html>
 <h2>LOG</h2>
 <div id="log"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+<script>/*ETHERS*/</script>
 <script>
 const ARTS=__ARTS__;
 const CHUNKS=__CHUNKS__;
@@ -85,14 +91,16 @@ const $=id=>document.getElementById(id);
 const log=(m,c)=>{ const e=$('log'); const d=document.createElement('div'); if(c)d.className=c; d.textContent=new Date().toISOString().slice(11,19)+'  '+m; e.appendChild(d); e.scrollTop=e.scrollHeight; };
 const REC={}; const rec=(k,v)=>{ REC[k]=v; $('record').value=JSON.stringify(REC,null,1); };
 let provider=null, signer=null, net='sepolia';
-$('net').addEventListener('change',()=>{ net=$('net').value; $('ethPool').value=POOLS[net].eth; $('pegPool').value=POOLS[net].peg; for(const k of ['aCoats','aGlass','aStorm','aChunks']) $(k).value=''; signer=null; $('who').textContent='network changed: CONNECT'; /* audit, Oct 2: nothing from another chain carries over */ if(net==='mainnet'){ $('signer').value='mm'; $('rpc').value='https://ethereum-rpc.publicnode.com'; } });
+$('net').addEventListener('change',()=>{ net=$('net').value; $('ethPool').value=POOLS[net].eth; $('pegPool').value=POOLS[net].peg; for(const k of ['aCoats','aGlass','aStorm','aChunks']) $(k).value=''; signer=null; $('who').textContent='network changed: CONNECT'; /* audit, Oct 2: nothing from another chain carries over */ if(net==='mainnet'){ $('signer').value='mm'; $('rpc').value='https://ethereum-rpc.publicnode.com'; } else { $('rpc').value='https://ethereum-sepolia-rpc.publicnode.com'; } });
 $('net').dispatchEvent(new Event('change'));
 async function connect(){
   net=$('net').value;
   if($('signer').value==='burner'){
     if(net!=='sepolia'){ log('a burner is for Sepolia only','bad'); return; }
     let k=localStorage.getItem('stormglass_burner'); if(!k){ k=ethers.Wallet.createRandom().privateKey; localStorage.setItem('stormglass_burner',k); log('a burner key was made and kept in this browser'); }
-    provider=new ethers.JsonRpcProvider($('rpc').value,undefined,{cacheTimeout:-1});   /* no cached nonce between back-to-back transactions */ signer=new ethers.Wallet(k,provider);
+    provider=new ethers.JsonRpcProvider($('rpc').value,undefined,{cacheTimeout:-1});   /* no cached nonce between back-to-back transactions */
+    const cid=(await provider.getNetwork()).chainId; if(cid!==11155111n&&cid!==31337n){ provider=null; signer=null; log('the burner is for Sepolia only and this RPC is chain '+cid+': nothing will be sent','bad'); return; }
+    signer=new ethers.Wallet(k,provider);
   } else {
     if(!window.ethereum){ log('no wallet in this browser','bad'); return; }
     provider=new ethers.BrowserProvider(window.ethereum); await provider.send('eth_requestAccounts',[]);
@@ -158,7 +166,13 @@ $('s5').addEventListener('click',async()=>{ try{
   log('coat on chain: '+coat.length+' bytes, sha256 '+sha+(sha===MAN.coat_sha256?' MATCHES the manifest':' DOES NOT MATCH'), sha===MAN.coat_sha256?'ok':'bad');
   const gs=await G.storm(), sg=await S.glass(); log('GLASS.storm '+gs+' / STORMGLASS.glass '+sg+((gs.toLowerCase()===$('aStorm').value.toLowerCase()&&sg.toLowerCase()===$('aGlass').value.toLowerCase())?' BOUND':' NOT BOUND'));
   log('candleOpen '+(await S.candleOpen())+' revealBlock '+(await S.revealBlock())+' zeroSeed '+(await S.zeroSeed())+' ARTIST '+(await S.ARTIST())+' PAYEE '+(await S.PAYEE()));
-  rec('verified',{coatSha:sha, coatBytes:coat.length});
+  /* THE CODE: what stands at each address is byte for byte the compiled code, the immutables masked */
+  const same=async(n,a)=>{ const live=ethers.getBytes(await provider.send('eth_getCode',[a,'latest'])), want=ethers.getBytes(ARTS[n].runtime);
+    if(live.length!==want.length) return false; const m=new Uint8Array(live.length); for(const [st,len] of ARTS[n].imm) for(let i=st;i<st+len;i++) m[i]=1;
+    for(let i=0;i<live.length;i++) if(!m[i]&&live[i]!==want[i]) return false; return true; };
+  const okC=await same('Coats',$('aCoats').value), okG=await same('GLASS',$('aGlass').value), okS=await same('STORMGLASS',$('aStorm').value);
+  log('code on chain: Coats '+(okC?'MATCHES':'DIFFERS')+' · GLASS '+(okG?'MATCHES':'DIFFERS')+' · STORMGLASS '+(okS?'MATCHES':'DIFFERS')+' the compiled code', okC&&okG&&okS?'ok':'bad');
+  rec('verified',{coatSha:sha, coatBytes:coat.length, code:okC&&okG&&okS});
 }catch(e){ log(String(e.message||e),'bad'); } });
 const S=()=>at('STORMGLASS',$('aStorm').value);
 const walk=(id,fn)=>$(id).addEventListener('click',async()=>{ try{ await fn(); }catch(e){ log(String(e.reason||e.message||e),'bad'); } });
@@ -177,6 +191,8 @@ walk('w10',async()=>{ const uri=await S().tokenURI(BigInt($('tid').value)); cons
   $('frame').style.display='block'; $('frame').src=json.animation_url; log('the plate is in the frame','ok'); rec('lastTokenURIBytes',uri.length); });
 </script></body></html>'''
 out=HTML.replace('__ARTS__',json.dumps(arts)).replace('__CHUNKS__',json.dumps(chunks)).replace('__MAN__',json.dumps({k:v for k,v in man.items() if k!='chunks'}))
+ETH=open(os.path.join(ROOT,'stormglass','node_modules','ethers','dist','ethers.umd.min.js')).read(); assert '</script' not in ETH and '/*ETHERS*/' not in ETH
+out=out.replace('<script>/*ETHERS*/</script>','<script>/* ethers 6.17.0, pinned in the page: sha256 '+hashlib.sha256(ETH.encode()).hexdigest()+' */\n'+ETH+'\n</script>',1)
 out=out.replace('__COATSHA__',man['coat_sha256']).replace('__COATBYTES__',str(man['coat_bytes'])).replace('__NCHUNKS__',str(len(chunks))).replace('__NBATCH__',str((len(chunks)+1)//2))
 out=out.replace('__SHA_S__',srcsha['STORMGLASS'][:16]).replace('__SHA_G__',srcsha['GLASS'][:16]).replace('__SHA_C__',srcsha['Coats'][:16])
 dst=os.path.join(ROOT,'glass','deploy','index.html'); os.makedirs(os.path.dirname(dst),exist_ok=True)
