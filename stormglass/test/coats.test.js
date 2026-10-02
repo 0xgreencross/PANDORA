@@ -6,9 +6,9 @@ describe("THE COATS", function () {
     const dir = path.join(H.ROOT, "onchain", "chunks"); const files = fs.readdirSync(dir).filter(f => f.endsWith(".bin")).sort();
     const parts = files.map(f => fs.readFileSync(path.join(dir, f)));
     const addrs = [];
-    for (let i = 0; i < parts.length; i += 4) {
-      const batch = parts.slice(i, i + 4).map(b => "0x" + b.toString("hex"));
-      const rc = await (await C.lay(batch, { gasLimit: 29000000 })).wait();
+    for (let i = 0; i < parts.length; i += 2) {
+      const batch = parts.slice(i, i + 2).map(b => "0x" + b.toString("hex"));
+      const rc = await (await C.lay(batch, { gasLimit: 12000000 })).wait();
       const laid = rc.logs.map(l => C.interface.parseLog(l)).filter(x => x && x.name === "Laid");
       expect(laid.length).to.equal(batch.length);
       laid.forEach(l => addrs.push(String(l.args[0])));

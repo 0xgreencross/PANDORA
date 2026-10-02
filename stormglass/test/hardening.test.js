@@ -53,6 +53,20 @@ describe("HARDENING", function () {
     expect(await S.storm.candleClose()).to.equal(open + 30n * 3600n - 1n);        // the fixed rule, not a hash the settler picked
   });
 
+  it("past 256 blocks the draw is read from the chain's history (EIP-2935), not the fixed rule", async () => {
+    const S = await H.deployAll(); const sig = await ethers.getSigners();
+    const M = await (await ethers.getContractFactory("HistoryMock")).deploy();
+    const HIST = "0x0000F90827F1C53a10cb7A02335B175320002935";
+    await ethers.provider.send("hardhat_setCode", [HIST, await ethers.provider.getCode(await M.getAddress())]);
+    await S.storm.connect(sig[1]).bid({ value: ETH("0.1") });
+    await burnOut(); await H.mine(300);                                          // blockhash() has forgotten revealBlock
+    await S.storm.settleCandle();
+    const rb = await S.storm.revealBlock(), open = await S.storm.candleOpen();
+    const h = ethers.keccak256(ethers.solidityPacked(["string", "bytes32"], ["history", ethers.toBeHex(rb, 32)]));
+    const want = open + 24n * 3600n + BigInt(ethers.keccak256(ethers.solidityPacked(["bytes32", "address"], [h, await S.storm.getAddress()]))) % (6n * 3600n);
+    expect(await S.storm.candleClose()).to.equal(want);
+  });
+
   it("a seat holder who pays again keeps its share of its own payment; nothing is stranded in the pool", async () => {
     const { storm, sig } = await founded();
     const b = sig[2];
@@ -129,6 +143,53 @@ describe("HARDENING", function () {
     const rc = await (await S.storm.settleCandle({ gasLimit: 16_777_216 })).wait();
     expect(rc.gasUsed).to.be.lt(5_000_000n);
     await conserved(S.storm);
+  });
+
+  it("a plate's lineage stops at the 400 ancestors the page draws, so its tokenURI stops growing", async () => {
+    const { storm, glass, sig } = await founded();
+    await storm.connect(sig[3]).pledge({ value: ETH("900") });
+    const open = await storm.closeAfter(await storm.foundersEnd());
+    await H.warpTo(open + 450n * 86400n);
+    for (let k = 0; k < 25; k++) { await (await storm.sync()).wait(); const [, , , isOpen] = await storm.onSale(); if (isOpen) break; }
+    const t = await storm.today(); expect(t).to.be.gte(450n);
+    expect((await storm.lineageOf(t)).length).to.equal(400);
+    expect((await storm.lineageOf(300)).length).to.equal(300);
+    const lin = await storm.lineageOf(t); for (let i = 0; i < 400; i++) expect(lin[i]).to.equal(await storm.picks(i));
+    const g = async id => ethers.provider.estimateGas({ to: await glass.getAddress(), data: glass.interface.encodeFunctionData("tokenURI", [id]) });
+    const g401 = await g(401n), gt = await g(t);
+    expect(gt - g401).to.be.lt(20000n);                      // flat past 400 (the day's own fields only)
+    expect(gt).to.be.lt(8_000_000n);
+  });
+
+  it("a long catch-up takes one sample of the pool, not a week of them in one block", async () => {
+    const P = await (await ethers.getContractFactory("MockPool")).deploy(79228162514264337593543950336n);
+    const S = await H.deployAll({ ethPool: await P.getAddress() }); const sig = await ethers.getSigners();
+    await S.storm.connect(sig[1]).bid({ value: ETH("0.3") }); await burnOut(); await S.storm.settleCandle();
+    await S.storm.connect(sig[3]).pledge({ value: ETH("300") });
+    const open = await S.storm.closeAfter(await S.storm.foundersEnd());
+    await H.warpTo(open + 100n); await S.storm.sync();
+    const n0 = await S.storm.ethSampleN();
+    await H.warpTo(open + 200n * 86400n);
+    for (let k = 0; k < 10; k++) { await S.storm.sync(); const [, , , isOpen] = await S.storm.onSale(); if (isOpen) break; }
+    expect(await S.storm.ethSampleN()).to.equal(n0 + 1n);
+  });
+
+  it("the dead take no gifts", async () => {
+    const { storm, sig } = await founded("0.05");
+    await H.warpTo((await storm.closeAfter(await storm.foundersEnd())) + 10n); await storm.sync();
+    for (let k = 0; k < 60 && !(await storm.dead()); k++) { await H.warpTo((await storm.plates(await storm.today())).close); await storm.sync(); }
+    expect(await storm.dead()).to.equal(true);
+    await expect(sig[5].sendTransaction({ to: await storm.getAddress(), value: ETH("1") })).to.be.revertedWith("the glass is dead");
+  });
+
+  it("a pool that turns bad after deploy cannot stop a plate from being read", async () => {
+    const P = await (await ethers.getContractFactory("DirtyPool")).deploy();
+    const S = await H.deployAll({ ethPool: await P.getAddress(), pegPool: await P.getAddress() }); const sig = await ethers.getSigners();
+    await S.storm.connect(sig[1]).bid({ value: ETH("0.3") }); await burnOut(); await S.storm.settleCandle();
+    await S.storm.tokenURI(0);
+    await P.spoil();
+    const d = H.decodeURI(await S.storm.tokenURI(0));
+    expect(d.json.name).to.contain("PLATE ZERO");
   });
 
   it("a wallet that cannot take ether names where its refund goes", async () => {
