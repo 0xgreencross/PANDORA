@@ -41,9 +41,11 @@ Compiler, pinned: solc 0.8.24+commit.e11b9ed9, cancun, optimizer 800, viaIR
    send anything while the wallet is on another chain. The wallet needs ~0.5
    Sepolia ETH (the deploy, then bids of 0.05 and 0.06).
 2. a → b → c → d → e. Copy THE RECORD.
-3. THE WALK: BID 0.05, BID 0.06 (the first is refunded at once), wait a day, SEAL,
-   wait for the flame, SETTLE, PLEDGE, then SYNC after the next 4:20 Miami, WITNESS,
-   BUY, READ tokenURI: the plate must render in the frame, from the chain alone.
+3. THE WALK: BID 0.05, BID 0.06 (the first is refunded at once; each bid at least 5%
+   over the last), wait thirty hours (the day and the six-hour window, and revealBlock
+   mined after it), SETTLE (the moment the candle went out is drawn now), PLEDGE, then
+   SYNC after the next 4:20 Miami, WITNESS, BUY, READ tokenURI: the plate must render
+   in the frame, from the chain alone.
 4. Flip `CFG` at the top of `stormglass/index.html` to the Sepolia record and walk
    the site.
 
