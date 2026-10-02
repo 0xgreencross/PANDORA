@@ -28,16 +28,18 @@ Compiler, pinned: solc 0.8.24+commit.e11b9ed9, cancun, optimizer 800, viaIR
 - USDC/USDT pool (the counterfeit): mainnet `0x3416cF6C708Da44DB2624D63ea0AAef7113527C6`
   (Uniswap v3, 0.01%). Sepolia: zero.
 - ARTIST is a constant: `0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359`.
-- Reserve 0.01 ETH, halving 2.4h, candle 24h + window ≤ 6h, founders' day 24h,
+- Reserve 0.05 ETH (curator, Oct 2), halving 2.4h, candle 24h + window ≤ 6h, founders' day 24h,
   royalty 6.9% to the vault, 70/20/10.
 
 ## Sepolia first
 
 1. Open `https://dithervoid.art/glass/deploy/` in Chrome. Network Sepolia, signer
-   "burner". CONNECT: the page makes a key, keeps it in that browser's
-   localStorage, and shows the address. Send it ~0.5 Sepolia ETH.
+   MetaMask (curator, Oct 2: greencross.eth signs the rehearsal and the mainnet
+   deploy). CONNECT: the page asks MetaMask to stand on Sepolia and refuses to
+   send anything while the wallet is on another chain. The wallet needs ~0.5
+   Sepolia ETH (the deploy, then bids of 0.05 and 0.06).
 2. a → b → c → d → e. Copy THE RECORD.
-3. THE WALK: BID 0.01, BID 0.02 (the first is refunded at once), wait a day, SEAL,
+3. THE WALK: BID 0.05, BID 0.06 (the first is refunded at once), wait a day, SEAL,
    wait for the flame, SETTLE, PLEDGE, then SYNC after the next 4:20 Miami, WITNESS,
    BUY, READ tokenURI: the plate must render in the frame, from the chain alone.
 4. Flip `CFG` at the top of `stormglass/index.html` to the Sepolia record and walk
