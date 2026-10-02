@@ -63,7 +63,7 @@ HTML=r'''<!doctype html>
 
 <h2>4 · THE WALK (Sepolia)</h2>
 <div class="row">
-  <button id="w1">BID 0.05</button><button id="w2">BID 0.06</button><button id="w3">SEAL</button><button id="w4">SETTLE THE CANDLE</button>
+  <button id="w1">BID 0.05</button><button id="w2">BID 0.06</button><button id="w4">SETTLE THE CANDLE</button>
   <button id="w5">PLEDGE 0.005</button><button id="w6">SYNC</button><button id="w7">WITNESS 0.001</button><button id="w8">BUY (pick 7)</button><button id="w9">STATE</button>
 </div>
 <div class="row"><div><label>TOKEN ID</label><input id="tid" value="0" style="min-width:80px"></div><button id="w10">READ tokenURI AND SHOW THE PLATE</button></div>
@@ -164,12 +164,11 @@ const S=()=>at('STORMGLASS',$('aStorm').value);
 const walk=(id,fn)=>$(id).addEventListener('click',async()=>{ try{ await fn(); }catch(e){ log(String(e.reason||e.message||e),'bad'); } });
 walk('w1',async()=>txlog('bid 0.05',await S().bid({value:ethers.parseEther('0.05')})));
 walk('w2',async()=>txlog('bid 0.06',await S().bid({value:ethers.parseEther('0.06')})));
-walk('w3',async()=>txlog('seal',await S().seal()));
 walk('w4',async()=>txlog('settleCandle',await S().settleCandle()));
 walk('w5',async()=>txlog('pledge',await S().pledge({value:ethers.parseEther('0.005')})));
 walk('w6',async()=>txlog('sync',await S().sync()));
-walk('w7',async()=>txlog('witness',await S().witness({value:ethers.parseEther('0.001')})));
-walk('w8',async()=>{ const [id,price]=await S().onSale(); log('on sale: id '+id+' price '+ethers.formatEther(price)); await txlog('buy',await S().buy(7,{value:price+price/20n})); });
+walk('w7',async()=>{ const [id]=await S().onSale(); await txlog('witness',await S().witness(id,{value:ethers.parseEther('0.001')})); });
+walk('w8',async()=>{ const [id,price]=await S().onSale(); log('on sale: id '+id+' price '+ethers.formatEther(price)); await txlog('buy',await S().buy(id,7,{value:price+price/20n})); });
 walk('w9',async()=>{ const s=S(); const [id,price,close,open]=await s.onSale();
   log('candleClose '+(await s.candleClose())+' settled '+(await s.candleSettled())+' FOUNDING '+ethers.formatEther(await s.FOUNDING())+' foundersEnd '+(await s.foundersEnd())+' today '+(await s.today())+' onSale id '+id+' price '+ethers.formatEther(price)+' close '+close+' open '+open+' vault '+ethers.formatEther(await s.vault())+' seatPool '+ethers.formatEther(await s.seatPool())+' dead '+(await s.dead())+' block '+(await provider.getBlockNumber())+' now '+Math.floor(Date.now()/1000)); });
 walk('w10',async()=>{ const uri=await S().tokenURI(BigInt($('tid').value)); const json=JSON.parse(atob(uri.slice('data:application/json;base64,'.length)));

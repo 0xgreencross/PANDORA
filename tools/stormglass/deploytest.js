@@ -16,17 +16,14 @@ const rpc=async(m,p=[])=>{ const r=await fetch('http://127.0.0.1:8545',{method:'
   await pg.click('#connect'); await pg.waitForTimeout(1000); console.log(await pg.textContent('#who'));
   const step=async(id,waitFor)=>{ await pg.click(id); for(let i=0;i<200;i++){ await pg.waitForTimeout(500); const t=await pg.textContent('#log'); if(t.includes(waitFor)) return; if(/bad/.test(await pg.evaluate(()=>[...document.querySelectorAll('#log .bad')].map(x=>x.textContent).join('|')))) break; } throw new Error('step '+id+' did not reach: '+waitFor+'\n'+(await pg.textContent('#log')).slice(-600)); };
   await step('#s1','Coats at');
-  await step('#s2','all 13 chunks laid');
+  await step('#s2','all 14 chunks laid');
   await step('#s3','GLASS at');
-  await step('#s4','STORMGLASS at');
+  await step('#s4','STORMGLASS at'); if(!(await pg.textContent('#log')).includes('page proven')) throw new Error('the page was not proven before d');
   await step('#s5','MATCHES the manifest');
   console.log((await pg.textContent('#log')).split('\n').filter(l=>/BOUND|MATCHES|gas/.test(l)).join('\n'));
-  await step('#w1','bid 0.01 mined'); await step('#w2','bid 0.02 mined');
-  await rpc('evm_increaseTime',[24*3600-7210]); await rpc('hardhat_mine',['0x1c2f','0x1']);
-  await step('#w3','seal mined');
+  await step('#w1','bid 0.05 mined'); await step('#w2','bid 0.06 mined');
+  await rpc('evm_increaseTime',[30*3600+10]); await rpc('hardhat_mine',['0x2332','0x1']);   // past the window, past revealBlock
   const st=await pg.evaluate(()=>JSON.parse(document.getElementById('record').value));
-  const close=Number(await (async()=>{ const r=await fetch('http://127.0.0.1:8545',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'eth_call',params:[{to:st.storm,data:'0x'+'e3b9d4f4'},'latest']})}); return 0; })());
-  await rpc('evm_increaseTime',[6*3600+10]); await rpc('evm_mine');
   await step('#w4','settleCandle mined');
   await step('#w5','pledge mined');
   await pg.click('#w9'); await pg.waitForTimeout(1500);
