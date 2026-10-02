@@ -49,7 +49,8 @@ interface IGlass {
 
 contract STORMGLASS {
     // ---------------------------------------------------------- the constants
-    address public constant ARTIST   = 0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359;
+    address public constant ARTIST   = 0x0DD399a7ED92283e4983C2974FE377070D67f4eB;   // greencross.eth: the artist, and Plate Zero if nobody bids
+    address public constant PAYEE    = 0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359;   // where the artist's seventy percent is sent (curator, Oct 2)
     uint256 public constant RESERVE  = 0.05 ether;   // the least a candle bid may be; FOUNDING if nobody bids
     uint256 public constant HALF     = 8640;         // seconds per halving: 2.4 hours
     uint256 public constant CANDLE   = 24 hours;     // the candle burns at least this long
@@ -203,7 +204,7 @@ contract STORMGLASS {
         plates[0] = Day(seed, uint64(candleOpen), uint64(candleClose), uint128(amount), 0, winner, 0, true);
         _mint(winner, 0);
         salePrices.push(amount);
-        if (amount > 0) { uint256 a = amount * 70 / 100; vault += amount - a; _pay(ARTIST, a); }
+        if (amount > 0) { uint256 a = amount * 70 / 100; vault += amount - a; _pay(PAYEE, a); }
         foundersEnd = block.timestamp + FOUNDERS;
         // the chain chooses day one's plate
         uint8 p = uint8(uint256(keccak256(abi.encodePacked(block.prevrandao, seed))) % 32);
@@ -362,7 +363,7 @@ contract STORMGLASS {
         uint256 a = v * 70 / 100; uint256 s = v * 20 / 100; uint256 r = v - a - s;
         if (totalSeats == 0) { r += s; } else { seatPool += s; accPerSeat += s * 1e18 / totalSeats; }
         vault += r;
-        _pay(ARTIST, a);
+        _pay(PAYEE, a);
     }
     function _seatForDay(uint256 id, address who, uint256 paid) private {
         uint256 total = dayPaid[id][who] + paid; dayPaid[id][who] = total;
@@ -495,6 +496,8 @@ contract STORMGLASS {
         if (id > lastId) lastId = id;
         emit Transfer(address(0), to, id);
     }
+    /* the artist, for the marketplaces that read owner() to know whose collection this is. It holds no power: the contract has no admin. */
+    function owner() external pure returns (address) { return ARTIST; }
     function supportsInterface(bytes4 i) external pure returns (bool) {
         return i == 0x01ffc9a7 || i == 0x80ac58cd || i == 0x5b5e139f || i == 0x2a55205a;   // 165, 721, 721 metadata, 2981
     }
