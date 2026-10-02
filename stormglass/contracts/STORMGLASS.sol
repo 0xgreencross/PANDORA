@@ -4,12 +4,14 @@ pragma solidity 0.8.24;
 /*
   DITHERVOID // STORMGLASS — one plate a day, at a falling price, until it dies.
 
-  THE CANDLE. Plate Zero is sold by candle: an ascending auction, every bid
-  escrowed, the outbid refunded at once, and every bid rerolls the plate.
-  After twenty-four hours the candle may go out at any moment inside a window
-  of up to six hours; the moment is drawn from a block hash fixed in advance.
-  The leader at that moment wins. The winning bid is FOUNDING: Plate Zero's
-  price and the price of a seat, forever.
+  THE CANDLE. Plate Zero is sold by candle: an ascending auction, each bid at
+  least five percent above the last, and every bid rerolls the plate. Before
+  the window the outbid are refunded at once. After twenty-four hours comes a
+  window of six; the candle went out at some moment inside it, drawn from the
+  hash of a block fixed at deploy that is mined only after the window ends, so
+  no one bidding can know it. The leader at that moment wins; every other bid
+  made inside the window is returned at the settle. The winning bid is
+  FOUNDING: Plate Zero's price and the price of a seat, forever.
 
   THE DAYS. Every day at 4:20pm in Miami (daylight saving followed, on chain)
   the day's plate closes and the next opens. Its price starts at the greater
@@ -30,7 +32,7 @@ pragma solidity 0.8.24;
 
   MONEY. Seventy to the artist, in the transaction. Twenty to the seats.
   Ten to the vault. Plate Zero: seventy to the artist, thirty to the vault.
-  Royalties: 6.9% to the vault (EIP-2981, a suggestion the market may honour).
+  Royalties: 6.9% to the payee (EIP-2981, a suggestion the market may honour).
   There is no owner and there are no dials. Set, and forgotten.
 
   CC0. Greencross, always.
@@ -58,6 +60,9 @@ contract STORMGLASS {
     uint256 public constant FOUNDERS = 24 hours;     // founders' day
     uint256 public constant ROYALTY  = 690;          // 6.9% in basis points
     uint256 public constant MAXMARKS = 200;          // witnesses and hands the plate can carry
+    uint256 public constant STEP     = 20;           // a bid beats the last by at least a twentieth (5%)
+    uint256 public constant MAXSYNC  = 30;           // days settled per call at most: a long silence is caught up in steps
+    uint256 private constant E_LN2   = 499859991027319457;   // the six-term series at ln 2 (for the halving's seam)
 
     string public constant name   = "DITHERVOID // STORMGLASS";
     string public constant symbol = "GLASS";
@@ -66,14 +71,16 @@ contract STORMGLASS {
     IGlass       public immutable glass;      // THE GLASS: tokenURI, the page and the sky
     IUniV3Slot0  public immutable ethPool;    // ETH/USDC, for the flood (zero on a chain without it)
     IUniV3Slot0  public immutable pegPool;    // USDC/USDT, for the counterfeit
-    uint256      public immutable revealBlock;// the block whose hash decides when the candle goes out
+    uint256      public immutable revealBlock;// mined only after the window ends; its hash says when the candle went out
     uint256      public immutable candleOpen;
 
     // ---------------------------------------------------------- the candle
     struct Bid { address bidder; uint128 amount; uint64 at; uint32 seed; }
     Bid[] public bids;                        // every bid that was leader when made, in order
     uint32  public zeroSeed;                  // rerolled by every bid
-    uint256 public candleClose;               // 0 until sealed
+    uint256 public candleClose;               // 0 until settled: the moment the candle went out
+    uint256 public windowFrom;                // the first bid the settle must look at (the leader when the window opened)
+    bool    private windowSeen;
     bool    public candleSettled;
     uint256 public FOUNDING;                  // the winning bid: the price of Plate Zero and of a seat
     uint256 public foundersEnd;
@@ -98,7 +105,7 @@ contract STORMGLASS {
     uint256 public lastBidAt;                 // any money at all: bid, pledge, buy, witness
 
     // ---------------------------------------------------------- the money
-    uint256 public vault;                     // held here, for the unsold days; royalties land here too
+    uint256 public vault;                     // held here, for the unsold days; gifts land here too
     uint256 public seatPool;                  // what the seats have earned and not yet claimed
     uint256 public totalSeats;                // 1e18 = one seat
     uint256 private accPerSeat;               // seat earnings accumulator, 1e18 scale
@@ -120,7 +127,7 @@ contract STORMGLASS {
     // ---------------------------------------------------------- ERC-721
     mapping(uint256 => address) private _owner;
     mapping(address => uint256) private _balance;
-    mapping(uint256 => address) public getApproved;
+    mapping(uint256 => address) private _approved;
     mapping(address => mapping(address => bool)) public isApprovedForAll;
     mapping(uint256 => uint64) public ownerSince;
 
@@ -129,7 +136,6 @@ contract STORMGLASS {
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
     event BidPlaced(address indexed bidder, uint256 amount, uint32 seed);
-    event CandleSealed(uint256 closeAt);
     event CandleSettled(address indexed winner, uint256 founding, uint32 seed);
     event Pledged(address indexed who, uint256 amount, uint256 seats);
     event DayOpened(uint256 indexed id, uint32 seed, uint64 open, uint64 close);
@@ -151,47 +157,42 @@ contract STORMGLASS {
         ethPool = IUniV3Slot0(_ethPool);
         pegPool = IUniV3Slot0(_pegPool);
         candleOpen = block.timestamp;
-        revealBlock = block.number + CANDLE / 12;          // about twenty-four hours of blocks
+        revealBlock = block.number + (CANDLE + WINDOW) / 12;   // a slot is twelve seconds: this block cannot be mined before the window ends
         zeroSeed = uint32(uint256(keccak256(abi.encodePacked(block.prevrandao, block.timestamp, address(this)))));
         lastBidAt = block.timestamp;
     }
 
     // ═══════════════════════════════════════════════════════════ THE CANDLE
     function bid() external payable nonReentrant {
-        require(!candleSettled, "the candle is out");
-        if (block.number > revealBlock && candleClose == 0) _seal();
-        require(candleClose == 0 || block.timestamp < candleClose, "the candle is out");
+        require(!candleSettled && block.timestamp < candleOpen + CANDLE + WINDOW, "the candle is out");
         uint256 n = bids.length;
         uint256 lead = n == 0 ? 0 : bids[n - 1].amount;
-        require(msg.value >= RESERVE && msg.value > lead, "bid more");
+        require(msg.value >= RESERVE && msg.value > lead && msg.value >= lead + lead / STEP, "bid more");
+        bool inWindow = block.timestamp >= candleOpen + CANDLE;
+        if (inWindow && !windowSeen) { windowSeen = true; windowFrom = n == 0 ? 0 : n - 1; }
         uint32 s = uint32(uint256(keccak256(abi.encodePacked(zeroSeed, msg.sender, msg.value, block.number))));
         zeroSeed = s;
         bids.push(Bid(msg.sender, uint128(msg.value), uint64(block.timestamp), s));
         lastBidAt = block.timestamp;
         emit BidPlaced(msg.sender, msg.value, s);
         // before the window the outbid are refunded at once; inside it everyone waits for the flame
-        if (n > 0 && block.timestamp < candleOpen + CANDLE) _pay(bids[n - 1].bidder, lead);
+        if (n > 0 && !inWindow) _pay(bids[n - 1].bidder, lead);
     }
 
-    /* the moment the candle goes out is drawn from the hash of a block fixed at deploy.
-       Anyone may seal it once that block is past; a bid does it too. If no one comes for
-       256 blocks the hash is gone and the latest block stands in for it. */
-    function seal() external { require(block.number > revealBlock, "not yet"); require(candleClose == 0, "sealed"); _seal(); }
-    function _seal() private {
-        bytes32 h = blockhash(revealBlock);
-        if (h == bytes32(0)) h = blockhash(block.number - 1);
-        candleClose = candleOpen + CANDLE + (uint256(keccak256(abi.encodePacked(h, address(this)))) % WINDOW);
-        emit CandleSealed(candleClose);
-    }
-
+    /* the moment the candle went out, drawn at the settle from the hash of revealBlock. If no
+       one settles for 256 blocks the hash is gone and the candle is taken to have burned the
+       whole window: a rule fixed in advance, not a hash the settler could choose. */
     function settleCandle() external nonReentrant {
         require(!candleSettled, "settled");
-        if (candleClose == 0) { require(block.number > revealBlock, "the candle burns"); _seal(); }
-        require(block.timestamp >= candleClose, "the candle burns");
+        require(block.timestamp >= candleOpen + CANDLE + WINDOW && block.number > revealBlock, "the candle burns");
+        bytes32 h = blockhash(revealBlock);
+        candleClose = h == bytes32(0) ? candleOpen + CANDLE + WINDOW - 1
+                                      : candleOpen + CANDLE + (uint256(keccak256(abi.encodePacked(h, address(this)))) % WINDOW);
         candleSettled = true;
         uint256 n = bids.length;
+        uint256 from = windowSeen ? windowFrom : (n == 0 ? 0 : n - 1);   // before the window only the last leader is still held
         uint256 w = type(uint256).max;
-        for (uint256 i = 0; i < n; i++) { if (bids[i].at <= candleClose) w = i; }
+        for (uint256 i = from; i < n; i++) { if (bids[i].at <= candleClose) w = i; }
         uint32 seed; address winner; uint256 amount;
         if (w == type(uint256).max) {
             // nobody bid in time: Plate Zero is the artist's, at the reserve
@@ -199,19 +200,15 @@ contract STORMGLASS {
         } else {
             Bid storage B = bids[w]; winner = B.bidder; amount = B.amount; seed = B.seed; FOUNDING = amount;
         }
-        // the bids made after the flame went out, and any leader that waited inside the window, are returned
-        for (uint256 i = 0; i < n; i++) {
-            if (i == w) continue;
-            if (i + 1 < n && bids[i + 1].at < candleOpen + CANDLE) continue;   // refunded at once when outbid before the window
-            _pay(bids[i].bidder, bids[i].amount);
-        }
-        plates[0] = Day(seed, uint64(candleOpen), uint64(candleClose), uint128(amount), 0, winner, 0, true);
+        // every held bid that did not win is returned: the window's (STEP keeps them few)
+        for (uint256 i = from; i < n; i++) { if (i != w) _pay(bids[i].bidder, bids[i].amount); }
+        // the chain chooses day one's plate, from the same hash the candle went out by
+        uint8 p = uint8(uint256(keccak256(abi.encodePacked(h, seed, uint256(1)))) % 32);
+        plates[0] = Day(seed, uint64(candleOpen), uint64(candleClose), uint128(amount), 0, winner, p, true);
         _mint(winner, 0);
         salePrices.push(amount);
         if (amount > 0) { uint256 a = amount * 70 / 100; vault += amount - a; _pay(PAYEE, a); }
         foundersEnd = block.timestamp + FOUNDERS;
-        // the chain chooses day one's plate
-        uint8 p = uint8(uint256(keccak256(abi.encodePacked(block.prevrandao, seed))) % 32);
         picks.push(p);
         emit CandleSettled(winner, FOUNDING, seed);
     }
@@ -221,8 +218,8 @@ contract STORMGLASS {
     function pledge() external payable nonReentrant {
         require(candleSettled && block.timestamp < foundersEnd, "not founders' day");
         require(msg.value > 0, "pay something");
-        _settleSeats(msg.sender);
         _split(msg.value);
+        _settleSeats(msg.sender);   // after the split: the payer's seats take their share of their own payment
         uint256 s = msg.value * 1e18 / FOUNDING;
         _grantSeats(msg.sender, s);
         _notch(_witnesses[0], msg.sender);
@@ -233,7 +230,8 @@ contract STORMGLASS {
     // ═══════════════════════════════════════════════════════════ THE DAYS
     /* the clock: settles every day that has closed since anyone last came, then
        opens the day that is on sale now. Anyone may call it; buy and witness do. */
-    function sync() public {
+    function sync() external nonReentrant { _sync(); }
+    function _sync() private {
         if (!candleSettled || dead) return;
         if (today == 0) {
             if (block.timestamp < foundersEnd) return;
@@ -241,11 +239,12 @@ contract STORMGLASS {
             if (block.timestamp < open) return;
             _open(1, _seedFor(plates[0].seed, picks[0]), open);
         }
-        while (!dead && block.timestamp >= plates[today].close) {
-            Day storage D = plates[today];
-            if (!D.sold) _vaultOrDie(today);
+        for (uint256 k = 0; k < MAXSYNC && !dead && block.timestamp >= plates[today].close; k++) {
+            uint256 id = today;
+            Day storage D = plates[id];
+            if (!D.sold) _vaultOrDie(id);
             if (dead) break;
-            _open(today + 1, _seedFor(D.seed, D.pick), D.close);
+            _open(id + 1, _seedFor(D.seed, D.pick), D.close);
         }
         if (today > sampledFor) { sampledFor = today; _sample(); }   // one sample a sync: a catch-up cannot refill the week (audit, Oct 2)
     }
@@ -302,6 +301,7 @@ contract STORMGLASS {
         // e^-x = 1 - x + x^2/2 - x^3/6 + x^4/24 - x^5/120
         uint256 x2 = x * x / 1e18; uint256 x3 = x2 * x / 1e18; uint256 x4 = x3 * x / 1e18; uint256 x5 = x4 * x / 1e18;
         uint256 e = 1e18 + x2 / 2 + x4 / 24 - x - x3 / 6 - x5 / 120;
+        e = 1e18 - (1e18 - e) * 5e17 / (1e18 - E_LN2);   // stretched so the curve meets the next halving exactly: it never rises
         return p * e / 1e18;
     }
 
@@ -319,18 +319,19 @@ contract STORMGLASS {
     }
 
     /* THE BUY. First to pay the price now takes the plate and chooses tomorrow's from thirty-two. */
-    function buy(uint8 pick) external payable nonReentrant {
-        sync();
+    function buy(uint256 day, uint8 pick) external payable nonReentrant {
+        _sync();
         require(pick < 32, "pick 0..31");
         (uint256 id, uint256 price, , bool open) = onSale();
         require(open, "nothing on sale");
+        require(id == day, "that day is gone");
         require(msg.value >= price, "the price is higher");
         Day storage D = plates[id];
         D.sold = true; D.buyer = msg.sender; D.price = uint128(price); D.pick = pick;
         picks.push(pick);
         salePrices.push(price);
-        _settleSeats(msg.sender);
         _split(price);
+        _settleSeats(msg.sender);
         _seatForDay(id, msg.sender, price);
         _mint(msg.sender, id);
         if (msg.value > price) _pay(msg.sender, msg.value - price);
@@ -339,15 +340,16 @@ contract STORMGLASS {
     }
 
     /* THE WITNESS. Any amount toward the day's plate: a seat (at most one a day), a notch, and the price rises by it. */
-    function witness() external payable nonReentrant {
-        sync();
+    function witness(uint256 day) external payable nonReentrant {
+        _sync();
         (uint256 id, , , bool open) = onSale();
         require(open, "nothing on sale");
+        require(id == day, "that day is gone");
         require(msg.value > 0, "pay something");
         Day storage D = plates[id];
         D.witnessed += uint128(msg.value);
-        _settleSeats(msg.sender);
         _split(msg.value);
+        _settleSeats(msg.sender);
         _seatForDay(id, msg.sender, msg.value);
         _notch(_witnesses[id], msg.sender);
         lastBidAt = block.timestamp;
@@ -383,19 +385,22 @@ contract STORMGLASS {
         return seats[who] * accPerSeat / 1e18 - seatDebt[who];
     }
     function _settleSeats(address who) private {
-        uint256 p = pending(who);
+        uint256 p = pending(who); if (p > seatPool) p = seatPool;   // rounding can run a few wei ahead of the pool
         seatDebt[who] = seats[who] * accPerSeat / 1e18;
         if (p > 0) { seatPool -= p; _pay(who, p); emit SeatsClaimed(who, p); }
     }
     function claim() external nonReentrant { _settleSeats(msg.sender); }
     /* a refund that could not be pushed waits here */
-    function withdraw() external nonReentrant { uint256 v = owed[msg.sender]; require(v > 0, "nothing owed"); owed[msg.sender] = 0; (bool ok, ) = msg.sender.call{value: v}(""); require(ok, "failed"); }
+    function withdraw() external nonReentrant { _withdraw(payable(msg.sender)); }
+    /* for a wallet that cannot take ether itself: it names where its refund goes */
+    function withdrawTo(address payable to) external nonReentrant { require(to != address(0), "zero address"); _withdraw(to); }
+    function _withdraw(address payable to) private { uint256 v = owed[msg.sender]; require(v > 0, "nothing owed"); owed[msg.sender] = 0; (bool ok, ) = to.call{value: v}(""); require(ok, "failed"); }
     function _pay(address to, uint256 v) private {
         if (v == 0) return;
         (bool ok, ) = to.call{value: v, gas: 60000}("");
         if (!ok) owed[to] += v;
     }
-    /* royalties and gifts land in the vault */
+    /* gifts land in the vault (royalties go to the payee) */
     receive() external payable { vault += msg.value; }
 
     // ═══════════════════════════════════════════════════════════ THE MARKS
@@ -416,13 +421,14 @@ contract STORMGLASS {
         if (address(ethPool) == address(0)) return;
         (bool ok, bytes memory r) = address(ethPool).staticcall{gas: 30000}(abi.encodeWithSelector(0x3850c7bd));
         if (!ok || r.length < 224) return;
-        uint160 sp = abi.decode(r, (uint160));
+        uint256 w0 = abi.decode(r, (uint256)); if (w0 > type(uint160).max) return;
+        uint160 sp = uint160(w0);
         ethSamples[ethSampleI] = sp; ethSampleI = uint8((ethSampleI + 1) % 7); if (ethSampleN < 7) ethSampleN++;
     }
     function _poolOk(address p) private view returns (bool) {
         if (p.code.length == 0) return false;
         (bool ok, bytes memory r) = p.staticcall{gas: 30000}(abi.encodeWithSelector(0x3850c7bd));
-        return ok && r.length >= 224;
+        return ok && r.length >= 224 && abi.decode(r, (uint256)) <= type(uint160).max;
     }
     function ethSampleAvg() external view returns (uint256) {
         if (ethSampleN == 0) return 0;
@@ -476,18 +482,20 @@ contract STORMGLASS {
     function balanceOf(address a) external view returns (uint256) { require(a != address(0), "zero address"); return _balance[a]; }
     function ownerOf(uint256 id) public view returns (address) { address o = _owner[id]; require(o != address(0), "no such plate"); return o; }
     function totalSupply() external view returns (uint256) { return _owner[0] == address(0) ? 0 : lastId + 1; }
+    function getApproved(uint256 id) external view returns (address) { ownerOf(id); return _approved[id]; }
     function approve(address to, uint256 id) external {
         address o = ownerOf(id); require(msg.sender == o || isApprovedForAll[o][msg.sender], "not authorized");
-        getApproved[id] = to; emit Approval(o, to, id);
+        _approved[id] = to; emit Approval(o, to, id);
     }
     function setApprovalForAll(address op, bool ok) external { isApprovedForAll[msg.sender][op] = ok; emit ApprovalForAll(msg.sender, op, ok); }
     function transferFrom(address from, address to, uint256 id) public {
         address o = ownerOf(id);
         require(o == from, "wrong from");
-        require(msg.sender == o || getApproved[id] == msg.sender || isApprovedForAll[o][msg.sender], "not authorized");
+        require(msg.sender == o || _approved[id] == msg.sender || isApprovedForAll[o][msg.sender], "not authorized");
         require(to != address(0), "zero address");
+        require(to != address(this), "the vault takes no plates");
         require(from != address(this), "the vault holds forever");
-        delete getApproved[id];
+        delete _approved[id];
         _balance[from] -= 1; _balance[to] += 1; _owner[id] = to; ownerSince[id] = uint64(block.timestamp);
         _notch(_hands[id], to);
         emit Transfer(from, to, id);
@@ -511,7 +519,7 @@ contract STORMGLASS {
     function supportsInterface(bytes4 i) external pure returns (bool) {
         return i == 0x01ffc9a7 || i == 0x80ac58cd || i == 0x5b5e139f || i == 0x2a55205a;   // 165, 721, 721 metadata, 2981
     }
-    function royaltyInfo(uint256, uint256 salePrice) external view returns (address, uint256) { return (address(this), salePrice * ROYALTY / 10000); }
+    function royaltyInfo(uint256, uint256 salePrice) external pure returns (address, uint256) { return (PAYEE, salePrice * ROYALTY / 10000); }
     function tokenURI(uint256 id) external view returns (string memory) { ownerOf(id); return glass.tokenURI(id); }
     function isTomb(uint256 id) external view returns (bool) { return dead && id == tombId; }
 }
