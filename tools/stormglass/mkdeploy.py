@@ -92,7 +92,7 @@ async function connect(){
   if($('signer').value==='burner'){
     if(net!=='sepolia'){ log('a burner is for Sepolia only','bad'); return; }
     let k=localStorage.getItem('stormglass_burner'); if(!k){ k=ethers.Wallet.createRandom().privateKey; localStorage.setItem('stormglass_burner',k); log('a burner key was made and kept in this browser'); }
-    provider=new ethers.JsonRpcProvider($('rpc').value); signer=new ethers.Wallet(k,provider);
+    provider=new ethers.JsonRpcProvider($('rpc').value,undefined,{cacheTimeout:-1});   /* no cached nonce between back-to-back transactions */ signer=new ethers.Wallet(k,provider);
   } else {
     if(!window.ethereum){ log('no wallet in this browser','bad'); return; }
     provider=new ethers.BrowserProvider(window.ethereum); await provider.send('eth_requestAccounts',[]);
@@ -124,9 +124,9 @@ $('s1').addEventListener('click',async()=>{ try{
 $('s2').addEventListener('click',async()=>{ try{
   const C=at('Coats',$('aCoats').value); const addrs=$('aChunks').value?$('aChunks').value.split(',').map(s=>s.trim()).filter(Boolean):[];
   for(let i=0;i<addrs.length;i++){ if((await provider.getCode(addrs[i])).length<=4) throw new Error('chunk '+i+' has no code on this chain: clear CHUNKS and lay again'); }
-  for(let i=addrs.length;i<CHUNKS.length;i+=4){
-    const batch=CHUNKS.slice(i,i+4).map(t=>'0x'+Array.from(new TextEncoder().encode(t)).map(b=>b.toString(16).padStart(2,'0')).join(''));
-    const rc=await txlog('lay '+i+'..'+(i+batch.length-1), await C.lay(batch));
+  for(let i=addrs.length;i<CHUNKS.length;i+=2){
+    const batch=CHUNKS.slice(i,i+2).map(t=>'0x'+Array.from(new TextEncoder().encode(t)).map(b=>b.toString(16).padStart(2,'0')).join(''));
+    const rc=await txlog('lay '+i+'..'+(i+batch.length-1), await C.lay(batch,{gasLimit:6000000*batch.length}));   /* a fixed limit: 2 chunks use 10.49M, under the 16.7M cap; a node's estimate may refuse */
     for(const l of rc.logs){ try{ const p=C.interface.parseLog(l); if(p&&p.name==='Laid') addrs.push(String(p.args[0])); }catch(_){} }
     $('aChunks').value=addrs.join(','); rec('chunks',addrs);
   }
@@ -177,7 +177,7 @@ walk('w10',async()=>{ const uri=await S().tokenURI(BigInt($('tid').value)); cons
   $('frame').style.display='block'; $('frame').src=json.animation_url; log('the plate is in the frame','ok'); rec('lastTokenURIBytes',uri.length); });
 </script></body></html>'''
 out=HTML.replace('__ARTS__',json.dumps(arts)).replace('__CHUNKS__',json.dumps(chunks)).replace('__MAN__',json.dumps({k:v for k,v in man.items() if k!='chunks'}))
-out=out.replace('__COATSHA__',man['coat_sha256']).replace('__COATBYTES__',str(man['coat_bytes'])).replace('__NCHUNKS__',str(len(chunks))).replace('__NBATCH__',str((len(chunks)+3)//4))
+out=out.replace('__COATSHA__',man['coat_sha256']).replace('__COATBYTES__',str(man['coat_bytes'])).replace('__NCHUNKS__',str(len(chunks))).replace('__NBATCH__',str((len(chunks)+1)//2))
 out=out.replace('__SHA_S__',srcsha['STORMGLASS'][:16]).replace('__SHA_G__',srcsha['GLASS'][:16]).replace('__SHA_C__',srcsha['Coats'][:16])
 dst=os.path.join(ROOT,'glass','deploy','index.html'); os.makedirs(os.path.dirname(dst),exist_ok=True)
 tmp=dst+'.tmp'; open(tmp,'w').write(out); os.replace(tmp,dst)
