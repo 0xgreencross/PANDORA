@@ -50,7 +50,8 @@ Proxy-stub DOM (see TESTING.md). For the contract: full in-process EVM
 suite (see TESTING.md). No ritual, no push.
 
 ## Key constants
-Artist wallet: 0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359
+Artist wallet: 0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359 (PANDORA's ARTIST; STORMGLASS's PAYEE, where the 70% goes)
+STORMGLASS artist and deployer: greencross.eth 0x0DD399a7ED92283e4983C2974FE377070D67f4eB (curator, Oct 2)
 Sepolia contract: 0x48b1A56033d0a896232001d4C7072712C36CaB83
 Supabase: https://llirnynoyarbvtxcekwy.supabase.co (anon key in engine SB
 config; RLS is the lock). Posters bucket: public, anon INSERT only.
