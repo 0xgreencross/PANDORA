@@ -118,6 +118,19 @@ describe("HARDENING", function () {
     for (let t = 0n; t < 86400n; t += 97n) { const p = await storm.priceAt(1, D.open + t); expect(p).to.be.lte(last); last = p; }
   });
 
+  it("a bidder that answers refunds with a mountain of returned data cannot make the settle unaffordable", async () => {
+    const S = await H.deployAll(); const sig = await ethers.getSigners();
+    const B = await (await ethers.getContractFactory("Bomber")).deploy(await S.storm.getAddress());
+    await H.warp(24 * 3600 + 5);
+    let v = ETH("0.05");
+    for (let i = 0; i < 40; i++) { await B.bid({ value: v }); v = v + v / 20n; }
+    await S.storm.connect(sig[1]).bid({ value: v });
+    await H.warp(6 * 3600); await H.mine(9010);
+    const rc = await (await S.storm.settleCandle({ gasLimit: 16_777_216 })).wait();
+    expect(rc.gasUsed).to.be.lt(5_000_000n);
+    await conserved(S.storm);
+  });
+
   it("a wallet that cannot take ether names where its refund goes", async () => {
     const S = await H.deployAll(); const [, a, b] = await ethers.getSigners();
     const R = await (await ethers.getContractFactory("Refuser")).deploy(await S.storm.getAddress());
