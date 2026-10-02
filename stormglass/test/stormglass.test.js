@@ -3,7 +3,8 @@ const { ethers } = require("hardhat");
 const H = require("./helpers");
 const { ETH } = H;
 
-const ARTIST = "0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359";
+const ARTIST = "0x0DD399a7ED92283e4983C2974FE377070D67f4eB";   // greencross.eth
+const PAYEE = "0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359";    // where the seventy percent goes
 const bal = a => ethers.provider.getBalance(a);
 
 /* the contract may hold only what it says it holds */
@@ -72,13 +73,14 @@ describe("THE CANDLE", function () {
     if (BigInt(t) + 10n < close) { await storm.connect(d).bid({ value: ETH("0.4") }); dBid = true; }
     await H.warpTo(close + 1n);
     await expect(storm.connect(a).bid({ value: ETH("1") })).to.be.revertedWith("the candle is out");
-    const artistBefore = await bal(ARTIST);
+    const artistBefore = await bal(PAYEE);
     const cBefore = await bal(c.address), bBefore2 = await bal(b.address);
     await storm.settleCandle();
     const winner = dBid ? d : c, winAmt = dBid ? ETH("0.4") : ETH("0.3");
     expect(await storm.ownerOf(0)).to.equal(winner.address);
     expect(await storm.FOUNDING()).to.equal(winAmt);
-    expect(await bal(ARTIST)).to.equal(artistBefore + winAmt * 70n / 100n);
+    expect(await bal(PAYEE)).to.equal(artistBefore + winAmt * 70n / 100n);
+    expect(await bal(ARTIST)).to.equal(0n);                              // the artist address is not paid
     expect(await storm.vault()).to.equal(winAmt - winAmt * 70n / 100n);
     expect(await bal(b.address)).to.equal(bBefore2 + ETH("0.2"));          // the pre-window leader, refunded at the end
     if (dBid) expect(await bal(c.address)).to.equal(cBefore + ETH("0.3")); // c outbid inside the window, refunded at the end
@@ -94,6 +96,8 @@ describe("THE CANDLE", function () {
     await H.warpTo((await storm.candleClose()) + 1n);
     await storm.settleCandle();
     expect(await storm.ownerOf(0)).to.equal(ARTIST);
+    expect(await storm.owner()).to.equal(ARTIST);
+    expect(await storm.PAYEE()).to.equal(PAYEE);
     expect(await storm.FOUNDING()).to.equal(ETH("0.05"));
   });
 
@@ -161,13 +165,13 @@ describe("THE DAYS", function () {
     await H.warpTo(open + 3600n); await storm.sync();
     const [id, price, , isOpen] = await storm.onSale(); expect(id).to.equal(1); expect(isOpen).to.equal(true);
     await expect(storm.connect(b).buy(7, { value: price / 2n })).to.be.revertedWith("the price is higher");
-    const artistBefore = await bal(ARTIST), vaultBefore = await storm.vault();
+    const artistBefore = await bal(PAYEE), vaultBefore = await storm.vault();
     const tx = await storm.connect(b).buy(7, { value: ETH("2") });
     const rc = await tx.wait(); const paid = (await storm.plates(1)).price;
     expect(paid).to.be.lte(price); expect(paid).to.be.gt(price * 99n / 100n);   // the price at the block's own second
     const gas = rc.gasUsed * rc.gasPrice;
     expect(await storm.ownerOf(1)).to.equal(b.address);
-    expect(await bal(ARTIST)).to.equal(artistBefore + paid * 70n / 100n);
+    expect(await bal(PAYEE)).to.equal(artistBefore + paid * 70n / 100n);
     expect(await storm.vault()).to.equal(vaultBefore + (paid - paid * 70n / 100n - paid * 20n / 100n));
     expect(await storm.pending(c.address)).to.equal(paid * 20n / 100n);
     expect(await storm.seats(b.address)).to.equal(paid * ETH("1") / ETH("0.3") > ETH("1") ? ETH("1") : paid * ETH("1") / ETH("0.3"));
