@@ -175,14 +175,15 @@ $('s5').addEventListener('click',async()=>{ try{
   rec('verified',{coatSha:sha, coatBytes:coat.length, code:okC&&okG&&okS});
 }catch(e){ log(String(e.message||e),'bad'); } });
 const S=()=>at('STORMGLASS',$('aStorm').value);
+async function pad(m,args,ov={}){ let g=null; try{ g=await m.estimateGas(...args,ov); }catch(e){} if(g===null) return m(...args,ov); let L=g*3n/2n+60000n; if(L<250000n) L=250000n; if(L>15000000n) L=15000000n; return m(...args,{...ov,gasLimit:L}); }   /* room to spare: a smart-account wallet (EIP-7702) runs code when refunded and estimates come in short */
 const walk=(id,fn)=>$(id).addEventListener('click',async()=>{ try{ await fn(); }catch(e){ log(String(e.reason||e.message||e),'bad'); } });
-walk('w1',async()=>txlog('bid 0.05',await S().bid({value:ethers.parseEther('0.05')})));
-walk('w2',async()=>txlog('bid 0.06',await S().bid({value:ethers.parseEther('0.06')})));
-walk('w4',async()=>txlog('settleCandle',await S().settleCandle()));
-walk('w5',async()=>txlog('pledge',await S().pledge({value:ethers.parseEther('0.005')})));
-walk('w6',async()=>txlog('sync',await S().sync()));
-walk('w7',async()=>{ const [id]=await S().onSale(); await txlog('witness',await S().witness(id,{value:ethers.parseEther('0.001')})); });
-walk('w8',async()=>{ const [id,price]=await S().onSale(); log('on sale: id '+id+' price '+ethers.formatEther(price)); await txlog('buy',await S().buy(id,7,{value:price+price/20n})); });
+walk('w1',async()=>txlog('bid 0.05',await pad(S().bid,[],{value:ethers.parseEther('0.05')})));
+walk('w2',async()=>txlog('bid 0.06',await pad(S().bid,[],{value:ethers.parseEther('0.06')})));
+walk('w4',async()=>txlog('settleCandle',await pad(S().settleCandle,[])));
+walk('w5',async()=>txlog('pledge',await pad(S().pledge,[],{value:ethers.parseEther('0.005')})));
+walk('w6',async()=>txlog('sync',await pad(S().sync,[])));
+walk('w7',async()=>{ const [id]=await S().onSale(); await txlog('witness',await pad(S().witness,[id],{value:ethers.parseEther('0.001')})); });
+walk('w8',async()=>{ const [id,price]=await S().onSale(); log('on sale: id '+id+' price '+ethers.formatEther(price)); await txlog('buy',await pad(S().buy,[id,7],{value:price+price/20n})); });
 walk('w9',async()=>{ const s=S(); const [id,price,close,open]=await s.onSale();
   log('candleClose '+(await s.candleClose())+' settled '+(await s.candleSettled())+' FOUNDING '+ethers.formatEther(await s.FOUNDING())+' foundersEnd '+(await s.foundersEnd())+' today '+(await s.today())+' onSale id '+id+' price '+ethers.formatEther(price)+' close '+close+' open '+open+' vault '+ethers.formatEther(await s.vault())+' seatPool '+ethers.formatEther(await s.seatPool())+' dead '+(await s.dead())+' block '+(await provider.getBlockNumber())+' now '+Math.floor(Date.now()/1000)); });
 walk('w10',async()=>{ const uri=await S().tokenURI(BigInt($('tid').value)); const json=JSON.parse(atob(uri.slice('data:application/json;base64,'.length)));
