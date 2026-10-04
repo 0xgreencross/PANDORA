@@ -1,0 +1,55 @@
+{
+ "set": "rehearsal",
+ "renderer": "tools/gift/small_weather.py sky",
+ "frames": 40,
+ "delay_ms": 40,
+ "size": 480,
+ "limit": 66500,
+ "loops": [
+  {
+   "id": 1,
+   "holder": "0x0DD399a7ED92283e4983C2974FE377070D67f4eB",
+   "handle": "greencross.eth",
+   "file": "001.gif",
+   "bytes": 42342,
+   "sha256": "e3694776cc0a15407b4d2a63ec66bc1817d84fbb1c795aacea36bb926fd391d6",
+   "wx": "SUN",
+   "pair": "EMBERGRID",
+   "drops": 19,
+   "override": {},
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 2,
+   "holder": "0x36c7300187fc44D95bd1a1443d88b8E0adc296aC",
+   "handle": "rehearsal-1",
+   "file": "002.gif",
+   "bytes": 56813,
+   "sha256": "d6f1d65c4090028065dc4a825baa7b22a376b5256cde29f2d521c0faef5c0f22",
+   "wx": "SNOW",
+   "pair": "HOTLINE",
+   "drops": 17,
+   "override": {},
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 3,
+   "holder": "0x0fc4c66C203F9B815a5239c5AFD915Bb0719B69a",
+   "handle": "rehearsal-2",
+   "file": "003.gif",
+   "bytes": 43306,
+   "sha256": "9ff4f92fb317f02b6ae0d3e0713bc32d62f0861cdcc685f18bc7e8a138dfee12",
+   "wx": "SUN",
+   "pair": "TISNUKE",
+   "drops": 16,
+   "override": {},
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  }
+ ]
+}
