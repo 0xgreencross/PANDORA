@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#050506">
+<title>DITHERVOID // SMALL WEATHER</title>
+<meta name="description" content="A small weather for each collector who answered. It came before STORMGLASS.">
+<style>
+  :root{--bg:#050506;--ink:#e8e8ec;--mut:#7d7d88;--acc:#c8ff3a;--bad:#ff5a5a;--hair:#1e1e24;--pane:#0b0b0e;--sab:env(safe-area-inset-bottom,0px)}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased}
+  body{height:100dvh;display:flex;flex-direction:column}
+  a{color:inherit;text-decoration:none}
+  header{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:10px 16px;min-height:48px;border-bottom:1px solid var(--hair)}
+  header .brand{letter-spacing:.24em;font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .brand span{color:var(--mut);font-weight:500}
+  header nav{margin-left:auto;display:flex;gap:16px;font-size:10px;letter-spacing:.16em;color:var(--mut);white-space:nowrap}
+  header nav a:hover{color:var(--ink)}
+  .stage{flex:1 1 auto;min-height:0;container-type:size;display:flex;align-items:center;justify-content:center;padding:14px 16px 8px}
+  .art{width:min(100cqw,100cqh);height:min(100cqw,100cqh);background:var(--pane);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .art img{width:100%;height:100%;image-rendering:pixelated;display:none}
+  .art .idle{padding:8%;text-align:center;color:var(--mut);font-size:12px;letter-spacing:.14em;line-height:1.9}
+  .art .idle b{display:block;color:var(--ink);font-weight:600;letter-spacing:.24em;font-size:13px;margin-bottom:10px}
+  .strip{flex:0 0 auto;padding:6px 16px calc(14px + var(--sab));display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+  #status{font-size:11px;letter-spacing:.14em;color:var(--mut);min-height:17px;overflow-wrap:anywhere}
+  #status.ok{color:var(--acc)} #status.bad{color:var(--bad)}
+  .acts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  button{font:inherit;background:none;color:var(--ink);border:1px solid var(--ink);padding:9px 18px;cursor:pointer;letter-spacing:.14em;font-size:11px;white-space:nowrap}
+  button.prime{border-color:var(--acc);color:var(--acc)} button:disabled{opacity:.35;cursor:default}
+  #zero{display:none;font-size:11px;letter-spacing:.12em;color:var(--ink)}
+  #zero a{color:var(--acc);border-bottom:1px solid var(--acc)}
+  @media(max-width:520px){ header nav{gap:12px} header nav a.wide{display:none} header .brand{font-size:11px;letter-spacing:.18em} }
+  @media(max-width:359px){ header{gap:8px} header .brand{font-size:10px;letter-spacing:.1em} }
+</style></head><body>
+<header><a class="brand" href="/">DITHERVOID <span>//</span> SMALL WEATHER</a><nav><a href="/">STORMGLASS</a><a class="wide" href="/pandora/">PANDORA</a></nav></header>
+<div class="stage"><div class="art" id="art">
+  <img id="loop" alt="your small weather">
+  <div class="idle" id="idle"><b>SMALL WEATHER</b>A small weather was made for each collector who answered. It came before STORMGLASS. Connect the address you posted to see yours.</div>
+</div></div>
+<div class="strip">
+  <div id="status"></div>
+  <div class="acts"><button id="connect" class="prime">CONNECT</button><button id="claim" class="prime" style="display:none">CLAIM</button></div>
+  <div id="zero">Plate Zero opens on founders' day. <a href="/">Pledge for a seat.</a></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+<script>
+/* where the gift lives. contract stays '' until the deploy; ?net=sepolia&c=0x... is the rehearsal */
+const NETS={
+  mainnet:{chainId:1,  contract:'', rpc:'https://ethereum-rpc.publicnode.com', name:'Ethereum'},
+  sepolia:{chainId:11155111, contract:'', rpc:'https://ethereum-sepolia-rpc.publicnode.com', name:'Sepolia'},
+  local:{chainId:31337, contract:'', rpc:'http://127.0.0.1:8545', name:'local'}
+};
+const ABI=['function giftOf(address) view returns (uint256)','function holderOf(uint256) view returns (address)','function isClaimed(uint256) view returns (bool)',
+  'function ownerOf(uint256) view returns (address)','function gif(uint256) view returns (bytes)','function isSealed() view returns (bool)','function claim()',
+  'error NotSealed()','error NoGift()','error Claimed()'];
+const q=new URLSearchParams(location.search);
+const NET=NETS[q.get('net')]?q.get('net'):'mainnet';
+const CFG={...NETS[NET]};
+if(NET!=='mainnet'){ if(q.get('c')) CFG.contract=q.get('c'); if(q.get('rpc')) CFG.rpc=q.get('rpc'); }
+const $=id=>document.getElementById(id);
+const say=(m,c)=>{ const s=$('status'); s.textContent=m; s.className=c||''; };
+const short=a=>a.slice(0,6)+'…'+a.slice(-4);
+let me=null, id=0n, WBP=null;
+
+const read=()=>new ethers.Contract(CFG.contract,ABI,new ethers.JsonRpcProvider(CFG.rpc,CFG.chainId,{staticNetwork:true}));
+/* reads go to the public RPC; if it fails, the same read goes through the connected wallet (already on the right chain) */
+async function rd(fn){ try{ return await fn(read()); }catch(e){ if(!WBP) throw e; return await fn(new ethers.Contract(CFG.contract,ABI,WBP)); } }
+/* what a collector reads when something goes wrong: plain lines, never developer jargon */
+function human(e){
+  const n=e&&e.revert&&e.revert.name;
+  if(e&&(e.code==='ACTION_REJECTED'||e.code===4001||(e.info&&e.info.error&&e.info.error.code===4001))) return 'You declined in your wallet. Nothing was sent.';
+  if(n==='NotSealed') return 'The claim is not open yet.';
+  if(n==='NoGift') return 'No small weather was made for this address.';
+  if(n==='Claimed') return 'This small weather is already claimed.';
+  if(e&&(e.code==='NETWORK_ERROR'||e.code==='SERVER_ERROR'||e.code==='TIMEOUT'||/fetch/i.test(String(e.message)))) return 'Could not reach the chain. Try again in a moment.';
+  if(e&&e.code==='INSUFFICIENT_FUNDS') return 'Not enough ETH in this wallet for the gas.';
+  return String((e&&(e.shortMessage||e.message))||e);
+}
+if(!CFG.contract){ say('Claims are not open yet.'); $('connect').disabled=true; }
+else if(NET!=='mainnet') say('REHEARSAL on '+CFG.name+' · '+short(CFG.contract));
+
+function show(bytes){ const b=ethers.getBytes(bytes); let s=''; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));
+  $('loop').src='data:image/gif;base64,'+btoa(s); $('loop').style.display='block'; $('idle').style.display='none'; }
+
+async function wallet(){
+  if(!window.ethereum) throw new Error('No wallet in this browser.');
+  let bp=new ethers.BrowserProvider(window.ethereum); await bp.send('eth_requestAccounts',[]);
+  if(Number((await bp.getNetwork()).chainId)!==CFG.chainId){
+    try{ await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x'+CFG.chainId.toString(16)}]}); }
+    catch(e){ throw new Error('Switch your wallet to '+CFG.name+'.'); }
+    bp=new ethers.BrowserProvider(window.ethereum);
+    if(Number((await bp.getNetwork()).chainId)!==CFG.chainId) throw new Error('Switch your wallet to '+CFG.name+'.');
+  }
+  WBP=bp; return bp;
+}
+function reset(){ $('loop').style.display='none'; $('loop').removeAttribute('src'); $('idle').style.display=''; $('zero').style.display='none'; $('claim').style.display='none'; }
+async function refresh(){
+  reset();
+  id=await rd(c=>c.giftOf(me));
+  if(id===0n){ say('No small weather was made for '+short(me)+'. Connect the address you posted under the tweet.','bad'); $('claim').style.display='none'; return; }
+  say('Reading #'+id+' from the chain…');
+  show(await rd(c=>c.gif(id)));
+  const [claimed,sealed]=await rd(c=>Promise.all([c.isClaimed(id),c.isSealed()]));
+  if(claimed){
+    const o=await rd(c=>c.ownerOf(id));
+    say('SMALL WEATHER #'+id+' · made for '+short(me)+' · '+(o.toLowerCase()===me.toLowerCase()?'yours':'held by '+short(o)),'ok');
+    $('claim').style.display='none'; $('zero').style.display='block';
+  } else if(!sealed){
+    say('SMALL WEATHER #'+id+' · made for '+short(me)+' · the claim opens soon'); $('claim').style.display='none';
+  } else {
+    say('SMALL WEATHER #'+id+' · made for '+short(me)+' · free, you pay only the gas'); $('claim').style.display='';
+  }
+}
+$('connect').addEventListener('click',async()=>{ try{
+  const bp=await wallet(); me=await (await bp.getSigner()).getAddress();
+  $('connect').textContent=short(me); await refresh();
+}catch(e){ say(human(e),'bad'); } });
+/* THE PAD: estimate x1.5 + 60k, at least 250k, at most 15M (smart-account wallets, EIP-7702, estimate short) */
+$('claim').addEventListener('click',async()=>{ try{
+  $('claim').disabled=true;
+  const bp=await wallet(); const s=await bp.getSigner();
+  if((await s.getAddress()).toLowerCase()!==me.toLowerCase()) throw new Error('The wallet changed account: connect again.');
+  const c=new ethers.Contract(CFG.contract,ABI,s);
+  const g=await c.claim.estimateGas(); let L=g*3n/2n+60000n; if(L<250000n) L=250000n; if(L>15000000n) L=15000000n;
+  say('Confirm in your wallet…');
+  const tx=await c.claim({gasLimit:L}); say('Claiming… '+short(tx.hash));
+  await tx.wait(); await refresh();
+}catch(e){ say(human(e),'bad'); } finally{ $('claim').disabled=false; } });
+</script>
+</body></html>
