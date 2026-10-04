@@ -1,0 +1,10 @@
+{
+  "name": "smallweather",
+  "version": "1.0.0",
+  "description": "DITHERVOID // SMALL WEATHER. A free 1 of 1 for each collector who answered. Single ERC-721, loops on chain (SSTORE2).",
+  "license": "CC0-1.0",
+  "scripts": { "test": "hardhat test",
+    "test:osaka": "hardhat test --config hardhat.osaka.config.js", "compile": "hardhat compile" },
+  "devDependencies": { "@nomicfoundation/hardhat-toolbox": "^5.0.0", "hardhat": "^2.22.0" },
+  "dependencies": { "solc": "0.8.24", "@openzeppelin/contracts": "5.0.2" }
+}
