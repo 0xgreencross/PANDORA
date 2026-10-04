@@ -1,0 +1,2106 @@
+{
+"note": "SKY size survey v2 (session 2, Oct 4 2026): 300 addresses sha256('small weather survey v2 %d')[:20 bytes], weather as each seed picks it, 40 frames, gifenc. LIMIT in mkloops.py is 66,500 B (pages' 15M gas cap at ~222 gas/B).",
+"limit": 66500,
+"rows": [
+{
+"addr": "0x5fddff59ef79a43c1c0bda791b2310bb7f600cec",
+"wx": "CLOUD",
+"pair": "POLE",
+"bytes": 39708,
+"drops": 22
+},
+{
+"addr": "0xde24fbbc0b7b8bf7b02400c9e7b96283f06f033b",
+"wx": "STORM",
+"pair": "CATHODE",
+"bytes": 56386,
+"drops": 14
+},
+{
+"addr": "0x5e5280f7f4ed8f1b5cafc83053a1ae90284f0f6d",
+"wx": "SNOW",
+"pair": "CATHODE",
+"bytes": 55988,
+"drops": 22
+},
+{
+"addr": "0x0ce442602d9e536adbd50c64d8154011cd43d56a",
+"wx": "MOON",
+"pair": "MGC",
+"bytes": 41576,
+"drops": 18
+},
+{
+"addr": "0x0de300ca2288e68555ac89aecf282ef284564af5",
+"wx": "RAIN",
+"pair": "MGC",
+"bytes": 67597,
+"drops": 22
+},
+{
+"addr": "0xe63cd0301d9d8758e3428ccb2eff461e1c945d0c",
+"wx": "SUN",
+"pair": "DITHERVOID",
+"bytes": 48851,
+"drops": 20
+},
+{
+"addr": "0x3c7fca01b754ab45b8b98346f09b9d1f42711215",
+"wx": "RAIN",
+"pair": "MGC",
+"bytes": 57953,
+"drops": 18
+},
+{
+"addr": "0x59614eb9b327ed0ad2af7d937ea31843248f9c91",
+"wx": "SUN",
+"pair": "DITHERVOID",
+"bytes": 54188,
+"drops": 21
+},
+{
+"addr": "0x2644c1dd8d970fa41dccc80ac85afe6efa747d71",
+"wx": "MOON",
+"pair": "MGC",
+"bytes": 38238,
+"drops": 22
+},
+{
+"addr": "0x065e0aad645167fd94533b432ff3679473530846",
+"wx": "RAIN",
+"pair": "EMBERGRID",
+"bytes": 60377,
+"drops": 20
+},
+{
+"addr": "0x510848014a1ad80661a6e2cf66dbe68d34d84cab",
+"wx": "CLOUD",
+"pair": "POISONFROG",
+"bytes": 44446,
+"drops": 20
+},
+{
+"addr": "0x66620b94852493b5c626b0756a73b2c08c4e6162",
+"wx": "RAIN",
+"pair": "TISNUKE",
+"bytes": 62350,
+"drops": 16
+},
+{
+"addr": "0x2791f41a1ad302d8340917a0bccc6ab889ee015a",
+"wx": "MOON",
+"pair": "EMBERGRID",
+"bytes": 41441,
+"drops": 17
+},
+{
+"addr": "0x8aba17a267ec9b3db6a8b99c1d1ec8026325212e",
+"wx": "SNOW",
+"pair": "POLE",
+"bytes": 57008,
+"drops": 18
+},
+{
+"addr": "0xd257a55ffe1b43603b87d0051544061d2201f25b",
+"wx": "CLOUD",
+"pair": "DITHERVOID",
+"bytes": 38810,
+"drops": 14
+},
+{
+"addr": "0x4a82c3111bb35b07833dd5fa092d1d251078747f",
+"wx": "SNOW",
+"pair": "INFRARED",
+"bytes": 53909,
+"drops": 20
+},
+{
+"addr": "0x84dd40135e417cc90cf498560297edc767d19999",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 60787,
+"drops": 19
+},
+{
+"addr": "0x10cf240f051b9f32ff05ed743f9e6e39eb151ea9",
+"wx": "CLOUD",
+"pair": "MGC",
+"bytes": 45513,
+"drops": 17
+},
+{
+"addr": "0x2be92548ac9fd4bb71849c3969d49074684aaabf",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 50849,
+"drops": 18
+},
+{
+"addr": "0xe673fd04dc934c276b92f6036815331c27bb79bd",
+"wx": "SNOW",
+"pair": "POISONFROG",
+"bytes": 53451,
+"drops": 18
+},
+{
+"addr": "0x646026fad00022f6b33f7f7d055a1177d711298b",
+"wx": "STORM",
+"pair": "MGC",
+"bytes": 71972,
+"drops": 21
+},
+{
+"addr": "0xaffae09c877c3b13f8697c2f376528208f7ab231",
+"wx": "CLOUD",
+"pair": "TISNUKE",
+"bytes": 35547,
+"drops": 21
+},
+{
+"addr": "0x16c938c550e0736287bb0f1c803e0aeef809a675",
+"wx": "SNOW",
+"pair": "INFRARED",
+"bytes": 53518,
+"drops": 16
+},
+{
+"addr": "0x1465e308e8b5d32141ad214fa7897a851460ddbc",
+"wx": "SNOW",
+"pair": "DITHERVOID",
+"bytes": 58616,
+"drops": 20
+},
+{
+"addr": "0xb7dbf302067049e74f8f4a185db1323a2953be4f",
+"wx": "MOON",
+"pair": "POLE",
+"bytes": 37138,
+"drops": 14
+},
+{
+"addr": "0xbf7fa07dfc1d30e29b71777383105b50d0639f1e",
+"wx": "CLOUD",
+"pair": "DITHERVOID",
+"bytes": 48596,
+"drops": 22
+},
+{
+"addr": "0x153c744e6c8ea229037ecfb55654828d23de7851",
+"wx": "RAIN",
+"pair": "CATHODE",
+"bytes": 63709,
+"drops": 17
+},
+{
+"addr": "0xf8f58c47729f27bc01394fc9edd03da3498b3bfb",
+"wx": "CLOUD",
+"pair": "TISNUKE",
+"bytes": 44593,
+"drops": 17
+},
+{
+"addr": "0x6f46b40fd156ef51fa7d40fa6541f96ab332c581",
+"wx": "MOON",
+"pair": "MGC",
+"bytes": 40083,
+"drops": 16
+},
+{
+"addr": "0xc032e0b5e2219000c88148f75e4044c80c3f6be3",
+"wx": "SNOW",
+"pair": "POISONFROG",
+"bytes": 53583,
+"drops": 17
+},
+{
+"addr": "0x9eb2e1480dcbe52ccf1524b11c4ac5b3ca64f789",
+"wx": "RAIN",
+"pair": "LAZER",
+"bytes": 61514,
+"drops": 17
+},
+{
+"addr": "0xf4864328da5f21bd9b5cd79317b79e4c0d88913e",
+"wx": "STORM",
+"pair": "MGC",
+"bytes": 62992,
+"drops": 21
+},
+{
+"addr": "0x4b0c89f007e4668d55486b9baf1831638f93bfa7",
+"wx": "SUN",
+"pair": "MGC",
+"bytes": 43885,
+"drops": 22
+},
+{
+"addr": "0x0183519f9a9255e527a77748c6c1f81fe227d1b5",
+"wx": "CLOUD",
+"pair": "LAZER",
+"bytes": 39996,
+"drops": 14
+},
+{
+"addr": "0xd273ee543d33be3dd6ffedde43af22416ed4fe20",
+"wx": "CLOUD",
+"pair": "POISONFROG",
+"bytes": 37337,
+"drops": 15
+},
+{
+"addr": "0xfed245d1a6d5bf14f114000813ff11ff3d44ac45",
+"wx": "SUN",
+"pair": "TISNUKE",
+"bytes": 48312,
+"drops": 15
+},
+{
+"addr": "0xd55defcace7c0928839d878d0f6a1e7f3fef3933",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 60486,
+"drops": 21
+},
+{
+"addr": "0xef4ac9c8e5ad351087143d652142c40b5d76d788",
+"wx": "SUN",
+"pair": "LAZER",
+"bytes": 48631,
+"drops": 20
+},
+{
+"addr": "0xf4a7e8a71954f633e18388f133cd6062c4d2df50",
+"wx": "SNOW",
+"pair": "DITHERVOID",
+"bytes": 49591,
+"drops": 21
+},
+{
+"addr": "0xab8a23208c8024949e455001c372b039dbf90e3c",
+"wx": "STORM",
+"pair": "POLE",
+"bytes": 69051,
+"drops": 17
+},
+{
+"addr": "0x5ac61d4ccde65cac9cfcec2fd77d9c8dac33c44f",
+"wx": "MOON",
+"pair": "TISNUKE",
+"bytes": 39825,
+"drops": 22
+},
+{
+"addr": "0x82753872388b8326cf01ad7aecee2b17b1b3946b",
+"wx": "CLOUD",
+"pair": "INFRARED",
+"bytes": 44944,
+"drops": 20
+},
+{
+"addr": "0x5899c7a7d09ed35f0091db96e8314e4c98f8fdb8",
+"wx": "MOON",
+"pair": "POLE",
+"bytes": 34900,
+"drops": 15
+},
+{
+"addr": "0x3aa21146898ace4e40fb75861e84e35027e82917",
+"wx": "MOON",
+"pair": "POLE",
+"bytes": 32706,
+"drops": 22
+},
+{
+"addr": "0xb637b3db784e339a430a145717f200d62efd7706",
+"wx": "MOON",
+"pair": "INFRARED",
+"bytes": 38312,
+"drops": 16
+},
+{
+"addr": "0xc57995c88e6aa56b6efc463c6b5892ed06c64f00",
+"wx": "CLOUD",
+"pair": "LAZER",
+"bytes": 39756,
+"drops": 17
+},
+{
+"addr": "0xdb5e93eae05a06526e57d07989ff7f87808bf2ab",
+"wx": "STORM",
+"pair": "DITHERVOID",
+"bytes": 62951,
+"drops": 14
+},
+{
+"addr": "0xd42b0f5db59a9399e0aecf09e902006204abcfda",
+"wx": "CLOUD",
+"pair": "EMBERGRID",
+"bytes": 41703,
+"drops": 18
+},
+{
+"addr": "0x2808dd0fd0f79f6c0d572b3204b8c8f956e8e8e5",
+"wx": "RAIN",
+"pair": "HOTLINE",
+"bytes": 59370,
+"drops": 17
+},
+{
+"addr": "0x1cc6d2287a580bee85a40ccb5e8040f7b64a3216",
+"wx": "SNOW",
+"pair": "MGC",
+"bytes": 53747,
+"drops": 17
+},
+{
+"addr": "0x6a12217150133acc59210b67689c479e6d503eae",
+"wx": "SNOW",
+"pair": "INFRARED",
+"bytes": 49516,
+"drops": 17
+},
+{
+"addr": "0xcbe890ab160ff35ab00f43b468ae85621735c2cb",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 58589,
+"drops": 15
+},
+{
+"addr": "0xd924bfcbb11b9c140b2f936fe0d8f0a3c06f6c8b",
+"wx": "SNOW",
+"pair": "HOTLINE",
+"bytes": 60655,
+"drops": 17
+},
+{
+"addr": "0x091588dd11bc2b98195b874cacd1a0eb76094435",
+"wx": "RAIN",
+"pair": "LAZER",
+"bytes": 59811,
+"drops": 20
+},
+{
+"addr": "0x2afba2c9e31f228141cbb242e09142a9ee5e824f",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 51467,
+"drops": 14
+},
+{
+"addr": "0xbf730ba17d4d8d7591b123735b3c59f19a329489",
+"wx": "SNOW",
+"pair": "MGC",
+"bytes": 53339,
+"drops": 21
+},
+{
+"addr": "0x951e3a513209089fb43e6b907640a8a5d10922f1",
+"wx": "SUN",
+"pair": "HOTLINE",
+"bytes": 51926,
+"drops": 15
+},
+{
+"addr": "0xae52b4d09f98da300bec0a20c004c82e7477e8f4",
+"wx": "CLOUD",
+"pair": "MGC",
+"bytes": 34477,
+"drops": 21
+},
+{
+"addr": "0x17b7495015134bf80f84cc5e83b2a4d1d8355bb2",
+"wx": "RAIN",
+"pair": "LAZER",
+"bytes": 70903,
+"drops": 20
+},
+{
+"addr": "0xa013961aad2ad3f84f844b266fe5f083b7ff4921",
+"wx": "CLOUD",
+"pair": "POISONFROG",
+"bytes": 40892,
+"drops": 18
+},
+{
+"addr": "0x8aed6172d2cc945b70c1c20f92fbd1c9a9920e43",
+"wx": "CLOUD",
+"pair": "HOTLINE",
+"bytes": 40732,
+"drops": 19
+},
+{
+"addr": "0x2648fd8b8bb983f249a0f8eefbabaf14cd6d2c13",
+"wx": "SUN",
+"pair": "LAZER",
+"bytes": 41129,
+"drops": 20
+},
+{
+"addr": "0x1c5660bce55ba157e0361cf3ca49a4f35b60b5df",
+"wx": "RAIN",
+"pair": "TISNUKE",
+"bytes": 59780,
+"drops": 21
+},
+{
+"addr": "0xddce3643fcf4d95de0d60a61666a9f8b388a161f",
+"wx": "SNOW",
+"pair": "HOTLINE",
+"bytes": 55036,
+"drops": 18
+},
+{
+"addr": "0xb79a4f3790c6611e3816bbb2af1d80f7f69c9d3a",
+"wx": "MOON",
+"pair": "DITHERVOID",
+"bytes": 37248,
+"drops": 17
+},
+{
+"addr": "0x1d0926e296e16f3e77b53f08b07a9af04192dc48",
+"wx": "SNOW",
+"pair": "MGC",
+"bytes": 51364,
+"drops": 16
+},
+{
+"addr": "0x321f06a92164317d74a59c50c36019bbf6f5f617",
+"wx": "CLOUD",
+"pair": "HOTLINE",
+"bytes": 39032,
+"drops": 19
+},
+{
+"addr": "0x905d2b16aadcbd801aeea092b3ba072594e458f7",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 66348,
+"drops": 21
+},
+{
+"addr": "0x9afda08b777b67a649de0d134e77dfc288d12ca5",
+"wx": "CLOUD",
+"pair": "TISNUKE",
+"bytes": 38948,
+"drops": 21
+},
+{
+"addr": "0x805b855b93f9f83e27b9c9b839909d3d23e7dbf0",
+"wx": "CLOUD",
+"pair": "POLE",
+"bytes": 45449,
+"drops": 16
+},
+{
+"addr": "0x380599569f27a3030c1ab9e7e6d04f6a3cb8a9fe",
+"wx": "MOON",
+"pair": "HOTLINE",
+"bytes": 38766,
+"drops": 16
+},
+{
+"addr": "0x9736a3c989917cc14ff4830f843e28ba90a2d6b9",
+"wx": "RAIN",
+"pair": "EMBERGRID",
+"bytes": 64916,
+"drops": 15
+},
+{
+"addr": "0x905458b2dc2d0c7bf360fafaa073f1d72ee97975",
+"wx": "CLOUD",
+"pair": "HOTLINE",
+"bytes": 43461,
+"drops": 22
+},
+{
+"addr": "0xa9a0b1934e51d598592aa7cc8bf9d313b82e15d0",
+"wx": "SUN",
+"pair": "INFRARED",
+"bytes": 47212,
+"drops": 17
+},
+{
+"addr": "0x78cb74daa6457f2273ed65aeebc88c75a36f1ac5",
+"wx": "SUN",
+"pair": "POLE",
+"bytes": 47682,
+"drops": 14
+},
+{
+"addr": "0x010127efb66a532692d5b69d9053d9ff24aa6ae4",
+"wx": "SNOW",
+"pair": "CATHODE",
+"bytes": 50428,
+"drops": 16
+},
+{
+"addr": "0xcda307f11f5fbc3c52b8d4b04fa3ce1a5f92ce75",
+"wx": "STORM",
+"pair": "EMBERGRID",
+"bytes": 63738,
+"drops": 19
+},
+{
+"addr": "0xd5ddde3792844c27d7e79e801e9c6d3312c25a2e",
+"wx": "STORM",
+"pair": "POLE",
+"bytes": 64933,
+"drops": 19
+},
+{
+"addr": "0xeebb63d73d6b07cae8a2b5e460d9fc48dc8868c5",
+"wx": "CLOUD",
+"pair": "HOTLINE",
+"bytes": 36626,
+"drops": 19
+},
+{
+"addr": "0xb067db4fdd7f2f2cb1cf8f91427eb89ce782cf18",
+"wx": "CLOUD",
+"pair": "EMBERGRID",
+"bytes": 38831,
+"drops": 14
+},
+{
+"addr": "0x214077414e31ae2e058c66ee4f7f184acc0a90d8",
+"wx": "CLOUD",
+"pair": "MGC",
+"bytes": 46477,
+"drops": 16
+},
+{
+"addr": "0xf28a75e956520e3e5122d73ce0c80b891bedca64",
+"wx": "STORM",
+"pair": "CATHODE",
+"bytes": 57561,
+"drops": 20
+},
+{
+"addr": "0x0a2b434d249cfee9374c4ebbbab54a9558bbc8f0",
+"wx": "SUN",
+"pair": "TISNUKE",
+"bytes": 48228,
+"drops": 16
+},
+{
+"addr": "0xae61d3b2d1a6b1518c42de3293c2ad225055dddf",
+"wx": "CLOUD",
+"pair": "DITHERVOID",
+"bytes": 41950,
+"drops": 16
+},
+{
+"addr": "0xafa80513822ba65050f00a62f7177bffea138194",
+"wx": "MOON",
+"pair": "EMBERGRID",
+"bytes": 34105,
+"drops": 15
+},
+{
+"addr": "0xb26e8a0976a72d2c3a3f47cf189eff02d0250254",
+"wx": "SUN",
+"pair": "POISONFROG",
+"bytes": 47493,
+"drops": 14
+},
+{
+"addr": "0xf8fcea44f38c30e7efa97f07fdb44e3f0d39456c",
+"wx": "STORM",
+"pair": "TISNUKE",
+"bytes": 68185,
+"drops": 21
+},
+{
+"addr": "0xdf33580af78b8e03da4b4ad138152b02f51299d2",
+"wx": "STORM",
+"pair": "HOTLINE",
+"bytes": 58009,
+"drops": 17
+},
+{
+"addr": "0x04da90f0ea4973748c0ad169d33c44bd5e039bf8",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 49147,
+"drops": 14
+},
+{
+"addr": "0xc505cd912eee1d09faf035c166463bafd4fa64d7",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 69599,
+"drops": 22
+},
+{
+"addr": "0x0c4d406b240b9a7be5bda4f746ac5221388813f9",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 64554,
+"drops": 16
+},
+{
+"addr": "0xbc3c73f0a1702834b01855cfb1627591e0e7d92f",
+"wx": "SNOW",
+"pair": "INFRARED",
+"bytes": 49282,
+"drops": 16
+},
+{
+"addr": "0xf7970f4d60198f8c3bbdf691206406d9cb78d9aa",
+"wx": "STORM",
+"pair": "MGC",
+"bytes": 61727,
+"drops": 21
+},
+{
+"addr": "0xaa1746960dc1771ee11d3dbe20254127b305ee90",
+"wx": "CLOUD",
+"pair": "EMBERGRID",
+"bytes": 39919,
+"drops": 17
+},
+{
+"addr": "0x53e431e62d0e212a50664daeb4558842ac6a9643",
+"wx": "CLOUD",
+"pair": "EMBERGRID",
+"bytes": 41622,
+"drops": 18
+},
+{
+"addr": "0x0f3a0bd425bcc1dcaab21b884108e9f7e94ef7b0",
+"wx": "CLOUD",
+"pair": "CATHODE",
+"bytes": 42038,
+"drops": 19
+},
+{
+"addr": "0xa0c17227418ddd99beb2fbad8e01f9ca1e5690fb",
+"wx": "SNOW",
+"pair": "HOTLINE",
+"bytes": 53697,
+"drops": 21
+},
+{
+"addr": "0x26ad0b2b9228ca142c0c031fb71731fbfe2b4961",
+"wx": "CLOUD",
+"pair": "DITHERVOID",
+"bytes": 40405,
+"drops": 19
+},
+{
+"addr": "0xab208e8895ffe2e4c8eec349641cf2ba916f7568",
+"wx": "MOON",
+"pair": "POISONFROG",
+"bytes": 45289,
+"drops": 20
+},
+{
+"addr": "0x9b22a5d2119804412b145ee987978b5e149db240",
+"wx": "RAIN",
+"pair": "HOTLINE",
+"bytes": 58645,
+"drops": 18
+},
+{
+"addr": "0xeb4198212b030f6f9f2c19a338ce84eaf7c7eac4",
+"wx": "MOON",
+"pair": "LAZER",
+"bytes": 40457,
+"drops": 17
+},
+{
+"addr": "0xcf97f9cfef167c534239cb321f46865a8163d014",
+"wx": "STORM",
+"pair": "INFRARED",
+"bytes": 58716,
+"drops": 18
+},
+{
+"addr": "0xf0a6aa36d98f341470d7253ac2b4c6cf01448c08",
+"wx": "CLOUD",
+"pair": "INFRARED",
+"bytes": 38560,
+"drops": 19
+},
+{
+"addr": "0xa3f293ae4489fd9442e9f558cd68646e5b285c65",
+"wx": "MOON",
+"pair": "CATHODE",
+"bytes": 40101,
+"drops": 17
+},
+{
+"addr": "0x316e893319d407e6fee81592e0c922997cd742e4",
+"wx": "SUN",
+"pair": "DITHERVOID",
+"bytes": 44584,
+"drops": 15
+},
+{
+"addr": "0x7f0025e70e72e0493b527839e85c0a1a57391849",
+"wx": "SUN",
+"pair": "LAZER",
+"bytes": 49609,
+"drops": 22
+},
+{
+"addr": "0xae8171151a4b42e10eed443b03d10659afd6cdaf",
+"wx": "SUN",
+"pair": "INFRARED",
+"bytes": 41498,
+"drops": 21
+},
+{
+"addr": "0xec43fc5f41e168a689eafeaaaa775bc7e0bfef20",
+"wx": "CLOUD",
+"pair": "TISNUKE",
+"bytes": 45216,
+"drops": 20
+},
+{
+"addr": "0x9ddd6f654bb307a65356d3072c526c46e837eed5",
+"wx": "CLOUD",
+"pair": "EMBERGRID",
+"bytes": 34740,
+"drops": 19
+},
+{
+"addr": "0x4185c2f5d1d9d3e241df3b6a14011436e3009dee",
+"wx": "STORM",
+"pair": "POLE",
+"bytes": 71877,
+"drops": 22
+},
+{
+"addr": "0xd1e93fcd680e6f57e17217b45d6a95a9d2ffa91d",
+"wx": "CLOUD",
+"pair": "POLE",
+"bytes": 40796,
+"drops": 16
+},
+{
+"addr": "0x2ecd7d0dd26f3d6a3df04c7904575034439b787b",
+"wx": "SUN",
+"pair": "TISNUKE",
+"bytes": 43713,
+"drops": 14
+},
+{
+"addr": "0x6546760f5ba22056b1ea4e121e13f7f71038b96e",
+"wx": "MOON",
+"pair": "LAZER",
+"bytes": 40647,
+"drops": 22
+},
+{
+"addr": "0xc3cd481783ca465d134a0ff05bf57cdb084a67d0",
+"wx": "STORM",
+"pair": "CATHODE",
+"bytes": 56952,
+"drops": 21
+},
+{
+"addr": "0xbcfdfb70565817d6d2ca7e651a95968c29cf0a3a",
+"wx": "CLOUD",
+"pair": "TISNUKE",
+"bytes": 46077,
+"drops": 17
+},
+{
+"addr": "0xd96cb0bd22aaaa643632bd4469d6ae813eee722f",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 58668,
+"drops": 15
+},
+{
+"addr": "0x8165b701b3aabdd3a3342f13d045b26acbb09fe9",
+"wx": "MOON",
+"pair": "POISONFROG",
+"bytes": 36383,
+"drops": 16
+},
+{
+"addr": "0xf2be6726667f08e5ced0cf88567e5fcaf3754b72",
+"wx": "SUN",
+"pair": "POLE",
+"bytes": 41978,
+"drops": 19
+},
+{
+"addr": "0xad6eaedf689cb30d00f5b4a72a5b3240de78a952",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 65699,
+"drops": 21
+},
+{
+"addr": "0x49b440522fb7a507c0560faf2c3ecc21fdc037ac",
+"wx": "RAIN",
+"pair": "HOTLINE",
+"bytes": 58061,
+"drops": 17
+},
+{
+"addr": "0x42b3559766e6cb5592e186014f2ea1d1dd5afcff",
+"wx": "MOON",
+"pair": "CATHODE",
+"bytes": 32188,
+"drops": 16
+},
+{
+"addr": "0x89e9651a15d88a48ebf9165b7ecf315214a5357e",
+"wx": "RAIN",
+"pair": "HOTLINE",
+"bytes": 66224,
+"drops": 22
+},
+{
+"addr": "0x00fab5e929b6c2a63e5a3385c1283f4c9e24401d",
+"wx": "RAIN",
+"pair": "LAZER",
+"bytes": 61649,
+"drops": 14
+},
+{
+"addr": "0x960f616968d1c8738f59ab94f4a864dd9009f682",
+"wx": "SNOW",
+"pair": "INFRARED",
+"bytes": 57420,
+"drops": 17
+},
+{
+"addr": "0xa36fd5af508d1dd0ee0e86afd6b90147e53d66a0",
+"wx": "STORM",
+"pair": "MGC",
+"bytes": 69882,
+"drops": 19
+},
+{
+"addr": "0x27a11cf4924997bb673460e56ebc6c7616ddf03b",
+"wx": "SUN",
+"pair": "LAZER",
+"bytes": 47772,
+"drops": 20
+},
+{
+"addr": "0xc734bf34d16eefe44206f33cfc74d1069ef4604b",
+"wx": "SNOW",
+"pair": "TISNUKE",
+"bytes": 55562,
+"drops": 22
+},
+{
+"addr": "0xce7f7cb2f146d3f40163d9bc2bb78138ea2f68a1",
+"wx": "STORM",
+"pair": "DITHERVOID",
+"bytes": 61494,
+"drops": 19
+},
+{
+"addr": "0x2a93955693a3d95a51f9df62300dd8d4c88b87a6",
+"wx": "MOON",
+"pair": "POLE",
+"bytes": 37512,
+"drops": 14
+},
+{
+"addr": "0xe9c15e7e3998b78625c0d84c5ed132da121462d6",
+"wx": "RAIN",
+"pair": "MGC",
+"bytes": 58129,
+"drops": 14
+},
+{
+"addr": "0x5a2a50c41a3c2e7313320e4237ece4445e8a3bb3",
+"wx": "STORM",
+"pair": "MGC",
+"bytes": 67332,
+"drops": 20
+},
+{
+"addr": "0x5dbf7ae6d9d9f095badceb273bcf80a7dc15f0a4",
+"wx": "SNOW",
+"pair": "MGC",
+"bytes": 51994,
+"drops": 16
+},
+{
+"addr": "0x0e7512b331a13374e9b3891ac7dcd05764d712d9",
+"wx": "MOON",
+"pair": "INFRARED",
+"bytes": 34567,
+"drops": 20
+},
+{
+"addr": "0x0cb21fcfbcb4241bf8c3bb0eb498497bc6b57158",
+"wx": "SNOW",
+"pair": "HOTLINE",
+"bytes": 55365,
+"drops": 21
+},
+{
+"addr": "0x46e04b75a1261529d33cc2a9a527fc71782f50ba",
+"wx": "SUN",
+"pair": "MGC",
+"bytes": 51087,
+"drops": 20
+},
+{
+"addr": "0xf8c76bb8124943deb624541efa01d95bd4c08b64",
+"wx": "SUN",
+"pair": "INFRARED",
+"bytes": 45895,
+"drops": 21
+},
+{
+"addr": "0x997a2d6c8c5b542624be53feddd193683e6bfcd7",
+"wx": "MOON",
+"pair": "HOTLINE",
+"bytes": 35216,
+"drops": 17
+},
+{
+"addr": "0xb443efc0d7b39d322df1bfc0c604fda722fe88b8",
+"wx": "SUN",
+"pair": "CATHODE",
+"bytes": 44296,
+"drops": 19
+},
+{
+"addr": "0xc5e9dc9aef3662a72e779c0c6abe466eda95e443",
+"wx": "SNOW",
+"pair": "MGC",
+"bytes": 47490,
+"drops": 14
+},
+{
+"addr": "0x3d68435ce0f46752213e5f49d1c01e3e76371060",
+"wx": "STORM",
+"pair": "INFRARED",
+"bytes": 68307,
+"drops": 18
+},
+{
+"addr": "0xccf1a01b550b27654e87b7e14becf586ba965405",
+"wx": "MOON",
+"pair": "MGC",
+"bytes": 38277,
+"drops": 15
+},
+{
+"addr": "0x01c8376fb965e8c516d170aa9886600e8e1edcf8",
+"wx": "RAIN",
+"pair": "POISONFROG",
+"bytes": 53186,
+"drops": 18
+},
+{
+"addr": "0x129b8dfa4a69a3f4e503f633f0832c685eb5f826",
+"wx": "STORM",
+"pair": "INFRARED",
+"bytes": 64156,
+"drops": 21
+},
+{
+"addr": "0xfa11a44d749161df6f16653691ace27711761a1a",
+"wx": "MOON",
+"pair": "EMBERGRID",
+"bytes": 44260,
+"drops": 16
+},
+{
+"addr": "0x2ef7fd7639733a4599f5940ae408bfa1d4c7ecca",
+"wx": "CLOUD",
+"pair": "MGC",
+"bytes": 41201,
+"drops": 19
+},
+{
+"addr": "0xa679d90d24b29f1ea4e3bbcd708816326e8af361",
+"wx": "CLOUD",
+"pair": "POISONFROG",
+"bytes": 36674,
+"drops": 14
+},
+{
+"addr": "0x77fa03aaa5a0eed222b38d4ad4db8dbe11f8de00",
+"wx": "SUN",
+"pair": "MGC",
+"bytes": 41034,
+"drops": 22
+},
+{
+"addr": "0xfdcd6a63c89c001baf421d5c300f3bbb0d611a3c",
+"wx": "STORM",
+"pair": "POISONFROG",
+"bytes": 59162,
+"drops": 14
+},
+{
+"addr": "0x8e4b3bf88ff0eb92e589aa394f4118a6e60dc668",
+"wx": "SNOW",
+"pair": "DITHERVOID",
+"bytes": 53779,
+"drops": 16
+},
+{
+"addr": "0x650b5d8edb85e4135b6b9bbbb14f154c480c9b4b",
+"wx": "SNOW",
+"pair": "CATHODE",
+"bytes": 50579,
+"drops": 19
+},
+{
+"addr": "0x8b3988d114df32b34634c29f36f780ec75efb040",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 59874,
+"drops": 16
+},
+{
+"addr": "0x8b5de25a1162993887a7f6dd12c7f333c041380d",
+"wx": "MOON",
+"pair": "INFRARED",
+"bytes": 31560,
+"drops": 18
+},
+{
+"addr": "0x2ae8edfa2022146d844fb77d07601216dbae26c2",
+"wx": "STORM",
+"pair": "HOTLINE",
+"bytes": 54062,
+"drops": 15
+},
+{
+"addr": "0xa9b959d5dbbce31d25d2ad6954c79f1553547c92",
+"wx": "SUN",
+"pair": "EMBERGRID",
+"bytes": 46055,
+"drops": 20
+},
+{
+"addr": "0xea1ddc634b1a3cb6a2755a6730d3a33123f7c74b",
+"wx": "MOON",
+"pair": "HOTLINE",
+"bytes": 36072,
+"drops": 14
+},
+{
+"addr": "0x3ef97ae697a168ff598bf49786bfd2c0076331a4",
+"wx": "RAIN",
+"pair": "CATHODE",
+"bytes": 67683,
+"drops": 19
+},
+{
+"addr": "0xe9d8826af93505b1b99f8ced408a30d1968a1744",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 53624,
+"drops": 16
+},
+{
+"addr": "0x74642c6181ea9cbc5e98592d51af9a598b953cf2",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 57930,
+"drops": 21
+},
+{
+"addr": "0x3180b83397dfdfd893f0d3d0274db87cd4993ac2",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 51668,
+"drops": 14
+},
+{
+"addr": "0xe133b899f432fc1b0f712dbbd04eb7c878f5776a",
+"wx": "SNOW",
+"pair": "MGC",
+"bytes": 55022,
+"drops": 19
+},
+{
+"addr": "0xea8f829d4e62458f24856ba2c384e72e182baad3",
+"wx": "MOON",
+"pair": "HOTLINE",
+"bytes": 38799,
+"drops": 19
+},
+{
+"addr": "0xe44244c64056aee1cbec1d203967338d73faa828",
+"wx": "SUN",
+"pair": "CATHODE",
+"bytes": 44688,
+"drops": 18
+},
+{
+"addr": "0x15835bca7edaa8bb591d4e12164d0cb264aee6aa",
+"wx": "STORM",
+"pair": "HOTLINE",
+"bytes": 57526,
+"drops": 17
+},
+{
+"addr": "0xdee1700534b723549c9164d8b3ad7ebae4934939",
+"wx": "SNOW",
+"pair": "INFRARED",
+"bytes": 51933,
+"drops": 17
+},
+{
+"addr": "0x40ae2a0a38764e1e58782769c37f683a38fd9312",
+"wx": "SUN",
+"pair": "MGC",
+"bytes": 55379,
+"drops": 20
+},
+{
+"addr": "0x252a011fc078c766796bd2d81c4054d70fad2be7",
+"wx": "CLOUD",
+"pair": "CATHODE",
+"bytes": 39451,
+"drops": 20
+},
+{
+"addr": "0x53b8ba9a35e7ced3dc89aa4f919d1e34e08fe4b2",
+"wx": "SUN",
+"pair": "INFRARED",
+"bytes": 42177,
+"drops": 16
+},
+{
+"addr": "0x4b5e3bd690440deb1114a4cf449de969da33bb76",
+"wx": "SUN",
+"pair": "CATHODE",
+"bytes": 45469,
+"drops": 21
+},
+{
+"addr": "0x88f31aee87051ecc56395735007557b7cf1d6e2c",
+"wx": "RAIN",
+"pair": "MGC",
+"bytes": 61043,
+"drops": 20
+},
+{
+"addr": "0xcffff5dddb374b6861dab04aaa1cab99a0746166",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 48744,
+"drops": 15
+},
+{
+"addr": "0x8a09dd6e1635b54255a8a560d912f829f1c08bb8",
+"wx": "STORM",
+"pair": "MGC",
+"bytes": 62829,
+"drops": 20
+},
+{
+"addr": "0xa94ae9f476670891062b2d11991c8859af965038",
+"wx": "RAIN",
+"pair": "TISNUKE",
+"bytes": 63211,
+"drops": 17
+},
+{
+"addr": "0x115ce0cd771f889bebc42329a901703ea860e64f",
+"wx": "MOON",
+"pair": "INFRARED",
+"bytes": 37210,
+"drops": 16
+},
+{
+"addr": "0x32d9fe0e8e53c38012f1a562db3013604331b62e",
+"wx": "SNOW",
+"pair": "EMBERGRID",
+"bytes": 54438,
+"drops": 16
+},
+{
+"addr": "0x0b66e12ad17d3dbbc0efc91ffcb1478b08304c5e",
+"wx": "SNOW",
+"pair": "INFRARED",
+"bytes": 50157,
+"drops": 20
+},
+{
+"addr": "0x2c8b075c18773692e0c08733b6764e8a2141540a",
+"wx": "CLOUD",
+"pair": "MGC",
+"bytes": 43434,
+"drops": 21
+},
+{
+"addr": "0xadfad7ac820fe20238840f35e787d171acc78507",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 47243,
+"drops": 16
+},
+{
+"addr": "0xefd8093aba7c69836e96e4e7d6fbb82302e356d8",
+"wx": "RAIN",
+"pair": "INFRARED",
+"bytes": 60097,
+"drops": 15
+},
+{
+"addr": "0x32fdca02aa6886aad37606e775b6db41dc7c4eaf",
+"wx": "SNOW",
+"pair": "HOTLINE",
+"bytes": 50895,
+"drops": 17
+},
+{
+"addr": "0x8992c01f077602004b925b6ff7807f7649958116",
+"wx": "CLOUD",
+"pair": "MGC",
+"bytes": 44561,
+"drops": 15
+},
+{
+"addr": "0x9dded00b48f0f32d81f3e77b9fb99f87750eee45",
+"wx": "RAIN",
+"pair": "CATHODE",
+"bytes": 52435,
+"drops": 14
+},
+{
+"addr": "0xdb72be7c5c740b014494f52f95ce5e37ca036fc2",
+"wx": "CLOUD",
+"pair": "MGC",
+"bytes": 42266,
+"drops": 21
+},
+{
+"addr": "0xf46e3af979d429a145cd45b4c7f0a13f0e72c5ed",
+"wx": "RAIN",
+"pair": "DITHERVOID",
+"bytes": 64866,
+"drops": 20
+},
+{
+"addr": "0x3b9101d079aa5154ee2ad281c1e5031c48bb7bdd",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 44828,
+"drops": 15
+},
+{
+"addr": "0x0971d06ffd7b0760d2d32baa7599ea16ffd5469f",
+"wx": "SNOW",
+"pair": "DITHERVOID",
+"bytes": 51228,
+"drops": 16
+},
+{
+"addr": "0x59438ee47153f143ec246371c03eed07e648f8b7",
+"wx": "SNOW",
+"pair": "HOTLINE",
+"bytes": 50942,
+"drops": 20
+},
+{
+"addr": "0x4b22276f286cba3a48f5e46e0219fbd6ed67f34e",
+"wx": "SUN",
+"pair": "EMBERGRID",
+"bytes": 42859,
+"drops": 18
+},
+{
+"addr": "0x0065857fbf43e16636dc0f73b9fb7c0dd667ad6d",
+"wx": "SUN",
+"pair": "INFRARED",
+"bytes": 50264,
+"drops": 22
+},
+{
+"addr": "0x3cdda78a59e258b2e1000ec50d9d6cd01638c41b",
+"wx": "CLOUD",
+"pair": "EMBERGRID",
+"bytes": 42284,
+"drops": 19
+},
+{
+"addr": "0xdea34993592d6a78959df9cde022ae0ea119a067",
+"wx": "CLOUD",
+"pair": "MGC",
+"bytes": 45512,
+"drops": 16
+},
+{
+"addr": "0x40219bad1c1e0e0f80e71217bae708c4beeada08",
+"wx": "SUN",
+"pair": "TISNUKE",
+"bytes": 53277,
+"drops": 20
+},
+{
+"addr": "0xe574effa9eb6b68430f8ebd5fd23b86849441110",
+"wx": "SUN",
+"pair": "CATHODE",
+"bytes": 47768,
+"drops": 17
+},
+{
+"addr": "0x16624fb5d2900d73ca8d72a558e50b9b635a66df",
+"wx": "STORM",
+"pair": "INFRARED",
+"bytes": 60935,
+"drops": 17
+},
+{
+"addr": "0xd85e0ab3c897ab229c01ea6f71458f2e96327e6a",
+"wx": "SNOW",
+"pair": "CATHODE",
+"bytes": 57060,
+"drops": 22
+},
+{
+"addr": "0xe6a8b2f073a10566e35b450eadbbed700c749770",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 58736,
+"drops": 22
+},
+{
+"addr": "0x53424914ff977be1e46209a29f8d220e1aded9ac",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 54826,
+"drops": 22
+},
+{
+"addr": "0x67f933fecbd574ec41ee94ecdc7be955d098b2da",
+"wx": "CLOUD",
+"pair": "POLE",
+"bytes": 43036,
+"drops": 22
+},
+{
+"addr": "0x70d0093bb8f8f032c5c9d0f922235784544c61fd",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 70370,
+"drops": 22
+},
+{
+"addr": "0x0b672091d03701af733dfd613ae3fd13794a013e",
+"wx": "RAIN",
+"pair": "POISONFROG",
+"bytes": 59278,
+"drops": 22
+},
+{
+"addr": "0xfe285acd2c6c3825f4e02cb7fcc028ec3ca0e73d",
+"wx": "SNOW",
+"pair": "TISNUKE",
+"bytes": 51841,
+"drops": 20
+},
+{
+"addr": "0xff46c614040438aa515d0d187a948d2d68e95e5d",
+"wx": "STORM",
+"pair": "POLE",
+"bytes": 63122,
+"drops": 21
+},
+{
+"addr": "0xd30db28cd1e4e65a2430b21e55819aa73c4449c9",
+"wx": "STORM",
+"pair": "POISONFROG",
+"bytes": 67857,
+"drops": 21
+},
+{
+"addr": "0xec55b6bd47e3c05a732e7e113e8ce1a61297391c",
+"wx": "SUN",
+"pair": "TISNUKE",
+"bytes": 45906,
+"drops": 15
+},
+{
+"addr": "0x991a06202d38a89f25fa1a95469c955a79d6b5a3",
+"wx": "MOON",
+"pair": "EMBERGRID",
+"bytes": 39212,
+"drops": 20
+},
+{
+"addr": "0x4b4fc70d7153162d80f2fd103f52c61de76309fe",
+"wx": "CLOUD",
+"pair": "EMBERGRID",
+"bytes": 40823,
+"drops": 17
+},
+{
+"addr": "0xc344f561078b67df91d12e6bc80d324604fc00eb",
+"wx": "MOON",
+"pair": "MGC",
+"bytes": 37386,
+"drops": 22
+},
+{
+"addr": "0x2df6c753e39eeb465f73cda4962220a2a77cf066",
+"wx": "CLOUD",
+"pair": "CATHODE",
+"bytes": 47264,
+"drops": 21
+},
+{
+"addr": "0x7506ec3c7e5ca44b8f967c518744f6b44a8b39da",
+"wx": "SNOW",
+"pair": "HOTLINE",
+"bytes": 49857,
+"drops": 17
+},
+{
+"addr": "0x35bfcd125505780ea3c542641183063cdc767c4e",
+"wx": "STORM",
+"pair": "MGC",
+"bytes": 65227,
+"drops": 18
+},
+{
+"addr": "0x443764032d1d90cf5c157225b56719d31844c547",
+"wx": "SNOW",
+"pair": "CATHODE",
+"bytes": 48995,
+"drops": 20
+},
+{
+"addr": "0xedc70b6012d848206fccc17499c8376fd1b25e30",
+"wx": "SUN",
+"pair": "CATHODE",
+"bytes": 46004,
+"drops": 20
+},
+{
+"addr": "0xaff30ae5231a71531b686087af0350d8442a503a",
+"wx": "RAIN",
+"pair": "DITHERVOID",
+"bytes": 62968,
+"drops": 20
+},
+{
+"addr": "0xeaa3286807f5648c5b58f814b072733df982552e",
+"wx": "MOON",
+"pair": "HOTLINE",
+"bytes": 29896,
+"drops": 18
+},
+{
+"addr": "0x9c627d626a60ff7fd5c7e5c03deae9c7acdb4e8c",
+"wx": "SUN",
+"pair": "DITHERVOID",
+"bytes": 47504,
+"drops": 19
+},
+{
+"addr": "0xe1926e27a0a6d8c6235d0e5c2a3c0b85d2199fa7",
+"wx": "CLOUD",
+"pair": "POLE",
+"bytes": 43023,
+"drops": 14
+},
+{
+"addr": "0xef44fb5566bdf903b08af44aa7d91c7cac964c19",
+"wx": "SNOW",
+"pair": "INFRARED",
+"bytes": 52452,
+"drops": 17
+},
+{
+"addr": "0xc62b1ea5c2d82705f31cf6674ade2c4936f24099",
+"wx": "CLOUD",
+"pair": "CATHODE",
+"bytes": 43390,
+"drops": 19
+},
+{
+"addr": "0x89c5ab95957be66af2007f0d5ba04269221bf884",
+"wx": "CLOUD",
+"pair": "POLE",
+"bytes": 40701,
+"drops": 20
+},
+{
+"addr": "0x818f03b64bc1b9483f19638a941bcc65af82b15f",
+"wx": "CLOUD",
+"pair": "POISONFROG",
+"bytes": 44291,
+"drops": 20
+},
+{
+"addr": "0x24f8c6cdb30b60146f1441d9f0ac497ec26aeaec",
+"wx": "MOON",
+"pair": "DITHERVOID",
+"bytes": 41876,
+"drops": 19
+},
+{
+"addr": "0x5abfa2148f8433da0e5c97b7bb19f1f3c40d50d1",
+"wx": "RAIN",
+"pair": "POISONFROG",
+"bytes": 61725,
+"drops": 21
+},
+{
+"addr": "0x8e480b7ba133447a884f9ef99b42cd4603239738",
+"wx": "SUN",
+"pair": "EMBERGRID",
+"bytes": 49409,
+"drops": 22
+},
+{
+"addr": "0xfa0c35e39543f7b016e3dc0ad45167c18eb53b98",
+"wx": "SNOW",
+"pair": "DITHERVOID",
+"bytes": 51349,
+"drops": 15
+},
+{
+"addr": "0xaf87727a78b5ed1a064ac56437fd529d3b1ec0fc",
+"wx": "MOON",
+"pair": "POISONFROG",
+"bytes": 35856,
+"drops": 17
+},
+{
+"addr": "0xbe42f1aaf3b179574d5d407b7129e0d9cdd974ca",
+"wx": "SUN",
+"pair": "EMBERGRID",
+"bytes": 47628,
+"drops": 21
+},
+{
+"addr": "0x34be8852203101bb2a1c0f5cf26ee46f9860b99b",
+"wx": "RAIN",
+"pair": "DITHERVOID",
+"bytes": 61190,
+"drops": 15
+},
+{
+"addr": "0x087338b2d939d2668af3e82ca02d6d805101ec2b",
+"wx": "SNOW",
+"pair": "POLE",
+"bytes": 59151,
+"drops": 22
+},
+{
+"addr": "0x2635792c94795c68e6865b9bcc22c12e13e7667a",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 47074,
+"drops": 14
+},
+{
+"addr": "0x86820525fd171a829627e7f3ff6e695063c22ad5",
+"wx": "RAIN",
+"pair": "LAZER",
+"bytes": 67005,
+"drops": 21
+},
+{
+"addr": "0x3e1ed7bd618d6fb6f3c63aa2ee364940367d13f3",
+"wx": "SNOW",
+"pair": "INFRARED",
+"bytes": 53942,
+"drops": 14
+},
+{
+"addr": "0x416b0370bd84326ac6a5e83162782990eb26a975",
+"wx": "SNOW",
+"pair": "CATHODE",
+"bytes": 53741,
+"drops": 15
+},
+{
+"addr": "0xa8db0d45786a0d067dc186c482c45b001865155b",
+"wx": "CLOUD",
+"pair": "POLE",
+"bytes": 43721,
+"drops": 20
+},
+{
+"addr": "0x73632afbee0545500bdd197ed2896aa0249e8011",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 62769,
+"drops": 15
+},
+{
+"addr": "0x918b2e1f845708657e17aceabda9c9f3b4714f8c",
+"wx": "MOON",
+"pair": "INFRARED",
+"bytes": 41232,
+"drops": 14
+},
+{
+"addr": "0x7b3940412bfec97990d0d4c2aeff0bad202ac4f8",
+"wx": "SUN",
+"pair": "HOTLINE",
+"bytes": 52612,
+"drops": 22
+},
+{
+"addr": "0x68dcc6257573672b8a91b0fd7f62e37b5af8e9e0",
+"wx": "STORM",
+"pair": "EMBERGRID",
+"bytes": 64752,
+"drops": 16
+},
+{
+"addr": "0xd89b7cadabd050db0f97b42f9cbbe5435c4721ec",
+"wx": "SUN",
+"pair": "CATHODE",
+"bytes": 43601,
+"drops": 20
+},
+{
+"addr": "0x8e43c5690d3bdb3c4617e054c5a3b3b184147a80",
+"wx": "SUN",
+"pair": "POLE",
+"bytes": 39428,
+"drops": 20
+},
+{
+"addr": "0x2902450fc481eb1fd5527bdab998256f2140bb38",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 59860,
+"drops": 14
+},
+{
+"addr": "0xcfef95a2d6d814c38130e61193f4d6a01389cc60",
+"wx": "CLOUD",
+"pair": "POLE",
+"bytes": 42758,
+"drops": 16
+},
+{
+"addr": "0x4dc5e91c76a5dde2f80714c0993cc73afcb0f80f",
+"wx": "MOON",
+"pair": "TISNUKE",
+"bytes": 38589,
+"drops": 14
+},
+{
+"addr": "0xcfb46a436eda3216079c92bd561548a3e18f0c02",
+"wx": "STORM",
+"pair": "DITHERVOID",
+"bytes": 60370,
+"drops": 17
+},
+{
+"addr": "0x0500fb9c50bb144e04b0299e2ddfed2ecf2caedd",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 60243,
+"drops": 20
+},
+{
+"addr": "0xed63f7d2d2e9a19eeaefaa5b84444968d63e0ea0",
+"wx": "MOON",
+"pair": "MGC",
+"bytes": 36299,
+"drops": 17
+},
+{
+"addr": "0x285f79d0c7d2711eedfb1d2ee0f02c5132ecc403",
+"wx": "RAIN",
+"pair": "LAZER",
+"bytes": 59007,
+"drops": 22
+},
+{
+"addr": "0xdefe801fc12b59cae76bcfba5a20e670516eb11d",
+"wx": "SNOW",
+"pair": "MGC",
+"bytes": 54697,
+"drops": 15
+},
+{
+"addr": "0x25e7e373a726550288a1ac6dfd7ee05f5c88f4c7",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 59272,
+"drops": 18
+},
+{
+"addr": "0x52055766a0fb702beaaea3bfc93203cc6368dfd2",
+"wx": "RAIN",
+"pair": "HOTLINE",
+"bytes": 55721,
+"drops": 19
+},
+{
+"addr": "0xd88c449691a45b7bdebbcd46f25fae1b8ecd4d8e",
+"wx": "MOON",
+"pair": "POISONFROG",
+"bytes": 44965,
+"drops": 15
+},
+{
+"addr": "0x39169794f24bbd57b57af3aee9a9ce06a34ee1dd",
+"wx": "SUN",
+"pair": "HOTLINE",
+"bytes": 51377,
+"drops": 14
+},
+{
+"addr": "0x448942ea51788cef10b26e9da5169a697155e2b1",
+"wx": "SUN",
+"pair": "POLE",
+"bytes": 43861,
+"drops": 22
+},
+{
+"addr": "0xf57da6c6080d3270d781ad9da73b945367330a65",
+"wx": "CLOUD",
+"pair": "POLE",
+"bytes": 37029,
+"drops": 14
+},
+{
+"addr": "0x0e04e9f22d40d40af4eb5f1ae09f5b1a2f8c51e6",
+"wx": "SNOW",
+"pair": "MGC",
+"bytes": 50380,
+"drops": 14
+},
+{
+"addr": "0x22543e8a43e8f2f6b0a87f2022ce7423ca0437aa",
+"wx": "MOON",
+"pair": "CATHODE",
+"bytes": 44443,
+"drops": 17
+},
+{
+"addr": "0x02a9417c2aa9a9c8cd2bd7bf6c44f9f301b17b19",
+"wx": "MOON",
+"pair": "POLE",
+"bytes": 39518,
+"drops": 19
+},
+{
+"addr": "0x1db33bfb272578eb9ac266994f40d50e42e4e38e",
+"wx": "SNOW",
+"pair": "POLE",
+"bytes": 56156,
+"drops": 17
+},
+{
+"addr": "0x47b7165e33a6a0f9481164a61446c15c973c8ead",
+"wx": "CLOUD",
+"pair": "CATHODE",
+"bytes": 35604,
+"drops": 21
+},
+{
+"addr": "0xf52029728fbdf4e7d564c1bfbfd50075b8d9fbf7",
+"wx": "MOON",
+"pair": "INFRARED",
+"bytes": 42090,
+"drops": 19
+},
+{
+"addr": "0x23e234cb5cc2ec2413b2151051067805bf501b85",
+"wx": "RAIN",
+"pair": "TISNUKE",
+"bytes": 69117,
+"drops": 20
+},
+{
+"addr": "0xf5b1edf6c31f63863f19f1b141b9d8b8588fc1f2",
+"wx": "STORM",
+"pair": "POLE",
+"bytes": 66064,
+"drops": 16
+},
+{
+"addr": "0x0825b8522b5f5d1cf74347ecfabbdec4fd16f039",
+"wx": "MOON",
+"pair": "CATHODE",
+"bytes": 41031,
+"drops": 17
+},
+{
+"addr": "0x67b0afcf97904ecde2c3e95491b9f3420606b51c",
+"wx": "RAIN",
+"pair": "EMBERGRID",
+"bytes": 65777,
+"drops": 20
+},
+{
+"addr": "0x116dd88ba0b363ff22c109e93cb93647e4c64668",
+"wx": "CLOUD",
+"pair": "EMBERGRID",
+"bytes": 40098,
+"drops": 15
+},
+{
+"addr": "0x3e193344352a7b77262d100df146c8bc08440c8b",
+"wx": "MOON",
+"pair": "CATHODE",
+"bytes": 33891,
+"drops": 21
+},
+{
+"addr": "0x48af32c3a08dd6bde2397874388e1a2fb711534f",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 61980,
+"drops": 21
+},
+{
+"addr": "0x232db4626ee4de5436e45d90a425aa9170ce1e21",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 57931,
+"drops": 15
+},
+{
+"addr": "0x4ee966a15f456139fec97391d012a6d0f4e818d5",
+"wx": "RAIN",
+"pair": "HOTLINE",
+"bytes": 62793,
+"drops": 17
+},
+{
+"addr": "0x630cb20c366d7c011add6c336c79fd55af54b7db",
+"wx": "SUN",
+"pair": "DITHERVOID",
+"bytes": 47038,
+"drops": 19
+},
+{
+"addr": "0xd95aec1b220acada9fe23e5186975fa91ee94c99",
+"wx": "SUN",
+"pair": "POLE",
+"bytes": 47575,
+"drops": 14
+},
+{
+"addr": "0xe22d4de1396f7898b6b044ca888780c88ce56360",
+"wx": "MOON",
+"pair": "POISONFROG",
+"bytes": 38921,
+"drops": 14
+},
+{
+"addr": "0xc5c99808f6bb7657dd0e6f6acf54c8585eeb997b",
+"wx": "MOON",
+"pair": "POLE",
+"bytes": 34752,
+"drops": 22
+},
+{
+"addr": "0xacdd1bc16614f081cbbf18f59747b98de50a5b73",
+"wx": "STORM",
+"pair": "DITHERVOID",
+"bytes": 64839,
+"drops": 20
+},
+{
+"addr": "0x8b43c4627fcaab61b0e3a29efb03f736a23b6b10",
+"wx": "MOON",
+"pair": "POLE",
+"bytes": 37926,
+"drops": 17
+},
+{
+"addr": "0x707974fd1ad91916fb810923565fbc9b7d003b9f",
+"wx": "CLOUD",
+"pair": "DITHERVOID",
+"bytes": 45408,
+"drops": 19
+},
+{
+"addr": "0xf21d83c5682265368aa7851e19217686c0df8e14",
+"wx": "RAIN",
+"pair": "CATHODE",
+"bytes": 62892,
+"drops": 21
+},
+{
+"addr": "0xacb8874c51839bed8f5e7860f76daad4898ad0aa",
+"wx": "SUN",
+"pair": "HOTLINE",
+"bytes": 45097,
+"drops": 14
+},
+{
+"addr": "0x46deab4c21a01aeb54d5adf14208ae7454040703",
+"wx": "SNOW",
+"pair": "LAZER",
+"bytes": 54718,
+"drops": 17
+},
+{
+"addr": "0x087a94f71668b08bf17b7e9b9a2d1db333279fef",
+"wx": "CLOUD",
+"pair": "INFRARED",
+"bytes": 38787,
+"drops": 22
+},
+{
+"addr": "0x4775bd6b56e212ba0b954a2f6d1e706fd7b68092",
+"wx": "STORM",
+"pair": "CATHODE",
+"bytes": 65733,
+"drops": 19
+},
+{
+"addr": "0x23c4c992a75f46ed0f266363352429838709d609",
+"wx": "STORM",
+"pair": "HOTLINE",
+"bytes": 63129,
+"drops": 21
+},
+{
+"addr": "0x435ed8518bb1d669f66d82bf5af29843049a580f",
+"wx": "SNOW",
+"pair": "HOTLINE",
+"bytes": 56794,
+"drops": 21
+},
+{
+"addr": "0xaa7d4bee6e385462ef0f4cefb1fee65dac4fff82",
+"wx": "STORM",
+"pair": "EMBERGRID",
+"bytes": 64644,
+"drops": 17
+},
+{
+"addr": "0x4cab5e9ad6f4ad35fd4720c9aab4cf0af83b2684",
+"wx": "SNOW",
+"pair": "POISONFROG",
+"bytes": 54187,
+"drops": 14
+},
+{
+"addr": "0x8691d463095aac6d2341dbb44655dda429c37cf1",
+"wx": "MOON",
+"pair": "INFRARED",
+"bytes": 41742,
+"drops": 17
+},
+{
+"addr": "0x01e5cb2c213197858892e989bc1efc7a0b8dfc14",
+"wx": "MOON",
+"pair": "POLE",
+"bytes": 36823,
+"drops": 18
+},
+{
+"addr": "0xb3942389a92428a94c87cc7cd78e72759c024bab",
+"wx": "SUN",
+"pair": "EMBERGRID",
+"bytes": 42471,
+"drops": 18
+},
+{
+"addr": "0x9681e6609e6e3b21f03cb718db33b734813b595f",
+"wx": "STORM",
+"pair": "POISONFROG",
+"bytes": 64215,
+"drops": 20
+},
+{
+"addr": "0xe1083f14b724b469a35fe595e56df3218cd6e409",
+"wx": "CLOUD",
+"pair": "HOTLINE",
+"bytes": 36384,
+"drops": 17
+},
+{
+"addr": "0x444b9ce9f831f7d3f83a7466444fc128b1e15d85",
+"wx": "STORM",
+"pair": "POISONFROG",
+"bytes": 56363,
+"drops": 16
+},
+{
+"addr": "0xfd530fd4dc291ccbe6d0dbd2c84bd674fcaf610d",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 63832,
+"drops": 21
+},
+{
+"addr": "0xe92a35a093ef1320223d7956f57019478cb6c675",
+"wx": "STORM",
+"pair": "TISNUKE",
+"bytes": 60589,
+"drops": 19
+},
+{
+"addr": "0xfc55985053884a9e9d0174abe35ddde051d1317c",
+"wx": "MOON",
+"pair": "POLE",
+"bytes": 32015,
+"drops": 21
+},
+{
+"addr": "0xa5edb4fd31f9a1f72cd3c16ce28cedffa41546c8",
+"wx": "MOON",
+"pair": "DITHERVOID",
+"bytes": 41131,
+"drops": 20
+},
+{
+"addr": "0x94e9ee37b14440979b29f2a0bd3ff59f0ef98b4b",
+"wx": "SNOW",
+"pair": "POLE",
+"bytes": 59258,
+"drops": 20
+},
+{
+"addr": "0xbc624cc80c0c1c572c6b3cd0b6fcfacbe506cbed",
+"wx": "STORM",
+"pair": "LAZER",
+"bytes": 62375,
+"drops": 19
+},
+{
+"addr": "0x2a3a8ac467df3883be0dfdb634a3fa4baf0820b1",
+"wx": "RAIN",
+"pair": "POLE",
+"bytes": 56829,
+"drops": 15
+},
+{
+"addr": "0xbd6c029f9293a0825908380923e8e54be1aea1c3",
+"wx": "STORM",
+"pair": "HOTLINE",
+"bytes": 60285,
+"drops": 19
+},
+{
+"addr": "0x97b4e45f426088bf849a65ecbc40dc360307b84a",
+"wx": "CLOUD",
+"pair": "POISONFROG",
+"bytes": 37064,
+"drops": 17
+},
+{
+"addr": "0x5d06f623b10f401b13c164196c9dbc5c47c2f76f",
+"wx": "RAIN",
+"pair": "POISONFROG",
+"bytes": 56487,
+"drops": 16
+},
+{
+"addr": "0xb1307666dfd55f280ca8058668fc1f8e76eb2cc7",
+"wx": "RAIN",
+"pair": "MGC",
+"bytes": 66135,
+"drops": 20
+}
+]
+}

@@ -1,0 +1,17 @@
+[
+ {
+  "id": 1,
+  "holder": "0x0DD399a7ED92283e4983C2974FE377070D67f4eB",
+  "handle": "greencross.eth"
+ },
+ {
+  "id": 2,
+  "holder": "0x36c7300187fc44d95bd1a1443d88b8e0adc296ac",
+  "handle": "rehearsal-1"
+ },
+ {
+  "id": 3,
+  "holder": "0x0fc4c66c203f9b815a5239c5afd915bb0719b69a",
+  "handle": "rehearsal-2"
+ }
+]
