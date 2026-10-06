@@ -1,6 +1,6 @@
 """Render one SKY loop per holder into tools/gift/loops/<set>/ with a manifest.
 
-Usage:  python3 mkloops.py <set> <recipients.json>
+Usage:  python3 mkloops.py <set> <recipients.json> [--unique-schemes]
 recipients.json: [{"id": 1, "holder": "0x...", "handle": "...", "drops": 12}]   ("drops" is optional, see below)
 
 Rules it enforces:
@@ -12,6 +12,9 @@ Rules it enforces:
 - "drops": n (optional, his call only) keeps the first n of that holder's seeded rain/snow drops. It is
   the per-holder way to bring an over-limit RAIN/STORM/SNOW loop under the limit; it is recorded in the
   manifest so the render can be reproduced. It never changes any other holder.
+- --unique-schemes (the final set, his call Oct 7 2026): every loop gets its own (paper, ink) from
+  sw.SCHEMES, never repeated. Token id k takes SCHEME_ORDER[k-1], a fixed shuffle of the pool, so adding
+  a holder later never moves anyone else's colours. More ids than schemes STOPS. Recorded as an override.
 - never replace: if loops/<set>/manifest.json already records an id, the new render for that id must
   have the same holder, the same overrides and the same sha256, whether or not the GIF file is present;
   and an id recorded there may not vanish from the recipients file. Otherwise it STOPS.
@@ -28,6 +31,16 @@ from Crypto.Hash import keccak
 LIMIT = 66500
 N = 40
 ZERO = "0x" + "0" * 40
+
+
+def scheme_order():
+    """Fixed, platform-independent shuffle of the scheme pool (sha256 counter, Fisher-Yates)."""
+    order = list(range(len(sw.SCHEMES)))
+    R = sw.Rng(b"SMALL WEATHER schemes v1", "order")
+    for j in range(len(order) - 1, 0, -1):
+        k = int(R.f() * (j + 1))
+        order[j], order[k] = order[k], order[j]
+    return order
 
 
 def checksum(addr):
@@ -47,8 +60,11 @@ def holder_ok(h):
     return checksum(h)
 
 
-def main(setname, rec_path):
+def main(setname, rec_path, unique=False):
     recs = json.load(open(rec_path))
+    order = scheme_order() if unique else None
+    if unique and len(recs) > len(order):
+        raise SystemExit("STOP: %d holders but only %d schemes; no scheme may repeat" % (len(recs), len(order)))
     out = os.path.join(HERE, "loops", setname)
     os.makedirs(out, exist_ok=True)
     mpath = os.path.join(out, "manifest.json")
@@ -71,6 +87,11 @@ def main(setname, rec_path):
                 raise SystemExit("STOP: drops for id %d must be 0..%d" % (i, len(P0["drops"])))
             over = {"drops": P0["drops"][:n]}
             note = {"drops": n}
+        if unique:
+            if i > len(order):
+                raise SystemExit("STOP: id %d has no scheme (pool of %d); ids must run 1..%d" % (i, len(order), len(order)))
+            over["scheme"] = order[i - 1]
+            note["scheme"] = sw.SCHEMES[order[i - 1]][0]
         P, frames, pal = sw.render("sky", h, N, over)
         closed = sw.closes("sky", P)
         g = encode(frames, pal, 4)
@@ -89,7 +110,7 @@ def main(setname, rec_path):
         else:
             tmp = fn + ".tmp"; open(tmp, "wb").write(g); os.replace(tmp, fn)
         e = dict(id=i, holder=h, handle=r.get("handle", ""), file=os.path.basename(fn), bytes=len(g), sha256=sha,
-                 wx=P["wx"], pair=sw.PAIRS[P["pair"]][0], drops=len(P["drops"]), override=note,
+                 wx=P["wx"], pair=(sw.SCHEMES[P["scheme"]][0] if "scheme" in P else sw.PAIRS[P["pair"]][0]), drops=len(P["drops"]), override=note,
                  frames=N, closed=closed, fits=fits)
         man.append(e)
         if not ok:
@@ -110,4 +131,5 @@ def main(setname, rec_path):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    main(args[0], args[1], "--unique-schemes" in sys.argv)

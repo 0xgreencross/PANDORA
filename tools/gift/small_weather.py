@@ -22,6 +22,79 @@ PAIRS = [
     ("HOTLINE",    "#0c0212", "#ff2fd6"),
     ("EMBERGRID",  "#ff2e6a", "#080202"),
 ]
+# The final set's colour pool (his call, Oct 7 2026): every holder gets a different (paper, ink) scheme.
+# Nine STORMGLASS inks (POLE merged into INFRARED, HOTLINE into MGC) plus WHITE and VIOLET, on six dark
+# papers, kept only where the ink has >= 4.5:1 contrast on the paper; then six inverted (black ink on a
+# colour paper). 66 schemes. Used only when mkloops is run with --unique-schemes; PAIRS stays the default
+# so the approved rehearsal loops are byte-identical.
+SCHEMES = [
+    ("DITHERVOID ON BLACK", "#000000", "#19f0ff"),
+    ("POISONFROG ON BLACK", "#000000", "#2eff9e"),
+    ("INFRARED ON BLACK", "#000000", "#ff7a00"),
+    ("LAZER ON BLACK", "#000000", "#00aaff"),
+    ("CATHODE ON BLACK", "#000000", "#00ff41"),
+    ("MGC ON BLACK", "#000000", "#ff00c8"),
+    ("TISNUKE ON BLACK", "#000000", "#f1da2e"),
+    ("EMBER ON BLACK", "#000000", "#ff2e6a"),
+    ("WHITE ON BLACK", "#000000", "#e8e8e8"),
+    ("VIOLET ON BLACK", "#000000", "#a56bff"),
+    ("DITHERVOID ON NAVY", "#0b0030", "#19f0ff"),
+    ("POISONFROG ON NAVY", "#0b0030", "#2eff9e"),
+    ("INFRARED ON NAVY", "#0b0030", "#ff7a00"),
+    ("LAZER ON NAVY", "#0b0030", "#00aaff"),
+    ("CATHODE ON NAVY", "#0b0030", "#00ff41"),
+    ("MGC ON NAVY", "#0b0030", "#ff00c8"),
+    ("TISNUKE ON NAVY", "#0b0030", "#f1da2e"),
+    ("EMBER ON NAVY", "#0b0030", "#ff2e6a"),
+    ("WHITE ON NAVY", "#0b0030", "#e8e8e8"),
+    ("VIOLET ON NAVY", "#0b0030", "#a56bff"),
+    ("DITHERVOID ON MAROON", "#2a0306", "#19f0ff"),
+    ("POISONFROG ON MAROON", "#2a0306", "#2eff9e"),
+    ("INFRARED ON MAROON", "#2a0306", "#ff7a00"),
+    ("LAZER ON MAROON", "#2a0306", "#00aaff"),
+    ("CATHODE ON MAROON", "#2a0306", "#00ff41"),
+    ("MGC ON MAROON", "#2a0306", "#ff00c8"),
+    ("TISNUKE ON MAROON", "#2a0306", "#f1da2e"),
+    ("EMBER ON MAROON", "#2a0306", "#ff2e6a"),
+    ("WHITE ON MAROON", "#2a0306", "#e8e8e8"),
+    ("VIOLET ON MAROON", "#2a0306", "#a56bff"),
+    ("DITHERVOID ON MOSS", "#011a08", "#19f0ff"),
+    ("POISONFROG ON MOSS", "#011a08", "#2eff9e"),
+    ("INFRARED ON MOSS", "#011a08", "#ff7a00"),
+    ("LAZER ON MOSS", "#011a08", "#00aaff"),
+    ("CATHODE ON MOSS", "#011a08", "#00ff41"),
+    ("MGC ON MOSS", "#011a08", "#ff00c8"),
+    ("TISNUKE ON MOSS", "#011a08", "#f1da2e"),
+    ("EMBER ON MOSS", "#011a08", "#ff2e6a"),
+    ("WHITE ON MOSS", "#011a08", "#e8e8e8"),
+    ("VIOLET ON MOSS", "#011a08", "#a56bff"),
+    ("DITHERVOID ON PLUM", "#1a0626", "#19f0ff"),
+    ("POISONFROG ON PLUM", "#1a0626", "#2eff9e"),
+    ("INFRARED ON PLUM", "#1a0626", "#ff7a00"),
+    ("LAZER ON PLUM", "#1a0626", "#00aaff"),
+    ("CATHODE ON PLUM", "#1a0626", "#00ff41"),
+    ("MGC ON PLUM", "#1a0626", "#ff00c8"),
+    ("TISNUKE ON PLUM", "#1a0626", "#f1da2e"),
+    ("EMBER ON PLUM", "#1a0626", "#ff2e6a"),
+    ("WHITE ON PLUM", "#1a0626", "#e8e8e8"),
+    ("VIOLET ON PLUM", "#1a0626", "#a56bff"),
+    ("DITHERVOID ON GRAPHITE", "#161616", "#19f0ff"),
+    ("POISONFROG ON GRAPHITE", "#161616", "#2eff9e"),
+    ("INFRARED ON GRAPHITE", "#161616", "#ff7a00"),
+    ("LAZER ON GRAPHITE", "#161616", "#00aaff"),
+    ("CATHODE ON GRAPHITE", "#161616", "#00ff41"),
+    ("MGC ON GRAPHITE", "#161616", "#ff00c8"),
+    ("TISNUKE ON GRAPHITE", "#161616", "#f1da2e"),
+    ("EMBER ON GRAPHITE", "#161616", "#ff2e6a"),
+    ("WHITE ON GRAPHITE", "#161616", "#e8e8e8"),
+    ("VIOLET ON GRAPHITE", "#161616", "#a56bff"),
+    ("BLACK ON TISNUKE", "#f1da2e", "#050505"),
+    ("BLACK ON EMBER", "#ff2e6a", "#050505"),
+    ("BLACK ON INFRARED", "#ff7a00", "#050505"),
+    ("BLACK ON POISONFROG", "#2eff9e", "#050505"),
+    ("BLACK ON DITHERVOID", "#19f0ff", "#050505"),
+    ("BLACK ON VIOLET", "#a56bff", "#050505"),
+]
 hx = lambda h: (int(h[1:3], 16), int(h[3:5], 16), int(h[5:7], 16))
 
 
@@ -347,5 +420,5 @@ def frame(direction, P, theta):
 def render(direction, addr, N=40, over=None):
     P = params(direction, addr, over)
     frames = [frame(direction, P, TAU * k / N) for k in range(N)]
-    _, paper, ink = PAIRS[P["pair"]]
+    _, paper, ink = SCHEMES[P["scheme"]] if "scheme" in P else PAIRS[P["pair"]]
     return P, frames, [hx(paper), hx(ink)]
