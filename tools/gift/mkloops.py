@@ -1,6 +1,6 @@
 """Render one SKY loop per holder into tools/gift/loops/<set>/ with a manifest.
 
-Usage:  python3 mkloops.py <set> <recipients.json> [--unique-schemes]
+Usage:  python3 mkloops.py <set> <recipients.json> [--motifs | --unique-schemes]
 recipients.json: [{"id": 1, "holder": "0x...", "handle": "...", "drops": 12}]   ("drops" is optional, see below)
 
 Rules it enforces:
@@ -15,6 +15,10 @@ Rules it enforces:
 - --unique-schemes (the final set, his call Oct 7 2026): every loop gets its own (paper, ink) from
   sw.SCHEMES, never repeated. Token id k takes SCHEME_ORDER[k-1], a fixed shuffle of the pool, so adding
   a holder later never moves anyone else's colours. More ids than schemes STOPS. Recorded as an override.
+- --motifs (the final set, his call Oct 7 2026, sheet approved): every holder gets a different (sky, land, weather)
+  scene from motifs.py, inks from the original PAIRS. Token id k takes motifs.assign(k)[k-1], so adding a holder
+  later never moves anyone. A loop over LIMIT walks the thin ladder (fewer drops/stars/wind/meteors/smoke) until
+  it fits; the scene, ink and thin level are recorded as the override.
 - never replace: if loops/<set>/manifest.json already records an id, the new render for that id must
   have the same holder, the same overrides and the same sha256, whether or not the GIF file is present;
   and an id recorded there may not vanish from the recipients file. Otherwise it STOPS.
@@ -60,8 +64,12 @@ def holder_ok(h):
     return checksum(h)
 
 
-def main(setname, rec_path, unique=False):
+def main(setname, rec_path, unique=False, motifs=False):
     recs = json.load(open(rec_path))
+    if motifs:
+        import motifs as mo
+        MA = mo.assign(max(int(r["id"]) for r in recs))
+    hx = lambda c: tuple(int(c[k:k + 2], 16) for k in (1, 3, 5))
     order = scheme_order() if unique else None
     if unique and len(recs) > len(order):
         raise SystemExit("STOP: %d holders but only %d schemes; no scheme may repeat" % (len(recs), len(order)))
@@ -92,9 +100,22 @@ def main(setname, rec_path, unique=False):
                 raise SystemExit("STOP: id %d has no scheme (pool of %d); ids must run 1..%d" % (i, len(order), len(order)))
             over["scheme"] = order[i - 1]
             note["scheme"] = sw.SCHEMES[order[i - 1]][0]
-        P, frames, pal = sw.render("sky", h, N, over)
-        closed = sw.closes("sky", P)
-        g = encode(frames, pal, 4)
+        if motifs:
+            if "drops" in r:
+                raise SystemExit("STOP: id %d: drops overrides are for the sky direction; motifs use the thin ladder" % i)
+            sky_, land_, wx_, pi_ = MA[i - 1]
+            _, paper_, ink_ = sw.PAIRS[pi_]
+            for thin in range(len(mo.THIN)):
+                P, frames, closed = mo.render(h, sky_, land_, wx_, thin, N)
+                g = encode(frames, [hx(paper_), hx(ink_)], 4)
+                if len(g) <= LIMIT:
+                    break
+            P["wx"] = "%s/%s/%s" % (sky_, land_, wx_)
+            note = {"motif": P["wx"], "ink": sw.PAIRS[pi_][0], "thin": thin}
+        else:
+            P, frames, pal = sw.render("sky", h, N, over)
+            closed = sw.closes("sky", P)
+            g = encode(frames, pal, 4)
         sha = hashlib.sha256(g).hexdigest()
         fits = len(g) <= LIMIT
         if i in old and old[i].get("closed") and old[i].get("fits"):      # a failed (.over) entry was never approvable
@@ -110,7 +131,7 @@ def main(setname, rec_path, unique=False):
         else:
             tmp = fn + ".tmp"; open(tmp, "wb").write(g); os.replace(tmp, fn)
         e = dict(id=i, holder=h, handle=r.get("handle", ""), file=os.path.basename(fn), bytes=len(g), sha256=sha,
-                 wx=P["wx"], pair=(sw.SCHEMES[P["scheme"]][0] if "scheme" in P else sw.PAIRS[P["pair"]][0]), drops=len(P["drops"]), override=note,
+                 wx=P["wx"], pair=(note["ink"] if motifs else sw.SCHEMES[P["scheme"]][0] if "scheme" in P else sw.PAIRS[P["pair"]][0]), drops=len(P["drops"]), override=note,
                  frames=N, closed=closed, fits=fits)
         man.append(e)
         if not ok:
@@ -120,7 +141,7 @@ def main(setname, rec_path, unique=False):
     if gone:
         raise SystemExit("STOP: ids %s are in the existing manifest but not in %s; an approved loop is never dropped silently" % (gone, rec_path))
     tmp = mpath + ".tmp"
-    json.dump(dict(set=setname, renderer="tools/gift/small_weather.py sky", frames=N, delay_ms=40, size=480,
+    json.dump(dict(set=setname, renderer=("tools/gift/motifs.py" if motifs else "tools/gift/small_weather.py sky"), frames=N, delay_ms=40, size=480,
                    limit=LIMIT, loops=man), open(tmp, "w"), indent=1)
     os.replace(tmp, mpath)
     if failed:
@@ -132,4 +153,6 @@ def main(setname, rec_path, unique=False):
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    main(args[0], args[1], "--unique-schemes" in sys.argv)
+    if "--motifs" in sys.argv and "--unique-schemes" in sys.argv:
+        raise SystemExit("STOP: --motifs and --unique-schemes are two different directions; pick one")
+    main(args[0], args[1], "--unique-schemes" in sys.argv, "--motifs" in sys.argv)
