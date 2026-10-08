@@ -57,7 +57,7 @@ contract GLASS {
 
     /* THE PAGE, FINGERPRINTED (audit, Oct 2). The chunks' code hashes, chained in order: a chunk
        missing, empty, swapped or foreign, and the glass refuses to be made. */
-    bytes32 public constant PAGE = 0xbe83f6847b496001b44f2ea8d83a32be2c88bef3c88c46e4fdd98cfa9b0932dd;
+    bytes32 public constant PAGE = 0x4b3ffe1cab65c035925ab5d4062e182ce781cbf90d045d8b057950493666f72f;
     constructor(address _storm, address[] memory chunks_) {
         bytes32 acc;
         for (uint256 i = 0; i < chunks_.length; i++) {
