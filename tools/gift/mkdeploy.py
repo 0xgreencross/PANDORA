@@ -1,6 +1,6 @@
 """THE GIFT DEPLOY PAGE (v2). One html file carrying the compiled GIFT artifact, the token page (the renderer)
 and a 96 set (tools/gift/loops/<set>/, built by mk96.py from the approved loops), laying them on a chain from the
-browser: a burner key for Sepolia, MetaMask for mainnet (he clicks; the page never holds a mainnet key).
+browser: a burner key for a rehearsal network (Hoodi), MetaMask for mainnet (he clicks; the page never holds a mainnet key).
 Usage: python3 mkdeploy.py final96     Out: gift/deploy/index.html"""
 import json, os, sys, hashlib, base64
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -59,18 +59,18 @@ HTML = r'''<!doctype html>
 
 <h2>1 · THE CHAIN AND THE SIGNER</h2>
 <div class="row">
-  <div><label>NETWORK</label><select id="net"><option value="sepolia">Sepolia (rehearsal)</option>__MAINNET_OPT__</select></div>
+  <div><label>NETWORK</label><select id="net"><option value="hoodi">Hoodi (rehearsal, mainnet rules)</option><option value="sepolia">Sepolia (Glamsterdam rules: laying costs ~7x, use Hoodi)</option>__MAINNET_OPT__</select></div>
   <div><label>RPC (burner only)</label><input id="rpc" style="min-width:320px"></div>
 </div>
 <div class="row">
-  <div><label>SIGNER</label><select id="signer"><option value="burner">Burner key kept in this browser (Sepolia only)</option><option value="mm">MetaMask (you click; the page never sees a key)</option></select></div>
+  <div><label>SIGNER</label><select id="signer"><option value="burner">Burner key kept in this browser (rehearsal networks only)</option><option value="mm">MetaMask (you click; the page never sees a key)</option></select></div>
   <button id="connect">CONNECT</button>
 </div>
 <div id="who" style="margin-top:8px;color:var(--mut)"></div>
 
 <h2>2 · THE LOOPS AND THEIR HOLDERS</h2>
-<div style="color:var(--mut)">On Sepolia a holder can be changed (bind a loop to the burner or to a second address of yours to test the claim). On mainnet the holders are the approved ones and cannot be edited.</div>
-<div style="color:var(--mut)">A loop bound to a different address on Sepolia draws a different picture on its token page (the seed is the hash of the holder): to see the approved picture, keep the real holder; bind one or two to the burner only to walk the claim.</div>
+<div style="color:var(--mut)">On a rehearsal network a holder can be changed (bind a loop to the burner or to a second address of yours to test the claim). On mainnet the holders are the approved ones and cannot be edited.</div>
+<div style="color:var(--mut)">A loop bound to a different address on a rehearsal network draws a different picture on its token page (the seed is the hash of the holder): to see the approved picture, keep the real holder; bind one or two to the burner only to walk the claim.</div>
 <table><thead><tr><th>ID</th><th>LOOP</th><th>HOLDER</th><th>SCENE</th><th>BYTES</th><th>SHA256</th><th>ON CHAIN</th></tr></thead><tbody id="rows"></tbody></table>
 
 <h2>3 · THE DEPLOY, IN ORDER</h2>
@@ -103,14 +103,15 @@ const LOOPS=__LOOPS__;
 const PAGE=__PAGE__;
 const SET=__SETJS__;   /* the loop set this page was built from; mainnet exists only on a page built from 'final' */
 const ARTIST='0x0DD399a7ED92283e4983C2974FE377070D67f4eB';
-const RPC={sepolia:'https://ethereum-sepolia-rpc.publicnode.com',mainnet:'https://ethereum-rpc.publicnode.com'};
+const RPC={sepolia:'https://ethereum-sepolia-rpc.publicnode.com',hoodi:'https://ethereum-hoodi-rpc.publicnode.com',mainnet:'https://ethereum-rpc.publicnode.com'};
+const CHAIN={sepolia:11155111n,hoodi:560048n,mainnet:1n}, NAME={sepolia:'Sepolia',hoodi:'Hoodi',mainnet:'Ethereum mainnet'};
 const $=id=>document.getElementById(id);
 const log=(m,c)=>{ const e=$('log'); const d=document.createElement('div'); if(c)d.className=c; d.textContent=new Date().toISOString().slice(11,19)+'  '+m; e.appendChild(d); e.scrollTop=e.scrollHeight; };
 const REC={}; const rec=(k,v)=>{ REC[k]=v; $('record').value=JSON.stringify(REC,null,1); };
 const hex=u=>Array.from(u).map(b=>b.toString(16).padStart(2,'0')).join('');
 const sha=async u=>hex(new Uint8Array(await crypto.subtle.digest('SHA-256',u)));
 const bytesOf=L=>Uint8Array.from(atob(L.b64),c=>c.charCodeAt(0));
-let provider=null, signer=null, net='sepolia', KEY=null;
+let provider=null, signer=null, net='hoodi', KEY=null;
 
 /* the table */
 for(const L of LOOPS){
@@ -134,18 +135,22 @@ async function connect(){
   net=$('net').value;
   if(net==='mainnet'&&SET!=='final96'){ signer=null; log('this page was built from the "'+SET+'" set: mainnet is only possible on a page built from the final96 set (mkdeploy.py final96)','bad'); return; }
   if($('signer').value==='burner'){
-    if(net!=='sepolia'){ log('a burner is for Sepolia only','bad'); return; }
+    if(net==='mainnet'){ log('a burner is for the rehearsal networks only','bad'); return; }
     let k=localStorage.getItem('smallweather_burner'); if(!k){ k=ethers.Wallet.createRandom().privateKey; localStorage.setItem('smallweather_burner',k); log('a burner key was made and kept in this browser'); }
     provider=new ethers.JsonRpcProvider($('rpc').value,undefined,{cacheTimeout:-1});
-    const cid=(await provider.getNetwork()).chainId; if(cid!==11155111n&&cid!==31337n){ provider=null; signer=null; log('the burner is for Sepolia only and this RPC is chain '+cid+': nothing will be sent','bad'); return; }
+    const cid=(await provider.getNetwork()).chainId; if(cid!==CHAIN[net]&&cid!==31337n){ provider=null; signer=null; log('the burner is for '+NAME[net]+' and this RPC is chain '+cid+': nothing will be sent','bad'); return; }
     signer=new ethers.Wallet(k,provider);
   } else {
     if(!window.ethereum){ log('no wallet in this browser','bad'); return; }
     provider=new ethers.BrowserProvider(window.ethereum); await provider.send('eth_requestAccounts',[]);
-    const want=net==='sepolia'?11155111n:1n;
+    const want=CHAIN[net];
     if((await provider.getNetwork()).chainId!==want){
       try{ await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x'+want.toString(16)}]}); }
-      catch(e){ signer=null; log('switch the wallet to '+(net==='sepolia'?'Sepolia':'Ethereum mainnet')+' and CONNECT again','bad'); return; }
+      catch(e){
+        if(net==='hoodi'&&(e.code===4902||(e.data&&e.data.originalError&&e.data.originalError.code===4902))){   /* the wallet does not know Hoodi yet: offer it */
+          try{ await window.ethereum.request({method:'wallet_addEthereumChain',params:[{chainId:'0x88bb0',chainName:'Hoodi',nativeCurrency:{name:'Hoodi ETH',symbol:'ETH',decimals:18},rpcUrls:[RPC.hoodi],blockExplorerUrls:['https://hoodi.etherscan.io']}]}); }
+          catch(e2){ signer=null; log('add Hoodi to the wallet and CONNECT again','bad'); return; }
+        } else { signer=null; log('switch the wallet to '+NAME[net]+' and CONNECT again','bad'); return; } }
       provider=new ethers.BrowserProvider(window.ethereum);
       if((await provider.getNetwork()).chainId!==want){ signer=null; log('the wallet is not on '+net+': nothing will be sent','bad'); return; }
     }
