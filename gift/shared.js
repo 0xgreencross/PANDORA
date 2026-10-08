@@ -4,6 +4,7 @@
 const NETS={
   mainnet:{chainId:1,  contract:'', rpc:'https://ethereum-rpc.publicnode.com', name:'Ethereum'},
   sepolia:{chainId:11155111, contract:'', rpc:'https://ethereum-sepolia-rpc.publicnode.com', name:'Sepolia'},
+  hoodi:{chainId:560048, contract:'', rpc:'https://ethereum-hoodi-rpc.publicnode.com', name:'Hoodi'},
   local:{chainId:31337, contract:'', rpc:'http://127.0.0.1:8545', name:'local'}
 };
 const ABI=['function giftOf(address) view returns (uint256)','function holderOf(uint256) view returns (address)','function isClaimed(uint256) view returns (bool)',

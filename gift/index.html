@@ -79,7 +79,10 @@ async function wallet(){
   let bp=new ethers.BrowserProvider(window.ethereum); await bp.send('eth_requestAccounts',[]);
   if(Number((await bp.getNetwork()).chainId)!==CFG.chainId){
     try{ await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x'+CFG.chainId.toString(16)}]}); }
-    catch(e){ throw new Error('Switch your wallet to '+CFG.name+'.'); }
+    catch(e){
+      if(NET==='hoodi'&&(e.code===4902||(e.data&&e.data.originalError&&e.data.originalError.code===4902))){
+        await window.ethereum.request({method:'wallet_addEthereumChain',params:[{chainId:'0x88bb0',chainName:'Hoodi',nativeCurrency:{name:'Hoodi ETH',symbol:'ETH',decimals:18},rpcUrls:[CFG.rpc],blockExplorerUrls:['https://hoodi.etherscan.io']}]});
+      } else throw new Error('Switch your wallet to '+CFG.name+'.'); }
     bp=new ethers.BrowserProvider(window.ethereum);
     if(Number((await bp.getNetwork()).chainId)!==CFG.chainId) throw new Error('Switch your wallet to '+CFG.name+'.');
   }
