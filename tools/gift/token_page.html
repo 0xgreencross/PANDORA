@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SMALL WEATHER</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#e8e8ec;font:11px/1.4 ui-monospace,Menlo,Consolas,monospace}
+#L{position:absolute;inset:0;margin:auto;width:min(100vw,100vh);height:min(100vw,100vh);image-rendering:pixelated;display:block}
+#bar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px;background:rgba(0,0,0,.72);opacity:0;transition:opacity .25s;letter-spacing:.12em}
+body.on #bar{opacity:1}
+#bar button{font:inherit;letter-spacing:.14em;background:none;color:inherit;border:1px solid currentColor;padding:6px 10px;cursor:pointer}
+#bar span{opacity:.75}
+@media (prefers-reduced-motion:reduce){#bar{transition:none}}
+</style></head><body>
+<img id="L" alt="SMALL WEATHER">
+<div id="bar"><span id="i">SMALL WEATHER</span><button id="sv" type="button">SAVE GIF</button><span id="s"></span></div>
+<script>
+/*RENDERER*/
+</script>
+<script>
+/* THE FRAME. The renderer above draws the loop from the hash of the holder's address and the scene the
+   contract appends below (boot). The 96 grid it draws is checked against the GIF the chain keeps; the
+   picture is the 480 loop, byte for byte the approved file, shown with hard pixels at any size. */
+function hx3(h){return[parseInt(h.substr(1,2),16),parseInt(h.substr(3,2),16),parseInt(h.substr(5,2),16)];}
+function b64(u){var s='';for(var i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s);}
+function hex(w){var s='';for(var i=0;i<w.length;i++)s+=('00000000'+(w[i]>>>0).toString(16)).slice(-8);return s;}
+function boot(T){
+  var P=SW.PAIRS[T.pair],pal=[hx3(P[1]),hx3(P[2])],L=document.getElementById('L');
+  document.body.style.background=P[1];
+  var name='SMALL WEATHER #'+T.id,scene=T.sky+' / '+T.land+' / '+T.weather;
+  document.getElementById('i').textContent=name+' · '+scene;
+  var fr=null,big=null;
+  setTimeout(function(){
+    fr=SW.frames(T.seed,T.sky,T.land,T.weather,T.thin,40);
+    var same=hex(SW.sha256(SW.gif(fr,pal,4,1)))===T.sha.replace(/^0x/,'');
+    L.src='data:image/gif;base64,'+b64(SW.gif(fr,pal,4,5));
+    document.getElementById('s').textContent=same?'DRAWN LIVE · MATCHES THE CHAIN':'DRAWN LIVE';
+  },20);
+  var t=0;function on(){document.body.className='on';clearTimeout(t);t=setTimeout(function(){document.body.className='';},2600);}
+  document.addEventListener('mousemove',on);document.addEventListener('touchstart',on,{passive:true});
+  document.getElementById('sv').onclick=function(){
+    if(!fr)return;if(!big)big=SW.gif(fr,pal,4,10);
+    var file='small-weather-'+('00'+T.id).slice(-3)+'.gif';
+    try{var f=new File([big],file,{type:'image/gif'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(function(){});return;}}catch(e){}
+    try{var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([big],{type:'image/gif'}));a.download=file;document.body.appendChild(a);a.click();a.remove();}catch(e){}
+  };
+}
+</script>
