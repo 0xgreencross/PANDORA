@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#050506">
+<title>DITHERVOID // SMALL WEATHER · ALL 79</title>
+<meta name="description" content="Every small weather, read from the chain.">
+<style>
+  :root{--bg:#050506;--ink:#e8e8ec;--mut:#7d7d88;--acc:#c8ff3a;--hair:#1e1e24;--pane:#0b0b0e}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  header{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--bg);display:flex;align-items:center;gap:12px;padding:10px 16px;min-height:48px;border-bottom:1px solid var(--hair)}
+  header .brand{letter-spacing:.24em;font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .brand span{color:var(--mut);font-weight:500}
+  header nav{margin-left:auto;display:flex;gap:16px;font-size:10px;letter-spacing:.16em;color:var(--mut);white-space:nowrap}
+  header nav a:hover{color:var(--ink)}
+  main{padding:16px;max-width:1400px;margin:0 auto;display:grid;gap:14px}
+  #count{font-size:11px;letter-spacing:.16em;color:var(--mut)} #count b{color:var(--acc);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(180px,100%),1fr));gap:12px}
+  .t{display:grid;gap:6px;min-width:0}
+  .t img,.t .ph{width:100%;aspect-ratio:1;display:block;background:var(--pane);image-rendering:pixelated}
+  .t .ph{display:grid;place-items:center;color:var(--mut);font-size:10px;letter-spacing:.14em}
+  .t .row{display:flex;justify-content:space-between;align-items:baseline;gap:6px;min-width:0}
+  .t .n{font-weight:600;letter-spacing:.1em}
+  .t .st{font-size:10px;letter-spacing:.12em;color:var(--mut)} .t .st.on{color:var(--acc)}
+  .t .sc{font-size:10px;letter-spacing:.08em;color:var(--mut);overflow-wrap:anywhere;min-height:2.6em}
+  button{font:inherit;background:none;color:var(--ink);border:1px solid var(--hair);padding:6px 10px;cursor:pointer;letter-spacing:.14em;font-size:10px}
+  button:hover{border-color:var(--ink)} button:focus-visible,a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+  #msg{color:var(--mut);letter-spacing:.12em;font-size:11px}
+  @media(max-width:520px){ header nav a.wide{display:none} header .brand{font-size:11px;letter-spacing:.18em} }
+</style></head><body>
+<header><a class="brand" id="home" href="/gift/">DITHERVOID <span>//</span> SMALL WEATHER</a><nav><a id="mine" href="/gift/">MINE</a><a href="/">STORMGLASS</a><a class="wide" href="/pandora/">PANDORA</a></nav></header>
+<main>
+  <div id="count">SMALL WEATHER · READING THE CHAIN…</div>
+  <div id="msg" hidden></div>
+  <div class="grid" id="grid"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+<script src="/gift/sw.js"></script>
+<script src="/gift/shared.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+$('home').href=keep('/gift/'); $('mine').href=keep('/gift/');
+(async()=>{
+  if(!CFG.contract){ $('count').textContent='SMALL WEATHER · 79 MADE'; $('msg').hidden=false; $('msg').textContent='The gallery opens with the claim. Every loop will be read from the chain here.'; return; }
+  const c=new ethers.Contract(CFG.contract,ABI,new ethers.JsonRpcProvider(CFG.rpc,CFG.chainId,{staticNetwork:true}));
+  let n, m;
+  try{ [n,m]=(await Promise.all([c.gifts(),c.minted()])).map(Number); }catch(e){ $('count').textContent='Could not reach the chain. Try again in a moment.'; return; }
+  const setCount=()=>{ $('count').innerHTML='SMALL WEATHER · <b>'+n+'</b> MADE · <b>'+m+'</b> CLAIMED'; }; setCount();
+  const tiles={};
+  for(let i=1;i<=n;i++){
+    const t=document.createElement('article'); t.className='t';
+    t.innerHTML='<div class="ph">#'+pad3(i)+'</div><div class="row"><span class="n">#'+pad3(i)+'</span><span class="st">…</span></div><div class="sc"></div><button type="button" disabled>SAVE GIF</button>';
+    $('grid').appendChild(t); tiles[i]=t;
+  }
+  /* six reads at a time, in order */
+  let next=1;
+  async function work(){ while(next<=n){ const i=next++; const t=tiles[i];
+    try{
+      const [g,L,cl]=await Promise.all([c.gif(i),loopInfo(c,i),c.isClaimed(i)]);
+      const img=document.createElement('img'); img.alt='SMALL WEATHER #'+i+', '+L.scene; img.src='data:image/gif;base64,'+b64(ethers.getBytes(g));
+      t.replaceChild(img,t.querySelector('.ph'));
+      t.querySelector('.sc').textContent=L.scene;
+      const st=t.querySelector('.st'); st.textContent=cl?'CLAIMED':'WAITING'; if(cl) st.classList.add('on');
+      const b=t.querySelector('button'); b.disabled=false; b.onclick=()=>saveGif(L,(msg)=>{ b.textContent=msg&&/Drawing/.test(msg)?'DRAWING…':'SAVE GIF'; });
+    }catch(e){ t.querySelector('.st').textContent='RETRY LATER'; }
+  } }
+  await Promise.all([work(),work(),work(),work(),work(),work()]);
+})();
+</script>
+</body></html>
