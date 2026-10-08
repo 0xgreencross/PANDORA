@@ -39,7 +39,7 @@ HTML=r'''<!doctype html>
 
 <h2>1 · THE CHAIN AND THE SIGNER</h2>
 <div class="row">
-  <div><label>NETWORK</label><select id="net"><option value="sepolia">Sepolia (rehearsal)</option><option value="mainnet">Ethereum mainnet (THE LEDGER)</option></select></div>
+  <div><label>NETWORK</label><select id="net"><option value="sepolia">Sepolia (rehearsal)</option><option value="hoodi">Hoodi (rehearsal, mainnet rules)</option><option value="mainnet">Ethereum mainnet (THE LEDGER)</option></select></div>
   <div><label>RPC (burner only)</label><input id="rpc" value="https://ethereum-sepolia-rpc.publicnode.com"></div>
 </div>
 <div class="row">
@@ -86,29 +86,34 @@ HTML=r'''<!doctype html>
 const ARTS=__ARTS__;
 const CHUNKS=__CHUNKS__;
 const MAN=__MAN__;
-const POOLS={mainnet:{eth:'0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640',peg:'0x3416cF6C708Da44DB2624D63ea0AAef7113527C6'},sepolia:{eth:'0x0000000000000000000000000000000000000000',peg:'0x0000000000000000000000000000000000000000'}};
+const POOLS={mainnet:{eth:'0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640',peg:'0x3416cF6C708Da44DB2624D63ea0AAef7113527C6'},sepolia:{eth:'0x0000000000000000000000000000000000000000',peg:'0x0000000000000000000000000000000000000000'},hoodi:{eth:'0x0000000000000000000000000000000000000000',peg:'0x0000000000000000000000000000000000000000'}};
+const CHAIN={sepolia:11155111n,hoodi:560048n,mainnet:1n}, NAME={sepolia:'Sepolia',hoodi:'Hoodi',mainnet:'Ethereum mainnet'}, RPCS={sepolia:'https://ethereum-sepolia-rpc.publicnode.com',hoodi:'https://ethereum-hoodi-rpc.publicnode.com',mainnet:'https://ethereum-rpc.publicnode.com'};
 const $=id=>document.getElementById(id);
 const log=(m,c)=>{ const e=$('log'); const d=document.createElement('div'); if(c)d.className=c; d.textContent=new Date().toISOString().slice(11,19)+'  '+m; e.appendChild(d); e.scrollTop=e.scrollHeight; };
 const REC={}; const rec=(k,v)=>{ REC[k]=v; $('record').value=JSON.stringify(REC,null,1); };
 let provider=null, signer=null, net='sepolia';
-$('net').addEventListener('change',()=>{ net=$('net').value; $('ethPool').value=POOLS[net].eth; $('pegPool').value=POOLS[net].peg; for(const k of ['aCoats','aGlass','aStorm','aChunks']) $(k).value=''; signer=null; $('who').textContent='network changed: CONNECT'; /* audit, Oct 2: nothing from another chain carries over */ if(net==='mainnet'){ $('signer').value='mm'; $('rpc').value='https://ethereum-rpc.publicnode.com'; } else { $('rpc').value='https://ethereum-sepolia-rpc.publicnode.com'; } });
+$('net').addEventListener('change',()=>{ net=$('net').value; $('ethPool').value=POOLS[net].eth; $('pegPool').value=POOLS[net].peg; for(const k of ['aCoats','aGlass','aStorm','aChunks']) $(k).value=''; signer=null; $('who').textContent='network changed: CONNECT'; /* audit, Oct 2: nothing from another chain carries over */ if(net==='mainnet') $('signer').value='mm'; $('rpc').value=RPCS[net]; });
 $('net').dispatchEvent(new Event('change'));
 async function connect(){
   net=$('net').value;
   if($('signer').value==='burner'){
-    if(net!=='sepolia'){ log('a burner is for Sepolia only','bad'); return; }
+    if(net==='mainnet'){ log('a burner is for the test networks only','bad'); return; }
     let k=localStorage.getItem('stormglass_burner'); if(!k){ k=ethers.Wallet.createRandom().privateKey; localStorage.setItem('stormglass_burner',k); log('a burner key was made and kept in this browser'); }
     provider=new ethers.JsonRpcProvider($('rpc').value,undefined,{cacheTimeout:-1});   /* no cached nonce between back-to-back transactions */
-    const cid=(await provider.getNetwork()).chainId; if(cid!==11155111n&&cid!==31337n){ provider=null; signer=null; log('the burner is for Sepolia only and this RPC is chain '+cid+': nothing will be sent','bad'); return; }
+    const cid=(await provider.getNetwork()).chainId; if(cid!==CHAIN[net]&&cid!==31337n){ provider=null; signer=null; log('the burner is for '+NAME[net]+' and this RPC is chain '+cid+': nothing will be sent','bad'); return; }
     signer=new ethers.Wallet(k,provider);
   } else {
     if(!window.ethereum){ log('no wallet in this browser','bad'); return; }
     provider=new ethers.BrowserProvider(window.ethereum); await provider.send('eth_requestAccounts',[]);
     /* THE CHAIN GUARD: the wallet must stand on the network chosen above, or nothing is sent */
-    const want=net==='sepolia'?11155111n:1n;
+    const want=CHAIN[net];
     if((await provider.getNetwork()).chainId!==want){
       try{ await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x'+want.toString(16)}]}); }
-      catch(e){ signer=null; log('switch the wallet to '+(net==='sepolia'?'Sepolia':'Ethereum mainnet')+' and CONNECT again','bad'); return; }
+      catch(e){
+        if(net==='hoodi'&&(e.code===4902||(e.data&&e.data.originalError&&e.data.originalError.code===4902))){   /* the wallet does not know Hoodi yet: offer it */
+          try{ await window.ethereum.request({method:'wallet_addEthereumChain',params:[{chainId:'0x88bb0',chainName:'Hoodi',nativeCurrency:{name:'Hoodi ETH',symbol:'ETH',decimals:18},rpcUrls:[RPCS.hoodi],blockExplorerUrls:['https://hoodi.etherscan.io']}]}); }catch(e2){ signer=null; log('add Hoodi to the wallet and CONNECT again','bad'); return; }
+        } else { signer=null; log('switch the wallet to '+NAME[net]+' and CONNECT again','bad'); return; }
+      }
       provider=new ethers.BrowserProvider(window.ethereum);
       if((await provider.getNetwork()).chainId!==want){ signer=null; log('the wallet is not on '+net+': nothing will be sent','bad'); return; }
     }
