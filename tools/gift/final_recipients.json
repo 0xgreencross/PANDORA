@@ -1,0 +1,397 @@
+[
+ {
+  "id": 1,
+  "holder": "0x561BC335f0fa57d8c6E8ae28f61C728FBB408724",
+  "handle": "MitosAlexp"
+ },
+ {
+  "id": 2,
+  "holder": "0xe2e9F3e5E6793c313F76076271bFe535cB27f114",
+  "handle": "eritaqua"
+ },
+ {
+  "id": 3,
+  "holder": "0xEbfD774c1C2008E56cE40E0a4504Ebecc81b1921",
+  "handle": "McHexleyOG"
+ },
+ {
+  "id": 4,
+  "holder": "0x0cb27e883E207905AD2A94F9B6eF0C7A99223C37",
+  "handle": "blue_onchain"
+ },
+ {
+  "id": 5,
+  "holder": "0xB9F7dC405EA74568ff2B51E44e27594CAdF00592",
+  "handle": "_SYKOE"
+ },
+ {
+  "id": 6,
+  "holder": "0xc2FEa212CB7635602B4B7993AfEaEcc97A873D5e",
+  "handle": "subterranean_1"
+ },
+ {
+  "id": 7,
+  "holder": "0x1ED4a7446556ed14593e15CDBA22B1BBA158Cf8c",
+  "handle": "Maniinng"
+ },
+ {
+  "id": 8,
+  "holder": "0x452a9b6432CD228410f01A1Da754449C8bAfc85a",
+  "handle": "cuatroceronueve"
+ },
+ {
+  "id": 9,
+  "holder": "0x89D53e8612E8416bf960Dc9444ce0e2a0878a582",
+  "handle": "suparno67"
+ },
+ {
+  "id": 10,
+  "holder": "0x0B9580C35DB43c1df34096795c7434DCa2069e9c",
+  "handle": "p1gg0d"
+ },
+ {
+  "id": 11,
+  "holder": "0xB8Ad671479618b7E204b82C16D7d4aA675C71CA6",
+  "handle": "ex_mortal_"
+ },
+ {
+  "id": 12,
+  "holder": "0xA6C3689380b2f13325AD655F3468a666deD64944",
+  "handle": "SpaceMan_8_"
+ },
+ {
+  "id": 13,
+  "holder": "0xd15d229Fd52240F8030Fa4694294189ED1DfBE4d",
+  "handle": "num1crush"
+ },
+ {
+  "id": 14,
+  "holder": "0xE6148d5b54D51ed4E13a9b9a342b9737b18Bfa42",
+  "handle": "NFTMike42"
+ },
+ {
+  "id": 15,
+  "holder": "0x6B85c6E03A939Cb37942F882eE2310E5Af3642BB",
+  "handle": "AFuckingNobody"
+ },
+ {
+  "id": 16,
+  "holder": "0x81772de3466a34901F0a13230869a3AC65F213dD",
+  "handle": "hapsxo"
+ },
+ {
+  "id": 17,
+  "holder": "0x0dae6E01A88826b4E77d717d9639B64F749C0152",
+  "handle": "tx_c0ld"
+ },
+ {
+  "id": 18,
+  "holder": "0x50F5599518de902BFe491F1Bebc4c011399F6146",
+  "handle": "Tenfin9erz"
+ },
+ {
+  "id": 19,
+  "holder": "0xA2Eae178F372220FF6C6D8CACD63EfE4e4b44525",
+  "handle": "StarkNaked23"
+ },
+ {
+  "id": 20,
+  "holder": "0x5AEC024c1D0f5FdF40769a51cad0bE934EA86AC3",
+  "handle": "maracatudo"
+ },
+ {
+  "id": 21,
+  "holder": "0x7C6b066cD8538687F8719397eCe8a038573eF54f",
+  "handle": "seelawrie"
+ },
+ {
+  "id": 22,
+  "holder": "0x848a9126FF57004aA8bFDc99384f36A4754D4367",
+  "handle": "FrauShitcoinz"
+ },
+ {
+  "id": 23,
+  "holder": "0x64eb4E3cAE1c6baf4eb6f07C3506EC9063D9301c",
+  "handle": "GTSewell"
+ },
+ {
+  "id": 24,
+  "holder": "0x8CAaDF7c03b1B08C68685b9f156223f311D2EdA2",
+  "handle": "ByronHirsch"
+ },
+ {
+  "id": 25,
+  "holder": "0x4e0f0a3ef71bAC23434F371B1dAD4Ee761cFEfb3",
+  "handle": "ohn0x4"
+ },
+ {
+  "id": 26,
+  "holder": "0xFbf8AE69b25542aC6833e2DE631E7B082Ffab1f5",
+  "handle": "DankyHashpantz"
+ },
+ {
+  "id": 27,
+  "holder": "0xC0ae85CD4bA82cbC440b2F7633fCAf8f4b29Bab1",
+  "handle": "darkb3at"
+ },
+ {
+  "id": 28,
+  "holder": "0x33bbf6e27ce7b254e537BCB9f3B00cD1451563eA",
+  "handle": "DCOT15"
+ },
+ {
+  "id": 29,
+  "holder": "0x9F128b52128027dD6eA9892f741519979D36FA34",
+  "handle": "Scamart"
+ },
+ {
+  "id": 30,
+  "holder": "0xeebff2d3F395aaF95ac43C813290aC75711Ee28f",
+  "handle": "Lounge_Act1"
+ },
+ {
+  "id": 31,
+  "holder": "0x030eb0849964d125772155e252982F7e9CBf32e4",
+  "handle": "sirsapient"
+ },
+ {
+  "id": 32,
+  "holder": "0xE477B7A297306D03C7AfF06873a6b7AC3113a3C9",
+  "handle": "llllll__lllllll"
+ },
+ {
+  "id": 33,
+  "holder": "0x4692785dcD2F7Ad1617DF4D82F4fCB6F217f3D34",
+  "handle": "Sideshow42000"
+ },
+ {
+  "id": 34,
+  "holder": "0x1a1427A73b7Cb0F4ea3F71C6c8090c4366c8eBe1",
+  "handle": "jsheps"
+ },
+ {
+  "id": 35,
+  "holder": "0xA89f3db42Cee7AC0cfFaa9ba6176f2574BA4071A",
+  "handle": "timewalker717"
+ },
+ {
+  "id": 36,
+  "holder": "0x34433Cb54D406d231cD511567f33CE1914FC888E",
+  "handle": "x3n1n"
+ },
+ {
+  "id": 37,
+  "holder": "0xCb30Cc9AbC2b3B4AA72A6f42C968D632D58547a2",
+  "handle": "arwyn_official"
+ },
+ {
+  "id": 38,
+  "holder": "0x6dA0a1784De1aBDDe1734bA37eCa3d560bf044c0",
+  "handle": "mxjxn"
+ },
+ {
+  "id": 39,
+  "holder": "0xd561ba5bdBFEA7A39bF073b7520a7273bc767131",
+  "handle": "WoodHandsRay"
+ },
+ {
+  "id": 40,
+  "holder": "0x4Ca1C22A3bFf99415C1095Dc22B3595d2c54c458",
+  "handle": "AP0CALYPSE"
+ },
+ {
+  "id": 41,
+  "holder": "0x1D95b0b6D3582FEeC7Ef35D2CCF91564DEd0Cf7f",
+  "handle": "desultor"
+ },
+ {
+  "id": 42,
+  "holder": "0x1E30CD2B897c13Ea7217d31D7e26529463c8D078",
+  "handle": "LeftWithTheArt"
+ },
+ {
+  "id": 43,
+  "holder": "0x3F570DB801E68Fc3A93e42114Bc6841193017DcC",
+  "handle": "_gokt"
+ },
+ {
+  "id": 44,
+  "holder": "0x1dA6A4cF0A189fFf6C3BfC383941A898bAa2C503",
+  "handle": "ryanhube"
+ },
+ {
+  "id": 45,
+  "holder": "0xdC8F09b81276cBAcEA5a9262774749f824756cB3",
+  "handle": "jbgdpt"
+ },
+ {
+  "id": 46,
+  "holder": "0xCC30A409d72FA6731542073CA3083380E6636A86",
+  "handle": "xrmxart"
+ },
+ {
+  "id": 47,
+  "holder": "0x2BE3744a5a9740189c863dAEe21Cbc631f5DE9e5",
+  "handle": "EL314B"
+ },
+ {
+  "id": 48,
+  "holder": "0x5a5707185e614a78Da8A9cEC3fb994c1cF564910",
+  "handle": "MisterPente"
+ },
+ {
+  "id": 49,
+  "holder": "0xF8209797399D70BbB5CCF92d0AFDE7dA6520Fb88",
+  "handle": "RhythmKing"
+ },
+ {
+  "id": 50,
+  "holder": "0xa2e9eC27b948d85B11f7935728cB68E11D73D8Fd",
+  "handle": "bodaciouspirate"
+ },
+ {
+  "id": 51,
+  "holder": "0xCA9D4f6f4b688253BcCDde6F491F4B9cCFBF8bC2",
+  "handle": "_2T1_"
+ },
+ {
+  "id": 52,
+  "holder": "0xB2d873342c05bF85029F12dcc3fAEdFC3652899a",
+  "handle": "dallasjfitz1"
+ },
+ {
+  "id": 53,
+  "holder": "0xBfaCdE4341f32B5F77Ad81831e128EdE4B5e6073",
+  "handle": "sbiernacki"
+ },
+ {
+  "id": 54,
+  "holder": "0x1776CFdcFFC21CD51B35d1EFAf5B3db4848dA1D7",
+  "handle": "resnepsid"
+ },
+ {
+  "id": 55,
+  "holder": "0x3d869084c46d39de7cE06DdC4a96b86ec606dBBb",
+  "handle": "xlvii47_eth"
+ },
+ {
+  "id": 56,
+  "holder": "0x53BEbD20781Aaa3a831f45B3C6889010A706ff9f",
+  "handle": "pman555"
+ },
+ {
+  "id": 57,
+  "holder": "0xe2E8d1bC8CC2afCe8332F5cFf5A36fb966805856",
+  "handle": "HolomediaVn"
+ },
+ {
+  "id": 58,
+  "holder": "0x02A8F422E4623cF409B2a1a64a603B16357EA9da",
+  "handle": "shillypreston"
+ },
+ {
+  "id": 59,
+  "holder": "0x1556495a0028F89Cce56A040c4BF5EdAFD9e4BDf",
+  "handle": "sansfomo"
+ },
+ {
+  "id": 60,
+  "holder": "0xeE38297ed7C0e96849Ec8581128033f99F48650d",
+  "handle": "sidonkulous"
+ },
+ {
+  "id": 61,
+  "holder": "0x8C1f393c989C667ad20E3d9Df72A4F778C5c64b2",
+  "handle": "walasavagephoto"
+ },
+ {
+  "id": 62,
+  "holder": "0x4DA73F16eA68796CF8cd5dD26F90B090280f4517",
+  "handle": "Ogsred_eth"
+ },
+ {
+  "id": 63,
+  "holder": "0x564A35fFCbd9B53a7B777327e6f79abd4364C888",
+  "handle": "iamhanzohattori"
+ },
+ {
+  "id": 64,
+  "holder": "0xC691ac712df9DDF5aE49DFE7bf82C291B59d9af4",
+  "handle": "Iteration__"
+ },
+ {
+  "id": 65,
+  "holder": "0x9ffAab6c24d4fb58d61b26B08c8795E9E323F28B",
+  "handle": "TheDudeA"
+ },
+ {
+  "id": 66,
+  "holder": "0x4982E0104ff7564Ee2a56f7210Bf0e50E3317C3D",
+  "handle": "supervillainsme"
+ },
+ {
+  "id": 67,
+  "holder": "0x9ec05Fa39a793bEa53db4F3dd4369f757D5C5E51",
+  "handle": "OGDSZN"
+ },
+ {
+  "id": 68,
+  "holder": "0x48d33D4327fcdD5ef30A287805ca12e48B063a01",
+  "handle": "scooter_mcgee"
+ },
+ {
+  "id": 69,
+  "holder": "0xc93C7f71581DFEAAb59BEd908888dAC5689F312a",
+  "handle": "seanbonner"
+ },
+ {
+  "id": 70,
+  "holder": "0x3433C2753da24Df566eA14c40584179e97396cf3",
+  "handle": "Moxarra"
+ },
+ {
+  "id": 71,
+  "holder": "0x8EFceB29863FB0B62C73C6C9c23f10F24243EBFA",
+  "handle": "VSTRVL_FFF"
+ },
+ {
+  "id": 72,
+  "holder": "0x91C1bD1Be0c81f970771D68426429e6276fE75e6",
+  "handle": "bookofbee"
+ },
+ {
+  "id": 73,
+  "holder": "0xb0396C7b1102a978a87A863Fbca7FD095b933D58",
+  "handle": "woodificouldart"
+ },
+ {
+  "id": 74,
+  "holder": "0x7D7Af2C0DE99258dfd607a32c826a85A5Cb4F155",
+  "handle": "maxOSIRISart"
+ },
+ {
+  "id": 75,
+  "holder": "0xE7c4b388Ea43D6D6c66a8c88949DDBa0c3EB3E6D",
+  "handle": "SpacedBraden"
+ },
+ {
+  "id": 76,
+  "holder": "0xd3a7A710171b8fC5C52832fea1faDb78fdFbc8be",
+  "handle": "EgidoVal"
+ },
+ {
+  "id": 77,
+  "holder": "0x089786580b66E76131D8EF9f7D165D1525338143",
+  "handle": "Benlio"
+ },
+ {
+  "id": 78,
+  "holder": "0x9A18E1412F7d8566005Db607E38c2279D26422D0",
+  "handle": "SquintDev"
+ },
+ {
+  "id": 79,
+  "holder": "0x2285Ec40F3618718EDF88A305fDf4b9fE89ba5CE",
+  "handle": "m0dest___"
+ }
+]

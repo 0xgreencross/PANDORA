@@ -505,15 +505,16 @@ def label(P):
     return "%s / %s / %s" % (P["sky"], P["land"], P["weather"])
 
 
-THIN = [1.0, 0.7, 0.5, 0.35]
+THIN = [1.0, 0.7, 0.5, 0.35, 0.25, 0.0]   # levels 4 and 5 added Oct 8 for ids 75/77; 0..3 unchanged
 
 
 def render(addr, sky, land, wx, thin=0, N=40):
-    """frames (index arrays at OUT px) and the closure check for one holder's scene. `thin` (0..3) is the
-    size ladder: fewer drops, stars, wind streaks, meteors and smoke puffs, nothing else changes."""
+    """frames (index arrays at OUT px) and the closure check for one holder's scene. `thin` (0..5) is the
+    size ladder: fewer drops, stars, wind streaks, meteors and smoke puffs, nothing else changes.
+    Levels 0..3 are exactly the approved ladder; 4 and 5 only ever run when 0..3 do not fit."""
     P = params(sw.seed_of(addr))
     P.update(sky=sky, land=land, weather=wx)
-    if thin:
+    if thin and thin <= 3:
         k = THIN[thin]
         P["drops"] = P["drops"][:max(6, int(len(P["drops"]) * k))]
         P["stars"] = P["stars"][:max(6, int(len(P["stars"]) * k))]
@@ -522,6 +523,18 @@ def render(addr, sky, land, wx, thin=0, N=40):
         if thin >= 3:
             P["m_puffs"] = 3
             P["m_wind"] = P["m_wind"][:2]
+    elif thin == 4:
+        P["drops"] = P["drops"][:4]
+        P["stars"] = P["stars"][:4]
+        P["m_wind"] = P["m_wind"][:2]
+        P["m_meteors"] = P["m_meteors"][:2]
+        P["m_puffs"] = 3
+    elif thin >= 5:
+        P["drops"] = P["drops"][:0]
+        P["stars"] = P["stars"][:0]
+        P["m_wind"] = P["m_wind"][:0]
+        P["m_meteors"] = P["m_meteors"][:2]
+        P["m_puffs"] = 1
     frames = []
     for j in range(N):
         idx = frame(P, sw.fold(TAU * j / N))
