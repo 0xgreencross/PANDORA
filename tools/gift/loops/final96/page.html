@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SMALL WEATHER</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#e8e8ec;font:11px/1.4 ui-monospace,Menlo,Consolas,monospace}
+#L{position:absolute;inset:0;margin:auto;width:min(100vw,100vh);height:min(100vw,100vh);image-rendering:pixelated;display:block}
+#bar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px;background:rgba(0,0,0,.72);opacity:0;transition:opacity .25s;letter-spacing:.12em}
+body.on #bar{opacity:1}
+#bar button{font:inherit;letter-spacing:.14em;background:none;color:inherit;border:1px solid currentColor;padding:6px 10px;cursor:pointer}
+#bar span{opacity:.75}
+@media (prefers-reduced-motion:reduce){#bar{transition:none}}
+</style></head><body>
+<img id="L" alt="SMALL WEATHER">
+<div id="bar"><span id="i">SMALL WEATHER</span><button id="sv" type="button">SAVE GIF</button><span id="s"></span></div>
+<script>
+/* SMALL WEATHER renderer, JavaScript port of tools/gift/motifs.py + small_weather.py (sky params) + gifenc.py.
+   A loop is a pure function of (seed, sky, land, weather, pair, thin). Python semantics are kept on purpose:
+   int() truncates, % on floats takes the divisor's sign, slices follow numpy (negative = from the end, clamped),
+   round() is half-to-even, and every float expression keeps Python's evaluation order. */
+(function (root) {
+"use strict";
+var TAU = 2 * Math.PI, OUT = 480;
+var PAIRS = [["DITHERVOID","#0b0030","#19f0ff"],["POISONFROG","#020208","#2eff9e"],["INFRARED","#2a0306","#ff7a00"],
+  ["LAZER","#02040c","#00aaff"],["CATHODE","#010401","#00ff41"],["MGC","#101010","#ff00c8"],["POLE","#000000","#ff7700"],
+  ["TISNUKE","#050508","#f1da2e"],["HOTLINE","#0c0212","#ff2fd6"],["EMBERGRID","#ff2e6a","#080202"]];
+var NIGHT = {"MOON":1,"FULL MOON":1,"SATURN":1,"ECLIPSE":1,"COMET":1,"METEORS":1,"SATELLITE":1,"AURORA":1};
+var CLOUDY = {"CLOUD":1,"RAIN":1,"STORM":1,"SNOW":1,"TORNADO":1};
+
+/* ---------------- python helpers */
+function pmod(a, b) { var m = a % b; if (m !== 0 && ((m < 0) !== (b < 0))) m += b; return m; }
+function imod(a, b) { var m = a % b; if (m !== 0 && ((m < 0) !== (b < 0))) m += b; return m; }
+var tr = Math.trunc;
+function pyround(x) { var f = Math.floor(x), d = x - f; if (d > 0.5) return f + 1; if (d < 0.5) return f; return (f % 2 === 0) ? f : f + 1; }
+function sl(a, b, n) { /* numpy slice bounds */
+  if (a < 0) a += n; if (a < 0) a = 0; if (a > n) a = n;
+  if (b < 0) b += n; if (b < 0) b = 0; if (b > n) b = n;
+  return [a, b < a ? a : b];
+}
+function ix(i, n) { return i < 0 ? i + n : i; }
+function S(m, u, ph) { return Math.sin(TAU * (m * u + (ph || 0))); }
+
+/* ---------------- sha256 (sync, small) */
+var K = new Uint32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+function sha256(msg) {
+  var l = msg.length, nb = ((l + 9 + 63) >> 6) << 6, b = new Uint8Array(nb), i, j;
+  b.set(msg); b[l] = 0x80; var bits = l * 8;
+  b[nb - 4] = (bits >>> 24) & 255; b[nb - 3] = (bits >>> 16) & 255; b[nb - 2] = (bits >>> 8) & 255; b[nb - 1] = bits & 255;
+  var H = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]), W = new Uint32Array(64);
+  for (i = 0; i < nb; i += 64) {
+    for (j = 0; j < 16; j++) W[j] = (b[i + 4 * j] << 24) | (b[i + 4 * j + 1] << 16) | (b[i + 4 * j + 2] << 8) | b[i + 4 * j + 3];
+    for (j = 16; j < 64; j++) {
+      var x = W[j - 15], y = W[j - 2];
+      var s0 = ((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3);
+      var s1 = ((y >>> 17) | (y << 15)) ^ ((y >>> 19) | (y << 13)) ^ (y >>> 10);
+      W[j] = (W[j - 16] + s0 + W[j - 7] + s1) | 0;
+    }
+    var a = H[0], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7], bb = H[1];
+    for (j = 0; j < 64; j++) {
+      var S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
+      var t1 = (h + S1 + ((e & f) ^ (~e & g)) + K[j] + W[j]) | 0;
+      var S0 = ((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10));
+      var t2 = (S0 + ((a & bb) ^ (a & c) ^ (bb & c))) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = bb; bb = a; a = (t1 + t2) | 0;
+    }
+    H[0] += a; H[1] += bb; H[2] += c; H[3] += d; H[4] += e; H[5] += f; H[6] += g; H[7] += h;
+  }
+  return H;
+}
+function Rng(seed, tag) {
+  var t = []; for (var i = 0; i < tag.length; i++) t.push(tag.charCodeAt(i));
+  this.s = new Uint8Array(seed.length + t.length + 4); this.s.set(seed); this.s.set(t, seed.length); this.n = seed.length + t.length; this.i = 0;
+}
+Rng.prototype.f = function () {
+  var s = this.s, n = this.n, i = this.i++;
+  s[n] = (i >>> 24) & 255; s[n + 1] = (i >>> 16) & 255; s[n + 2] = (i >>> 8) & 255; s[n + 3] = i & 255;
+  return sha256(s)[0] / 4294967296.0;
+};
+Rng.prototype.r = function (a, b) { return a + (b - a) * this.f(); };
+Rng.prototype.i_ = function (a, b) { return a + tr(this.f() * (b - a + 1)); };
+Rng.prototype.pick = function (xs) { return xs[tr(this.f() * xs.length)]; };
+
+function hexb(h) { h = h.replace(/^0x/, ""); var o = new Uint8Array(h.length / 2); for (var i = 0; i < o.length; i++) o[i] = parseInt(h.substr(2 * i, 2), 16); return o; }
+
+/* ---------------- params: the sky stream, then the motif stream (same draw order as Python) */
+function params(seed) {
+  var R = new Rng(seed, "sky"), P = {G: 96}, n, k, a;
+  P.pair = R.i_(0, PAIRS.length - 1); P.hz = R.r(0.56, 0.70);
+  P.wx = R.pick(["SUN", "MOON", "CLOUD", "RAIN", "STORM", "SNOW"]);
+  P.cx = R.r(0.30, 0.70); P.cy = R.r(0.20, 0.34); P.r = R.r(0.08, 0.14); P.grid = R.i_(5, 9);
+  n = R.i_(4, 7); P.balls = []; for (k = 0; k < n; k++) { a = R.r(-0.22, 0.22); var b2 = R.r(-0.05, 0.05), c2 = R.r(0.05, 0.10), d2 = R.f(); P.balls.push([a, b2, c2, d2]); }
+  n = R.i_(14, 22); P.drops = []; for (k = 0; k < n; k++) { a = R.f(); var e2 = R.f(); P.drops.push([a, e2, R.i_(1, 2)]); }
+  n = R.i_(14, 26); P.stars = []; for (k = 0; k < n; k++) { a = R.f(); var f2 = R.f() * 0.5, g2 = R.f(); P.stars.push([a, f2, g2, R.i_(1, 3)]); }
+  P.bolt = []; for (k = 0; k < 12; k++) P.bolt.push(R.r(-1, 1));
+  P.flash = R.r(0.1, 0.8);
+  R = new Rng(seed, "motif");
+  P.m_ridge = []; for (k = 0; k < 48; k++) P.m_ridge.push(R.r(-1, 1));
+  P.m_ridge2 = []; for (k = 0; k < 48; k++) P.m_ridge2.push(R.r(-1, 1));
+  P.m_city = []; for (k = 0; k < 24; k++) { a = R.i_(5, 10); var h2 = R.r(0.06, 0.30); P.m_city.push([a, h2, R.i_(0, 2)]); }
+  P.m_lit = []; for (k = 0; k < 400; k++) P.m_lit.push(R.f());
+  P.m_meteors = []; for (k = 0; k < 5; k++) { a = R.f(); var i2 = R.r(0.05, 1.05); P.m_meteors.push([a, i2, R.r(0.0, 0.45)]); }
+  P.m_side = R.f() < 0.5; P.m_vx = R.r(0.35, 0.65); P.m_tilt = R.r(-0.5, 0.5);
+  P.m_fog = []; for (k = 0; k < 5; k++) P.m_fog.push(R.f());
+  P.m_wind = []; for (k = 0; k < 9; k++) { a = R.f(); var j2 = R.f(); P.m_wind.push([a, j2, R.i_(6, 14)]); }
+  return P;
+}
+
+/* Bayer 8x8 thresholds */
+var B8 = (function () {
+  var m = [[0]];
+  while (m.length < 8) {
+    var n = m.length, o = [];
+    for (var r = 0; r < 2 * n; r++) { o.push([]); for (var c = 0; c < 2 * n; c++) {
+      var v = m[r % n][c % n] * 4; if (r < n && c >= n) v += 2; else if (r >= n && c < n) v += 3; else if (r >= n && c >= n) v += 1; o[r].push(v); } }
+    m = o;
+  }
+  var t = new Float64Array(64); for (var i = 0; i < 64; i++) t[i] = (m[i >> 3][i & 7] + 0.5) / 64; return t;
+})();
+function dithIdx(d, ink, G) {
+  var o = new Uint8Array(G * G);
+  for (var r = 0; r < G; r++) for (var c = 0; c < G; c++) { var i = r * G + c; o[i] = (ink[i] || d[i] > B8[((r & 7) << 3) | (c & 7)]) ? 1 : 0; }
+  return o;
+}
+
+function ground(G, hz, grid, u, crawl) {
+  var d = new Float64Array(G * G), r, c, k;
+  for (r = 0; r < G; r++) if (r >= hz) {
+    var t = (r - hz) / (G - hz); t = t < 0 ? 0 : t > 1 ? 1 : t; var v = 0.30 - 0.22 * t;
+    for (c = 0; c < G; c++) d[r * G + c] = v;
+  }
+  var A = (G - hz) * 1.6;
+  for (k = 1; k < 80; k++) {
+    var den = k - crawl * u; if (den <= 0) continue;
+    var yk = hz + A / den;
+    if (yk < G && yk - hz > 4) { var row = tr(yk); for (c = 0; c < G; c++) { var q = row * G + c; d[q] = Math.max(d[q], 0.9); } }
+  }
+  var vx = G / 2;
+  for (var i = -grid; i <= grid; i++) for (var yy = tr(hz) + 2; yy < G; yy++) {
+    var xx = vx + i * (G / grid) * 0.9 * (yy - hz) / (G - hz);
+    if (0 <= xx && xx < G) d[yy * G + tr(xx)] = 0.9;
+  }
+  return d;
+}
+
+function noise1(pts, G, oct) {
+  oct = oct || [[3, 1.0], [7, 0.45], [17, 0.18]];
+  var out = new Float64Array(G), n = pts.length;
+  for (var i = 0; i < G; i++) for (var o = 0; o < oct.length; o++) {
+    var oc = oct[o][0], amp = oct[o][1], t = i / G * oc, k = tr(t), f = t - k; f = f * f * (3 - 2 * f);
+    var a = pts[imod(k * 5 + oc, n)], b = pts[imod((k + 1) * 5 + oc, n)];
+    out[i] += amp * (a + (b - a) * f);
+  }
+  return out;
+}
+
+function stars(P, ink, hz, G, u, th) {
+  for (var s = 0; s < P.stars.length; s++) { var st = P.stars[s];
+    if (S(st[3], u, st[2]) > th) ink[imod(tr(st[1] * hz), G) * G + imod(tr(st[0] * G), G)] = 1; }
+}
+
+function frame(P, u) {
+  var G = P.G, N = G * G, hz = P.hz * G, sky = P.sky, land = P.land, wx = P.weather, night = !!NIGHT[sky];
+  var d = new Float64Array(N), ink = new Uint8Array(N), r, c, i, k, j, q, v, x, y;
+  for (r = 0; r < G; r++) { v = r < hz ? (night ? 0.02 : 0.04) + (night ? 0.22 : 0.30) * Math.pow(r / hz, 3) : 0.0; for (c = 0; c < G; c++) d[r * G + c] = v; }
+  var cx = P.cx * G, cy = P.cy * G, rad = P.r * G;
+  var cloudy = !!CLOUDY[wx] || wx === "HURRICANE", bcx, ccx;
+  if (cloudy || wx === "TORNADO") { bcx = (P.m_side ? 0.27 : 0.73) * G; ccx = G - bcx; } else { bcx = cx; ccx = cx; }
+
+  /* ---------------- sky */
+  if (night && sky !== "AURORA") stars(P, ink, hz, G, u, 0.1);
+  if (sky === "SUN") {
+    var cyb = cy + 1.2 * S(1, u), hden = rad * (0.55 + 0.12 * S(1, u, 0.25)), bsh = 4 * u * 4;
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      var rr = Math.hypot(c - bcx, r - cyb);
+      var halo = 0.85 * Math.exp(-(rr - rad) / hden) * (rr > rad ? 1 : 0);
+      d[i] = Math.max(d[i], halo * (r < hz ? 1 : 0));
+      var band = (pmod(r - cyb + bsh, 4) < 1.2) && (r > cyb);
+      if (rr <= rad && !band) ink[i] = 1; }
+  } else if (sky === "MOON") {
+    var off = rad * (0.55 + 0.12 * S(1, u));
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      if (Math.hypot(c - bcx, r - cy) <= rad && Math.hypot(c - bcx - off, r - cy + off * 0.3) > rad) ink[i] = 1; }
+  } else if (sky === "FULL MOON") {
+    var rf = rad * 1.1, MA = [[-0.40, -0.02, 0.40], [-0.05, 0.40, 0.20], [0.42, -0.42, 0.08]], fden = rf * (0.35 + 0.08 * S(1, u));
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      var rr2 = Math.hypot(c - bcx, r - cy), maria = 0;
+      for (k = 0; k < 3; k++) { var mv = (Math.hypot(c - bcx - MA[k][0] * rf, r - cy - MA[k][1] * rf) < MA[k][2] * rf) ? 1.0 : 0.0; maria = Math.max(maria, mv); }
+      if (rr2 <= rf) d[i] = maria > 0 ? 0.55 : 0.97;
+      var halo2 = 0.55 * Math.exp(-(rr2 - rf) / fden) * (rr2 > rf ? 1 : 0);
+      d[i] = Math.max(d[i], halo2 * (r < hz ? 1 : 0)); }
+  } else if (sky === "SATURN") {
+    var rp = rad * 0.9, a = 0.30 + 0.25 * P.m_tilt, ca = Math.cos(a), sa = Math.sin(a), bs = 5 * u * 5;
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      var ex = c - bcx, ey = r - cy, xr = ex * ca + ey * sa, yr = -ex * sa + ey * ca;
+      var e = Math.hypot(xr / (rp * 2.15), yr / (rp * 2.15 * 0.30));
+      var ring = (e > 0.72) && (e < 1.0) && !((e > 0.84) && (e < 0.88));
+      var planet = Math.hypot(ex, ey) <= rp;
+      var sh = (ex + rp) / (2 * rp); sh = sh < 0 ? 0 : sh > 1 ? 1 : sh; var shade = 0.30 + 0.60 * sh;
+      var bands = pmod(yr + bs, 5) < 1.2;
+      if (planet) d[i] = bands ? shade * 0.35 : shade;
+      if (ring && ((yr > 0) || !planet)) ink[i] = 1;
+      if (planet && ring && (yr <= 0)) ink[i] = 0;
+      if (ring && !planet) d[i] = 0.0; }
+  } else if (sky === "ECLIPSE") {
+    var rc = rad * 1.05, eden = rc * (0.42 + 0.10 * S(1, u)), tu = TAU * u;
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      var rr3 = Math.hypot(c - bcx, r - cy), th = Math.atan2(r - cy, c - bcx);
+      var cor = Math.exp(-(rr3 - rc) / eden) * (rr3 > rc ? 1 : 0);
+      var rays = 0.30 * (0.5 + 0.5 * Math.cos(7 * th + tu)) * cor;
+      var cv = cor * 0.85 + rays; cv = cv < 0 ? 0 : cv > 1 ? 1 : cv;
+      d[i] = Math.max(d[i], cv * (r < hz ? 1 : 0));
+      if (rr3 <= rc) { d[i] = 0.0; ink[i] = 0; }
+      if (Math.abs(rr3 - rc) < 0.6) ink[i] = 1; }
+  } else if (sky === "COMET") {
+    var hx_ = bcx - 0.10 * G, hy = cy + 0.02 * G, ang = (P.m_side ? -24 : -156) * (Math.PI / 180);
+    var cA = Math.cos(ang), sA = Math.sin(ang), L = 0.46 * G, tu2 = TAU * u * 2;
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      var dx = c - hx_, dy = r - hy, along = dx * cA + dy * sA, across = -dx * sA + dy * cA;
+      var w = 1.0 + along * 0.20, fall = 1 - along / L; fall = fall < 0 ? 0 : fall > 1 ? 1 : fall;
+      var tail = (along > 0) && (along < L), tv = 0;
+      if (tail) { var shim = 0.88 + 0.12 * Math.sin(across * 1.3 + tu2 + along * 0.12); var aw = across / w; tv = Math.pow(fall, 0.8) * shim * Math.exp(-(aw * aw)); }
+      d[i] = Math.max(d[i], tv * (r < hz ? 1 : 0));
+      if (tail && Math.abs(across) < 0.5 && along < L * 0.45) ink[i] = 1;
+      var rr4 = Math.hypot(dx, dy);
+      if (rr4 <= 2.2) ink[i] = 1;
+      d[i] = Math.max(d[i], 0.8 * Math.exp(-(rr4 - 2.2) / 2.0) * (rr4 > 2.2 ? 1 : 0) * (r < hz ? 1 : 0)); }
+  } else if (sky === "METEORS") {
+    for (k = 0; k < P.m_meteors.length; k++) { var me = P.m_meteors[k], t = pmod(u + me[0], 1.0);
+      if (t < 0.22) { var qq = t / 0.22, hx0 = me[1] * G - qq * 0.45 * G, hy0 = me[2] * hz + qq * 0.22 * G;
+        for (j = 0; j < 9; j++) { var px = hx0 + j, py = hy0 - j * 0.5;
+          if (0 <= px && px < G && 0 <= py && py < hz) { q = tr(py) * G + tr(px); if (j < 5) ink[q] = 1; else d[q] = Math.max(d[q], 0.5); } } } }
+  } else if (sky === "TWIN SUNS") {
+    var TS = [[-0.11, 0.02, 0.95], [0.12, -0.05, 0.55]];
+    for (k = 0; k < 2; k++) { var sx_ = bcx + TS[k][0] * G, sy_ = cy + TS[k][1] * G + 1.0 * S(1, u, 0.5 * k), rr_ = rad * TS[k][2], tden = rad * (0.45 + 0.1 * S(1, u, 0.3 * k));
+      for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c; var rr5 = Math.hypot(c - sx_, r - sy_);
+        var h5 = 0.80 * Math.exp(-(rr5 - rr_) / tden) * (rr5 > rr_ ? 1 : 0);
+        d[i] = Math.max(d[i], h5 * (r < hz ? 1 : 0)); if (rr5 <= rr_) ink[i] = 1; } }
+  } else if (sky === "SATELLITE") {
+    var off2 = rad * 0.62;
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      if (Math.hypot(c - bcx, r - cy) <= rad * 0.75 && Math.hypot(c - bcx - off2, r - cy + off2 * 0.3) > rad * 0.75) ink[i] = 1; }
+    var ssx = -6 + (G + 12) * u, ssy = 0.12 * G + 0.10 * G * u;
+    if (0 <= ssx && ssx < G) { var iX = tr(ssx), iY = tr(ssy), b_, s_;
+      for (var ddx = -3; ddx <= 3; ddx++) if (0 <= iX + ddx && iX + ddx < G) ink[ix(iY, G) * G + iX + ddx] = Math.abs(ddx) !== 1 ? 1 : 0;
+      [-1, 1].forEach(function (ddy) { var row = ix(iY + ddy, G);
+        b_ = sl(Math.max(0, iX - 3), Math.min(G, iX - 1), G); for (s_ = b_[0]; s_ < b_[1]; s_++) ink[row * G + s_] = 1;
+        b_ = sl(Math.max(0, iX + 2), Math.min(G, iX + 4), G); for (s_ = b_[0]; s_ < b_[1]; s_++) ink[row * G + s_] = 1; });
+      if (pmod(u * 8, 1) < 0.5 && iY + 2 < G) ink[ix(iY + 2, G) * G + ix(iX, G)] = 1; }
+  } else if (sky === "RAINBOW") {
+    var rx = bcx, ry = hz + 2, R0 = 0.42 * G, dens = [0.95, 0.70, 0.48, 0.30, 0.16], bv = [];
+    for (k = 0; k < 5; k++) bv.push(dens[k] * (0.92 + 0.08 * S(1, u, k * 0.2)));
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c; var rr6 = Math.hypot((c - rx) / 1.0, r - ry);
+      for (k = 0; k < 5; k++) if (rr6 >= R0 + 2.2 * k && rr6 < R0 + 2.2 * (k + 1) && r < hz) d[i] = bv[k];
+      if (Math.abs(rr6 - R0) < 0.55 && r < hz) ink[i] = 1;
+      if (!CLOUDY[wx]) { var sun = Math.hypot(c - (G - bcx), r - cy * 0.8);
+        d[i] = Math.max(d[i], 0.7 * Math.exp(-(sun - 3) / 3) * (sun > 3 ? 1 : 0) * (r < hz ? 1 : 0)); if (sun <= 3.5) ink[i] = 1; } }
+  } else if (sky === "AURORA") {
+    stars(P, ink, hz * 0.6, G, u, 0.3);
+    for (j = 0; j < 2; j++) { var base = hz * (0.16 + 0.22 * j), top = new Float64Array(G), ln = new Float64Array(G);
+      for (c = 0; c < G; c++) { top[c] = base + G * 0.07 * Math.sin(TAU * (c / G * (0.7 + 0.5 * j)) + 1.9 * j);
+        var sn = Math.sin(c * 0.21 + 2.1 * j); ln[c] = hz * (0.20 - 0.05 * j) * (0.55 + 0.45 * (sn * sn)); }
+      for (var cxp = j; cxp < G; cxp += 2) {
+        var t0 = top[cxp] + 0.8 * Math.sin(TAU * (cxp / G * 1.5 + u) + j);
+        var L_ = ln[cxp] * (0.8 + 0.2 * Math.sin(TAU * (u + cxp / G * 2) + j));
+        var y0 = tr(t0), y1 = tr(Math.min(t0 + L_, hz - 2));
+        if (y1 > y0) { var bb = sl(y0, y0 + Math.max(1, Math.floor((y1 - y0) / 2)), G); for (q = bb[0]; q < bb[1]; q++) ink[q * G + cxp] = 1;
+          var nn = y1 - y0, b2_ = sl(y0, y1, G);
+          for (q = b2_[0]; q < b2_[1]; q++) { var lv = nn === 1 ? 0.6 : (q - y0) * ((0.1 - 0.6) / (nn - 1)) + 0.6; if (nn > 1 && q - y0 === nn - 1) lv = 0.1;
+            d[q * G + cxp] = Math.max(d[q * G + cxp], lv); } } } }
+  }
+
+  /* ---------------- land */
+  var b;
+  if (land === "GRID" || land === "PEAKS" || land === "VOLCANO" || land === "CITY") {
+    var g = ground(G, hz, P.grid, u, 1);
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c; d[i] = r >= hz ? g[i] : Math.max(d[i], g[i]); }
+  }
+  if (land === "PEAKS") {
+    var n1 = noise1(P.m_ridge, G), n2 = noise1(P.m_ridge2, G, [[4, 1.0], [11, 0.4]]), ihz = tr(hz);
+    for (c = 0; c < G; c++) { var far = hz - (0.13 + 0.07 * n1[c]) * G, near = hz - (0.05 + 0.05 * n2[c]) * G;
+      var f0 = tr(Math.max(far, 0)), n0 = tr(Math.max(near, 0));
+      b = sl(f0, ihz, G); for (q = b[0]; q < b[1]; q++) d[q * G + c] = 0.22;
+      ink[ix(f0, G) * G + c] = 1;
+      if (far < hz - 0.17 * G) { b = sl(f0, f0 + 2, G); for (q = b[0]; q < b[1]; q++) ink[q * G + c] = 1; b = sl(f0, f0 + 4, G); for (q = b[0]; q < b[1]; q++) d[q * G + c] = 0.8; }
+      b = sl(n0, ihz, G); for (q = b[0]; q < b[1]; q++) { d[q * G + c] = 0.0; ink[q * G + c] = 0; }
+      ink[ix(n0, G) * G + c] = 1; }
+  } else if (land === "VOLCANO") {
+    var vx = P.m_vx * G, peak = hz - 0.27 * G, cr = 0.045 * G, topv = new Float64Array(G);
+    for (c = 0; c < G; c++) topv[c] = peak + Math.max(Math.abs(c - vx) - cr, 0) * 1.05;
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      var cone = (r >= topv[c]) && (r < hz);
+      if (cone) { d[i] = 0.0; ink[i] = 0; if (Math.abs(r - topv[c]) < 0.9) ink[i] = 1; } }
+    var npf = P.m_puffs === undefined ? 4 : P.m_puffs;
+    for (j = 0; j < npf; j++) { var tt = pmod(u + j / npf, 1.0), ppx = vx + tt * 8 + 2.0 * Math.sin(TAU * tt + j), ppy = peak - 1 - tt * 0.26 * G, prad = 1.4 + 3.4 * tt, pv = 0.80 * (1 - tt) + 0.08;
+      for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c; if (Math.hypot(c - ppx, r - ppy) < prad && r < peak) d[i] = Math.max(d[i], pv); } }
+    if (S(2, u) > -0.2) for (r = 0; r < G; r++) for (c = 0; c < G; c++) if (Math.abs(c - vx) < cr && Math.abs(r - peak) < 1.0) ink[r * G + c] = 1;
+  } else if (land === "CITY") {
+    var xx0 = 0, ci = 0, cols = [], ihz2 = tr(hz);
+    while (xx0 < G && ci < P.m_city.length) { var mc = P.m_city[ci]; cols.push([xx0, mc[0], tr(hz - mc[1] * G)]); xx0 += mc[0] + mc[2]; ci++; }
+    var lit = P.m_lit, li = 0;
+    for (k = 0; k < cols.length; k++) { var x0 = cols[k][0], w2 = cols[k][1], tp = cols[k][2], br = sl(tp, ihz2, G), bc = sl(x0, x0 + w2, G);
+      for (r = br[0]; r < br[1]; r++) for (c = bc[0]; c < bc[1]; c++) { d[r * G + c] = 0.0; ink[r * G + c] = 0; }
+      bc = sl(x0, Math.min(G, x0 + w2), G); for (c = bc[0]; c < bc[1]; c++) ink[ix(tp, G) * G + c] = 1;
+      for (var wy = tp + 2; wy < ihz2 - 1; wy += 3) for (var wxp = x0 + 1; wxp < Math.min(x0 + w2 - 1, G); wxp += 2) {
+        var lv2 = lit[li % lit.length]; li++;
+        if (lv2 < 0.30 || (lv2 > 0.96 && S(1, u, lv2 * 7) > 0)) ink[ix(wy, G) * G + wxp] = 1; } }
+    var tall = cols[0]; for (k = 1; k < cols.length; k++) if (cols[k][2] < tall[2]) tall = cols[k];
+    var ax = tall[0] + Math.floor(tall[1] / 2), at = tall[2];
+    b = sl(Math.max(0, at - 5), at, G); for (q = b[0]; q < b[1]; q++) ink[q * G + ax] = 1;
+    if (pmod(u * 2, 1) < 0.5) ink[ix(Math.max(0, at - 6), G) * G + ax] = 1;
+  } else if (land === "SEA" || land === "LIGHTHOUSE") {
+    for (r = 0; r < G; r++) if (r >= hz) { v = 0.10 + 0.10 * ((r - hz) / (G - hz)); for (c = 0; c < G; c++) d[r * G + c] = v; }
+    var lt = P.m_lit, row;
+    for (row = tr(hz) + 2; row < G; row += 2) { var ts = (row - hz) / (G - hz), per = tr(7 + 16 * ts), lnn = 1 + tr(4 * ts), of = tr(lt[row % 400] * per), lr = lt[(row * 7) % 400];
+      for (c = 0; c < G; c++) { var m = imod(c + of, per) < lnn, ph = Math.floor((c + of) / per), breathe = imod(ph + row, 4) === 0;
+        var on = Math.sin(TAU * (u + lr + ph * 0.13)) > -0.2;
+        if (m && (!breathe || on)) ink[row * G + c] = 1; } }
+    for (c = 0; c < G; c++) ink[tr(hz) * G + c] = 1;
+    var gx = bcx;
+    for (row = tr(hz) + 2; row < G; row += 2) { var ts2 = (row - hz) / (G - hz);
+      if (S(1, u, row * 0.137) > 0.1) { var xg = gx + (2 + 4 * ts2) * S(1, u, row * 0.29); ink[row * G + imod(tr(xg), G)] = 1; } }
+    if (land === "LIGHTHOUSE") {
+      var lx = (bcx > G / 2 ? 0.22 : 0.78) * G, lbase = hz + 2, H = 0.30 * G, topy = lbase - H, ilx = tr(lx);
+      for (var yy = tr(topy); yy < tr(lbase); yy++) { var tl = (yy - topy) / H, hw = 1.6 + 2.0 * tl, xa = tr(pyround(lx - hw)), xb = tr(pyround(lx + hw));
+        var stripe = imod(tr(Math.floor((yy - topy) / 4)), 2) === 0, rw = ix(yy, G);
+        b = sl(xa, xb + 1, G); for (q = b[0]; q < b[1]; q++) { d[rw * G + q] = 0.0; ink[rw * G + q] = stripe ? 1 : 0; }
+        ink[rw * G + ix(xa, G)] = 1; ink[rw * G + ix(xb, G)] = 1; }
+      var ty = tr(topy), br2, bc2;
+      br2 = sl(ty - 5, ty, G); bc2 = sl(ilx - 3, ilx + 4, G); for (r = br2[0]; r < br2[1]; r++) for (c = bc2[0]; c < bc2[1]; c++) { d[r * G + c] = 0.0; ink[r * G + c] = 0; }
+      for (c = bc2[0]; c < bc2[1]; c++) ink[ix(ty - 1, G) * G + c] = 1;
+      br2 = sl(ty - 5, ty - 1, G); for (r = br2[0]; r < br2[1]; r++) { ink[r * G + ix(ilx - 2, G)] = 1; ink[r * G + ix(ilx + 2, G)] = 1; }
+      br2 = sl(ty - 4, ty - 2, G); bc2 = sl(ilx - 1, ilx + 2, G); for (r = br2[0]; r < br2[1]; r++) for (c = bc2[0]; c < bc2[1]; c++) ink[r * G + c] = 1;
+      for (c = bc2[0]; c < bc2[1]; c++) ink[ix(ty - 6, G) * G + c] = 1;
+      ink[ix(ty - 7, G) * G + ilx] = 1;
+      for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c; var hr = Math.hypot((c - lx) / 2.2, (r - lbase) * 1.4);
+        if (hr < 6 && r >= hz - 1) { d[i] = 0.0; ink[i] = 0; if (r < lbase + 1 && Math.abs(hr - 6) < 0.9) ink[i] = 1; } }
+      var ly = ty - 3, dirx = Math.cos(TAU * u), reach = tr(0.70 * G * Math.abs(dirx)), sgn = dirx >= 0 ? 1 : -1;
+      for (k = 3; k < reach; k++) { var lpx = tr(lx + sgn * k);
+        if (0 <= lpx && lpx < G) { var sp = 0.12 * k, ys = [ly - sp, ly + sp];
+          for (q = 0; q < 2; q++) if (0 <= ys[q] && ys[q] < hz) ink[tr(ys[q]) * G + lpx] = 1;
+          if (k % 2 === 0) { var lo = tr(ly - sp) + 1, hi = tr(ly + sp);
+            if (hi > lo) { var lval = 0.45 * (1 - k / (reach + 1)); b = sl(lo, hi, G); for (q = b[0]; q < b[1]; q++) d[q * G + lpx] = Math.max(d[q * G + lpx], lval); } } } }
+    }
+  } else if (land === "DUNES") {
+    for (r = 0; r < G; r++) if (r >= hz) for (c = 0; c < G; c++) d[r * G + c] = 0.10;
+    var ph2 = P.m_ridge, farD = new Float64Array(G), nearD = new Float64Array(G), xs;
+    for (c = 0; c < G; c++) { xs = c / G;
+      farD[c] = hz - 0.06 * G - 0.05 * G * Math.sin(TAU * (xs * 0.9 + ph2[0])) - 0.02 * G * Math.sin(TAU * (xs * 2.1 + ph2[1]));
+      nearD[c] = hz + 0.10 * G - 0.07 * G * Math.sin(TAU * (xs * 0.7 + ph2[2])) - 0.02 * G * Math.sin(TAU * (xs * 1.7 + ph2[3])); }
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      if (r >= farD[c] && r < nearD[c]) { d[i] = 0.34; ink[i] = 0; }
+      var bn = r >= nearD[c]; if (bn) { d[i] = 0.0; ink[i] = 0; }
+      if (Math.abs(r - farD[c]) < 0.55 || Math.abs(r - nearD[c]) < 0.55) ink[i] = 1;
+      if (bn) for (k = 1; k < 4; k++) { xs = c / G;
+        if (Math.abs(r - nearD[c] - 4 * k - 1.5 * Math.sin(TAU * (xs * 3 + ph2[4 + k]))) < 0.5 && pmod(c + 3 * k, 7) < 4) ink[i] = 1; } }
+    for (j = 0; j < 5; j++) { var td = pmod(u + j / 5, 1.0), dpx = (ph2[10 + j] * 0.5 + 0.5) * G + td * 14;
+      if (dpx < G) { var dpy = nearD[tr(dpx)] - 1 - 3 * td; if (0 <= dpy && dpy < G && td < 0.8) ink[tr(dpy) * G + tr(dpx)] = 1; } }
+  }
+
+  /* ---------------- weather */
+  if (cloudy && wx !== "HURRICANE") {
+    var drift = 1.5 * S(1, u), f = new Float64Array(N), BL = [];
+    var sq = wx === "TORNADO" ? 3.4 : 1.6, spp = wx === "TORNADO" ? 1.9 : 1.0, fac = (sky && wx !== "TORNADO") ? 0.85 : 1.0;
+    for (k = 0; k < P.balls.length; k++) { var bl = P.balls[k], brad = bl[2] * G * (1 + 0.14 * S(1, u, bl[3])) * fac; BL.push([brad * brad, bl[0] * G * spp, bl[1] * G]); }
+    for (k = 0; k < BL.length; k++) { var r2 = BL[k][0], bxx = BL[k][1], byy = BL[k][2];
+      for (r = 0; r < G; r++) for (c = 0; c < G; c++) { var A1 = c - ccx - bxx - drift, B1 = (r - cy - byy) * sq; f[r * G + c] += r2 / (A1 * A1 + B1 * B1 + 1); } }
+    for (i = 0; i < N; i++) { var cl = (f[i] - 0.55) * 1.1; cl = cl < 0 ? 0 : cl > 1 ? 1 : cl; if (cl > 0) d[i] = 0.08 + 0.80 * cl; if (cl > 0.05) ink[i] = 0; }
+    var bottom = cy + 0.06 * G, span = hz - bottom;
+    if (wx === "RAIN" || wx === "STORM" || wx === "SNOW") {
+      for (k = 0; k < P.drops.length; k++) { var dr = P.drops[k], dyy = bottom + pmod(dr[1] + dr[2] * u, 1.0) * span, dxx = ccx + (dr[0] - 0.5) * G * 0.55;
+        if (wx === "SNOW") { dxx += 1.2 * S(1, u, dr[0]); ink[imod(tr(dyy), G) * G + imod(tr(dxx), G)] = 1; }
+        else for (q = 0; q < 3; q++) ink[imod(tr(dyy - q), G) * G + imod(tr(dxx - q * 0.5), G)] = 1; } }
+    if (wx === "STORM") { var fl = pmod(u - P.flash, 1.0);
+      if (fl < 0.05 || (0.10 < fl && fl < 0.13)) { var bxb = ccx, nb = P.bolt.length;
+        for (k = 0; k < nb; k++) { var yb0 = bottom + span * k / nb; for (j = 0; j < tr(span / nb) + 1; j++) ink[imod(tr(yb0 + j), G) * G + imod(tr(bxb), G)] = 1; bxb += P.bolt[k] * 2.5; } } }
+    if (wx === "TORNADO") { var top_ = cy + 0.01 * G, bot = hz + 1;
+      for (row = tr(top_); row < tr(bot); row++) { var tn = (row - top_) / (bot - top_), wt = Math.pow(1 - tn, 2.2) * 0.10 * G + 0.9, sway = 3.5 * Math.sin(TAU * (u + tn * 0.6)) * tn, c0 = ccx + sway;
+        var lo2 = Math.max(0, tr(c0 - wt)), hi2 = Math.min(G, tr(c0 + wt) + 1), tv2 = 0.55 + 0.25 * (1 - tn), rw2 = ix(row, G);
+        b = sl(lo2, hi2, G); for (q = b[0]; q < b[1]; q++) d[rw2 * G + q] = Math.max(d[rw2 * G + q], tv2);
+        for (k = 0; k < 2; k++) { var tpx = c0 + wt * Math.cos(TAU * (2 * u) + row * 0.55 + k * Math.PI); if (0 <= tpx && tpx < G) ink[rw2 * G + tr(tpx)] = 1; } }
+      for (j = 0; j < 6; j++) { var tj = pmod(u * 2 + j / 6, 1.0), jpx = ccx + 3.5 * Math.sin(TAU * u) + (6 + 6 * tj) * Math.cos(TAU * tj + j), jpy = hz - 1 - 4 * Math.sin(Math.PI * tj);
+        if (0 <= jpx && jpx < G && 0 <= jpy && jpy < G) ink[tr(jpy) * G + tr(jpx)] = 1; } }
+  }
+  if (wx === "HURRICANE") {
+    var hhx = ccx, hhy = cy + 0.04 * G, Rm = 0.20 * G, hph = TAU * u * 1.0 / 1.0 * 2 / 2;
+    for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+      var hdx = c - hhx, hdy = (r - hhy) * 1.9, hrr = Math.hypot(hdx, hdy), hth = Math.atan2(hdy, hdx);
+      var arms = 0.5 + 0.5 * Math.cos(2 * (hth - 0.22 * hrr) + hph), body = 1 - hrr / Rm; body = body < 0 ? 0 : body > 1 ? 1 : body;
+      var hd = Math.pow(body, 0.6) * (0.25 + 0.70 * arms), eye = hrr < 1.6;
+      if (hd > 0.05 && !eye && r < hz) d[i] = Math.max(d[i], hd);
+      if (eye) d[i] = 0.0;
+      if (hd > 0.15 && !eye) ink[i] = 0; }
+  }
+  if (wx === "FOG") {
+    for (j = 0; j < 4; j++) { var yb = hz - 0.02 * G + (j - 1.2) * 0.055 * G, fph = P.m_fog[j], m2 = 1 + j % 2;
+      for (r = 0; r < G; r++) for (c = 0; c < G; c++) { i = r * G + c;
+        var amp = 0.5 + 0.5 * Math.sin(c / G * TAU * m2 + fph * TAU), z = (r - yb) / 2.6, bandf = Math.exp(-(z * z)) * amp;
+        d[i] = Math.max(d[i], bandf * 0.62); if (bandf > 0.45) ink[i] = 0; }
+      for (k = 0; k < 3; k++) { var fx0 = pmod(fph + k / 3 + u * (j % 2 ? 1 : -1), 1.0) * (G + 12) - 6;
+        for (q = 0; q < 6; q++) { var fpx = tr(fx0 + q); if (0 <= fpx && fpx < G && q % 3 !== 2) ink[ix(tr(yb), G) * G + fpx] = 1; } } }
+  } else if (wx === "WIND") {
+    var nw = Math.min(5, P.m_wind.length);
+    for (k = 0; k < nw; k++) { var wd = P.m_wind[k], wyy = tr(wd[1] * hz * 0.85) + 2, wx0 = pmod(wd[0] + u, 1.0) * (G + 20) - 10;
+      for (q = 0; q < wd[2]; q++) { var wpx = tr(wx0 + q); if (0 <= wpx && wpx < G && wyy < hz) ink[ix(wyy, G) * G + wpx] = (q % 5) !== 4 ? 1 : 0; }
+      var tail2 = tr(wx0) - 3; if (0 <= tail2 && tail2 < G && wyy + 1 < hz) ink[ix(wyy + 1, G) * G + tail2] = 1; }
+  } else if (wx === "MIRAGE") {
+    var idx = dithIdx(d, ink, G), band0 = tr(hz) - 3, band1 = Math.min(G, tr(hz) + 9);
+    for (row = band0; row < band1; row++) { var shf = tr(pyround(1.2 * S(1, u, row * 0.37)));
+      if (shf) { var rr7 = ix(row, G), tmp = idx.slice(rr7 * G, rr7 * G + G); for (c = 0; c < G; c++) idx[rr7 * G + imod(c + shf, G)] = tmp[c]; } }
+    return idx;
+  }
+  return dithIdx(d, ink, G);
+}
+
+var THIN = [1.0, 0.7, 0.5, 0.35, 0.25, 0.0];
+function fold(theta) { var u = pmod(theta / TAU, 1.0); return u > 1 - 1e-12 ? 0.0 : u; }
+function scene(seedHex, sky, land, wx, thin) {
+  var P = params(hexb(seedHex));
+  P.sky = sky; P.land = land; P.weather = wx;
+  var mx = function (a, b) { return a > b ? a : b; };
+  if (thin && thin <= 3) { var k = THIN[thin];
+    P.drops = P.drops.slice(0, mx(6, tr(P.drops.length * k))); P.stars = P.stars.slice(0, mx(6, tr(P.stars.length * k)));
+    P.m_wind = P.m_wind.slice(0, mx(3, tr(P.m_wind.length * k))); P.m_meteors = P.m_meteors.slice(0, mx(2, tr(P.m_meteors.length * k)));
+    if (thin >= 3) { P.m_puffs = 3; P.m_wind = P.m_wind.slice(0, 2); }
+  } else if (thin === 4) { P.drops = P.drops.slice(0, 4); P.stars = P.stars.slice(0, 4); P.m_wind = P.m_wind.slice(0, 2); P.m_meteors = P.m_meteors.slice(0, 2); P.m_puffs = 3; }
+  else if (thin >= 5) { P.drops = []; P.stars = []; P.m_wind = []; P.m_meteors = P.m_meteors.slice(0, 2); P.m_puffs = 1; }
+  return P;
+}
+/* the 96x96 index frames of one loop */
+function frames(seedHex, sky, land, wx, thin, N) {
+  N = N || 40; var P = scene(seedHex, sky, land, wx, thin), out = [];
+  for (var j = 0; j < N; j++) out.push(frame(P, fold(TAU * j / N)));
+  return out;
+}
+
+/* ---------------- GIF encoder (port of gifenc.py, byte for byte) */
+function lzw(px, mcs) {
+  var clear = 1 << mcs, eoi = clear + 1, size = mcs + 1, nxt = eoi + 1, table = new Map(), out = [], acc = 0, nbits = 0;
+  function emit(code, sz) { acc |= code << nbits; nbits += sz; while (nbits >= 8) { out.push(acc & 255); acc >>>= 8; nbits -= 8; } }
+  emit(clear, size); var w = px[0];
+  for (var i = 1; i < px.length; i++) { var k = px[i], key = w * 8 + k, c = table.get(key);
+    if (c !== undefined) { w = c; continue; }
+    emit(w, size);
+    if (nxt < 4096) { table.set(key, nxt); nxt++; if (nxt > (1 << size) && size < 12) size++; }
+    else { emit(clear, size); table.clear(); size = mcs + 1; nxt = eoi + 1; }
+    w = k; }
+  emit(w, size); emit(eoi, size); if (nbits) out.push(acc & 255);
+  return out;
+}
+function up(f, G, s) { var W = G * s, o = new Uint8Array(W * W); for (var r = 0; r < W; r++) { var rs = ((r / s) | 0) * G; for (var c = 0; c < W; c++) o[r * W + c] = f[rs + ((c / s) | 0)]; } return o; }
+function gif(fr96, palette, delay, scale) {
+  delay = delay || 4; var G = 96, s = scale || OUT / G, W = G * s, H = G * s, fr = s === 1 ? fr96 : fr96.map(function (f) { return up(f, G, s); });
+  var pal = palette.slice(), transparent = pal.length; pal.push([0, 0, 0]);
+  var n = 2; while (n < pal.length) n *= 2; while (pal.length < n) pal.push([0, 0, 0]);
+  var bits = Math.round(Math.log2(n)), mcs = Math.max(2, bits), g = [];
+  function u16(v) { g.push(v & 255, (v >> 8) & 255); }
+  "GIF89a".split("").forEach(function (ch) { g.push(ch.charCodeAt(0)); });
+  u16(W); u16(H); g.push(0x80 | 0x70 | (bits - 1), 0, 0);
+  pal.forEach(function (c) { g.push(c[0], c[1], c[2]); });
+  [0x21, 0xFF, 0x0B].concat("NETSCAPE2.0".split("").map(function (ch) { return ch.charCodeAt(0); }), [3, 1, 0, 0, 0]).forEach(function (x) { g.push(x); });
+  var prev = null;
+  for (var fi = 0; fi < fr.length; fi++) { var f = fr[fi], x0, y0, x1, y1, img, tflag;
+    if (!prev) { x0 = 0; y0 = 0; x1 = W; y1 = H; img = f; tflag = 0; }
+    else { var any = false; x0 = W; y0 = H; x1 = -1; y1 = -1;
+      for (var p = 0; p < W * H; p++) if (f[p] !== prev[p]) { any = true; var rr = (p / W) | 0, cc = p % W; if (rr < y0) y0 = rr; if (rr > y1) y1 = rr; if (cc < x0) x0 = cc; if (cc > x1) x1 = cc; }
+      if (!any) { x0 = 0; y0 = 0; x1 = 1; y1 = 1; img = new Uint8Array([transparent]); tflag = 1; }
+      else { x1++; y1++; var ww = x1 - x0; img = new Uint8Array(ww * (y1 - y0));
+        for (var yy = y0; yy < y1; yy++) for (var xx = x0; xx < x1; xx++) { var q = yy * W + xx; img[(yy - y0) * ww + xx - x0] = f[q] !== prev[q] ? f[q] : transparent; }
+        tflag = 1; } }
+    g.push(0x21, 0xF9, 0x04, (1 << 2) | tflag); u16(delay); g.push(tflag ? transparent : 0, 0);
+    g.push(0x2C); u16(x0); u16(y0); u16(x1 - x0); u16(y1 - y0); g.push(0);
+    g.push(mcs); var data = lzw(img, mcs);
+    for (var bi = 0; bi < data.length; bi += 255) { var ch = data.slice(bi, bi + 255); g.push(ch.length); for (var z = 0; z < ch.length; z++) g.push(ch[z]); }
+    g.push(0); prev = f; }
+  g.push(0x3B);
+  return new Uint8Array(g);
+}
+function hx3(h) { return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)]; }
+function loopGif(seedHex, sky, land, wx, pair, thin, scale) {
+  return gif(frames(seedHex, sky, land, wx, thin, 40), [hx3(PAIRS[pair][1]), hx3(PAIRS[pair][2])], 4, scale);
+}
+
+root.SW = { SKIES: ["SUN","MOON","FULL MOON","SATURN","ECLIPSE","COMET","METEORS","TWIN SUNS","SATELLITE","RAINBOW","AURORA"], LANDS: ["GRID","PEAKS","VOLCANO","SEA","LIGHTHOUSE","DUNES","CITY"], WEATHERS: ["CLEAR","CLOUD","RAIN","STORM","SNOW","FOG","TORNADO","WIND","HURRICANE","MIRAGE"], frames: frames, frame: frame, scene: scene, fold: fold, gif: gif, loopGif: loopGif, PAIRS: PAIRS, sha256: sha256, TAU: TAU };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* THE FRAME. The renderer above draws the loop from the hash of the holder's address and the scene the
+   contract appends below (boot). The 96 grid it draws is checked against the GIF the chain keeps; the
+   picture is the 480 loop, byte for byte the approved file, shown with hard pixels at any size. */
+function hx3(h){return[parseInt(h.substr(1,2),16),parseInt(h.substr(3,2),16),parseInt(h.substr(5,2),16)];}
+function b64(u){var s='';for(var i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s);}
+function hex(w){var s='';for(var i=0;i<w.length;i++)s+=('00000000'+(w[i]>>>0).toString(16)).slice(-8);return s;}
+function boot(T){
+  var P=SW.PAIRS[T.pair],pal=[hx3(P[1]),hx3(P[2])],L=document.getElementById('L');
+  document.body.style.background=P[1];
+  var name='SMALL WEATHER #'+T.id,scene=T.sky+' / '+T.land+' / '+T.weather;
+  document.getElementById('i').textContent=name+' · '+scene;
+  var fr=null,big=null;
+  setTimeout(function(){
+    fr=SW.frames(T.seed,T.sky,T.land,T.weather,T.thin,40);
+    var same=hex(SW.sha256(SW.gif(fr,pal,4,1)))===T.sha.replace(/^0x/,'');
+    L.src='data:image/gif;base64,'+b64(SW.gif(fr,pal,4,5));
+    document.getElementById('s').textContent=same?'DRAWN LIVE · MATCHES THE CHAIN':'DRAWN LIVE';
+  },20);
+  var t=0;function on(){document.body.className='on';clearTimeout(t);t=setTimeout(function(){document.body.className='';},2600);}
+  document.addEventListener('mousemove',on);document.addEventListener('touchstart',on,{passive:true});
+  document.getElementById('sv').onclick=function(){
+    if(!fr)return;if(!big)big=SW.gif(fr,pal,4,10);
+    var file='small-weather-'+('00'+T.id).slice(-3)+'.gif';
+    try{var f=new File([big],file,{type:'image/gif'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(function(){});return;}}catch(e){}
+    try{var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([big],{type:'image/gif'}));a.download=file;document.body.appendChild(a);a.click();a.remove();}catch(e){}
+  };
+}
+</script>
