@@ -1537,6 +1537,8 @@ const TEX={ frames:null, W:0, N:0, i:0, K:0 };
 /* ───────────────────────────── the sky ──────────────────────────────────── */
 /* Luminance only. Colour is the ink's business. */
 /* how much day there is: 1 with the sun well up, a dim floor at night */
+const NIGHT_GLOW=1.15, NIGHT_SUBJ_KEY=0.95, NIGHT_SUBJ_AMB=0.55, NIGHT_SUBJ_EL=35*Math.PI/180, NIGHT_SUBJ_RIM=2.0;
+const NS={sx:0,sy:1,sz:0,key:0,amb:0,rim:1};
 function dayF(P){ const e=P.sunEl; return e>0.12?1:(e<-0.10?0.14:0.14+0.86*(e+0.10)/0.22); }
 function skyLum(P,dx,dy,dz,sx,sy,sz){
   const up=dy<0?0:dy;
@@ -1647,6 +1649,10 @@ function renderLum(P,W,H,th,lum,mat,dep,texbuf){
     keyI=0.44;
   }
   if(wxOver(P)){ keyI*=wxStorm(P)?0.30:0.48; hardShadow=false; }   /* a lid of cloud: soft, no cast shadow */
+  /* the monument's own moonlight (see THE MONUMENT KEEPS ITS LIGHT AT NIGHT) */
+  if(P.night){ const kel=Math.max(P.moonEl,NIGHT_SUBJ_EL);
+    NS.sx=Math.cos(P.moonAz)*Math.cos(kel); NS.sy=Math.sin(kel); NS.sz=Math.sin(P.moonAz)*Math.cos(kel);
+    NS.key=NIGHT_SUBJ_KEY*(wxOver(P)?(wxStorm(P)?0.62:0.80):1); NS.amb=NIGHT_SUBJ_AMB; NS.rim=NIGHT_SUBJ_RIM; }
   const fov=P.fov*(C.fovS||1);
   /* THE TALL PLATE IS A TALLER WINDOW ON THE SAME WORLD. This is a camera, so
      the honest way to change the shape of the sheet is to open the vertical
@@ -1727,14 +1733,27 @@ function renderLum(P,W,H,th,lum,mat,dep,texbuf){
         L=0.05+refl*(0.62+0.38*fres);
         m=0;
       } else {
-        const ndl=Math.max(0,nx*sx+ny*sy+nz*sz);
-        const sh=ndl>0?(hardShadow?shadow(P,hx+nx*0.02,hy2+ny*0.02,hz+nz*0.02,sx,sy,sz,th):1):0;
+        /* THE MONUMENT KEEPS ITS LIGHT AT NIGHT. The sky and the ground go dark with the hour; the sculpture
+           and the loop it wears do not. After dark the form is lit by its own moonlight, from high enough to
+           model it, so it stands off the night instead of sinking into it. The ground, its shadows and the sky
+           are drawn exactly as before. */
+        const subj=P.night&&m!==0;
+        const ksx=subj?NS.sx:sx, ksy=subj?NS.sy:sy, ksz=subj?NS.sz:sz, kI=subj?NS.key:keyI, kdf=subj?NS.amb:df;
+        const ndl=Math.max(0,nx*ksx+ny*ksy+nz*ksz);
+        const sh=ndl>0?(hardShadow?shadow(P,hx+nx*0.02,hy2+ny*0.02,hz+nz*0.02,ksx,ksy,ksz,th):1):0;
         const ao=occlusion(P,hx,hy2,hz,nx,ny,nz,th);
         const skyF=0.5+0.5*ny;
         /* a soft rim from the sky behind the form, which is what lifts a
            silhouette off a print */
-        const rim=Math.pow(1-Math.max(0,-(dx*nx+dy*ny+dz*nz)),4)*0.18;
-        L=0.16*skyF*ao*df + 0.78*ndl*sh*keyI + rim*ao*df;
+        const rim=Math.pow(1-Math.max(0,-(dx*nx+dy*ny+dz*nz)),4)*0.18*(subj?NS.rim:1);
+        L=0.16*skyF*ao*kdf + 0.78*ndl*sh*kI + rim*ao*kdf;
+        if(subj){
+          /* LIT FROM WITHIN. After dark the sculpture glows: brightest where it faces you, falling off toward
+             its edges the way a lamp shade or a lantern does, so the night reads it as a light, not a shadow.
+             The moon still models it a little on top. */
+          const face=Math.max(0,-(dx*nx+dy*ny+dz*nz));
+          L=NIGHT_GLOW*(0.50+0.50*Math.pow(face,0.8))*(0.75+0.25*ao) + 0.25*ndl*sh*kI;
+        }
         for(let li=0;li<NL;li++){
           /* the second light, and its sisters: warm points low to the ground, each with its own shadow */
           const LPx=(P.subject===11&&li===0)?LP[0]:FR.lp[li*3], LPy=(P.subject===11&&li===0)?LP[1]:FR.lp[li*3+1], LPz=(P.subject===11&&li===0)?LP[2]:FR.lp[li*3+2];
