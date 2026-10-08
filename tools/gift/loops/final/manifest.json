@@ -1,0 +1,1511 @@
+{
+ "set": "final",
+ "renderer": "tools/gift/motifs.py",
+ "frames": 40,
+ "delay_ms": 40,
+ "size": 480,
+ "limit": 66500,
+ "loops": [
+  {
+   "id": 1,
+   "holder": "0x561BC335f0fa57d8c6E8ae28f61C728FBB408724",
+   "handle": "MitosAlexp",
+   "file": "001.gif",
+   "bytes": 40798,
+   "sha256": "9379ae7478c807e19df6382501205095cd3571677b68e993fd35293c302d39fe",
+   "wx": "FULL MOON/GRID/CLEAR",
+   "pair": "INFRARED",
+   "drops": 22,
+   "override": {
+    "motif": "FULL MOON/GRID/CLEAR",
+    "ink": "INFRARED",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 2,
+   "holder": "0xe2e9F3e5E6793c313F76076271bFe535cB27f114",
+   "handle": "eritaqua",
+   "file": "002.gif",
+   "bytes": 40996,
+   "sha256": "3ee185d2e578ebac06d6c0f4d275432261ebd0414b56bbff36dcd8294bf91bfd",
+   "wx": "SUN/DUNES/HURRICANE",
+   "pair": "DITHERVOID",
+   "drops": 15,
+   "override": {
+    "motif": "SUN/DUNES/HURRICANE",
+    "ink": "DITHERVOID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 3,
+   "holder": "0xEbfD774c1C2008E56cE40E0a4504Ebecc81b1921",
+   "handle": "McHexleyOG",
+   "file": "003.gif",
+   "bytes": 40634,
+   "sha256": "c6786da55347eb686797e30de18cc9b678cbbb728999b32055d6f9ba2fc8611c",
+   "wx": "METEORS/LIGHTHOUSE/CLOUD",
+   "pair": "POISONFROG",
+   "drops": 15,
+   "override": {
+    "motif": "METEORS/LIGHTHOUSE/CLOUD",
+    "ink": "POISONFROG",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 4,
+   "holder": "0x0cb27e883E207905AD2A94F9B6eF0C7A99223C37",
+   "handle": "blue_onchain",
+   "file": "004.gif",
+   "bytes": 66108,
+   "sha256": "beadfb019b52eeb356a6fe2f13fc9f274ef12e37e0b12963bbabd5161bb30241",
+   "wx": "SATELLITE/VOLCANO/SNOW",
+   "pair": "MGC",
+   "drops": 10,
+   "override": {
+    "motif": "SATELLITE/VOLCANO/SNOW",
+    "ink": "MGC",
+    "thin": 1
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 5,
+   "holder": "0xB9F7dC405EA74568ff2B51E44e27594CAdF00592",
+   "handle": "_SYKOE",
+   "file": "005.gif",
+   "bytes": 61196,
+   "sha256": "e7259c461990ba1406403088df51871fb76e69dd0ff37d7cbf86bfab3e930a61",
+   "wx": "SATURN/SEA/RAIN",
+   "pair": "TISNUKE",
+   "drops": 19,
+   "override": {
+    "motif": "SATURN/SEA/RAIN",
+    "ink": "TISNUKE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 6,
+   "holder": "0xc2FEa212CB7635602B4B7993AfEaEcc97A873D5e",
+   "handle": "subterranean_1",
+   "file": "006.gif",
+   "bytes": 55896,
+   "sha256": "8093edfe5db0cdc0b0eff278e6611df6b1dab127f9a3fef63ecd11e68bb27831",
+   "wx": "TWIN SUNS/PEAKS/WIND",
+   "pair": "EMBERGRID",
+   "drops": 17,
+   "override": {
+    "motif": "TWIN SUNS/PEAKS/WIND",
+    "ink": "EMBERGRID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 7,
+   "holder": "0x1ED4a7446556ed14593e15CDBA22B1BBA158Cf8c",
+   "handle": "Maniinng",
+   "file": "007.gif",
+   "bytes": 58986,
+   "sha256": "e2025cbf2d4b261b79b93a1794d6401cc677f646b8b42d653c76804468c1dbe5",
+   "wx": "COMET/CITY/TORNADO",
+   "pair": "HOTLINE",
+   "drops": 21,
+   "override": {
+    "motif": "COMET/CITY/TORNADO",
+    "ink": "HOTLINE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 8,
+   "holder": "0x452a9b6432CD228410f01A1Da754449C8bAfc85a",
+   "handle": "cuatroceronueve",
+   "file": "008.gif",
+   "bytes": 38696,
+   "sha256": "164c079f151f7cf5bce7ab8665e2da19ce6989c10ef73b7c71f5a387df1d6fc3",
+   "wx": "MOON/DUNES/FOG",
+   "pair": "CATHODE",
+   "drops": 18,
+   "override": {
+    "motif": "MOON/DUNES/FOG",
+    "ink": "CATHODE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 9,
+   "holder": "0x89D53e8612E8416bf960Dc9444ce0e2a0878a582",
+   "handle": "suparno67",
+   "file": "009.gif",
+   "bytes": 45375,
+   "sha256": "d5666ae4214d33cf2baeda263177fa7d1d3bbb41233110dca985dc38eb881797",
+   "wx": "ECLIPSE/PEAKS/CLOUD",
+   "pair": "POLE",
+   "drops": 22,
+   "override": {
+    "motif": "ECLIPSE/PEAKS/CLOUD",
+    "ink": "POLE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 10,
+   "holder": "0x0B9580C35DB43c1df34096795c7434DCa2069e9c",
+   "handle": "p1gg0d",
+   "file": "010.gif",
+   "bytes": 66086,
+   "sha256": "1e23f82ed592984583da8fb2afdfa39a7168da6436024a9d78ec48e3b7edac47",
+   "wx": "AURORA/VOLCANO/WIND",
+   "pair": "LAZER",
+   "drops": 7,
+   "override": {
+    "motif": "AURORA/VOLCANO/WIND",
+    "ink": "LAZER",
+    "thin": 2
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 11,
+   "holder": "0xB8Ad671479618b7E204b82C16D7d4aA675C71CA6",
+   "handle": "ex_mortal_",
+   "file": "011.gif",
+   "bytes": 40894,
+   "sha256": "427a0a98bcc8db25d83f8eec6265a7c826a9a5df1772b6561628396df28f6347",
+   "wx": "RAINBOW/CITY/CLEAR",
+   "pair": "INFRARED",
+   "drops": 19,
+   "override": {
+    "motif": "RAINBOW/CITY/CLEAR",
+    "ink": "INFRARED",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 12,
+   "holder": "0xA6C3689380b2f13325AD655F3468a666deD64944",
+   "handle": "SpaceMan_8_",
+   "file": "012.gif",
+   "bytes": 52251,
+   "sha256": "c50e4abf1634c1023123bb95f0b57655949df82888698e27841a62c38ca51670",
+   "wx": "COMET/LIGHTHOUSE/STORM",
+   "pair": "DITHERVOID",
+   "drops": 17,
+   "override": {
+    "motif": "COMET/LIGHTHOUSE/STORM",
+    "ink": "DITHERVOID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 13,
+   "holder": "0xd15d229Fd52240F8030Fa4694294189ED1DfBE4d",
+   "handle": "num1crush",
+   "file": "013.gif",
+   "bytes": 44091,
+   "sha256": "fdfc37a326ae9372505bb23b6d4f22977b660fed7fa4220cb2ebe1285dac500b",
+   "wx": "TWIN SUNS/SEA/MIRAGE",
+   "pair": "POISONFROG",
+   "drops": 18,
+   "override": {
+    "motif": "TWIN SUNS/SEA/MIRAGE",
+    "ink": "POISONFROG",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 14,
+   "holder": "0xE6148d5b54D51ed4E13a9b9a342b9737b18Bfa42",
+   "handle": "NFTMike42",
+   "file": "014.gif",
+   "bytes": 56105,
+   "sha256": "95f077aa1cf9c7c9b6dcbe7b193f58cc96f78839546d8fc39fcd3ce27b0a082f",
+   "wx": "METEORS/GRID/FOG",
+   "pair": "MGC",
+   "drops": 20,
+   "override": {
+    "motif": "METEORS/GRID/FOG",
+    "ink": "MGC",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 15,
+   "holder": "0x6B85c6E03A939Cb37942F882eE2310E5Af3642BB",
+   "handle": "AFuckingNobody",
+   "file": "015.gif",
+   "bytes": 64624,
+   "sha256": "a4b8b78388524fc8a644e23920e74301472111522f260c4c17612a361db48b29",
+   "wx": "SATURN/DUNES/STORM",
+   "pair": "EMBERGRID",
+   "drops": 19,
+   "override": {
+    "motif": "SATURN/DUNES/STORM",
+    "ink": "EMBERGRID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 16,
+   "holder": "0x81772de3466a34901F0a13230869a3AC65F213dD",
+   "handle": "hapsxo",
+   "file": "016.gif",
+   "bytes": 62546,
+   "sha256": "a6132f2b9b9689bcdc0d7b36ff4523b44ccfc3d2ad3334fe0548dd40850d178a",
+   "wx": "SATELLITE/PEAKS/TORNADO",
+   "pair": "TISNUKE",
+   "drops": 19,
+   "override": {
+    "motif": "SATELLITE/PEAKS/TORNADO",
+    "ink": "TISNUKE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 17,
+   "holder": "0x0dae6E01A88826b4E77d717d9639B64F749C0152",
+   "handle": "tx_c0ld",
+   "file": "017.gif",
+   "bytes": 36223,
+   "sha256": "613aef82aeb48674a38b25931196b806edff1b2f8d791585d0ae962476973b04",
+   "wx": "MOON/SEA/HURRICANE",
+   "pair": "HOTLINE",
+   "drops": 18,
+   "override": {
+    "motif": "MOON/SEA/HURRICANE",
+    "ink": "HOTLINE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 18,
+   "holder": "0x50F5599518de902BFe491F1Bebc4c011399F6146",
+   "handle": "Tenfin9erz",
+   "file": "018.gif",
+   "bytes": 63788,
+   "sha256": "43fd9975d47ec108451bfa8ebc7a5742515ded11844fb3a064be00ab58b36754",
+   "wx": "SUN/CITY/RAIN",
+   "pair": "CATHODE",
+   "drops": 10,
+   "override": {
+    "motif": "SUN/CITY/RAIN",
+    "ink": "CATHODE",
+    "thin": 2
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 19,
+   "holder": "0xA2Eae178F372220FF6C6D8CACD63EfE4e4b44525",
+   "handle": "StarkNaked23",
+   "file": "019.gif",
+   "bytes": 57356,
+   "sha256": "026de3225259acdbda3cb165616ccc6d9eefb235abbda9d711bc651b5a70400f",
+   "wx": "FULL MOON/VOLCANO/SNOW",
+   "pair": "POLE",
+   "drops": 15,
+   "override": {
+    "motif": "FULL MOON/VOLCANO/SNOW",
+    "ink": "POLE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 20,
+   "holder": "0x5AEC024c1D0f5FdF40769a51cad0bE934EA86AC3",
+   "handle": "maracatudo",
+   "file": "020.gif",
+   "bytes": 52070,
+   "sha256": "e8eddd1d804a8ddceed086b2946b9bf6a91e568ccbfe8139e8716c7e59d200cd",
+   "wx": "ECLIPSE/LIGHTHOUSE/FOG",
+   "pair": "LAZER",
+   "drops": 18,
+   "override": {
+    "motif": "ECLIPSE/LIGHTHOUSE/FOG",
+    "ink": "LAZER",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 21,
+   "holder": "0x7C6b066cD8538687F8719397eCe8a038573eF54f",
+   "handle": "seelawrie",
+   "file": "021.gif",
+   "bytes": 39753,
+   "sha256": "64cd8e161b428c283e1b8a22836ab789e77cc24fef3e53f4ba0b4650cc5cde3d",
+   "wx": "RAINBOW/GRID/CLEAR",
+   "pair": "DITHERVOID",
+   "drops": 18,
+   "override": {
+    "motif": "RAINBOW/GRID/CLEAR",
+    "ink": "DITHERVOID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 22,
+   "holder": "0x848a9126FF57004aA8bFDc99384f36A4754D4367",
+   "handle": "FrauShitcoinz",
+   "file": "022.gif",
+   "bytes": 61035,
+   "sha256": "260a8d176c73cdb2de60ed89f91ed477af881e2f1749eb75f19d0db68747fc7b",
+   "wx": "AURORA/CITY/WIND",
+   "pair": "INFRARED",
+   "drops": 15,
+   "override": {
+    "motif": "AURORA/CITY/WIND",
+    "ink": "INFRARED",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 23,
+   "holder": "0x64eb4E3cAE1c6baf4eb6f07C3506EC9063D9301c",
+   "handle": "GTSewell",
+   "file": "023.gif",
+   "bytes": 60540,
+   "sha256": "98b9d6d2f6f12ccda70b2a3d4e830f3810e11819c6267d85c1c909cd40017353",
+   "wx": "SUN/GRID/MIRAGE",
+   "pair": "POISONFROG",
+   "drops": 20,
+   "override": {
+    "motif": "SUN/GRID/MIRAGE",
+    "ink": "POISONFROG",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 24,
+   "holder": "0x8CAaDF7c03b1B08C68685b9f156223f311D2EdA2",
+   "handle": "ByronHirsch",
+   "file": "024.gif",
+   "bytes": 52157,
+   "sha256": "9629be45b5ad424086167342bfe22589c623de284e96eb581fc8a2155c2f4b34",
+   "wx": "METEORS/DUNES/RAIN",
+   "pair": "TISNUKE",
+   "drops": 21,
+   "override": {
+    "motif": "METEORS/DUNES/RAIN",
+    "ink": "TISNUKE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 25,
+   "holder": "0x4e0f0a3ef71bAC23434F371B1dAD4Ee761cFEfb3",
+   "handle": "ohn0x4",
+   "file": "025.gif",
+   "bytes": 47366,
+   "sha256": "45f0bc0af7fa49ac97690ba8bc16b685796f7bfb1292c37126b748baa27f8e0f",
+   "wx": "SATURN/LIGHTHOUSE/CLOUD",
+   "pair": "MGC",
+   "drops": 21,
+   "override": {
+    "motif": "SATURN/LIGHTHOUSE/CLOUD",
+    "ink": "MGC",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 26,
+   "holder": "0xFbf8AE69b25542aC6833e2DE631E7B082Ffab1f5",
+   "handle": "DankyHashpantz",
+   "file": "026.gif",
+   "bytes": 58421,
+   "sha256": "4548684a2d86183a4ddd399c10fed55251ef6bd075c3d57947fc208c2b73746c",
+   "wx": "COMET/VOLCANO/HURRICANE",
+   "pair": "EMBERGRID",
+   "drops": 22,
+   "override": {
+    "motif": "COMET/VOLCANO/HURRICANE",
+    "ink": "EMBERGRID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 27,
+   "holder": "0xC0ae85CD4bA82cbC440b2F7633fCAf8f4b29Bab1",
+   "handle": "darkb3at",
+   "file": "027.gif",
+   "bytes": 51963,
+   "sha256": "0749f4eb6e6f294eec1961146414814b5739809fdda2ab47a4d4ada4da4c41be",
+   "wx": "TWIN SUNS/SEA/TORNADO",
+   "pair": "HOTLINE",
+   "drops": 20,
+   "override": {
+    "motif": "TWIN SUNS/SEA/TORNADO",
+    "ink": "HOTLINE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 28,
+   "holder": "0x33bbf6e27ce7b254e537BCB9f3B00cD1451563eA",
+   "handle": "DCOT15",
+   "file": "028.gif",
+   "bytes": 59734,
+   "sha256": "6285b1a178d8fb7a7a42fea253dd04cd8988f054e85ec9a4c38958ddeebd9395",
+   "wx": "MOON/PEAKS/SNOW",
+   "pair": "POLE",
+   "drops": 22,
+   "override": {
+    "motif": "MOON/PEAKS/SNOW",
+    "ink": "POLE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 29,
+   "holder": "0x9F128b52128027dD6eA9892f741519979D36FA34",
+   "handle": "Scamart",
+   "file": "029.gif",
+   "bytes": 53578,
+   "sha256": "48fa11db06fc3e2dc33f304f55d5b650324f877c480f69f887760dd9c21dc5ea",
+   "wx": "SATELLITE/SEA/STORM",
+   "pair": "CATHODE",
+   "drops": 14,
+   "override": {
+    "motif": "SATELLITE/SEA/STORM",
+    "ink": "CATHODE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 30,
+   "holder": "0xeebff2d3F395aaF95ac43C813290aC75711Ee28f",
+   "handle": "Lounge_Act1",
+   "file": "030.gif",
+   "bytes": 49363,
+   "sha256": "7fa594878466ccc0b0d88b6a061b4e39edb4be44b8c9d75e92c58540fadddc8d",
+   "wx": "ECLIPSE/CITY/CLEAR",
+   "pair": "INFRARED",
+   "drops": 20,
+   "override": {
+    "motif": "ECLIPSE/CITY/CLEAR",
+    "ink": "INFRARED",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 31,
+   "holder": "0x030eb0849964d125772155e252982F7e9CBf32e4",
+   "handle": "sirsapient",
+   "file": "031.gif",
+   "bytes": 39779,
+   "sha256": "7a731a1351ffb8ebb14138b2e7e6551df18a97acf2f2fb23344524fec9114929",
+   "wx": "FULL MOON/DUNES/TORNADO",
+   "pair": "LAZER",
+   "drops": 20,
+   "override": {
+    "motif": "FULL MOON/DUNES/TORNADO",
+    "ink": "LAZER",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 32,
+   "holder": "0xE477B7A297306D03C7AfF06873a6b7AC3113a3C9",
+   "handle": "llllll__lllllll",
+   "file": "032.gif",
+   "bytes": 57665,
+   "sha256": "3554e9078f0493d82d5352d70e949325b340b40133f2d055ad97b54080ae216a",
+   "wx": "AURORA/LIGHTHOUSE/FOG",
+   "pair": "DITHERVOID",
+   "drops": 15,
+   "override": {
+    "motif": "AURORA/LIGHTHOUSE/FOG",
+    "ink": "DITHERVOID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 33,
+   "holder": "0x4692785dcD2F7Ad1617DF4D82F4fCB6F217f3D34",
+   "handle": "Sideshow42000",
+   "file": "033.gif",
+   "bytes": 53725,
+   "sha256": "910b899c69adae7ae2ff7c42180aa3294a3ca2334180cbf0fb3f417d48ac5295",
+   "wx": "RAINBOW/PEAKS/WIND",
+   "pair": "POISONFROG",
+   "drops": 16,
+   "override": {
+    "motif": "RAINBOW/PEAKS/WIND",
+    "ink": "POISONFROG",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 34,
+   "holder": "0x1a1427A73b7Cb0F4ea3F71C6c8090c4366c8eBe1",
+   "handle": "jsheps",
+   "file": "034.gif",
+   "bytes": 65760,
+   "sha256": "954a8c1243ac4f1510a3aa3e615fc15ce676d9228614c03caeae868144563fae",
+   "wx": "SUN/VOLCANO/MIRAGE",
+   "pair": "MGC",
+   "drops": 19,
+   "override": {
+    "motif": "SUN/VOLCANO/MIRAGE",
+    "ink": "MGC",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 35,
+   "holder": "0xA89f3db42Cee7AC0cfFaa9ba6176f2574BA4071A",
+   "handle": "timewalker717",
+   "file": "035.gif",
+   "bytes": 61204,
+   "sha256": "5c0341c5116ad9a6666f05eec8e298f278d2a4f8f685742bfe976f08483e89c4",
+   "wx": "TWIN SUNS/GRID/RAIN",
+   "pair": "TISNUKE",
+   "drops": 11,
+   "override": {
+    "motif": "TWIN SUNS/GRID/RAIN",
+    "ink": "TISNUKE",
+    "thin": 1
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 36,
+   "holder": "0x34433Cb54D406d231cD511567f33CE1914FC888E",
+   "handle": "x3n1n",
+   "file": "036.gif",
+   "bytes": 37366,
+   "sha256": "f274086d92ead165d91c770512ff83dccc8c35807a52063799956c7dadc03db2",
+   "wx": "ECLIPSE/DUNES/CLOUD",
+   "pair": "EMBERGRID",
+   "drops": 19,
+   "override": {
+    "motif": "ECLIPSE/DUNES/CLOUD",
+    "ink": "EMBERGRID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 37,
+   "holder": "0xCb30Cc9AbC2b3B4AA72A6f42C968D632D58547a2",
+   "handle": "arwyn_official",
+   "file": "037.gif",
+   "bytes": 64946,
+   "sha256": "afa918125723e73388c06447f1eb2d3c1565dc05945ce95d619a80185bae2e9b",
+   "wx": "SATURN/GRID/SNOW",
+   "pair": "HOTLINE",
+   "drops": 12,
+   "override": {
+    "motif": "SATURN/GRID/SNOW",
+    "ink": "HOTLINE",
+    "thin": 1
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 38,
+   "holder": "0x6dA0a1784De1aBDDe1734bA37eCa3d560bf044c0",
+   "handle": "mxjxn",
+   "file": "038.gif",
+   "bytes": 63656,
+   "sha256": "d41614e0ee05e8158710de4ae1d1a584bfb23c1d45371ff23b99c0bff8bcae33",
+   "wx": "MOON/VOLCANO/STORM",
+   "pair": "LAZER",
+   "drops": 9,
+   "override": {
+    "motif": "MOON/VOLCANO/STORM",
+    "ink": "LAZER",
+    "thin": 1
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 39,
+   "holder": "0xd561ba5bdBFEA7A39bF073b7520a7273bc767131",
+   "handle": "WoodHandsRay",
+   "file": "039.gif",
+   "bytes": 48335,
+   "sha256": "410acd179fe62630608d950e4c4be171a6cc84e0e2316159113851d12fed15fe",
+   "wx": "FULL MOON/PEAKS/HURRICANE",
+   "pair": "CATHODE",
+   "drops": 22,
+   "override": {
+    "motif": "FULL MOON/PEAKS/HURRICANE",
+    "ink": "CATHODE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 40,
+   "holder": "0x4Ca1C22A3bFf99415C1095Dc22B3595d2c54c458",
+   "handle": "AP0CALYPSE",
+   "file": "040.gif",
+   "bytes": 48561,
+   "sha256": "338c16b7b7d9eb9974418d068b9f02c8ca5a3f5d5095f70469b70e7f7175fd06",
+   "wx": "SATELLITE/SEA/FOG",
+   "pair": "POLE",
+   "drops": 17,
+   "override": {
+    "motif": "SATELLITE/SEA/FOG",
+    "ink": "POLE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 41,
+   "holder": "0x1D95b0b6D3582FEeC7Ef35D2CCF91564DEd0Cf7f",
+   "handle": "desultor",
+   "file": "041.gif",
+   "bytes": 56270,
+   "sha256": "c7df5f51cae3b6dd2ff88537adee28d4345b93c19d636e572df8b0deb8ee901a",
+   "wx": "COMET/CITY/WIND",
+   "pair": "INFRARED",
+   "drops": 19,
+   "override": {
+    "motif": "COMET/CITY/WIND",
+    "ink": "INFRARED",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 42,
+   "holder": "0x1E30CD2B897c13Ea7217d31D7e26529463c8D078",
+   "handle": "LeftWithTheArt",
+   "file": "042.gif",
+   "bytes": 47432,
+   "sha256": "443baec067cc80b964c7d0547429f8c179c6ff120ace9eec42e9ec9b20d1f467",
+   "wx": "METEORS/LIGHTHOUSE/SNOW",
+   "pair": "DITHERVOID",
+   "drops": 19,
+   "override": {
+    "motif": "METEORS/LIGHTHOUSE/SNOW",
+    "ink": "DITHERVOID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 43,
+   "holder": "0x3F570DB801E68Fc3A93e42114Bc6841193017DcC",
+   "handle": "_gokt",
+   "file": "043.gif",
+   "bytes": 41250,
+   "sha256": "c19b1af1ec23c24ec64c2a10fffaa9a5f5087b5cb4e396877d133b4d7274d2f0",
+   "wx": "RAINBOW/PEAKS/CLOUD",
+   "pair": "MGC",
+   "drops": 19,
+   "override": {
+    "motif": "RAINBOW/PEAKS/CLOUD",
+    "ink": "MGC",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 44,
+   "holder": "0x1dA6A4cF0A189fFf6C3BfC383941A898bAa2C503",
+   "handle": "ryanhube",
+   "file": "044.gif",
+   "bytes": 45610,
+   "sha256": "0b69d409fd46880e400139fef0cee7e32fb688eefa4403a096b84d30425683fd",
+   "wx": "AURORA/LIGHTHOUSE/CLEAR",
+   "pair": "POISONFROG",
+   "drops": 18,
+   "override": {
+    "motif": "AURORA/LIGHTHOUSE/CLEAR",
+    "ink": "POISONFROG",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 45,
+   "holder": "0xdC8F09b81276cBAcEA5a9262774749f824756cB3",
+   "handle": "jbgdpt",
+   "file": "045.gif",
+   "bytes": 48587,
+   "sha256": "35160d0a2c58fb61c595d6c8e26eaeec0d198b714dcd3fd93c87571a09e56217",
+   "wx": "TWIN SUNS/CITY/MIRAGE",
+   "pair": "CATHODE",
+   "drops": 16,
+   "override": {
+    "motif": "TWIN SUNS/CITY/MIRAGE",
+    "ink": "CATHODE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 46,
+   "holder": "0xCC30A409d72FA6731542073CA3083380E6636A86",
+   "handle": "xrmxart",
+   "file": "046.gif",
+   "bytes": 42370,
+   "sha256": "dd21182eeefce0b3bed2043dbc13d0e03eb6eb8dd1728ca0533df84540687d08",
+   "wx": "MOON/DUNES/TORNADO",
+   "pair": "TISNUKE",
+   "drops": 18,
+   "override": {
+    "motif": "MOON/DUNES/TORNADO",
+    "ink": "TISNUKE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 47,
+   "holder": "0x2BE3744a5a9740189c863dAEe21Cbc631f5DE9e5",
+   "handle": "EL314B",
+   "file": "047.gif",
+   "bytes": 59805,
+   "sha256": "895e35c239dc03b01d13243dc350617457a04ae0b644a8a64bc6608b944643bc",
+   "wx": "METEORS/SEA/RAIN",
+   "pair": "EMBERGRID",
+   "drops": 22,
+   "override": {
+    "motif": "METEORS/SEA/RAIN",
+    "ink": "EMBERGRID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 48,
+   "holder": "0x5a5707185e614a78Da8A9cEC3fb994c1cF564910",
+   "handle": "MisterPente",
+   "file": "048.gif",
+   "bytes": 50182,
+   "sha256": "5f35aaff1cf51b2be6ce375ed40bea181f2000812ff4166ed0a7bf3927c74576",
+   "wx": "SUN/VOLCANO/HURRICANE",
+   "pair": "HOTLINE",
+   "drops": 18,
+   "override": {
+    "motif": "SUN/VOLCANO/HURRICANE",
+    "ink": "HOTLINE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 49,
+   "holder": "0xF8209797399D70BbB5CCF92d0AFDE7dA6520Fb88",
+   "handle": "RhythmKing",
+   "file": "049.gif",
+   "bytes": 61129,
+   "sha256": "c936303fbb1cf51ceca661bae7e4d806cbead45e255d3636c617fe83d2e7aaaa",
+   "wx": "FULL MOON/GRID/STORM",
+   "pair": "DITHERVOID",
+   "drops": 17,
+   "override": {
+    "motif": "FULL MOON/GRID/STORM",
+    "ink": "DITHERVOID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 50,
+   "holder": "0xa2e9eC27b948d85B11f7935728cB68E11D73D8Fd",
+   "handle": "bodaciouspirate",
+   "file": "050.gif",
+   "bytes": 61848,
+   "sha256": "63d0da254f0aa8be6f8057f0d3e0ac307708965ea8e540a53f037a28998fd1a8",
+   "wx": "SATURN/CITY/FOG",
+   "pair": "POLE",
+   "drops": 17,
+   "override": {
+    "motif": "SATURN/CITY/FOG",
+    "ink": "POLE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 51,
+   "holder": "0xCA9D4f6f4b688253BcCDde6F491F4B9cCFBF8bC2",
+   "handle": "_2T1_",
+   "file": "051.gif",
+   "bytes": 47649,
+   "sha256": "9c551a5bad2cd880dd265970b570fcfb3079d667ced5868a0355c35e869fd0ff",
+   "wx": "COMET/SEA/WIND",
+   "pair": "LAZER",
+   "drops": 18,
+   "override": {
+    "motif": "COMET/SEA/WIND",
+    "ink": "LAZER",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 52,
+   "holder": "0xB2d873342c05bF85029F12dcc3fAEdFC3652899a",
+   "handle": "dallasjfitz1",
+   "file": "052.gif",
+   "bytes": 61146,
+   "sha256": "a0145869068b6a2c7ea1fc5944437bf38a946e08ccf49dd127fddba06916506f",
+   "wx": "SATELLITE/GRID/SNOW",
+   "pair": "INFRARED",
+   "drops": 20,
+   "override": {
+    "motif": "SATELLITE/GRID/SNOW",
+    "ink": "INFRARED",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 53,
+   "holder": "0xBfaCdE4341f32B5F77Ad81831e128EdE4B5e6073",
+   "handle": "sbiernacki",
+   "file": "053.gif",
+   "bytes": 52056,
+   "sha256": "0f2725ffeabaac587fdfd70bfd346cb736ea0c90d1922b8957da6205f65ea4f5",
+   "wx": "ECLIPSE/VOLCANO/CLOUD",
+   "pair": "POISONFROG",
+   "drops": 22,
+   "override": {
+    "motif": "ECLIPSE/VOLCANO/CLOUD",
+    "ink": "POISONFROG",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 54,
+   "holder": "0x1776CFdcFFC21CD51B35d1EFAf5B3db4848dA1D7",
+   "handle": "resnepsid",
+   "file": "054.gif",
+   "bytes": 35272,
+   "sha256": "572d84103fa36ac6c780cdd811b8acd3beb648ad8f79001fe784a19179dba4c2",
+   "wx": "AURORA/DUNES/CLEAR",
+   "pair": "MGC",
+   "drops": 18,
+   "override": {
+    "motif": "AURORA/DUNES/CLEAR",
+    "ink": "MGC",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 55,
+   "holder": "0x3d869084c46d39de7cE06DdC4a96b86ec606dBBb",
+   "handle": "xlvii47_eth",
+   "file": "055.gif",
+   "bytes": 62191,
+   "sha256": "495613f1be44b4eb1c3cf5537ff1d39dfbc0c7c4383d2f28167c449578d6235b",
+   "wx": "RAINBOW/PEAKS/RAIN",
+   "pair": "TISNUKE",
+   "drops": 15,
+   "override": {
+    "motif": "RAINBOW/PEAKS/RAIN",
+    "ink": "TISNUKE",
+    "thin": 1
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 56,
+   "holder": "0x53BEbD20781Aaa3a831f45B3C6889010A706ff9f",
+   "handle": "pman555",
+   "file": "056.gif",
+   "bytes": 50243,
+   "sha256": "7539e1e483934a18857cec5ca17979c6d8de470013a4cb0849cec98f4e6b6d1f",
+   "wx": "FULL MOON/LIGHTHOUSE/TORNADO",
+   "pair": "EMBERGRID",
+   "drops": 14,
+   "override": {
+    "motif": "FULL MOON/LIGHTHOUSE/TORNADO",
+    "ink": "EMBERGRID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 57,
+   "holder": "0xe2E8d1bC8CC2afCe8332F5cFf5A36fb966805856",
+   "handle": "HolomediaVn",
+   "file": "057.gif",
+   "bytes": 52584,
+   "sha256": "487d73561dc0def187a3307d3e6d8d0b3500b4159b18f8a3e12e141fc87df978",
+   "wx": "TWIN SUNS/PEAKS/MIRAGE",
+   "pair": "POLE",
+   "drops": 22,
+   "override": {
+    "motif": "TWIN SUNS/PEAKS/MIRAGE",
+    "ink": "POLE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 58,
+   "holder": "0x02A8F422E4623cF409B2a1a64a603B16357EA9da",
+   "handle": "shillypreston",
+   "file": "058.gif",
+   "bytes": 47812,
+   "sha256": "e8bb33126d4a4bd55a9c82a628da0e87e85c97b8a2fb44288d3fe25d9994550f",
+   "wx": "MOON/DUNES/STORM",
+   "pair": "INFRARED",
+   "drops": 17,
+   "override": {
+    "motif": "MOON/DUNES/STORM",
+    "ink": "INFRARED",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 59,
+   "holder": "0x1556495a0028F89Cce56A040c4BF5EdAFD9e4BDf",
+   "handle": "sansfomo",
+   "file": "059.gif",
+   "bytes": 52296,
+   "sha256": "dc8b1b1e2bc51a2351a1574bbd4068905e834000f248f816611e289426f1f42f",
+   "wx": "SATURN/LIGHTHOUSE/HURRICANE",
+   "pair": "CATHODE",
+   "drops": 17,
+   "override": {
+    "motif": "SATURN/LIGHTHOUSE/HURRICANE",
+    "ink": "CATHODE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 60,
+   "holder": "0xeE38297ed7C0e96849Ec8581128033f99F48650d",
+   "handle": "sidonkulous",
+   "file": "060.gif",
+   "bytes": 57085,
+   "sha256": "77c42257e2464d95a1220e6c35d4823db5404075a2ad77044d5f01835cf4291b",
+   "wx": "SUN/CITY/MIRAGE",
+   "pair": "LAZER",
+   "drops": 16,
+   "override": {
+    "motif": "SUN/CITY/MIRAGE",
+    "ink": "LAZER",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 61,
+   "holder": "0x8C1f393c989C667ad20E3d9Df72A4F778C5c64b2",
+   "handle": "walasavagephoto",
+   "file": "061.gif",
+   "bytes": 41035,
+   "sha256": "a591111bbea232350656d0fc019836e21616cf82ec3586f0ee629ac268ec09e4",
+   "wx": "COMET/GRID/CLEAR",
+   "pair": "POISONFROG",
+   "drops": 22,
+   "override": {
+    "motif": "COMET/GRID/CLEAR",
+    "ink": "POISONFROG",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 62,
+   "holder": "0x4DA73F16eA68796CF8cd5dD26F90B090280f4517",
+   "handle": "Ogsred_eth",
+   "file": "062.gif",
+   "bytes": 52293,
+   "sha256": "0bbcf88c2e2f63f033f05a6afa23277686e9bb8436bbca74ae4c8e748af3e3d4",
+   "wx": "RAINBOW/VOLCANO/FOG",
+   "pair": "HOTLINE",
+   "drops": 22,
+   "override": {
+    "motif": "RAINBOW/VOLCANO/FOG",
+    "ink": "HOTLINE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 63,
+   "holder": "0x564A35fFCbd9B53a7B777327e6f79abd4364C888",
+   "handle": "iamhanzohattori",
+   "file": "063.gif",
+   "bytes": 37611,
+   "sha256": "d23989ee81e946d1b17623352c1d4a1fd509669ddc89153ceec720af4dbec424",
+   "wx": "METEORS/SEA/HURRICANE",
+   "pair": "HOTLINE",
+   "drops": 21,
+   "override": {
+    "motif": "METEORS/SEA/HURRICANE",
+    "ink": "HOTLINE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 64,
+   "holder": "0xC691ac712df9DDF5aE49DFE7bf82C291B59d9af4",
+   "handle": "Iteration__",
+   "file": "064.gif",
+   "bytes": 49702,
+   "sha256": "9234f55ee9940d7a74973c0fcb3299b7b365da5140c32af1daa0c38e6cb83aeb",
+   "wx": "ECLIPSE/GRID/CLOUD",
+   "pair": "DITHERVOID",
+   "drops": 19,
+   "override": {
+    "motif": "ECLIPSE/GRID/CLOUD",
+    "ink": "DITHERVOID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 65,
+   "holder": "0x9ffAab6c24d4fb58d61b26B08c8795E9E323F28B",
+   "handle": "TheDudeA",
+   "file": "065.gif",
+   "bytes": 56365,
+   "sha256": "9685b201f72b07f91febdba04c83fadc9e21703a6afa320a3fbcc7dddb5df9f2",
+   "wx": "SATELLITE/PEAKS/WIND",
+   "pair": "EMBERGRID",
+   "drops": 17,
+   "override": {
+    "motif": "SATELLITE/PEAKS/WIND",
+    "ink": "EMBERGRID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 66,
+   "holder": "0x4982E0104ff7564Ee2a56f7210Bf0e50E3317C3D",
+   "handle": "supervillainsme",
+   "file": "066.gif",
+   "bytes": 62999,
+   "sha256": "becf24e8f1d0854d45ba15e5b8b63f708581bfb9e95eb703afc05cdbfab85ada",
+   "wx": "AURORA/CITY/FOG",
+   "pair": "TISNUKE",
+   "drops": 15,
+   "override": {
+    "motif": "AURORA/CITY/FOG",
+    "ink": "TISNUKE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 67,
+   "holder": "0x9ec05Fa39a793bEa53db4F3dd4369f757D5C5E51",
+   "handle": "OGDSZN",
+   "file": "067.gif",
+   "bytes": 46257,
+   "sha256": "50dbd7dbaf11b1985e5387605d278dce6a51ccd03761bacba5abf90bc79c4a54",
+   "wx": "SATURN/DUNES/SNOW",
+   "pair": "LAZER",
+   "drops": 21,
+   "override": {
+    "motif": "SATURN/DUNES/SNOW",
+    "ink": "LAZER",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 68,
+   "holder": "0x48d33D4327fcdD5ef30A287805ca12e48B063a01",
+   "handle": "scooter_mcgee",
+   "file": "068.gif",
+   "bytes": 53567,
+   "sha256": "7a8846bacb3d6190988b26bd5e1add44a2fbbc16155729ca6026cf468ab81b9f",
+   "wx": "COMET/SEA/RAIN",
+   "pair": "MGC",
+   "drops": 19,
+   "override": {
+    "motif": "COMET/SEA/RAIN",
+    "ink": "MGC",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 69,
+   "holder": "0xc93C7f71581DFEAAb59BEd908888dAC5689F312a",
+   "handle": "seanbonner",
+   "file": "069.gif",
+   "bytes": 57643,
+   "sha256": "e3b3a2bacf679e61564b1236747bf577d11125d42ef208b54b35b09f9fc2432a",
+   "wx": "SATELLITE/LIGHTHOUSE/STORM",
+   "pair": "DITHERVOID",
+   "drops": 16,
+   "override": {
+    "motif": "SATELLITE/LIGHTHOUSE/STORM",
+    "ink": "DITHERVOID",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 70,
+   "holder": "0x3433C2753da24Df566eA14c40584179e97396cf3",
+   "handle": "Moxarra",
+   "file": "070.gif",
+   "bytes": 65665,
+   "sha256": "59a960dd134eb2605d1ceb7f23d16d28135bd22bbbeee56091d21bba5ee0dcbc",
+   "wx": "METEORS/VOLCANO/TORNADO",
+   "pair": "CATHODE",
+   "drops": 21,
+   "override": {
+    "motif": "METEORS/VOLCANO/TORNADO",
+    "ink": "CATHODE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 71,
+   "holder": "0x8EFceB29863FB0B62C73C6C9c23f10F24243EBFA",
+   "handle": "VSTRVL_FFF",
+   "file": "071.gif",
+   "bytes": 43077,
+   "sha256": "829e02fa1382f1d4284dbdc857a1f0b687a42882192e95a7a8858c8c4dffe0ad",
+   "wx": "TWIN SUNS/DUNES/MIRAGE",
+   "pair": "INFRARED",
+   "drops": 22,
+   "override": {
+    "motif": "TWIN SUNS/DUNES/MIRAGE",
+    "ink": "INFRARED",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 72,
+   "holder": "0x91C1bD1Be0c81f970771D68426429e6276fE75e6",
+   "handle": "bookofbee",
+   "file": "072.gif",
+   "bytes": 45334,
+   "sha256": "07b1c043b364bef6b1b52ac3acfe8e0cf220df3c185db4bcecf9649d72e0624b",
+   "wx": "FULL MOON/CITY/CLEAR",
+   "pair": "POISONFROG",
+   "drops": 15,
+   "override": {
+    "motif": "FULL MOON/CITY/CLEAR",
+    "ink": "POISONFROG",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 73,
+   "holder": "0xb0396C7b1102a978a87A863Fbca7FD095b933D58",
+   "handle": "woodificouldart",
+   "file": "073.gif",
+   "bytes": 58760,
+   "sha256": "58f3ad36ad62529c558af7fcbc5aea13766508876e44bbe913fc7d00dd55b7f2",
+   "wx": "MOON/GRID/SNOW",
+   "pair": "MGC",
+   "drops": 17,
+   "override": {
+    "motif": "MOON/GRID/SNOW",
+    "ink": "MGC",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 74,
+   "holder": "0x7D7Af2C0DE99258dfd607a32c826a85A5Cb4F155",
+   "handle": "maxOSIRISart",
+   "file": "074.gif",
+   "bytes": 43092,
+   "sha256": "89dca9226bba2e7da690ef062e9395d5b1f736b93160d716d7af499421cf3a44",
+   "wx": "RAINBOW/SEA/WIND",
+   "pair": "POLE",
+   "drops": 14,
+   "override": {
+    "motif": "RAINBOW/SEA/WIND",
+    "ink": "POLE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 75,
+   "holder": "0xE7c4b388Ea43D6D6c66a8c88949DDBa0c3EB3E6D",
+   "handle": "SpacedBraden",
+   "file": "075.gif",
+   "bytes": 63831,
+   "sha256": "34e14f1b429cb69ee0ad737edf3bfc6ec32224f630e83e81a47daaeb63167a64",
+   "wx": "SUN/PEAKS/STORM",
+   "pair": "TISNUKE",
+   "drops": 4,
+   "override": {
+    "motif": "SUN/PEAKS/STORM",
+    "ink": "TISNUKE",
+    "thin": 4
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 76,
+   "holder": "0xd3a7A710171b8fC5C52832fea1faDb78fdFbc8be",
+   "handle": "EgidoVal",
+   "file": "076.gif",
+   "bytes": 46077,
+   "sha256": "8e49627fbacd9a751dc39be56f9bc6014cdccd406b16554bb4732778726a3dfb",
+   "wx": "ECLIPSE/LIGHTHOUSE/CLOUD",
+   "pair": "HOTLINE",
+   "drops": 17,
+   "override": {
+    "motif": "ECLIPSE/LIGHTHOUSE/CLOUD",
+    "ink": "HOTLINE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 77,
+   "holder": "0x089786580b66E76131D8EF9f7D165D1525338143",
+   "handle": "Benlio",
+   "file": "077.gif",
+   "bytes": 65300,
+   "sha256": "79dc023900cdcda771310fdf85f52ee57e4aaa747c01d5058c8e48a371ff1625",
+   "wx": "AURORA/VOLCANO/FOG",
+   "pair": "EMBERGRID",
+   "drops": 0,
+   "override": {
+    "motif": "AURORA/VOLCANO/FOG",
+    "ink": "EMBERGRID",
+    "thin": 5
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 78,
+   "holder": "0x9A18E1412F7d8566005Db607E38c2279D26422D0",
+   "handle": "SquintDev",
+   "file": "078.gif",
+   "bytes": 52416,
+   "sha256": "6733d6f1368c9751d581c81629db633df697ac8da234e793583445398bb358ec",
+   "wx": "TWIN SUNS/DUNES/RAIN",
+   "pair": "LAZER",
+   "drops": 17,
+   "override": {
+    "motif": "TWIN SUNS/DUNES/RAIN",
+    "ink": "LAZER",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  },
+  {
+   "id": 79,
+   "holder": "0x2285Ec40F3618718EDF88A305fDf4b9fE89ba5CE",
+   "handle": "m0dest___",
+   "file": "079.gif",
+   "bytes": 61635,
+   "sha256": "23ebbdb01ff8371616693f21f184262800a6dae38ab685d7d612ff08594efcc4",
+   "wx": "METEORS/GRID/TORNADO",
+   "pair": "POLE",
+   "drops": 14,
+   "override": {
+    "motif": "METEORS/GRID/TORNADO",
+    "ink": "POLE",
+    "thin": 0
+   },
+   "frames": 40,
+   "closed": true,
+   "fits": true
+  }
+ ]
+}
