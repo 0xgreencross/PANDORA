@@ -124,18 +124,18 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
 <section id="sale">
   <h2>THE SALE</h2>
   <div class="steps">
-    <div class="box"><h3>PLATE ZERO, BY CANDLE</h3>An ascending auction. Every bid rerolls the plate; outbid, you are refunded at once. After the first day the flame goes out at a moment drawn from a block hash inside a six-hour window. The leader at the flame takes Plate Zero, and the winning bid becomes the founding price: the price of a seat, forever.</div>
+    <div class="box"><h3>PLATE ZERO, BY CANDLE</h3>An ascending auction. Every bid rerolls the plate. Outbid in the first day, you are refunded at once. After the first day the flame goes out at a moment drawn from a block hash inside a six-hour window; bids in that window are held until the settle, then every bid but the winner’s is returned. The leader at the flame takes Plate Zero, and the winning bid becomes the founding price: the price of a seat, forever.</div>
     <div class="box"><h3>FOUNDERS’ DAY</h3>The day after the candle. Pay anything: seats at the founding rate, uncapped, and a notch on Plate Zero. No token that day.</div>
     <div class="box"><h3>ONE PLATE A DAY</h3>The price starts at the greater of the founding price and four times the median of the last seven sales, plus what the day’s witnesses paid, and halves every 2.4 hours. The first buy wins and chooses tomorrow’s plate from thirty-two. The day closes at 4:20pm in Miami.</div>
     <div class="box"><h3>WITNESSES AND SEATS</h3>Pay any amount toward a day: a seat at the founding rate (one a day at most), a notch on the plate, and the day’s price rises by it. Seats are permanent, belong to the wallet, and share twenty percent of everything.</div>
-    <div class="box"><h3>THE VAULT</h3>An unsold day is bought by the vault at the reference price if it can pay, and held forever. Royalties, 6.9 percent, go to the vault.</div>
+    <div class="box"><h3>THE VAULT</h3>An unsold day is bought by the vault at the reference price if it can pay, and held forever. Royalties, 6.9 percent, go to the artist.</div>
     <div class="box"><h3>THE TOMBSTONE</h3>If the vault cannot pay, the Tombstone is minted and the collection is dead. Every plate before it lives on, reading the sky each time it is looked at.</div>
   </div>
   <div class="split">
     <div><div class="big">70</div><div class="k">TO THE ARTIST</div></div>
     <div><div class="big">20</div><div class="k">TO THE SEATS</div></div>
     <div><div class="big">10</div><div class="k">TO THE VAULT</div></div>
-    <div><div class="big">6.9%</div><div class="k">ROYALTY, TO THE VAULT</div></div>
+    <div><div class="big">6.9%</div><div class="k">ROYALTY, TO THE ARTIST</div></div>
   </div>
   <div class="note">In the transaction, every time. Nothing is withdrawn by anyone, nothing is adjusted by anyone: the contract has no owner.</div>
 </section>
@@ -144,8 +144,8 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
 <section id="seats"><h2>SEATS</h2><div class="note" id="seatsNote">Connect to see your seats.</div><div class="row" style="margin-top:8px"><button id="claim" disabled>CLAIM</button> <button id="withdraw" disabled style="display:none">WITHDRAW</button></div></section>
 <section id="rules" class="rules"><h2>THE RULES</h2>
 <p class="note">One plate a day. Its price starts at the greater of the founding price and four times the median of the last seven sales, plus what the day’s witnesses paid, and halves every 2.4 hours; the day closes at 4:20pm in Miami. The first buy wins and chooses tomorrow’s plate from thirty-two. An unsold day is bought by the vault at the reference price if it can pay and held forever; if it cannot, the Tombstone is minted and the collection is dead.</p>
-<p class="note">Plate Zero is sold by candle: an ascending auction, every bid rerolling the plate, going out at a moment drawn from a block hash inside a six-hour window after the first day. The winning bid is the founding price, the price of a seat forever.</p>
-<p class="note">Witnesses pay any amount toward a day: a seat at the founding rate (one a day at most), a notch on the plate in the accent ink, and the day’s price rises by it. Seventy to the artist in the transaction, twenty to the seats, ten to the vault. Royalties 6.9% to the vault. No owner, no dials, nothing to expire: the engine, the print and the sky are on the chain. CC0. Greencross, always.</p>
+<p class="note">Plate Zero is sold by candle: an ascending auction, every bid rerolling the plate, going out at a moment drawn from a block hash inside a six-hour window after the first day. Outbid in the first day, you are refunded at once; bids in the window are held until the settle, then returned to all but the winner. The winning bid is the founding price, the price of a seat forever.</p>
+<p class="note">Witnesses pay any amount toward a day: a seat at the founding rate (one a day at most), a notch on the plate in the accent ink, and the day’s price rises by it. Seventy to the artist in the transaction, twenty to the seats, ten to the vault. Royalties 6.9% to the artist. No owner, no dials, nothing to expire: the engine, the print and the sky are on the chain. CC0. Greencross, always.</p>
 </section>
 
 <section id="engines-teaser">
@@ -305,7 +305,7 @@ async function render(st){
       if(t>=windowEnd) line='<div class="big warn">THE CANDLE IS OUT</div><div class="note">The window has closed. The moment the flame went out is drawn at the settle, from block '+st.revealBlock+(st.blk>st.revealBlock?'':' (now '+st.blk+')')+'; the leader at that moment takes Plate Zero and every other held bid is returned.</div>'+(st.blk>st.revealBlock?'<button class="prime" id="bSettle">SETTLE THE CANDLE</button>':'');
       else if(t<burn) line='<div class="k">BURNING · SURE FOR</div><div class="big">'+hms(burn-t)+'</div>';
       else line='<div class="k">INSIDE THE WINDOW</div><div class="big warn">IT MAY ALREADY BE OUT</div><div class="note">Until '+new Date(windowEnd*1000).toLocaleTimeString()+' at the latest. The moment is drawn after the window, from a block no one has seen yet. Bids now are held until the settle; the leader at the drawn moment wins and every other held bid is returned.</div>';
-      panel('<div class="k">PLATE ZERO · SOLD BY CANDLE</div>'+line+'<hr><div class="k">LEADING BID</div><div class="big">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+'</small>':'<small>none yet · reserve 0.05 ETH</small>')+'</div><div class="note">'+st.nBids+' bids. Every bid rerolls the plate; the plate you see is the leader’s. Each bid at least 5% over the last. Outbid before the window: refunded at once. The winning bid becomes the founding price, the price of a seat forever. Seventy to the artist, thirty to the vault.</div>'
+      panel('<div class="k">PLATE ZERO · SOLD BY CANDLE</div>'+line+'<hr><div class="k">LEADING BID</div><div class="big">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+'</small>':'<small>none yet · reserve 0.05 ETH</small>')+'</div><div class="note">'+st.nBids+' bids. Every bid rerolls the plate; the plate you see is the leader’s. Each bid at least 5% over the last. Outbid before the window: refunded at once. In the window, bids are held until the settle. The winning bid becomes the founding price, the price of a seat forever. Seventy to the artist, thirty to the vault.</div>'
         +'<div class="row"><input id="bidAmt" placeholder="'+(st.leader?'ETH, at least '+fmt(st.leader.amount+st.leader.amount/20n):'ETH, at least 0.05')+'" inputmode="decimal"><button class="prime" id="bBid">BID</button></div>');
       const b=$('bBid'); if(b) b.onclick=()=>send('bid',W=>pad(W.bid,[],{value:ethers.parseEther($('bidAmt').value||'0')}));
       const s3=$('bSettle'); if(s3) s3.onclick=()=>send('settle',W=>pad(W.settleCandle,[]));
