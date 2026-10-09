@@ -1,4 +1,4 @@
-"""THE GIFT DEPLOY PAGE (v2). One html file carrying the compiled GIFT artifact, the token page (the renderer)
+"""THE GIFT DEPLOY PAGE (v2). One html file carrying the compiled GIFT artifact, the renderer (sw.js, for VERIFY only)
 and a 96 set (tools/gift/loops/<set>/, built by mk96.py from the approved loops), laying them on a chain from the
 browser: a burner key for a rehearsal network (Hoodi), MetaMask for mainnet (he clicks; the page never holds a mainnet key).
 Usage: python3 mkdeploy.py final96     Out: gift/deploy/index.html"""
@@ -26,10 +26,8 @@ for e in man['loops']:
     loops.append({'id': e['id'], 'holder': e['holder'], 'handle': e.get('handle', ''), 'sha256': e['sha256'], 'approved': e['approved_sha256'], 'scene': sc,
                   'sky': man['skies'][e['sky']], 'land': man['lands'][e['land']], 'weather': man['weathers'][e['weather']], 'pair': e['pair'], 'thin': e['thin'],
                   'bytes': len(b), 'b64': base64.b64encode(b).decode()})
-PAGE = open(os.path.join(HERE, 'loops', SET, 'page.html'), 'rb').read()
-PJ = json.load(open(os.path.join(HERE, 'loops', SET, 'page.json')))
-assert hashlib.sha256(PAGE).hexdigest() == PJ['sha256'], 'page.html differs from page.json'
-PAGE_OUT = {'sha256': PJ['sha256'], 'bytes': len(PAGE), 'b64': base64.b64encode(PAGE).decode()}
+SWJS = open(os.path.join(HERE, 'sw.js')).read()
+assert '</script' not in SWJS.lower()
 srcsha = hashlib.sha256(open(os.path.join(ROOT, 'smallweather', 'contracts', 'GIFT.sol'), 'rb').read()).hexdigest()
 
 HTML = r'''<!doctype html>
@@ -55,7 +53,7 @@ HTML = r'''<!doctype html>
   #shown{width:480px;max-width:100%;image-rendering:pixelated;display:none;margin-top:8px}
 </style></head><body>
 <h1>DITHERVOID // SMALL WEATHER · THE DEPLOY</h1>
-<div style="color:var(--mut)">Compiler pinned: solc 0.8.24+commit.e11b9ed9 · cancun · optimizer 800 · viaIR. GIFT.sol (v2) sha256 __SRCSHA__. Loop set <b>__SET__</b>: __NLOOPS__ loops at their 96 grid, each made by mk96.py from the approved file, plus the token page (the renderer, __PAGEBYTES__ bytes, sha256 __PAGESHA__).</div>
+<div style="color:var(--mut)">Compiler pinned: solc 0.8.24+commit.e11b9ed9 · cancun · optimizer 800 · viaIR. GIFT.sol (v2) sha256 __SRCSHA__. Loop set <b>__SET__</b>: __NLOOPS__ loops at their 96 grid, each made by mk96.py from the approved file. Each token's image is an SVG of its loop with hard pixels. VERIFY redraws every approved file with the renderer (sw.js __SWSHA__) from what the chain holds.</div>
 
 <h2>1 · THE CHAIN AND THE SIGNER</h2>
 <div class="row">
@@ -70,15 +68,14 @@ HTML = r'''<!doctype html>
 
 <h2>2 · THE LOOPS AND THEIR HOLDERS</h2>
 <div style="color:var(--mut)">On a rehearsal network a holder can be changed (bind a loop to the burner or to a second address of yours to test the claim). On mainnet the holders are the approved ones and cannot be edited.</div>
-<div style="color:var(--mut)">A loop bound to a different address on a rehearsal network draws a different picture on its token page (the seed is the hash of the holder): to see the approved picture, keep the real holder; bind one or two to the burner only to walk the claim.</div>
+<div style="color:var(--mut)">On a rehearsal network bind one or two loops to the burner to walk the claim; the picture is the laid loop either way.</div>
 <table><thead><tr><th>ID</th><th>LOOP</th><th>HOLDER</th><th>SCENE</th><th>BYTES</th><th>SHA256</th><th>ON CHAIN</th></tr></thead><tbody id="rows"></tbody></table>
 
 <h2>3 · THE DEPLOY, IN ORDER</h2>
 <button id="s1" class="prime">a · DEPLOY GIFT</button>
-<button id="s5">b · SET PAGE (the renderer)</button>
-<button id="s2">c · SET GIFTS (batches under 12M gas, resumes)</button>
-<div class="row"><div><label>CLAIM DEADLINE (UTC; empty = 7 days after you press SEAL; after it the airdrop of unclaimed loops opens)</label><input id="deadline" type="datetime-local"></div><button id="s3">d · SEAL</button></div>
-<button id="s4">e · VERIFY</button>
+<button id="s2">b · SET GIFTS (batches under 12M gas, resumes)</button>
+<div class="row"><div><label>CLAIM DEADLINE (UTC; empty = 7 days after you press SEAL; after it the airdrop of unclaimed loops opens)</label><input id="deadline" type="datetime-local"></div><button id="s3">c · SEAL</button></div>
+<button id="s4">d · VERIFY</button>
 <div class="row" style="margin-top:6px"><div><label>GIFT</label><input id="aGift" style="min-width:420px"></div></div>
 
 <h2>4 · THE WALK</h2>
@@ -86,10 +83,10 @@ HTML = r'''<!doctype html>
   <button id="w1">CLAIM (as the connected signer)</button>
   <button id="w2">AIRDROP UNCLAIMED</button>
   <button id="w3">STATE</button>
-  <div><label>TOKEN ID</label><input id="tid" value="1" style="width:80px"></div><button id="w4">READ tokenURI: THE IMAGE AND THE PAGE</button>
+  <div><label>TOKEN ID</label><input id="tid" value="1" style="width:80px"></div><button id="w4">READ tokenURI: THE IMAGE</button>
 </div>
 <div id="meta" style="color:var(--mut);margin-top:6px"></div>
-<div class="row" style="align-items:start"><div><label>IMAGE (the SVG, as a marketplace shows it)</label><img id="shown" alt=""></div><div><label>ANIMATION_URL (the token page, sandboxed like a marketplace frame)</label><iframe id="frame" sandbox="allow-scripts" style="width:480px;max-width:100%;height:480px;border:1px solid var(--hair);display:none"></iframe></div></div>
+<div class="row" style="align-items:start"><div><label>IMAGE (the SVG, as a marketplace shows it)</label><img id="shown" alt=""></div></div>
 
 <h2>THE RECORD</h2>
 <textarea id="record" placeholder="filled as things land"></textarea>
@@ -97,10 +94,10 @@ HTML = r'''<!doctype html>
 <div id="log"></div>
 
 <script>/*ETHERS*/</script>
+<script>/*SW*/</script>
 <script>
 const ART=__ART__;
 const LOOPS=__LOOPS__;
-const PAGE=__PAGE__;
 const SET=__SETJS__;   /* the loop set this page was built from; mainnet exists only on a page built from 'final' */
 const ARTIST='0x0DD399a7ED92283e4983C2974FE377070D67f4eB';
 const RPC={sepolia:'https://ethereum-sepolia-rpc.publicnode.com',hoodi:'https://ethereum-hoodi-rpc.publicnode.com',mainnet:'https://ethereum-rpc.publicnode.com'};
@@ -120,8 +117,7 @@ for(const L of LOOPS){
   $('rows').appendChild(tr);
 }
 (async()=>{ let bad=0; for(const L of LOOPS){ if(await sha(bytesOf(L))!==L.sha256){ bad++; log('loop '+L.id+' in this page does not match its sha256: do not deploy','bad'); } }
-  if(await sha(bytesOf(PAGE))!==PAGE.sha256){ bad++; log('the token page in this page does not match its sha256: do not deploy','bad'); }
-  if(!bad) log('all '+LOOPS.length+' loops and the token page match their sha256','ok'); })();
+  if(!bad) log('all '+LOOPS.length+' loops match their sha256','ok'); })();
 const holderOf=L=>{ const v=$('h'+L.id).value.trim(); if(!ethers.isAddress(v)) throw new Error('holder of loop '+L.id+' is not an address'); return ethers.getAddress(v); };
 
 $('net').addEventListener('change',()=>{ net=$('net').value; $('aGift').value=''; signer=null; $('who').textContent='network changed: CONNECT';
@@ -188,12 +184,6 @@ act('s1',async()=>{ await artistOnly();
 async function laidOk(c,L){ const h=holderOf(L), onH=await c.holderOf(L.id); if(onH.toLowerCase()!==h.toLowerCase()) return false;
   try{ return (await c.gifHash(L.id)).slice(2)===L.sha256 && BigInt(await sceneOf(c,L.id))===BigInt(L.scene); }catch(e){ return false; } }
 async function sceneOf(c,id){ const s=await c.sceneOf(id); return BigInt(s[0])|BigInt(s[1])<<8n|BigInt(s[2])<<16n|BigInt(s[3])<<24n|BigInt(s[4])<<32n; }
-act('s5',async()=>{ await artistOnly(); const c=G();
-  if(await c.isSealed()) throw new Error('sealed: nothing can be laid');
-  try{ const on=ethers.getBytes(await c.page()); if(await sha(on)===PAGE.sha256){ log('the token page is already laid: skipped','ok'); return; } }catch(e){}
-  if(net==='mainnet'&&!confirm('Lay the token page (the renderer, '+PAGE.bytes+' bytes)?')) return;
-  await txlog('setPage',await pad(c.setPage,[bytesOf(PAGE)])); rec('page',PAGE.sha256);
-});
 act('s2',async()=>{ await artistOnly(); const c=G();
   if(await c.isSealed()) throw new Error('sealed: nothing can be laid');
   const todo=[]; for(const L of LOOPS){ if(await laidOk(c,L)){ log('loop '+L.id+' already laid: skipped'); $('c'+L.id).textContent='laid'; } else todo.push(L); }
@@ -214,8 +204,7 @@ act('s2',async()=>{ await artistOnly(); const c=G();
 act('s3',async()=>{ await artistOnly(); const c=G();
   const chainNow=Number((await provider.getBlock('latest')).timestamp);   /* the chain's clock, not this computer's */
   const dl=$('deadline').value?Math.floor(new Date($('deadline').value+':00Z').getTime()/1000):chainNow+7*86400; if(!(dl>chainNow+600)) throw new Error('the deadline must be at least 10 minutes after the chain\'s current time ('+new Date(chainNow*1000).toISOString()+')');
-  for(const L of LOOPS){ if(!(await laidOk(c,L))) throw new Error('loop '+L.id+' is not laid (or differs): run c first'); }
-  if(await sha(ethers.getBytes(await c.page()))!==PAGE.sha256) throw new Error('the token page is not laid (or differs): run b first');
+  for(const L of LOOPS){ if(!(await laidOk(c,L))) throw new Error('loop '+L.id+' is not laid (or differs): run b first'); }
   if(!confirm('SEAL: after this no loop can be added or changed. Deadline '+new Date(dl*1000).toISOString()+'. Seal now?')) return;
   await txlog('seal',await pad(c.seal,[dl])); rec('deadline',dl);
 });
@@ -226,11 +215,8 @@ act('s4',async()=>{ const c=G(); let all=true;
   log('code on chain '+(same?'MATCHES':'DIFFERS FROM')+' the compiled code ('+live.length+' bytes)',same?'ok':'bad'); all=all&&same;
   const artist=await c.ARTIST(); log('ARTIST '+artist+(net==='mainnet'?(artist.toLowerCase()===ARTIST.toLowerCase()?' = greencross.eth':' IS NOT greencross.eth'):''),(net!=='mainnet'||artist.toLowerCase()===ARTIST.toLowerCase())?'ok':'bad');
   if(net==='mainnet') all=all&&artist.toLowerCase()===ARTIST.toLowerCase();
-  /* THE PAGE: read back from the chain; its renderer must redraw every approved file from the real holder's seed */
-  const pg=ethers.getBytes(await c.page()); const pgOk=await sha(pg)===PAGE.sha256;
-  log('token page on chain '+pg.length+' bytes '+(pgOk?'MATCHES':'DIFFERS FROM')+' the built page',pgOk?'ok':'bad'); all=all&&pgOk;
-  const pgText=new TextDecoder().decode(pg); const code=pgText.match(/<script>\n([\s\S]*?)\n<\/script>/)[1];
-  const R=(new Function('globalThis','window',code+'\n;return globalThis.SW;'))({},undefined);
+  /* THE RENDERER (sw.js, in this page): from the chain's scene and the real holder's seed it must redraw the approved file */
+  const R=window.SW, pgOk=true;
   const hx3=h=>[parseInt(h.substr(1,2),16),parseInt(h.substr(3,2),16),parseInt(h.substr(5,2),16)];
   for(const L of LOOPS){
     const h=holderOf(L), onH=await c.holderOf(L.id);
@@ -238,8 +224,8 @@ act('s4',async()=>{ const c=G(); let all=true;
     const scOk=BigInt(await sceneOf(c,L.id))===BigInt(L.scene);
     const ok=onH.toLowerCase()===h.toLowerCase()&&s===L.sha256&&scOk&&(await c.giftOf(h))===BigInt(L.id);
     let drawn='';
-    if(pgOk){ const P=R.PAIRS[L.pair], pal=[hx3(P[1]),hx3(P[2])]; const fr=R.frames(ethers.keccak256(L.holder),L.sky,L.land,L.weather,L.thin,40);
-      const a=await sha(R.gif(fr,pal,4,5)), b=await sha(R.gif(fr,pal,4,1)); drawn=(a===L.approved&&b===L.sha256)?' · the renderer from chain redraws the APPROVED file':' · RENDERER DIFFERS'; all=all&&a===L.approved&&b===L.sha256; }
+    if(pgOk){ const sc=await c.sceneOf(L.id), P=R.PAIRS[Number(sc[3])], pal=[hx3(P[1]),hx3(P[2])]; const fr=R.frames(ethers.keccak256(L.holder),R.SKIES[Number(sc[0])],R.LANDS[Number(sc[1])],R.WEATHERS[Number(sc[2])],Number(sc[4]),40);
+      const a=await sha(R.gif(fr,pal,4,5)), b=await sha(R.gif(fr,pal,4,1)); drawn=(a===L.approved&&b===L.sha256)?' · the renderer redraws the APPROVED file':' · RENDERER DIFFERS'; all=all&&a===L.approved&&b===L.sha256; }
     log('loop '+L.id+': holder '+onH+' · scene '+(scOk?'ok':'WRONG')+' · read back '+got.length+' bytes sha '+s.slice(0,16)+(ok?' MATCHES':' DOES NOT MATCH')+drawn,ok&&!/DIFFERS/.test(drawn)?'ok':'bad');
     $('c'+L.id).textContent=ok?'verified':'MISMATCH'; all=all&&ok;
   }
@@ -260,17 +246,18 @@ act('w4',async()=>{ const uri=await G().tokenURI(BigInt($('tid').value)); const 
   $('meta').textContent=j.name+' · '+j.description+' · '+JSON.stringify(j.attributes);
   const svg=atob(j.image.slice('data:image/svg+xml;base64,'.length)); const g=Uint8Array.from(atob(svg.match(/base64,([^"]+)"/)[1]),c=>c.charCodeAt(0)); const s=await sha(g);
   const L=LOOPS.find(x=>x.id===Number($('tid').value)); log('tokenURI image: an SVG holding a '+g.length+'-byte GIF, sha '+s.slice(0,16)+(L&&s===L.sha256?' = the laid loop':' (no match in this page)'),L&&s===L.sha256?'ok':'bad');
-  $('shown').src=j.image; $('shown').style.display='block'; $('frame').src=j.animation_url; $('frame').style.display='block'; rec('lastTokenURIChars',uri.length); });
+  $('shown').src=j.image; $('shown').style.display='block'; rec('lastTokenURIChars',uri.length); });
 </script></body></html>'''
-out = HTML.replace('__ART__', json.dumps(ART_OUT)).replace('__LOOPS__', json.dumps(loops)).replace('__PAGE__', json.dumps(PAGE_OUT))
+out = HTML.replace('__ART__', json.dumps(ART_OUT)).replace('__LOOPS__', json.dumps(loops))
 MAINNET_OPT = ('<option value="mainnet">Ethereum mainnet (set final96, %d loops)</option>' % len(loops)) if SET == 'final96' \
     else '<option value="mainnet" disabled>Ethereum mainnet (only on a page built from the final96 set)</option>'
 out = out.replace('__MAINNET_OPT__', MAINNET_OPT).replace('__SETJS__', json.dumps(SET))
 ETH = open(os.path.join(ROOT, 'smallweather', 'node_modules', 'ethers', 'dist', 'ethers.umd.min.js')).read()
 assert '</script' not in ETH and '/*ETHERS*/' not in ETH
 ver = json.load(open(os.path.join(ROOT, 'smallweather', 'node_modules', 'ethers', 'package.json')))['version']
+out = out.replace('<script>/*SW*/</script>', '<script>/* the renderer, tools/gift/sw.js */\n' + SWJS + '\n</script>', 1)
 out = out.replace('<script>/*ETHERS*/</script>', '<script>/* ethers ' + ver + ', pinned in the page: sha256 ' + hashlib.sha256(ETH.encode()).hexdigest() + ' */\n' + ETH + '\n</script>', 1)
-out = out.replace('__SRCSHA__', srcsha[:16]).replace('__SET__', SET).replace('__NLOOPS__', str(len(loops))).replace('__PAGEBYTES__', str(len(PAGE))).replace('__PAGESHA__', PJ['sha256'][:16])
+out = out.replace('__SRCSHA__', srcsha[:16]).replace('__SET__', SET).replace('__NLOOPS__', str(len(loops))).replace('__SWSHA__', hashlib.sha256(SWJS.encode()).hexdigest()[:16])
 dst = os.path.join(ROOT, 'gift', 'deploy', 'index.html'); os.makedirs(os.path.dirname(dst), exist_ok=True)
 tmp = dst + '.tmp'; open(tmp, 'w').write(out); os.replace(tmp, dst)
 print('deploy page', dst, len(out), 'bytes, set', SET, len(loops), 'loops')
