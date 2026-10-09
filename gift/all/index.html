@@ -34,7 +34,7 @@
   <div id="msg" hidden></div>
   <div class="grid" id="grid"></div>
 </main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js" integrity="sha384-gpR0Q6Hx/O+uevlbpbANbS0LWjbejPV1sqD/8w422l/fW8whGY0EPmKw3uG7ACYP" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="/gift/sw.js"></script>
 <script src="/gift/shared.js"></script>
 <script>
@@ -42,7 +42,7 @@ const $=id=>document.getElementById(id);
 $('home').href=keep('/gift/'); $('mine').href=keep('/gift/');
 (async()=>{
   if(!CFG.contract){ $('count').textContent='SMALL WEATHER · 79 MADE'; $('msg').hidden=false; $('msg').textContent='The gallery opens with the claim. Every loop will be read from the chain here.'; return; }
-  const c=new ethers.Contract(CFG.contract,ABI,new ethers.JsonRpcProvider(CFG.rpc,CFG.chainId,{staticNetwork:true}));
+  const c=new ethers.Contract(CFG.contract,ABI,new ethers.JsonRpcProvider(Object.assign(new ethers.FetchRequest(CFG.rpc),{timeout:15000}),CFG.chainId,{staticNetwork:true}));
   let n, m;
   try{ [n,m]=(await Promise.all([c.gifts(),c.minted()])).map(Number); }catch(e){ $('count').textContent='Could not reach the chain. Try again in a moment.'; return; }
   const setCount=()=>{ $('count').innerHTML='SMALL WEATHER · <b>'+n+'</b> MADE · <b>'+m+'</b> CLAIMED'; }; setCount();
