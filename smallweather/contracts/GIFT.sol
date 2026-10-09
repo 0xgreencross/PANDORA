@@ -6,16 +6,13 @@ import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /*
-  DITHERVOID // SMALL WEATHER. The gift. (v2: the hard-pixel SVG and the renderer)
+  DITHERVOID // SMALL WEATHER. The gift. (v2: the hard-pixel SVG)
 
   One loop for each collector who answered, made from the hash of their own address.
   Every loop is drawn on a 96 x 96 grid. The chain keeps that grid as a GIF, and the
   token's image is an SVG that shows it with hard pixels: animated, and sharp at any size.
-  The token's page (animation_url) carries the renderer itself, the code that drew every
-  loop: it draws the holder's loop again in the browser, from the hash of the address and
-  the scene, byte for byte the approved file, and lets the holder save it.
 
-  The artist lays the page and every loop on the chain (SSTORE2: each part is the code of
+  The artist lays every loop on the chain (SSTORE2: each part is the code of
   a small contract, a STOP byte in front), binds each loop to its holder, then seals. After
   the seal nothing can be added or changed. Each holder claims their own, once, for free
   (they pay only the gas). After the deadline the artist may hand the unclaimed ones to
@@ -35,10 +32,8 @@ contract GIFT is ERC721 {
     mapping(address => uint256) public giftOf;      // holder -> tokenId (0 = none)
     mapping(uint256 => Loop) private _loop;
     mapping(uint256 => address) private _gif;       // tokenId -> the 96 x 96 GIF (one part)
-    address[] private _page;                        // the token page with the renderer, in parts
 
     event Gift(uint256 indexed id, address indexed holder, uint40 scene, uint256 size, bytes32 sha);
-    event Page(uint256 size, bytes32 sha);
     event Sealed(uint64 deadline);
 
     error NotArtist();
@@ -94,18 +89,7 @@ contract GIFT is ERC721 {
         return uint8(s) < 11 && uint8(s >> 8) < 7 && uint8(s >> 16) < 10 && uint8(s >> 24) < 10 && uint8(s >> 32) < 6;
     }
 
-    // ------------------------------------------------------------------ laying the page and the loops
-    function setPage(bytes calldata page) external onlyArtist {
-        if (isSealed) revert IsSealed();
-        if (page.length == 0) revert Bad();
-        delete _page;
-        for (uint256 off = 0; off < page.length; off += PART) {
-            uint256 end = off + PART < page.length ? off + PART : page.length;
-            _page.push(_lay(page[off:end]));
-        }
-        emit Page(page.length, sha256(page));
-    }
-
+    // ------------------------------------------------------------------ laying the loops
     function setGift(address holder, uint256 id, uint40 scene, bytes calldata loop) public onlyArtist {
         if (isSealed) revert IsSealed();
         if (holder == address(0) || id == 0 || loop.length == 0 || loop.length > PART || !_validScene(scene)) revert Bad();
@@ -126,7 +110,7 @@ contract GIFT is ERC721 {
 
     function seal(uint64 deadline_) external onlyArtist {
         if (isSealed) revert IsSealed();
-        if (deadline_ <= block.timestamp || gifts == 0 || _page.length == 0) revert Bad();
+        if (deadline_ <= block.timestamp || gifts == 0) revert Bad();
         isSealed = true;
         deadline = deadline_;
         emit Sealed(deadline_);
@@ -176,15 +160,6 @@ contract GIFT is ERC721 {
     /// sha256 of the loop, for anyone to check against the published set
     function gifHash(uint256 id) external view returns (bytes32) { return sha256(gif(id)); }
 
-    /// the token page: the renderer and its frame, byte for byte as laid
-    function page() public view returns (bytes memory out) {
-        uint256 n = _page.length;
-        if (n == 0) revert NoGift();
-        bytes[] memory p = new bytes[](n);
-        for (uint256 i = 0; i < n; i++) p[i] = _read(_page[i]);
-        for (uint256 i = 0; i < n; i++) out = bytes.concat(out, p[i]);
-    }
-
     /// the image: the 96 grid with hard pixels, sharp at any size
     function svg(uint256 id) public view returns (string memory) {
         return string(abi.encodePacked(
@@ -193,27 +168,13 @@ contract GIFT is ERC721 {
             Base64.encode(gif(id)), '"/></svg>'));
     }
 
-    /// the token page for one loop: the renderer, then the loop's own numbers
-    function html(uint256 id) public view returns (string memory) {
-        (uint8 s, uint8 l, uint8 w, uint8 k, uint8 t) = sceneOf(id);
-        address h = _loop[id].holder;
-        return string(abi.encodePacked(
-            page(),
-            '<script>boot({"id":', Strings.toString(id),
-            ',"seed":"', Strings.toHexString(uint256(keccak256(abi.encodePacked(h))), 32),
-            '","sky":"', _pick(SKIES, s), '","land":"', _pick(LANDS, l), '","weather":"', _pick(WEATHERS, w),
-            '","pair":', Strings.toString(k), ',"thin":', Strings.toString(t),
-            ',"sha":"', Strings.toHexString(uint256(sha256(gif(id))), 32), '"})</script>'));
-    }
-
     function tokenURI(uint256 id) public view override returns (string memory) {
         _requireOwned(id);
         (uint8 s, uint8 l, uint8 w, uint8 k, ) = sceneOf(id);
         bytes memory json = abi.encodePacked(
             '{"name":"SMALL WEATHER #', Strings.toString(id),
             '","description":"A small weather, made for one collector who answered. It came before STORMGLASS. The loop is on the chain, drawn from the hash of the address it was made for. dithervoid dot art. CC0. Greencross.",',
-            '"image":"data:image/svg+xml;base64,', Base64.encode(bytes(svg(id))), '",',
-            '"animation_url":"data:text/html;base64,', Base64.encode(bytes(html(id))), '",');
+            '"image":"data:image/svg+xml;base64,', Base64.encode(bytes(svg(id))), '",');
         json = abi.encodePacked(json,
             '"attributes":[{"trait_type":"MADE FOR","value":"', Strings.toHexString(_loop[id].holder),
             '"},{"trait_type":"SKY","value":"', _pick(SKIES, s),
