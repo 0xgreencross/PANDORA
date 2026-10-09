@@ -28,7 +28,7 @@ async function setup(n = 3) {
   return { c, sig, artist: sig[0], holders };
 }
 
-describe("SMALL WEATHER v2 (GIFT.sol)", function () {
+describe("SMALL WEATHER v3 (GIFT.sol)", function () {
   it("is fixed to its deployer, named, and never holds ether", async () => {
     const { c, artist } = await setup(1);
     expect(await c.ARTIST()).to.equal(artist.address);
@@ -76,6 +76,9 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     await expect(c.connect(holders[0]).claim()).to.be.revertedWithCustomError(c, "NotSealed");
     await expect(c.connect(sig[5]).seal((await now()) + 3600)).to.be.revertedWithCustomError(c, "NotArtist");
     await expect(c.seal(await now())).to.be.revertedWithCustomError(c, "Bad");
+    await expect(c.seal((await now()) + 366 * 86400)).to.be.revertedWithCustomError(c, "Bad");                // a mistyped year: refused
+    await expect(c.connect(sig[5]).setGifts([], [], [], [])).to.be.revertedWithCustomError(c, "NotArtist");   // even the empty batch
+    await expect(c.connect(sig[5]).setGifts([sig[5].address], [], [], [])).to.be.revertedWithCustomError(c, "NotArtist");
     await (await c.seal((await now()) + 3600)).wait();
     await expect(c.setGift(sig[7].address, 5, real[0].sc, real[0].b)).to.be.revertedWithCustomError(c, "IsSealed");
     await expect(c.seal((await now()) + 7200)).to.be.revertedWithCustomError(c, "IsSealed");
@@ -87,10 +90,12 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     const { c, holders, sig } = await setup(2);
     await (await c.seal((await now()) + 3600)).wait();
     const { tx } = await pad(c.connect(holders[0]).claim, []);
-    console.log("      claim gas used", (await tx.wait()).gasUsed.toString());
+    const g1 = (await tx.wait()).gasUsed, g2 = (await (await c.connect(holders[1]).claim()).wait()).gasUsed;
+    console.log("      claim gas used: first", g1.toString(), "· later", g2.toString());
+    expect(g1 < 80000n && g2 < 80000n).to.equal(true);             // minted shares the seal's slot
     expect(await c.ownerOf(1)).to.equal(holders[0].address);
     expect(await c.balanceOf(holders[0].address)).to.equal(1n);
-    expect(await c.minted()).to.equal(1n);
+    expect(await c.minted()).to.equal(2n);
     await expect(c.connect(holders[0]).claim()).to.be.revertedWithCustomError(c, "Claimed");
     await expect(c.connect(sig[9]).claim()).to.be.revertedWithCustomError(c, "NoGift");
   });
@@ -109,7 +114,8 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     expect(j.description).to.match(/STORMGLASS/); expect(j.description).to.match(/dithervoid dot art/); expect(j.description).to.not.match(/—/);
     expect(j.image.startsWith("data:image/svg+xml;base64,")).to.equal(true);
     const svg = Buffer.from(j.image.slice(26), "base64").toString("utf8");
-    expect(svg).to.match(/viewBox="0 0 96 96"/); expect(svg).to.match(/image-rendering:pixelated/);
+    expect(svg).to.match(/viewBox="0 0 96 96"/); expect(svg).to.match(/@supports \(image-rendering:pixelated\)\{image\{image-rendering:pixelated\}\}/); expect(svg).to.match(/image-rendering="optimizeSpeed"/);
+    expect(svg).to.not.match(/style="/);                            // no style attribute to override the SVG 1.1 renderers
     const g = Buffer.from(svg.match(/data:image\/gif;base64,([^"]+)"/)[1], "base64");
     expect(g.equals(e.b)).to.equal(true);
     expect(j.animation_url).to.equal(undefined);                    // the SVG is the work, everywhere
