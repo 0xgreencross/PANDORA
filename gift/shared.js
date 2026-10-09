@@ -1,6 +1,6 @@
 /* SMALL WEATHER, shared by /gift/ and /gift/all/: the chain config, the renderer glue, saving and sharing,
-   and the Plate Zero line. The renderer itself is /gift/sw.js, the same bytes as tools/gift/sw.js and the
-   page laid on the chain. */
+   and the Plate Zero line. The renderer itself is /gift/sw.js, the same bytes as tools/gift/sw.js: it redraws
+   each loop from the chain's numbers for SAVE GIF (the chain holds the loop itself, the 96 grid). */
 const NETS={
   mainnet:{chainId:1,  contract:'', rpc:'https://ethereum-rpc.publicnode.com', name:'Ethereum'},
   sepolia:{chainId:11155111, contract:'', rpc:'https://ethereum-sepolia-rpc.publicnode.com', name:'Sepolia'},

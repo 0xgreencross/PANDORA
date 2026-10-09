@@ -45,7 +45,7 @@
     <button id="save" hidden>SAVE GIF</button><button id="copy" hidden>COPY POST</button><button id="xpost" hidden>OPEN X</button></div>
   <div id="zero"><div id="zline"></div><div class="z"><button id="remind">REMIND ME</button><a class="btn" href="/">STORMGLASS →</a></div></div>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js" integrity="sha384-gpR0Q6Hx/O+uevlbpbANbS0LWjbejPV1sqD/8w422l/fW8whGY0EPmKw3uG7ACYP" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="/gift/sw.js"></script>
 <script src="/gift/shared.js"></script>
 <script>
@@ -55,12 +55,15 @@ const short=a=>a.slice(0,6)+'…'+a.slice(-4);
 let me=null, id=0n, WBP=null, LOOP=null, J=null;
 $('allLink').href=keep('/gift/all/');
 
-const read=()=>new ethers.Contract(CFG.contract,ABI,new ethers.JsonRpcProvider(CFG.rpc,CFG.chainId,{staticNetwork:true}));
+const RQ=()=>{ const f=new ethers.FetchRequest(CFG.rpc); f.timeout=8000; return f; };   /* a hung public node falls back in 8 s, not 5 min */
+const read=()=>new ethers.Contract(CFG.contract,ABI,new ethers.JsonRpcProvider(RQ(),CFG.chainId,{staticNetwork:true}));
 /* reads go to the public RPC; if it fails, the same read goes through the connected wallet (already on the right chain) */
-async function rd(fn){ try{ return await fn(read()); }catch(e){ if(!WBP) throw e; return await fn(new ethers.Contract(CFG.contract,ABI,WBP)); } }
+let PUB=true;   /* once the public node fails, the rest of the visit reads through the wallet */
+async function rd(fn){ if(PUB){ try{ return await fn(read()); }catch(e){ if(!WBP) throw e; PUB=false; } } return await fn(new ethers.Contract(CFG.contract,ABI,WBP)); }
 /* what a collector reads when something goes wrong: plain lines, never developer jargon */
 function human(e){
-  const n=e&&e.revert&&e.revert.name;
+  let n=e&&e.revert&&e.revert.name;
+  if(!n&&e&&typeof e.data==='string'&&e.data.length>=10){ try{ n=new ethers.Interface(ABI).parseError(e.data).name; }catch(x){} }   /* estimateGas does not decode custom errors */
   if(e&&(e.code==='ACTION_REJECTED'||e.code===4001||(e.info&&e.info.error&&e.info.error.code===4001))) return 'You declined in your wallet. Nothing was sent.';
   if(n==='NotSealed') return 'The claim is not open yet.';
   if(n==='NoGift') return 'No small weather was made for this address.';
@@ -115,16 +118,18 @@ $('connect').addEventListener('click',async()=>{ try{
   const bp=await wallet(); me=await (await bp.getSigner()).getAddress();
   $('connect').textContent=short(me); await refresh();
 }catch(e){ say(human(e),'bad'); } });
-/* THE PAD: estimate x1.5 + 60k, at least 250k, at most 15M (smart-account wallets, EIP-7702, estimate short) */
+/* THE PAD: estimate x1.3 + 20k (a claim uses ~76k: no floor, so a wallet with a little ETH can still claim), at most 15M */
 $('claim').addEventListener('click',async()=>{ try{
   $('claim').disabled=true;
   const bp=await wallet(); const s=await bp.getSigner();
   if((await s.getAddress()).toLowerCase()!==me.toLowerCase()) throw new Error('The wallet changed account: connect again.');
   const c=new ethers.Contract(CFG.contract,ABI,s);
-  const g=await c.claim.estimateGas(); let L=g*3n/2n+60000n; if(L<250000n) L=250000n; if(L>15000000n) L=15000000n;
+  const g=await c.claim.estimateGas(); let L=g*13n/10n+20000n; if(L>15000000n) L=15000000n;
   say('Confirm in your wallet…');
   const tx=await c.claim({gasLimit:L}); say('Claiming… '+short(tx.hash));
-  await tx.wait(); await refresh();
+  await tx.wait();
+  for(let k=0;k<20&&!(await rd(c=>c.isClaimed(id)).catch(()=>false));k++) await new Promise(r=>setTimeout(r,1500));   /* a public node a block behind must not show CLAIM again */
+  await refresh();
 }catch(e){ say(human(e),'bad'); } finally{ $('claim').disabled=false; } });
 $('save').addEventListener('click',()=>{ if(LOOP) saveGif(LOOP,say).catch(e=>say(human(e),'bad')); });
 $('copy').addEventListener('click',()=>{ if(LOOP) copyPost(LOOP,say); });
