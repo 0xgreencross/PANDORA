@@ -6,7 +6,7 @@ import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /*
-  DITHERVOID // SMALL WEATHER. The gift. (v2: the hard-pixel SVG)
+  DITHERVOID // SMALL WEATHER. The gift. (v3: the hard-pixel SVG, audited)
 
   One loop for each collector who answered, made from the hash of their own address.
   Every loop is drawn on a 96 x 96 grid. The chain keeps that grid as a GIF, and the
@@ -23,10 +23,11 @@ contract GIFT is ERC721 {
     address public immutable ARTIST;
     uint256 private constant PART = 24575;          // EIP-170: a contract's code is at most 24576 bytes
 
-    bool public isSealed;
+    bool public isSealed;                           // one slot for the four: a claim writes one warm slot
     uint64 public deadline;                         // set at the seal; airdrop allowed from here on
-    uint256 public gifts;                           // loops laid
-    uint256 public minted;                          // loops claimed or handed over
+    uint64 public gifts;                            // loops laid
+    uint64 public minted;                           // loops claimed or handed over
+    uint256 private constant MAXWAIT = 365 days;    // the longest a deadline may be: a mistyped year cannot lock the airdrop
 
     struct Loop { address holder; uint40 scene; }   // one slot: holder + scene
     mapping(address => uint256) public giftOf;      // holder -> tokenId (0 = none)
@@ -90,7 +91,14 @@ contract GIFT is ERC721 {
     }
 
     // ------------------------------------------------------------------ laying the loops
-    function setGift(address holder, uint256 id, uint40 scene, bytes calldata loop) public onlyArtist {
+    function setGift(address holder, uint256 id, uint40 scene, bytes calldata loop) external onlyArtist { _setGift(holder, id, scene, loop); }
+
+    function setGifts(address[] calldata holders, uint256[] calldata ids, uint40[] calldata scenes, bytes[] calldata loops) external onlyArtist {
+        if (holders.length != ids.length || ids.length != scenes.length || ids.length != loops.length) revert Bad();
+        for (uint256 i = 0; i < ids.length; i++) _setGift(holders[i], ids[i], scenes[i], loops[i]);
+    }
+
+    function _setGift(address holder, uint256 id, uint40 scene, bytes calldata loop) private {
         if (isSealed) revert IsSealed();
         if (holder == address(0) || id == 0 || loop.length == 0 || loop.length > PART || !_validScene(scene)) revert Bad();
         address prev = _loop[id].holder;
@@ -103,14 +111,9 @@ contract GIFT is ERC721 {
         emit Gift(id, holder, scene, loop.length, sha256(loop));
     }
 
-    function setGifts(address[] calldata holders, uint256[] calldata ids, uint40[] calldata scenes, bytes[] calldata loops) external {
-        if (holders.length != ids.length || ids.length != scenes.length || ids.length != loops.length) revert Bad();
-        for (uint256 i = 0; i < ids.length; i++) setGift(holders[i], ids[i], scenes[i], loops[i]);
-    }
-
     function seal(uint64 deadline_) external onlyArtist {
         if (isSealed) revert IsSealed();
-        if (deadline_ <= block.timestamp || gifts == 0) revert Bad();
+        if (deadline_ <= block.timestamp || deadline_ > block.timestamp + MAXWAIT || gifts == 0) revert Bad();
         isSealed = true;
         deadline = deadline_;
         emit Sealed(deadline_);
@@ -160,11 +163,13 @@ contract GIFT is ERC721 {
     /// sha256 of the loop, for anyone to check against the published set
     function gifHash(uint256 id) external view returns (bytes32) { return sha256(gif(id)); }
 
-    /// the image: the 96 grid with hard pixels, sharp at any size
+    // the image: the 96 grid with hard pixels, sharp at any size. Browsers take 'pixelated' from the supports rule;
+    // SVG 1.1 renderers (resvg, CairoSVG, librsvg: the server-side thumbnailers) skip it and take optimizeSpeed.
     function svg(uint256 id) public view returns (string memory) {
         return string(abi.encodePacked(
             '<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 96 96" shape-rendering="crispEdges">',
-            '<image width="96" height="96" image-rendering="pixelated" style="image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;image-rendering:pixelated" href="data:image/gif;base64,',
+            '<style>@supports (image-rendering:pixelated){image{image-rendering:pixelated}}</style>',
+            '<image width="96" height="96" image-rendering="optimizeSpeed" href="data:image/gif;base64,',
             Base64.encode(gif(id)), '"/></svg>'));
     }
 
