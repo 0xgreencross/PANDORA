@@ -2,11 +2,11 @@ const { expect } = require("chai");
 const { ethers, network } = require("hardhat");
 const fs = require("fs"); const path = require("path"); const crypto = require("crypto"); const vm = require("vm");
 
-/* GIFT v2. The real set lives in tools/gift/loops/final96 (79 loops at their 96 grid, the scenes, the token page).
+/* GIFT v2. The real set lives in tools/gift/loops/final96 (79 loops at their 96 grid, the scenes).
    Synthetic loops cover the edges (one byte, one full part, one byte over). */
 const SET = path.join(__dirname, "..", "..", "tools", "gift", "loops", "final96");
 const MAN = JSON.parse(fs.readFileSync(path.join(SET, "manifest.json")));
-const PAGE = fs.readFileSync(path.join(SET, "page.html"));
+require(path.join(__dirname, "..", "..", "tools", "gift", "sw.js"));          // the published renderer (globalThis.SW)
 const real = MAN.loops.map(e => ({ ...e, b: fs.readFileSync(path.join(SET, e.file)), sc: scene(e) }));
 function scene(e) { return BigInt(e.sky) | BigInt(e.land) << 8n | BigInt(e.weather) << 16n | BigInt(e.pair) << 24n | BigInt(e.thin) << 32n; }
 function gifOf(n) { const b = crypto.randomBytes(n); b.write("GIF89a", 0); return b; }
@@ -20,10 +20,9 @@ const CAP = 15000000;   // the pages' gas cap; mainnet (osaka, EIP-7825) refuses
 async function now() { return (await ethers.provider.getBlock("latest")).timestamp; }
 const json = uri => { expect(uri.startsWith("data:application/json;base64,")).to.equal(true); return JSON.parse(Buffer.from(uri.slice(29), "base64").toString("utf8")); };
 
-async function setup(n = 3, withPage = true) {
+async function setup(n = 3) {
   const sig = await ethers.getSigners();
   const c = await (await ethers.getContractFactory("GIFT")).deploy(); await c.waitForDeployment();
-  if (withPage) await (await c.setPage(PAGE, { gasLimit: CAP })).wait();
   const holders = sig.slice(1, 1 + n);
   for (let i = 0; i < n; i++) await (await c.setGift(holders[i].address, i + 1, real[i].sc, real[i].b, { gasLimit: CAP })).wait();
   return { c, sig, artist: sig[0], holders };
@@ -39,9 +38,8 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     await expect(artist.sendTransaction({ to: await c.getAddress(), value: 1 })).to.be.reverted;
   });
 
-  it("stores the page and every loop byte for byte, and the scene", async () => {
+  it("stores every loop byte for byte, and the scene", async () => {
     const { c } = await setup(5);
-    expect(Buffer.from((await c.page()).slice(2), "hex").equals(PAGE)).to.equal(true);
     for (let id = 1; id <= 5; id++) {
       const e = real[id - 1];
       expect(Buffer.from((await c.gif(id)).slice(2), "hex").equals(e.b)).to.equal(true);
@@ -55,7 +53,6 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     const { c, sig, holders } = await setup(2);
     const r = real[0];
     await expect(c.connect(sig[5]).setGift(sig[5].address, 9, r.sc, r.b)).to.be.revertedWithCustomError(c, "NotArtist");
-    await expect(c.connect(sig[5]).setPage(PAGE)).to.be.revertedWithCustomError(c, "NotArtist");
     await expect(c.setGift(holders[0].address, 7, r.sc, r.b)).to.be.revertedWithCustomError(c, "Bad");          // holder has one
     await expect(c.setGift(ethers.ZeroAddress, 7, r.sc, r.b)).to.be.revertedWithCustomError(c, "Bad");
     await expect(c.setGift(sig[6].address, 0, r.sc, r.b)).to.be.revertedWithCustomError(c, "Bad");
@@ -63,7 +60,6 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     await expect(c.setGift(sig[6].address, 7, r.sc, gifOf(24576), { gasLimit: CAP })).to.be.revertedWithCustomError(c, "Bad");  // over one part
     for (const bad of [11n, 7n << 8n, 10n << 16n, 10n << 24n, 6n << 32n])
       await expect(c.setGift(sig[6].address, 7, bad, r.b)).to.be.revertedWithCustomError(c, "Bad");
-    await expect(c.setPage("0x")).to.be.revertedWithCustomError(c, "Bad");
     await (await c.setGift(sig[6].address, 7, r.sc, gifOf(24575), { gasLimit: CAP })).wait();                    // exactly one part
     await (await c.setGift(sig[7].address, 2, real[5].sc, real[5].b, { gasLimit: CAP })).wait();                 // rebind slot 2
     expect(await c.giftOf(holders[1].address)).to.equal(0n);
@@ -75,19 +71,15 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     await expect(c.sceneOf(99)).to.be.revertedWithCustomError(c, "NoGift");
   });
 
-  it("the seal needs the page and a gift; nothing is claimed before it, nothing is laid after it", async () => {
-    const a = await setup(2, false);
-    await expect(a.c.seal((await now()) + 3600)).to.be.revertedWithCustomError(a.c, "Bad");                     // no page
+  it("the seal needs a gift; nothing is claimed before it, nothing is laid after it", async () => {
     const { c, holders, sig } = await setup(2);
     await expect(c.connect(holders[0]).claim()).to.be.revertedWithCustomError(c, "NotSealed");
     await expect(c.connect(sig[5]).seal((await now()) + 3600)).to.be.revertedWithCustomError(c, "NotArtist");
     await expect(c.seal(await now())).to.be.revertedWithCustomError(c, "Bad");
     await (await c.seal((await now()) + 3600)).wait();
     await expect(c.setGift(sig[7].address, 5, real[0].sc, real[0].b)).to.be.revertedWithCustomError(c, "IsSealed");
-    await expect(c.setPage(PAGE)).to.be.revertedWithCustomError(c, "IsSealed");
     await expect(c.seal((await now()) + 7200)).to.be.revertedWithCustomError(c, "IsSealed");
     const empty = await (await ethers.getContractFactory("GIFT")).deploy();
-    await (await empty.setPage(PAGE, { gasLimit: CAP })).wait();
     await expect(empty.seal((await now()) + 3600)).to.be.revertedWithCustomError(empty, "Bad");               // no gifts
   });
 
@@ -103,7 +95,7 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     await expect(c.connect(sig[9]).claim()).to.be.revertedWithCustomError(c, "NoGift");
   });
 
-  it("tokenURI: the hard-pixel SVG holds the exact loop; the page is the laid page plus this loop's numbers", async () => {
+  it("tokenURI: the hard-pixel SVG holds the exact loop, with the scene as traits", async () => {
     const { c, holders } = await setup(2);
     await (await c.seal((await now()) + 3600)).wait();
     await expect(c.tokenURI(1)).to.be.reverted;                    // not yet claimed
@@ -120,46 +112,25 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     expect(svg).to.match(/viewBox="0 0 96 96"/); expect(svg).to.match(/image-rendering:pixelated/);
     const g = Buffer.from(svg.match(/data:image\/gif;base64,([^"]+)"/)[1], "base64");
     expect(g.equals(e.b)).to.equal(true);
-    expect(j.animation_url.startsWith("data:text/html;base64,")).to.equal(true);
-    const html = Buffer.from(j.animation_url.slice(22), "base64");
-    expect(html.subarray(0, PAGE.length).equals(PAGE)).to.equal(true);
-    const tail = html.subarray(PAGE.length).toString("utf8");
-    const T = JSON.parse(tail.match(/^<script>boot\((.*)\)<\/script>$/)[1]);
-    expect(T).to.deep.equal({ id: 1, seed: ethers.keccak256(holders[0].address), sky: MAN.skies[e.sky], land: MAN.lands[e.land], weather: MAN.weathers[e.weather], pair: e.pair, thin: e.thin, sha: sha(e.b) });
+    expect(j.animation_url).to.equal(undefined);                    // the SVG is the work, everywhere
     const A = Object.fromEntries(j.attributes.map(a => [a.trait_type, a.value]));
     expect(A["MADE FOR"].toLowerCase()).to.equal(holders[0].address.toLowerCase());
     expect([A.SKY, A.LAND, A.WEATHER, A.INK]).to.deep.equal([MAN.skies[e.sky], MAN.lands[e.land], MAN.weathers[e.weather], MAN.pairs[e.pair]]);
   });
 
-  it("THE PROOF: the page read back from tokenURI redraws the approved 480 file and the stored 96 grid, byte for byte", async () => {
+  it("THE PROOF: the chain keeps each approved loop's 96 grid; the published renderer redraws the approved 480 file from the chain's numbers", async () => {
     const sig = await ethers.getSigners();
     const c = await (await ethers.getContractFactory("GIFT")).deploy();
-    await (await c.setPage(PAGE, { gasLimit: CAP })).wait();
     const pick = [1, 2, 75, 77, 79].map(id => real.find(e => e.id === id));     // includes both new thin levels
-    const ws = [];
-    for (let k = 0; k < pick.length; k++) {
-      const w = ethers.Wallet.createRandom().connect(ethers.provider); ws.push(w);
-      await (await sig[0].sendTransaction({ to: w.address, value: ethers.parseEther("1") })).wait();
-      /* the real holder's seed is keccak(real holder); here the holder is a fresh wallet, so the check is the renderer
-         against the seed the contract derives, and the approved file is checked with the real holder's numbers below */
-      await (await c.setGift(w.address, pick[k].id, pick[k].sc, pick[k].b, { gasLimit: CAP })).wait();
-    }
-    await (await c.seal((await now()) + 3600)).wait();
-    for (let k = 0; k < pick.length; k++) await (await c.connect(ws[k]).claim()).wait();
-    for (let k = 0; k < pick.length; k++) {
-      const e = pick[k];
-      const html = Buffer.from(json(await c.tokenURI(e.id)).animation_url.slice(22), "base64").toString("utf8");
-      const code = html.match(/<script>\n([\s\S]*?)\n<\/script>/)[1];             // the renderer, as read from the chain
-      const box = { console }; vm.createContext(box); vm.runInContext(code + "\n;globalThis.SW=SW;", box);
-      const T = JSON.parse(html.match(/<script>boot\((.*)\)<\/script>$/)[1]);
-      const pal = [hx(MAN.pairs && box.SW.PAIRS[T.pair][1]), hx(box.SW.PAIRS[T.pair][2])];
-      // the approved file: the real holder's seed through the renderer read from chain
-      const fr = box.SW.frames(e.seed, T.sky, T.land, T.weather, T.thin, 40);
-      expect(sha(Buffer.from(box.SW.gif(fr, pal, 4, 5)))).to.equal("0x" + e.approved_sha256);
-      expect(sha(Buffer.from(box.SW.gif(fr, pal, 4, 1)))).to.equal("0x" + e.sha256);
-      // and for the wallet that holds it here, the page's own numbers match what the chain keeps for that seed
-      expect(T.seed).to.equal(ethers.keccak256(ws[k].address));
-      console.log("      #" + e.id, T.sky + "/" + T.land + "/" + T.weather, "thin", T.thin, ": renderer from chain = approved 480 file and the stored 96 grid");
+    for (let k = 0; k < pick.length; k++) await (await c.setGift(pick[k].holder, pick[k].id, pick[k].sc, pick[k].b, { gasLimit: CAP })).wait();
+    for (const e of pick) {
+      const g = Buffer.from((await c.gif(e.id)).slice(2), "hex");
+      const s = (await c.sceneOf(e.id)).map(Number), h = await c.holderOf(e.id);
+      const P = SW.PAIRS[s[3]], pal = [hx(P[1]), hx(P[2])];
+      const fr = SW.frames(ethers.keccak256(h), SW.SKIES[s[0]], SW.LANDS[s[1]], SW.WEATHERS[s[2]], s[4], 40);
+      expect(sha(Buffer.from(SW.gif(fr, pal, 4, 1)))).to.equal(sha(g));                       // the stored grid
+      expect(sha(Buffer.from(SW.gif(fr, pal, 4, 5)))).to.equal("0x" + e.approved_sha256);     // the approved file
+      console.log("      #" + e.id, SW.SKIES[s[0]] + "/" + SW.LANDS[s[1]] + "/" + SW.WEATHERS[s[2]], "thin", s[4], ": chain grid = renderer, renderer x5 = approved 480 file");
     }
   });
 
@@ -195,13 +166,12 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
     expect(await c.ownerOf(3)).to.equal(holders[2].address);
   });
 
-  it("THE BILL: the whole real set (page + 79 loops) laid in batches under the 15M cap, tokenURIs readable", async () => {
+  it("THE BILL: the whole real set (79 loops) laid in batches under the 15M cap, tokenURIs readable", async () => {
     const sig = await ethers.getSigners();
     const F = await ethers.getContractFactory("GIFT");
     const dtx = await F.getDeployTransaction(); const dg = await ethers.provider.estimateGas({ ...dtx, from: sig[0].address });
     const c = await F.deploy(); const drc = await c.deploymentTransaction().wait();
     let total = drc.gasUsed, txs = 1;
-    const prc = await (await c.setPage(PAGE, { gasLimit: CAP })).wait(); total += prc.gasUsed; txs++;
     const H = real.map(() => ethers.Wallet.createRandom().address);
     let i = 0;
     while (i < real.length) {            // greedy: as many loops as fit under 12M by estimate
@@ -217,7 +187,7 @@ describe("SMALL WEATHER v2 (GIFT.sol)", function () {
       total += rc.gasUsed; txs++; i += n;
     }
     const src = await (await c.seal((await now()) + 7 * 86400)).wait(); total += src.gasUsed; txs++;
-    console.log("      deploy", drc.gasUsed.toString(), "(est", dg.toString() + ") page", prc.gasUsed.toString(), "· transactions", txs, "· TOTAL GAS", total.toString(),
+    console.log("      deploy", drc.gasUsed.toString(), "(est", dg.toString() + ") · transactions", txs, "· TOTAL GAS", total.toString(),
       "· at 0.1 gwei", ethers.formatEther(total * 100000000n), "ETH");
     expect(await c.gifts()).to.equal(BigInt(real.length));
     for (const e of real) expect(await c.gifHash(e.id)).to.equal(sha(e.b)); 
