@@ -32,8 +32,8 @@ function drawGif(L,scale){
   const fr=SW.frames(ethers.keccak256(L.holder),L.sky,L.land,L.weather,L.thin,40);
   return SW.gif(fr,[hx3(P[1]),hx3(P[2])],4,scale);
 }
-/* THE POST (draft, waits for his yes): no links, ever; "dithervoid dot art" spelled out */
-function postText(L){ return 'my small weather from greencross\nSMALL WEATHER #'+L.id+' · '+L.scene+'\ndrawn on the chain from my address\ndithervoid dot art\n#DITHERVOID'; }
+/* THE POST (his words, Oct 9): no links, ever; "dithervoid dot art" spelled out */
+function postText(L){ return 'my SMALL WEATHER from @greencrosslive\n\nSMALL WEATHER #'+L.id+' · '+L.scene+'\n\ndrawn on the chain from my address\n\ndithervoid dot art\n\n#DITHERVOID'; }
 const fileName=L=>'small-weather-'+pad3(L.id)+'.gif';
 /* save: the phone's share sheet when it can take a file (post straight to X, or save to Photos); otherwise a download */
 async function saveGif(L,onSay){
