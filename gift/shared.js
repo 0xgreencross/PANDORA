@@ -35,13 +35,16 @@ function drawGif(L,scale){
 /* THE POST (his words, Oct 9): no links, ever; "dithervoid dot art" spelled out */
 function postText(L){ return 'my SMALL WEATHER from @greencrosslive\n\nSMALL WEATHER #'+L.id+' · '+L.scene+'\n\ndrawn on the chain from my address\n\ndithervoid dot art\n\n#DITHERVOID'; }
 const fileName=L=>'small-weather-'+pad3(L.id)+'.gif';
-/* save: the phone's share sheet when it can take a file (post straight to X, or save to Photos); otherwise a download */
+/* save: on a phone, the share sheet (post straight to X, or save to Photos); on a computer, always a plain download.
+   Windows (Chrome, Edge) also says it can share files, and its share sheet opens instead of saving (reported Oct 10). */
+const isPhone=()=>{ const d=navigator.userAgentData; if(d&&typeof d.mobile==='boolean') return d.mobile;
+  const ua=navigator.userAgent||''; return /Android|iPhone|iPad|iPod|Mobile/i.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1); };
 async function saveGif(L,onSay){
   onSay&&onSay('Drawing #'+L.id+' at 960…');
   await new Promise(r=>setTimeout(r,30));
   const g=drawGif(L,10);
   const f=new File([g],fileName(L),{type:'image/gif'});
-  if(navigator.canShare&&navigator.canShare({files:[f]})){
+  if(isPhone()&&navigator.canShare&&navigator.canShare({files:[f]})){
     try{ await navigator.share({files:[f],text:postText(L)}); onSay&&onSay('Shared.','ok'); return; }
     catch(e){ if(e&&e.name==='AbortError'){ onSay&&onSay(''); return; } }
   }
