@@ -48,9 +48,26 @@ async function saveGif(L,onSay){
     try{ await navigator.share({files:[f],text:postText(L)}); onSay&&onSay('Shared.','ok'); return; }
     catch(e){ if(e&&e.name==='AbortError'){ onSay&&onSay(''); return; } }
   }
+  /* a phone with no file sharing: almost always a wallet's own browser (Zerion, MetaMask, Rainbow...), where a download
+     goes nowhere (reported Oct 10). Show the GIF itself: press and hold saves it to Photos in every phone browser. */
+  if(isPhone()){ holdToSave(g,L); onSay&&onSay('Press and hold the picture to save it.','ok'); return; }
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([g],{type:'image/gif'})); a.download=fileName(L);
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
   onSay&&onSay('Saved '+fileName(L)+' (960 x 960). Attach it to your post on X.','ok');
+}
+function holdToSave(g,L){
+  const old=document.getElementById('sw-hold'); if(old) old.remove();
+  const o=document.createElement('div'); o.id='sw-hold';
+  o.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(5,5,6,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.14em;color:#e8e8ec;text-align:center';
+  const im=document.createElement('img'); im.alt=fileName(L); im.src='data:image/gif;base64,'+b64(g);
+  im.style.cssText='width:min(92vw,70vh);height:auto;image-rendering:pixelated;-webkit-touch-callout:default;user-select:auto';
+  const t=document.createElement('div'); t.textContent='PRESS AND HOLD THE PICTURE, THEN SAVE TO PHOTOS';
+  const t2=document.createElement('div'); t2.style.color='#7d7d88'; t2.textContent='or open dithervoid.art/gift in your phone\'s browser (Safari, Chrome) and press SAVE GIF there';
+  const row=document.createElement('div'); row.style.cssText='display:flex;gap:10px';
+  const mk=(label,fn)=>{ const b=document.createElement('button'); b.textContent=label; b.style.cssText='font:inherit;background:none;color:#e8e8ec;border:1px solid #e8e8ec;padding:9px 16px;letter-spacing:.14em'; b.onclick=fn; return b; };
+  row.appendChild(mk('COPY PAGE LINK',async()=>{ try{ await navigator.clipboard.writeText('https://dithervoid.art/gift/'); t2.textContent='Link copied. Paste it in your phone\'s browser.'; }catch(e){ window.prompt('Copy the link:','https://dithervoid.art/gift/'); } }));
+  row.appendChild(mk('CLOSE',()=>o.remove()));
+  o.appendChild(im); o.appendChild(t); o.appendChild(t2); o.appendChild(row); document.body.appendChild(o);
 }
 async function copyPost(L,onSay){
   const t=postText(L);
