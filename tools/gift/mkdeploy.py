@@ -299,9 +299,13 @@ act('s4',async()=>{ const c=G(); let all=true;
 });
 act('w1',async()=>{ const c=G(); const me=await need().getAddress(); const id=await c.giftOf(me); if(id===0n) throw new Error('no loop is bound to '+me);
   const T=await byNonce(c.claim,[]); await send('claim #'+id,T.req,T.gas); log('owner of #'+id+': '+(await c.ownerOf(id)),'ok'); });
-act('w2',async()=>{ await artistOnly(); const c=G(); const ids=[]; for(const L of LOOPS){ if(!(await c.isClaimed(L.id))) ids.push(L.id); }
+// SKIP: loops the airdrop never sends. #72 is bound to 0x91C1…75e6 (bookofbee.eth), which is not bee's wallet:
+// bound by mistake on Oct 8, sealed, cannot be rebound. GREENCROSS, Oct 10: "airdrop skips 72".
+const SKIP=[72];
+act('w2',async()=>{ await artistOnly(); const c=G(); const ids=[], skipped=[]; for(const L of LOOPS){ if(SKIP.includes(L.id)){ skipped.push(L.id); continue; } if(!(await c.isClaimed(L.id))) ids.push(L.id); }
+  if(skipped.length) log('skipped on purpose: '+skipped.join(', ')+' (bound to the wrong wallet; never airdropped)','bad');
   if(!ids.length){ log('every loop is claimed','ok'); return; }
-  if(!confirm('Airdrop '+ids.length+' unclaimed loop(s) to their holders: '+ids.join(', ')+'?')) return;
+  if(!confirm('Airdrop '+ids.length+' unclaimed loop(s) to their holders: '+ids.join(', ')+(skipped.length?'\n\nSkipped on purpose: '+skipped.join(', '):'')+'?')) return;
   const T=await byNonce(c.airdropUnclaimed,[ids]); await send('AIRDROP '+ids.length,T.req,T.gas); });
 act('w3',async()=>{ const c=G(); log('sealed '+(await c.isSealed())+' deadline '+(await c.deadline())+' gifts '+(await c.gifts())+' minted '+(await c.minted())+' now '+Math.floor(Date.now()/1000));
   for(const L of LOOPS){ const cl=await c.isClaimed(L.id); log('#'+L.id+' holder '+(await c.holderOf(L.id))+' · '+(cl?'claimed by '+(await c.ownerOf(L.id)):'unclaimed')); } });
