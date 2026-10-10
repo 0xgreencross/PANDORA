@@ -2,7 +2,7 @@
    and the Plate Zero line. The renderer itself is /gift/sw.js, the same bytes as tools/gift/sw.js: it redraws
    each loop from the chain's numbers for SAVE GIF (the chain holds the loop itself, the 96 grid). */
 const NETS={
-  mainnet:{chainId:1,  contract:'', rpc:'https://ethereum-rpc.publicnode.com', name:'Ethereum'},
+  mainnet:{chainId:1,  contract:'0xFda639d346Cf2Dd8456aefCB741109861256A614', rpc:'https://ethereum-rpc.publicnode.com', name:'Ethereum'},
   sepolia:{chainId:11155111, contract:'', rpc:'https://ethereum-sepolia-rpc.publicnode.com', name:'Sepolia'},
   hoodi:{chainId:560048, contract:'', rpc:'https://ethereum-hoodi-rpc.publicnode.com', name:'Hoodi'},
   local:{chainId:31337, contract:'', rpc:'http://127.0.0.1:8545', name:'local'}
