@@ -69,6 +69,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   .big{font-size:34px;line-height:1.1;letter-spacing:.02em;font-weight:500}
   .big small{font-size:14px;color:var(--mut);letter-spacing:.1em}
   .row{display:flex;gap:8px;align-items:center}
+  .cta{border:1px solid var(--acc);padding:16px;margin:14px 0 18px} .cta .k{color:var(--acc)} .cta .row{margin-top:10px} .cta input{flex:1;min-width:0;font-size:16px;padding:12px} .cta button.prime{background:var(--acc);color:var(--bg);font-weight:700;font-size:15px;letter-spacing:.14em;padding:12px 22px} .cta .note{margin-top:8px}
   section{max-width:1240px;margin:0 auto;padding:6px 16px 22px;width:100%}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
   .card{position:relative;background:#000;border:1px solid var(--hair);aspect-ratio:1/1;overflow:hidden;cursor:pointer}
@@ -212,7 +213,7 @@ async function rehearsal(){
 </script>
 <script>
 /* ═══ THE CONFIG. Set once the ledger is deployed. Empty means the page shows the design on a rehearsal. */
-const CFG={ chainId:0, contract:'', glass:'', rpc:'', explorer:'', demo:new URLSearchParams(location.search).has('demo') };
+const CFG={ chainId:1, contract:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C', glass:'0xF125024a394C0518D85D7a416cc9df96177107f4', rpc:'https://ethereum-rpc.publicnode.com', explorer:'https://etherscan.io', demo:new URLSearchParams(location.search).has('demo') };
 const ABI=[
   'function candleOpen() view returns (uint256)','function candleClose() view returns (uint256)','function candleSettled() view returns (bool)','function revealBlock() view returns (uint256)',
   'function zeroSeed() view returns (uint32)','function bidsCount() view returns (uint256)','function bids(uint256) view returns (address bidder,uint128 amount,uint64 at,uint32 seed)',
@@ -301,12 +302,15 @@ async function render(st){
     $('state').textContent='THE CANDLE';
     const sky=CFG.demo?{}:await skyOf(0);
     await showPlate({seed:st.leader?st.leader.seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO · REROLLED BY EVERY BID');
-    const draw=()=>{ const t=now(); let line;
+    const draw=()=>{ const t=now(); let line; const ki=$('bidAmt'); const keep=ki?{v:ki.value,f:document.activeElement===ki}:null;
       if(t>=windowEnd) line='<div class="big warn">THE CANDLE IS OUT</div><div class="note">The window has closed. The moment the flame went out is drawn at the settle, from block '+st.revealBlock+(st.blk>st.revealBlock?'':' (now '+st.blk+')')+'; the leader at that moment takes Plate Zero and every other held bid is returned.</div>'+(st.blk>st.revealBlock?'<button class="prime" id="bSettle">SETTLE THE CANDLE</button>':'');
       else if(t<burn) line='<div class="k">BURNING · SURE FOR</div><div class="big">'+hms(burn-t)+'</div>';
       else line='<div class="k">INSIDE THE WINDOW</div><div class="big warn">IT MAY ALREADY BE OUT</div><div class="note">Until '+new Date(windowEnd*1000).toLocaleTimeString()+' at the latest. The moment is drawn after the window, from a block no one has seen yet. Bids now are held until the settle; the leader at the drawn moment wins and every other held bid is returned.</div>';
-      panel('<div class="k">PLATE ZERO · SOLD BY CANDLE</div>'+line+'<hr><div class="k">LEADING BID</div><div class="big">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+'</small>':'<small>none yet · reserve 0.05 ETH</small>')+'</div><div class="note">'+st.nBids+' bids. Every bid rerolls the plate; the plate you see is the leader’s. Each bid at least 5% over the last. Outbid before the window: refunded at once. In the window, bids are held until the settle. The winning bid becomes the founding price, the price of a seat forever. Seventy to the artist, thirty to the vault.</div>'
-        +'<div class="row"><input id="bidAmt" placeholder="'+(st.leader?'ETH, at least '+fmt(st.leader.amount+st.leader.amount/20n):'ETH, at least 0.05')+'" inputmode="decimal"><button class="prime" id="bBid">BID</button></div>');
+      panel('<div class="k">PLATE ZERO · SOLD BY CANDLE</div>'
+        +(t<windowEnd?'<div class="cta"><div class="k">BID ON PLATE ZERO</div><div class="big">'+(st.leader?'Beat '+fmt(st.leader.amount)+' <small>ETH</small>':'Start at 0.05 <small>ETH</small>')+'</div><div class="row"><input id="bidAmt" placeholder="'+(st.leader?'ETH, at least '+fmt(st.leader.amount+st.leader.amount/20n):'ETH, at least 0.05')+'" inputmode="decimal"><button class="prime" id="bBid">BID</button></div><div class="note">Your wallet opens to confirm. Your bid redraws the plate above. '+(t<burn?'Outbid before the window: refunded at once.':'In the window, bids are held until the settle.')+'</div></div>':'')
+        +line+'<hr><div class="k">LEADING BID</div><div class="big">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+'</small>':'<small>none yet · reserve 0.05 ETH</small>')+'</div><div class="note">'+st.nBids+' bids. Every bid rerolls the plate; the plate you see is the leader’s. Each bid at least 5% over the last. Outbid before the window: refunded at once. In the window, bids are held until the settle. The winning bid becomes the founding price, the price of a seat forever. Seventy to the artist, thirty to the vault.</div>'
+        +'');
+      const ni=$('bidAmt'); if(keep&&ni){ ni.value=keep.v; if(keep.f){ ni.focus(); ni.setSelectionRange(ni.value.length,ni.value.length); } }
       const b=$('bBid'); if(b) b.onclick=()=>send('bid',W=>pad(W.bid,[],{value:ethers.parseEther($('bidAmt').value||'0')}));
       const s3=$('bSettle'); if(s3) s3.onclick=()=>send('settle',W=>pad(W.settleCandle,[]));
     };
