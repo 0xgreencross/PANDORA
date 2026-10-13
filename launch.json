@@ -1,0 +1,8 @@
+{
+  "candleLights": "2026-10-12T20:23:23Z",
+  "candleWindow": ["2026-10-13T20:23:23Z", "2026-10-14T02:23:23Z"],
+  "foundersDayHours": 24,
+  "stormglass": { "chainId": 1, "contract": "0xCf5EBA884EFA04940d31A663bEB6D37F907d064C" },
+  "gift": { "chainId": 1, "contract": "0xFda639d346Cf2Dd8456aefCB741109861256A614" },
+  "state": "candle"
+}
