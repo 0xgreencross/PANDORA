@@ -276,10 +276,17 @@ async function swCount(){
 
 /* ═══ THE CHAIN */
 let ro=null, storm=null, glass=null, signer=null, me=null, W=null;
-/* reads go to a public node; when one fails or rate-limits, the page moves to the next (writes always go through the wallet) */
-const READ_RPCS=[CFG.rpc,'https://rpc.mevblocker.io','https://eth.drpc.org']; let rpcAt=0;
-function bindRead(){ const net=ethers.Network.from(CFG.chainId); const fr=new ethers.FetchRequest(READ_RPCS[rpcAt%READ_RPCS.length]); fr.timeout=8000; fr.setThrottleParams({maxAttempts:1}); ro=new ethers.JsonRpcProvider(fr,net,{staticNetwork:net,batchMaxCount:4}); storm=new ethers.Contract(CFG.contract,ABI,ro); glass=new ethers.Contract(CFG.glass,GABI,ro); giftC=null; }
-async function connectRead(){ if(!CFG.contract) return; bindRead(); }
+/* reads go to a public node; when one fails or rate-limits, the page moves to the next. Last resort: the visitor's own
+   browser wallet, read-only (eth_call needs no permission and opens no popup), only when it sits on the right chain.
+   Writes always go through the wallet. */
+const READ_RPCS=[CFG.rpc,'https://rpc.mevblocker.io','https://eth.drpc.org','wallet']; let rpcAt=0;
+async function walletReads(){ try{ return !!window.ethereum && Number(await window.ethereum.request({method:'eth_chainId'}))===CFG.chainId; }catch(e){ return false; } }
+async function bindRead(){ const net=ethers.Network.from(CFG.chainId); let src=READ_RPCS[rpcAt%READ_RPCS.length];
+  if(src==='wallet'&&!(await walletReads())){ rpcAt++; src=READ_RPCS[rpcAt%READ_RPCS.length]; }
+  if(src==='wallet'){ ro=new ethers.BrowserProvider(window.ethereum,net); }
+  else { const fr=new ethers.FetchRequest(src); fr.timeout=8000; fr.setThrottleParams({maxAttempts:1}); ro=new ethers.JsonRpcProvider(fr,net,{staticNetwork:net,batchMaxCount:4}); }
+  storm=new ethers.Contract(CFG.contract,ABI,ro); glass=new ethers.Contract(CFG.glass,GABI,ro); giftC=null; }
+async function connectRead(){ if(!CFG.contract) return; await bindRead(); }
 async function connectWallet(){
   if(!window.ethereum){ toast('no wallet in this browser'); return; }
   const bp=new ethers.BrowserProvider(window.ethereum); await bp.send('eth_requestAccounts',[]);
@@ -422,10 +429,10 @@ async function refreshSeats(){
 let fails=0;
 async function tick(force){ try{ const st=await read(); fails=0; await render(st); await renderLedger(st); if(me) refreshSeats().catch(e=>console.error(e)); }
   catch(e){ console.error(e); fails++;
-    if(!CFG.demo&&fails<READ_RPCS.length){ rpcAt++; bindRead(); return tick(force); }   /* try the next public node at once */
-    fails=0; rpcAt++; bindRead();
+    if(!CFG.demo&&fails<READ_RPCS.length){ rpcAt++; await bindRead(); return tick(force); }   /* try the next source at once */
+    fails=0; rpcAt++; await bindRead();
     if(ST&&ST.now){ $('state').textContent='RECONNECTING…'; return; }                   /* keep the last good panel: the bid box stays usable */
-    $('state').textContent='CANNOT READ THE CHAIN'; panel('<div class="k">THE CHAIN</div><div class="note warn">The public nodes did not answer. Retrying every 30 seconds.</div>'); } }
+    $('state').textContent='CANNOT READ THE CHAIN'; panel('<div class="k">THE CHAIN</div><div class="note warn">The public nodes did not answer from your network. Retrying every 30 seconds. With a browser wallet set to Ethereum mainnet, the page reads through it.</div>'); } }
 (async()=>{
   if(!CFG.contract&&!CFG.demo){ return rehearsal(); }
   if(!CFG.demo) await connectRead();
