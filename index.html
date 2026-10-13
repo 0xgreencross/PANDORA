@@ -270,27 +270,32 @@ async function welcome(addr){
 }
 async function swCount(){
   const el=$('swCount'); if(!CFG.gift) return;
-  let made=79n, claimed=78n; try{ const G=giftRead(); [made,claimed]=await Promise.all([G.gifts(),G.minted()]); }catch(e){ if(!CFG.demo) return; }
+  let made=79n, claimed=78n; try{ const G=giftRead(); [made,claimed]=await Promise.all([G.gifts(),G.minted()]); }catch(e){ if(!CFG.demo){ setTimeout(swCount,8000); return; } }
   el.innerHTML='<a href="/gift/all/" style="color:var(--acc)">SMALL WEATHER</a> · '+made+' made · '+claimed+' claimed'; el.hidden=false;
 }
 
 /* ═══ THE CHAIN */
 let ro=null, storm=null, glass=null, signer=null, me=null, W=null;
-async function connectRead(){
-  if(!CFG.contract) return;
-  ro=new ethers.JsonRpcProvider(CFG.rpc); storm=new ethers.Contract(CFG.contract,ABI,ro); glass=new ethers.Contract(CFG.glass,GABI,ro);
-}
+/* reads go to a public node; when one fails or rate-limits, the page moves to the next (writes always go through the wallet) */
+const READ_RPCS=[CFG.rpc,'https://rpc.mevblocker.io','https://eth.drpc.org']; let rpcAt=0;
+function bindRead(){ const net=ethers.Network.from(CFG.chainId); const fr=new ethers.FetchRequest(READ_RPCS[rpcAt%READ_RPCS.length]); fr.timeout=8000; fr.setThrottleParams({maxAttempts:1}); ro=new ethers.JsonRpcProvider(fr,net,{staticNetwork:net,batchMaxCount:4}); storm=new ethers.Contract(CFG.contract,ABI,ro); glass=new ethers.Contract(CFG.glass,GABI,ro); giftC=null; }
+async function connectRead(){ if(!CFG.contract) return; bindRead(); }
 async function connectWallet(){
   if(!window.ethereum){ toast('no wallet in this browser'); return; }
   const bp=new ethers.BrowserProvider(window.ethereum); await bp.send('eth_requestAccounts',[]);
   const net=await bp.getNetwork(); if(CFG.chainId&&Number(net.chainId)!==CFG.chainId){ toast('switch your wallet to chain '+CFG.chainId); }
   signer=await bp.getSigner(); me=await signer.getAddress(); W=new ethers.Contract(CFG.contract,ABI,signer);
-  $('wallet').textContent=short(me); welcome(me).catch(()=>{}); await refreshSeats();
+  $('wallet').textContent=short(me); welcome(me).catch(()=>{}); refreshSeats().catch(e=>console.error(e));
 }
-$('wallet').addEventListener('click',()=>connectWallet().catch(e=>toast(e.shortMessage||e.message)));
+/* the wallet's own words: ethers hides wallet errors it does not know behind "could not coalesce error" */
+function errMsg(e){ const inner=(e&&(e.error||(e.info&&e.info.error)))||{}; const code=inner.code??(e&&e.code);
+  if(code===-32002) return 'Your wallet already has a request waiting: open it from the browser toolbar and finish it, then try again';
+  if(code===4001||code==='ACTION_REJECTED') return 'Cancelled in the wallet';
+  return String(inner.message||(e&&(e.reason||e.shortMessage||e.message))||e).slice(0,200); }
+$('wallet').addEventListener('click',()=>connectWallet().catch(e=>{ console.error(e); toast(errMsg(e)); }));
 /* every transaction carries room to spare: a wallet that is a smart account (EIP-7702) runs code when it is refunded, and wallets' estimates come in short */
 async function pad(m,args,ov={}){ let g=null; try{ g=await m.estimateGas(...args,ov); }catch(e){} if(g===null) return m(...args,ov); let L=g*3n/2n+60000n; if(L<250000n) L=250000n; if(L>15000000n) L=15000000n; return m(...args,{...ov,gasLimit:L}); }
-async function send(name,fn){ if(!W){ await connectWallet(); if(!W) return; } try{ toast(name+' … confirm in your wallet'); const tx=await fn(W); toast(name+' sent'); await tx.wait(); toast(name+' done'); await tick(true); }catch(e){ toast((e.reason||e.shortMessage||e.message||String(e)).slice(0,160)); } }
+async function send(name,fn){ try{ if(!W){ await connectWallet(); if(!W) return; } toast(name+' … confirm in your wallet'); const tx=await fn(W); toast(name+' sent'); await tx.wait(); toast(name+' done'); await tick(true); }catch(e){ console.error(e); toast(errMsg(e)); } }
 
 /* ═══ THE PLATE ON THE GLASS: the token page itself, fed the seed and the sky */
 let pageSrc=null;
@@ -414,7 +419,13 @@ async function refreshSeats(){
   $('claim').disabled=p===0n; $('claim').onclick=()=>send('claim',W=>pad(W.claim,[]));
   $('withdraw').style.display=o>0n?'':'none'; $('withdraw').disabled=o===0n; $('withdraw').onclick=()=>send('withdraw',W=>pad(W.withdraw,[]));
 }
-async function tick(force){ try{ const st=await read(); await render(st); await renderLedger(st); if(me) await refreshSeats(); }catch(e){ console.error(e); $('state').textContent='CANNOT READ THE CHAIN'; panel('<div class="k">THE CHAIN</div><div class="note warn">'+String(e.shortMessage||e.message||e).slice(0,200)+'</div>'); } }
+let fails=0;
+async function tick(force){ try{ const st=await read(); fails=0; await render(st); await renderLedger(st); if(me) refreshSeats().catch(e=>console.error(e)); }
+  catch(e){ console.error(e); fails++;
+    if(!CFG.demo&&fails<READ_RPCS.length){ rpcAt++; bindRead(); return tick(force); }   /* try the next public node at once */
+    fails=0; rpcAt++; bindRead();
+    if(ST&&ST.now){ $('state').textContent='RECONNECTING…'; return; }                   /* keep the last good panel: the bid box stays usable */
+    $('state').textContent='CANNOT READ THE CHAIN'; panel('<div class="k">THE CHAIN</div><div class="note warn">The public nodes did not answer. Retrying every 30 seconds.</div>'); } }
 (async()=>{
   if(!CFG.contract&&!CFG.demo){ return rehearsal(); }
   if(!CFG.demo) await connectRead();
