@@ -3,7 +3,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23050506%22/%3E%3Crect x=%229%22 y=%229%22 width=%2214%22 height=%2214%22 fill=%22none%22 stroke=%22%23c8ff3a%22 stroke-width=%222%22 transform=%22rotate(45 16 16)%22/%3E%3C/svg%3E"><link rel="apple-touch-icon" href="/icon.png">
 <title>DITHERVOID // STORMGLASS</title>
 <meta name="description" content="One plate a day at a falling price, the chain writing the sky, until it dies.">
-<meta property="og:type" content="website"><meta property="og:title" content="DITHERVOID // STORMGLASS"><meta property="og:description" content="One plate a day at a falling price, the chain writing the sky, until it dies."><meta property="og:url" content="https://dithervoid.art/"><meta property="og:image" content="https://dithervoid.art/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="DITHERVOID // STORMGLASS"><meta name="twitter:image" content="https://dithervoid.art/og.png">
+<meta property="og:type" content="website"><meta property="og:title" content="DITHERVOID // STORMGLASS"><meta property="og:description" content="One plate a day at a falling price, the chain writing the sky, until it dies."><meta property="og:url" content="https://dithervoid.art/"><meta property="og:image" content="https://dithervoid.art/og_stormglass.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="DITHERVOID // STORMGLASS"><meta name="twitter:image" content="https://dithervoid.art/og_stormglass.png">
 <script>
 /* the old addresses keep working: the PANDORA renderer (?dna=) and the wall's QR codes (?s=&i=) lived at the root */
 (function(){var q=new URLSearchParams(location.search);
@@ -280,16 +280,28 @@ let ro=null, storm=null, glass=null, signer=null, me=null, W=null;
    browser wallet, read-only (eth_call needs no permission and opens no popup), only when it sits on the right chain.
    Writes always go through the wallet. */
 const READ_RPCS=[CFG.rpc,'https://rpc.mevblocker.io','https://eth.drpc.org','wallet']; let rpcAt=0;
-async function walletReads(){ try{ return !!window.ethereum && Number(await window.ethereum.request({method:'eth_chainId'}))===CFG.chainId; }catch(e){ return false; } }
+/* EIP-6963: every installed wallet announces itself. Ask MetaMask first, then the others, then window.ethereum:
+   when two wallet extensions fight over window.ethereum, the one that wins may refuse ("dapp interaction disabled") */
+const WALLETS=[]; let EP=null;
+window.addEventListener('eip6963:announceProvider',e=>{ const d=e&&e.detail; if(d&&d.provider&&!WALLETS.some(w=>w.provider===d.provider)) WALLETS.push(d); });
+try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
+const isMM=w=>!!(w&&w.info&&w.info.rdns==='io.metamask');
+function walletList(){ const L=WALLETS.slice().sort((a,b)=>isMM(b)-isMM(a)).map(w=>w.provider); if(window.ethereum&&!L.includes(window.ethereum)) L.push(window.ethereum); return L; }
+function anyWallet(){ return EP||walletList()[0]||null; }
+async function walletReads(){ try{ const P=anyWallet(); return !!P && Number(await P.request({method:'eth_chainId'}))===CFG.chainId; }catch(e){ return false; } }
 async function bindRead(){ const net=ethers.Network.from(CFG.chainId); let src=READ_RPCS[rpcAt%READ_RPCS.length];
   if(src==='wallet'&&!(await walletReads())){ rpcAt++; src=READ_RPCS[rpcAt%READ_RPCS.length]; }
-  if(src==='wallet'){ ro=new ethers.BrowserProvider(window.ethereum,net); }
+  if(src==='wallet'){ ro=new ethers.BrowserProvider(anyWallet(),net); }
   else { const fr=new ethers.FetchRequest(src); fr.timeout=8000; fr.setThrottleParams({maxAttempts:1}); ro=new ethers.JsonRpcProvider(fr,net,{staticNetwork:net,batchMaxCount:4}); }
   storm=new ethers.Contract(CFG.contract,ABI,ro); glass=new ethers.Contract(CFG.glass,GABI,ro); giftC=null; }
 async function connectRead(){ if(!CFG.contract) return; await bindRead(); }
 async function connectWallet(){
-  if(!window.ethereum){ toast('no wallet in this browser'); return; }
-  const bp=new ethers.BrowserProvider(window.ethereum); await bp.send('eth_requestAccounts',[]);
+  try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
+  const L=EP?[EP]:walletList(); if(!L.length){ toast('no wallet in this browser'); return; }
+  let bp=null, err=null;
+  for(const P of L){ try{ await P.request({method:'eth_requestAccounts'}); bp=new ethers.BrowserProvider(P); EP=P; break; }
+    catch(e){ const c=e&&e.code; if(c===4001||c===-32002) throw e; err=e; console.warn('wallet refused, trying the next one',e); } }
+  if(!bp){ if(L.length>1) throw new Error(errMsg(err)+' (more than one wallet extension is installed: switch off the others and reload)'); throw err; }
   const net=await bp.getNetwork(); if(CFG.chainId&&Number(net.chainId)!==CFG.chainId){ toast('switch your wallet to chain '+CFG.chainId); }
   signer=await bp.getSigner(); me=await signer.getAddress(); W=new ethers.Contract(CFG.contract,ABI,signer);
   $('wallet').textContent=short(me); welcome(me).catch(()=>{}); refreshSeats().catch(e=>console.error(e));
