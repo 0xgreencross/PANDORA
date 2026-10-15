@@ -203,7 +203,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
 
 <section id="smallweather">
   <h2>SMALL WEATHER</h2>
-  <p class="note">SMALL WEATHER is a separate, earlier collection: a small animated loop, 96 by 96 pixels, made for each collector who answered GREENCROSS before STORMGLASS began, drawn from their own wallet address and stored on Ethereum. Each one can only be claimed by the wallet it was made for, for free apart from the network fee. GREENCROSS may also send an unclaimed one to its owner. Holders get a small ≈ mark next to their address on this page. SMALL WEATHER has no effect on STORMGLASS; the mark and the count below are features of this website. Its contract is not yet verified on Etherscan. <a href="/gift/" style="color:var(--acc)">Claim yours ↗</a></p>
+  <p class="note">SMALL WEATHER is a separate, earlier collection: a small animated loop, 96 by 96 pixels, made for each collector who answered GREENCROSS before STORMGLASS began, drawn from their own wallet address and stored on Ethereum. Each one can only be claimed by the wallet it was made for, for free apart from the network fee. GREENCROSS may also send an unclaimed one to its owner. Holders get a small ≈ mark next to their address on this page. SMALL WEATHER has no effect on STORMGLASS; the mark and the count below are features of this website. Its contract is verified on Etherscan: <a href="https://etherscan.io/address/0xFda639d346Cf2Dd8456aefCB741109861256A614#code" target="_blank" rel="noopener" style="color:var(--acc);overflow-wrap:anywhere">0xFda639d346Cf2Dd8456aefCB741109861256A614 ↗</a>. <a href="/gift/" style="color:var(--acc)">Claim yours ↗</a></p>
   <div class="k" id="swCount" hidden style="margin-top:12px"></div>
 </section>
 
@@ -444,7 +444,7 @@ async function read(){
   const s=storm;
   const [settled, dead, today, lastId, candleClose, candleOpen, nBids, zeroSeed, FOUNDING, foundersEnd, revealBlock, vault, seatPool, totalSeats]=await Promise.all([s.candleSettled(),s.dead(),s.today(),s.lastId(),s.candleClose(),s.candleOpen(),s.bidsCount(),s.zeroSeed(),s.FOUNDING(),s.foundersEnd(),s.revealBlock(),s.vault(),s.seatPool(),s.totalSeats()]);
   const blk=await ro.getBlockNumber(); const now=(await ro.getBlock('latest')).timestamp;
-  const st={settled,dead,today:Number(today),lastId:Number(lastId),candleClose:Number(candleClose),candleOpen:Number(candleOpen),nBids:Number(nBids),zeroSeed:Number(zeroSeed),FOUNDING,foundersEnd:Number(foundersEnd),revealBlock:Number(revealBlock),blk,now,vault,seatPool,totalSeats,skew:now-Math.floor(Date.now()/1000)};
+  const st={settled,dead,today:Number(today),lastId:Number(lastId),candleClose:Number(candleClose),candleOpen:Number(candleOpen),nBids:Number(nBids),zeroSeed:Number(zeroSeed),FOUNDING,foundersEnd:Number(foundersEnd),revealBlock:Number(revealBlock),blk,now,vault,seatPool,totalSeats,skew:(d=>Math.abs(d)>90?d:0)(now-Math.floor(Date.now()/1000))};
   if(st.nBids>0){ const b=await s.bids(st.nBids-1); st.leader={bidder:b.bidder,amount:b.amount,seed:Number(b.seed)}; }
   if(settled&&!dead&&st.today>0){ const D=await s.plates(st.today); const [id,price,close,open]=await s.onSale(); st.day={id:Number(id),seed:Number(D.seed),pick:Number(D.pick),open:Number(D.open),close:Number(D.close),sold:D.sold,buyer:D.buyer,witnessed:D.witnessed,price:D.price,onSale:open,priceNow:price,start:await s.startPrice(st.today),ref:await s.referencePrice()};
     if(open) st.cands=(await s.candidates(st.today)).map(Number); }
@@ -468,7 +468,8 @@ function demoState(){
   return base;
 }
 function panel(html){ $('panel').innerHTML=html; }
-async function render(st){
+let RGEN=0;
+async function render(st){ const gen=++RGEN;
   ST=st; const now=()=>Math.floor(Date.now()/1000)+st.skew;
   clearInterval(timer);
   if(!st.settled){
@@ -488,7 +489,7 @@ async function render(st){
       const b=$('bBid'); if(b) b.onclick=()=>send('bid',W=>pad(W.bid,[],{value:ethers.parseEther($('bidAmt').value||'0')}));
       const s3=$('bSettle'); if(s3) s3.onclick=()=>send('settle',W=>pad(W.settleCandle,[]));
     };
-    draw(); REDRAW=draw; timer=setInterval(()=>{ const t=now(); if(t%5===0) draw(); else { const e=$('panel').querySelector('.big'); } },1000);
+    if(gen!==RGEN) return; clearInterval(timer); draw(); REDRAW=draw; timer=setInterval(()=>{ const t=now(); if(t%5===0) draw(); else { const e=$('panel').querySelector('.big'); } },1000);
     $('candidates').style.display='none'; return;
   }
   if(st.dead){
@@ -512,7 +513,7 @@ async function render(st){
       const np=$('plAmt'); if(keep&&np){ np.value=keep.v; if(keep.f){ np.focus(); np.setSelectionRange(np.value.length,np.value.length); } }
       const b=$('bPledge'); if(b) b.onclick=()=>send('pledge',W=>pad(W.pledge,[],{value:ethers.parseEther($('plAmt').value||'0')}));
       const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[])); };
-    draw(); REDRAW=draw; timer=setInterval(draw,1000); $('candidates').style.display='none'; return;
+    if(gen!==RGEN) return; clearInterval(timer); draw(); REDRAW=draw; timer=setInterval(draw,1000); $('candidates').style.display='none'; return;
   }
   const D=st.day; $('state').textContent='DAY '+D.id;
   lastSky=CFG.demo?{}:await skyOf(D.id);
@@ -532,7 +533,7 @@ async function render(st){
     const b=$('bBuy'); if(b) b.onclick=()=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; send('buy',W=>pad(W.buy,[D.id,pick],{value:pay})); };
     const w=$('bWit'); if(w) w.onclick=()=>send('witness',W=>pad(W.witness,[D.id],{value:ethers.parseEther($('wAmt').value||'0')}));
   };
-  draw(); REDRAW=draw; timer=setInterval(()=>{ const t=now(); const e=$('px'); if(e&&!D.sold&&t<D.close){ const p=priceNow(start,D.open,t); e.innerHTML=p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small>'; const nx=$('nxt'); if(nx) nx.textContent=nextHalf(D.open,t); } if(t%10===0) draw(); },1000);
+  if(gen!==RGEN) return; clearInterval(timer); draw(); REDRAW=draw; timer=setInterval(()=>{ const t=now(); const e=$('px'); if(e&&!D.sold&&t<D.close){ const p=priceNow(start,D.open,t); e.innerHTML=p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small>'; const nx=$('nxt'); if(nx) nx.textContent=nextHalf(D.open,t); } if(t%10===0) draw(); },1000);
   if(D.onSale&&st.cands){ $('candidates').style.display='block'; const g=$('candGrid'); if(g.dataset.day!==String(D.id)){ g.dataset.day=String(D.id); g.innerHTML=''; pick=null;
       st.cands.forEach((seed,k)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+k+'</i>'; el.onclick=()=>{ pick=k; g.querySelectorAll('.card').forEach(c=>c.classList.remove('on')); el.classList.add('on'); draw(); }; g.appendChild(el); });
       (async()=>{ for(const [k,seed] of st.cands.entries()) await fillCard(g.children[k],{seed,live:lastSky}); })(); } }
