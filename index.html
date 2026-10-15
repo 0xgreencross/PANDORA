@@ -286,7 +286,7 @@ const WALLETS=[]; let EP=null;
 window.addEventListener('eip6963:announceProvider',e=>{ const d=e&&e.detail; if(d&&d.provider&&!WALLETS.some(w=>w.provider===d.provider)) WALLETS.push(d); });
 try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
 const isMM=w=>!!(w&&w.info&&w.info.rdns==='io.metamask');
-function walletList(){ const L=WALLETS.slice().sort((a,b)=>isMM(b)-isMM(a)).map(w=>w.provider); if(window.ethereum&&!L.includes(window.ethereum)) L.push(window.ethereum); return L; }
+function walletList(){ const L=[]; if(window.ethereum) L.push(window.ethereum); WALLETS.slice().sort((a,b)=>isMM(b)-isMM(a)).forEach(w=>{ if(!L.includes(w.provider)) L.push(w.provider); }); return L; }   /* the browser's default wallet first (the one the user chose), then every other announced wallet as a fallback */
 function anyWallet(){ return EP||walletList()[0]||null; }
 async function walletReads(){ try{ const P=anyWallet(); return !!P && Number(await P.request({method:'eth_chainId'}))===CFG.chainId; }catch(e){ return false; } }
 async function bindRead(){ const net=ethers.Network.from(CFG.chainId); let src=READ_RPCS[rpcAt%READ_RPCS.length];
