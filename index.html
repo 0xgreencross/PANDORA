@@ -393,9 +393,10 @@ async function render(st){
     $('state').textContent="FOUNDERS' DAY";
     const sky=CFG.demo?{}:await skyOf(0);
     await showPlate({seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO');
-    const draw=()=>{ const t=now(); const open=t>=st.foundersEnd;
+    const draw=()=>{ const t=now(); const open=t>=st.foundersEnd; const pi=$('plAmt'); const keep=pi?{v:pi.value,f:document.activeElement===pi}:null;
       panel('<div class="k">'+(open?'BETWEEN DAYS':"FOUNDERS' DAY")+'</div><div class="big">'+(open?'DAY ONE OPENS AT 4:20 MIAMI':hms(st.foundersEnd-t))+'</div><div class="note">Founding price '+fmt(st.FOUNDING)+' ETH. Pay anything today: seats at the founding rate, uncapped, and a notch on Plate Zero in the accent ink. No token. Seventy to the artist, twenty to the seats, ten to the vault.</div>'
         +(open?'<button id="bSync">OPEN THE DAY</button>':'<div class="row"><input id="plAmt" placeholder="ETH" inputmode="decimal"><button class="prime" id="bPledge">PLEDGE</button></div>'));
+      const np=$('plAmt'); if(keep&&np){ np.value=keep.v; if(keep.f){ np.focus(); np.setSelectionRange(np.value.length,np.value.length); } }
       const b=$('bPledge'); if(b) b.onclick=()=>send('pledge',W=>pad(W.pledge,[],{value:ethers.parseEther($('plAmt').value||'0')}));
       const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[])); };
     draw(); REDRAW=draw; timer=setInterval(draw,1000); $('candidates').style.display='none'; return;
