@@ -2,8 +2,8 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#050506">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23050506%22/%3E%3Crect x=%229%22 y=%229%22 width=%2214%22 height=%2214%22 fill=%22none%22 stroke=%22%23c8ff3a%22 stroke-width=%222%22 transform=%22rotate(45 16 16)%22/%3E%3C/svg%3E"><link rel="apple-touch-icon" href="/icon.png">
 <title>DITHERVOID // STORMGLASS</title>
-<meta name="description" content="One plate a day at a falling price, the chain writing the sky, until it dies.">
-<meta property="og:type" content="website"><meta property="og:title" content="DITHERVOID // STORMGLASS"><meta property="og:description" content="One plate a day at a falling price, the chain writing the sky, until it dies."><meta property="og:url" content="https://dithervoid.art/"><meta property="og:image" content="https://dithervoid.art/og_stormglass.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="DITHERVOID // STORMGLASS"><meta name="twitter:image" content="https://dithervoid.art/og_stormglass.png">
+<meta name="description" content="An art project by GREENCROSS on Ethereum: one artwork a day at a price that halves every 2.4 hours, drawn from live Ethereum data, until a day goes unsold.">
+<meta property="og:type" content="website"><meta property="og:title" content="DITHERVOID // STORMGLASS"><meta property="og:description" content="One artwork a day at a price that halves every 2.4 hours, drawn from live Ethereum data, until a day goes unsold. By GREENCROSS."><meta property="og:url" content="https://dithervoid.art/"><meta property="og:image" content="https://dithervoid.art/og_stormglass.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="DITHERVOID // STORMGLASS"><meta name="twitter:image" content="https://dithervoid.art/og_stormglass.png">
 <script>
 /* the old addresses keep working: the PANDORA renderer (?dna=) and the wall's QR codes (?s=&i=) lived at the root */
 (function(){var q=new URLSearchParams(location.search);
@@ -99,70 +99,166 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
 <header class="top"><div class="bar"><a class="brand" href="/">DITHERVOID // STORMGLASS</a><span id="state">READING THE CHAIN</span><nav><a href="/" aria-current="page">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a></nav><button id="wallet" class="act">CONNECT</button></div></header>
 <main class="hero" id="top">
   <div><div id="plateBox"><iframe id="plate" title="the plate"></iframe><div id="plateTag">STANDBY</div></div></div>
-  <div class="side"><div class="panel" id="panel"><div class="k">STANDBY</div><div class="note">Reading the chain…</div></div><div class="welcome" id="welcome" hidden></div></div>
+  <div class="side"><div class="panel" id="panel"><div class="k">LOADING</div><div class="note">Reading the sale from Ethereum…</div></div><div class="welcome" id="welcome" hidden></div></div>
 </main>
-<section id="candidates" style="display:none"><h2>TOMORROW’S PLATE · THE BUYER CHOOSES ONE OF THIRTY-TWO</h2><div class="grid" id="candGrid"></div></section>
+<section id="candidates" style="display:none"><h2>TOMORROW’S PLATE · THE BUYER PICKS ONE OF THESE 32</h2><div class="grid" id="candGrid"></div></section>
 
 <section id="project">
-  <h2>THE PROJECT</h2>
-  <p class="lead">DITHERVOID // STORMGLASS is one plate a day at a falling price, the chain writing the sky, until it dies.</p>
-  <p>A plate is a kinetic monument: a stone, a solid, a growth or an assembly of them, turning once per loop under one sun, printed in ink and dither. The engine that draws it is not a file on a server; it is stored in the contract, byte for byte, and every plate is drawn again each time it is looked at. What changes between two lookings is the sky.</p>
-  <p>The sky is read from the chain itself. The base fee sets the weather, the clock sets the hour, the moon and the tide, the price of ether floods the ground, the stablecoins slipping off their peg counterfeit the impression, the blob fee brings the hunger. No oracle, no server, no owner, no dial to expire. One ERC-721 collection, CC0, Greencross, always.</p>
-  <div class="cols" style="margin-top:14px">
-    <div class="box"><div class="n">THE PLATE</div>Monuments (obelisk, trilithon, ziggurat, dolmen, stelae, the gate, the sundial, the hourglass), the golden solids, the generators of the golden proportion (the tree, the nest, the whorl, the circle of stones, quartz), assemblies of them, and, one plate in a hundred, the STORMGLASS itself with the weather inside it.</div>
-    <div class="box"><div class="n">THE PRINT</div>A loop of 36 frames at 1080 pixels, square by default; the glass also shows it tall (9:16) and wide (16:9). The print is written exactly as it is drawn: what you see on the glass is the file.</div>
-    <div class="box"><div class="n">THE GLASS</div>Every token is its own page. Tap the plate to open the OS: the shape, the download, full screen, the DNA. <a href="/glass/?seed=424242" style="color:var(--acc)">Open a rehearsal glass ↗</a></div>
+  <h2>WHAT THIS IS</h2>
+  <p class="lead">STORMGLASS is an art project by GREENCROSS on Ethereum. Every day one new artwork, called a plate, goes on sale at 4:20pm Miami time. Its price starts high and halves every 2.4 hours until someone buys it.</p>
+  <p>Each plate is drawn by a program stored on Ethereum itself, and it is drawn again from live Ethereum data every time it is opened, so the same plate looks different from one day to the next. The series goes on for as long as plates keep selling. If a day ends unsold and the project's savings (the vault) cannot buy it, the series ends for good.</p>
+  <p class="note">New to this? Ethereum is a public network that runs programs called smart contracts. ETH is its currency. To buy a plate you need a wallet (an app such as MetaMask, Rabby or Coinbase Wallet) holding some ETH. Every action also costs a small network fee, called gas. The words in this page are explained in the <a href="#glossary" style="color:var(--acc)">glossary</a>, and the common questions in the <a href="#faq" style="color:var(--acc)">FAQ</a>.</p>
+  <div class="row" style="flex-wrap:wrap;gap:6px 14px;font-size:10px;letter-spacing:.16em;color:var(--mut)"><a href="#sale">HOW THE SALE WORKS</a><a href="#art">THE ARTWORK</a><a href="#sky">THE SKY</a><a href="#seats">SEATS</a><a href="#money">THE MONEY</a><a href="#trust">WHO CONTROLS THIS</a><a href="#faq">FAQ</a></div>
+</section>
+
+<section id="sale">
+  <h2>HOW THE SALE WORKS</h2>
+  <p>This is the only place the rules are written out. Everything here is enforced by the STORMGLASS contract on Ethereum; nobody can change it.</p>
+  <div class="steps">
+    <div class="box"><h3>PLATE ZERO · FINISHED</h3>The first plate was sold by auction, starting October 12 2026. Bids had to be at least 0.05 ETH and at least 5% above the last, and every bid redrew the plate. In the first 24 hours an outbid bidder got their ETH back at once. The auction then ended at a secret moment inside the next 6 hours, picked from a block of Ethereum created after those 6 hours, so nobody could know it while bidding. The highest bid at that moment won; every other bid was refunded. Result: @eritaqua won at 0.069 ETH. That amount became the founding price, which sets the price of a seat (below) forever.</div>
+    <div class="box"><h3>FOUNDERS’ DAY · FINISHED</h3>For the 24 hours after the auction, anyone could pay any amount and get seats at the founding price, with no limit: 0.069 ETH for one seat, 0.138 ETH for two. No artwork came with it, only seats and a mark on Plate Zero. It ended on October 15 2026 at 04:35 UTC with no payments.</div>
+    <div class="box"><h3>ONE PLATE A DAY</h3>From October 15 2026 a new plate goes on sale every day at 4:20pm Miami time and stays on sale until the next 4:20pm. That is 20:20 UTC from the second Sunday of March to the first Sunday of November (US summer time) and 21:20 UTC the rest of the year, so the day when the clocks change lasts 23 or 25 hours.
+      <br><br>The price starts at 4 times the median of the last seven sale prices (the middle one, once they are sorted), or at the founding price if that is higher, plus anything paid by witnesses that day. Then it halves every 2.4 hours, smoothly, all day. By the close it is about a thousandth of where it started. There are no bids: the first person to pay the current price gets the plate.</div>
+    <div class="box"><h3>WHAT THE BUYER GETS</h3>The plate, as a token in their wallet. The right to choose tomorrow’s plate from 32 options shown on this page; the choice is drawn into every later plate. And seats: the price paid divided by the founding price, at most one seat a day. Paying 0.069 ETH or more gives one full seat; paying 0.0345 ETH gives half a seat.</div>
+    <div class="box"><h3>WITNESSES</h3>Anyone can pay any amount toward the plate on sale without buying it. A witness gets seats on the same terms (at most one seat a day per wallet, counting purchase and witness payments together) and a mark cut into that plate in the accent colour. What a witness pays is added to that day’s starting price, so the current price goes up by the amount halved once for every 2.4 hours since the open: 0.1 ETH paid 12 hours in adds about 0.003 ETH.</div>
+    <div class="box"><h3>IF NOBODY BUYS</h3>When a day closes unsold, the vault buys the plate at the reference price: the median of the last seven sales, or a tenth of the founding price if that is higher. The vault keeps that plate forever; it can never be sold. A random choice picks tomorrow’s plate.</div>
+    <div class="box"><h3>THE END: THE TOMBSTONE</h3>If the vault holds less than the reference price when a day closes unsold, that plate becomes the Tombstone and the series is over. No new plates, no more buying or witnessing. Every plate already sold keeps its owner, can still be traded, and still draws itself from live data. Seats can still collect what they earned. The vault’s ETH stays in the contract forever.</div>
+  </div>
+  <h3 style="margin-top:18px">A WORKED EXAMPLE: DAY 1 (OCTOBER 15 TO 16 2026)</h3>
+  <p class="note">The only sale so far is Plate Zero at 0.069 ETH, so the median is 0.069 ETH and day 1 starts at 4 × 0.069 = 0.276 ETH.</p>
+  <div class="sky">
+    <div><b>0.276 ETH</b>Thu 4:20pm Miami · 20:20 UTC · the open</div>
+    <div><b>0.138 ETH</b>Thu 6:44pm Miami · 22:44 UTC</div>
+    <div><b>0.069 ETH</b>Thu 9:08pm Miami · Fri 01:08 UTC · last price for a full seat</div>
+    <div><b>0.0345 ETH</b>Thu 11:32pm Miami · Fri 03:32 UTC</div>
+    <div><b>0.0086 ETH</b>Fri 4:20am Miami · 08:20 UTC</div>
+    <div><b>0.0011 ETH</b>Fri 11:32am Miami · 15:32 UTC</div>
+    <div><b>0.00027 ETH</b>Fri 4:20pm Miami · 20:20 UTC · the close</div>
+  </div>
+  <p class="note" style="margin-top:8px">The vault holds 0.0207 ETH and the reference price is 0.069 ETH. So if day 1 goes unsold, the vault cannot buy it and day 1 becomes the Tombstone. The same is true of day 2: whatever day 1 sells for, the vault will still hold less than the new reference price. From day 3 the vault can start to cover unsold days, depending on prices. Anyone can add ETH to the vault by sending it straight to the STORMGLASS contract.</p>
+</section>
+
+<section id="art">
+  <h2>THE ARTWORK</h2>
+  <div class="cols">
+    <div class="box"><div class="n">A PLATE</div>A plate is one artwork: a single object (the subject) under a sky, turning in a loop of 36 frames, printed in a limited palette of colours and dots (dither). Most subjects are one of 41 named forms: monuments such as an obelisk, a gate, a ziggurat or a sundial; geometric solids; and forms that grow, such as a tree, a nest or quartz. About 1 plate in 4 is an assembly of several of them. 1 plate in 100 is the STORMGLASS itself: a glass tube with weather inside it. Plate Zero and the Tombstone have subjects of their own.</div>
+    <div class="box"><div class="n">NOT A FILE</div>No image of a plate is stored anywhere. Each plate is a number (its seed). The program that turns the seed into a picture is stored on Ethereum, in pieces, and the GLASS contract refuses to work unless every piece matches a fixed fingerprint. When a plate is opened, your browser runs that program and draws it. Marketplaces show a plain title card as the image; the live plate is in the animation.</div>
+    <div class="box"><div class="n">THE GLASS</div>The glass is the page every plate opens on: the plate, full screen, with a menu behind a tap. From the menu you can switch the shape (square, tall 9:16 or wide 16:9), see the seed, and save the loop as a GIF. The square print is 1,080 × 1,080 pixels. <a href="/glass/?seed=424242" style="color:var(--acc)">Open an example glass ↗</a></div>
+    <div class="box"><div class="n">WHAT A TOKEN RECORDS</div>Each plate is an ERC-721 token (an NFT: a one-of-a-kind record on Ethereum of who owns it). Its listed traits are its name, the price it sold for, the number of witnesses, the buyer’s pick for the next day, and whether the vault holds it. The artwork is CC0: GREENCROSS has given up copyright, so anyone may copy and reuse the images.</div>
   </div>
 </section>
 
 <section id="sky">
-  <h2>THE SKY · WHAT THE CHAIN WRITES ON EVERY PLATE</h2>
+  <h2>THE SKY · WHAT CHANGES THE PICTURE</h2>
+  <p class="note">Every time a plate is opened on this site or on the glass, the program reads these values from Ethereum at that moment and draws them into the plate. One row per input.</p>
   <div class="sky">
-    <div><b>WEATHER</b>From the base fee, in gwei: snow under 0.04, clear under 0.1, overcast under 0.2, fog under 0.5, rain under 2, storm above.</div>
-    <div><b>HOUR</b>The Miami clock. The sun rises on the left, sets on the right, and carries on under the ground at night; the shadows fall away from it.</div>
-    <div><b>MOON AND TIDE</b>The phase from the mean lunation, computed on chain; spring tides at new and full.</div>
-    <div><b>FLOOD</b>Ether against its seven-day mean: water from a four percent fall, the base under at sixteen.</div>
-    <div><b>COUNTERFEIT</b>USDC against USDT: off the peg, the impression doubles and slips.</div>
-    <div><b>HUNGER</b>The blob base fee raises the corruption on the screen.</div>
-    <div><b>WITNESSES</b>Every witness of a day is a notch on its plate in the accent ink; the hands that held it, the lineage strip, the age.</div>
-    <div><b>PULSE</b>Hours since the last bid; a collection nobody touches goes quiet.</div>
+    <div><b>WEATHER</b>Ethereum’s base fee: the going price of one unit of network work, in gwei (a billionth of an ETH). Under 0.04 gwei: snow. Under 0.1: clear. Under 0.2: overcast. Under 0.5: fog. Under 2: rain. 2 or more: storm. In a STORMGLASS it also sets how high the crystals rise.</div>
+    <div><b>HUNGER</b>The blob fee: the price other networks pay to store data on Ethereum, in gwei. From about 0.003 up to 3 gwei, the small screen inside the picture flickers and breaks more.</div>
+    <div><b>HOUR</b>The time in Miami, summer time included. The sun moves from left to right across the day and goes under the ground at night, when the moon comes out.</div>
+    <div><b>MOON</b>The moon’s phase, worked out from the average length of a lunar month. It sets the moon’s shape.</div>
+    <div><b>TIDE</b>Worked out from the moon phase: highest at new and full moon. It moves the water on plates that stand on water.</div>
+    <div><b>WIND</b>Not live data: a value fixed once a day from the plate’s own seed. It slants the rain and snow and moves the fog.</div>
+    <div><b>FLOOD</b>The price of ETH against its average over the last 7 days, from the ETH/USDC pool on Uniswap (a trading contract on Ethereum). One reading is taken each day when a new day starts. Water rises from a 4% fall and covers the base at a 16% fall. Dry until the first reading.</div>
+    <div><b>COUNTERFEIT</b>How far USDC and USDT, two tokens meant to be worth one dollar each, are from 1 to 1 in their Uniswap pool. From 0.06% apart the plate prints twice, slightly out of line; fully at 0.5%.</div>
+    <div><b>PULSE</b>Time since anyone last paid anything to the contract (a bid, pledge, purchase or witness). As it nears 24 hours, the screen inside the picture breaks up.</div>
+    <div><b>AGE</b>Days since the auction started on October 12 2026, up to a year. The horizon sinks as the series ages.</div>
+    <div><b>LAMPS</b>Weeks the current owner has held the plate, up to 7: one lamp lit per week. Back to zero when it changes hands.</div>
+    <div><b>WEIGHT</b>How much ETH the owner’s wallet holds, up to 10 ETH. The more ETH, the less haze.</div>
+    <div><b>WITNESS MARKS</b>One mark per witness payment along the plate’s edge, in the accent colour. Up to 200.</div>
+    <div><b>HANDS</b>One mark for every time the plate changes owner, after the witness marks, each shaped by the new owner’s address. Up to 200.</div>
+    <div><b>LINEAGE</b>A strip along the edge showing the choices (0 to 31) that led to this plate, day by day.</div>
   </div>
 </section>
 
-<section id="sale">
-  <h2>THE SALE</h2>
-  <div class="steps">
-    <div class="box"><h3>PLATE ZERO, BY CANDLE</h3>An ascending auction. Every bid rerolls the plate. Outbid in the first day, you are refunded at once. After the first day the flame goes out at a moment drawn from a block hash inside a six-hour window; bids in that window are held until the settle, then every bid but the winner’s is returned. The leader at the flame takes Plate Zero, and the winning bid becomes the founding price: the price of a seat, forever.</div>
-    <div class="box"><h3>FOUNDERS’ DAY</h3>The day after the candle. Pay anything: seats at the founding rate, uncapped, and a notch on Plate Zero. No token that day.</div>
-    <div class="box"><h3>ONE PLATE A DAY</h3>The price starts at the greater of the founding price and four times the median of the last seven sales, plus what the day’s witnesses paid, and halves every 2.4 hours. The first buy wins and chooses tomorrow’s plate from thirty-two. The day closes at 4:20pm in Miami.</div>
-    <div class="box"><h3>WITNESSES AND SEATS</h3>Pay any amount toward a day: a seat at the founding rate (one a day at most), a notch on the plate, and the day’s price rises by it. Seats are permanent, belong to the wallet, and share twenty percent of everything.</div>
-    <div class="box"><h3>THE VAULT</h3>An unsold day is bought by the vault at the reference price if it can pay, and held forever. Royalties, 6.9 percent, go to the artist.</div>
-    <div class="box"><h3>THE TOMBSTONE</h3>If the vault cannot pay, the Tombstone is minted and the collection is dead. Every plate before it lives on, reading the sky each time it is looked at.</div>
-  </div>
+<section id="seats"><h2>SEATS</h2>
+  <p class="note">A seat is a share of future payments, kept as a number next to your wallet address in the contract. It is not a token: it cannot be sold, sent or moved to another wallet, and it never expires. 20% of every purchase, witness payment and vault purchase is shared among all seats existing at that moment, in proportion to how many each wallet holds. A payment does not pay the seats it creates. Seats get nothing from Plate Zero’s sale, from resale royalties or from ETH sent to the vault. While no seats exist, that 20% goes to the vault instead. Seats are not an investment and nothing is promised: they only earn while people keep paying for plates.</p>
+  <p class="note">Your earnings wait in the contract until you collect them. CLAIM sends them to your wallet. They are also sent automatically whenever your wallet buys or witnesses. WITHDRAW appears only if the contract once tried to send you ETH and your wallet could not accept it.</p>
+  <div class="note" id="seatsNote">Connect your wallet to see your seats and what they have earned.</div><div class="row" style="margin-top:8px"><button id="claim" disabled>CLAIM</button> <button id="withdraw" disabled style="display:none">WITHDRAW</button></div>
+</section>
+
+<section id="money">
+  <h2>THE MONEY</h2>
   <div class="split">
-    <div><div class="big">70</div><div class="k">TO THE ARTIST</div></div>
-    <div><div class="big">20</div><div class="k">TO THE SEATS</div></div>
-    <div><div class="big">10</div><div class="k">TO THE VAULT</div></div>
-    <div><div class="big">6.9%</div><div class="k">ROYALTY, TO THE ARTIST</div></div>
+    <div><div class="big">70%</div><div class="k">TO THE ARTIST</div></div>
+    <div><div class="big">20%</div><div class="k">TO THE SEATS</div></div>
+    <div><div class="big">10%</div><div class="k">TO THE VAULT</div></div>
+    <div><div class="big">6.9%</div><div class="k">RESALE ROYALTY</div></div>
   </div>
-  <div class="note">In the transaction, every time. Nothing is withdrawn by anyone, nothing is adjusted by anyone: the contract has no owner.</div>
+  <p class="note" style="margin-top:8px">Every purchase, witness payment and vault purchase is split this way by the contract. Plate Zero’s sale was split 70% to the artist and 30% to the vault. The artist’s 70% is sent to the artist’s payout address in the same transaction. The seats’ 20% waits in the contract until each seat holder claims it. The vault’s 10% stays in the contract, and nothing can take it out except buying unsold plates. If the contract ever cannot send ETH to a wallet (a refund, a payout), the amount is kept for that wallet to withdraw. The 6.9% royalty on resales is a request to marketplaces through the EIP-2981 standard; the contract cannot force them to pay it.</p>
+  <div class="box" id="vaultLive" style="margin-top:8px">THE VAULT · reading the chain…</div>
+  <p class="note" style="margin-top:8px">Artist’s payout address: <a href="https://etherscan.io/address/0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359" target="_blank" rel="noopener" style="color:var(--acc);overflow-wrap:anywhere">0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359 ↗</a></p>
+</section>
+
+<section id="ledger"><h2>THE LEDGER · EVERY PLATE SO FAR</h2><div class="grid" id="ledgerGrid"></div><div class="note" id="ledgerNote">Every plate appears here once it exists: Plate Zero first, then one a day.</div></section>
+
+<section id="trust">
+  <h2>WHO CONTROLS THIS</h2>
+  <p class="note">Nobody. The STORMGLASS contract has no administrator and no settings anyone can change: the prices, the split, the clock and the payout address were fixed when it was deployed. It answers “owner” with the artist’s address only so that marketplaces know whose collection it is; that gives no powers. The contracts and the drawing program are all on Ethereum, and their source code is published and verified on Etherscan, where anyone can read it. This website is only a window: it reads the contracts through public Ethereum nodes and sends your transactions through your wallet. If it went offline, the plates, the sale and the payouts would carry on, and anyone could use the contracts directly.</p>
+  <div class="cols">
+    <div class="box"><div class="n">STORMGLASS</div>The sale, the plates (tokens), the seats and the vault.<br><a href="https://etherscan.io/address/0xCf5EBA884EFA04940d31A663bEB6D37F907d064C#code" target="_blank" rel="noopener" style="color:var(--acc)">0xCf5EBA884EFA04940d31A663bEB6D37F907d064C ↗</a></div>
+    <div class="box"><div class="n">GLASS</div>Hands every plate its page and reads the sky.<br><a href="https://etherscan.io/address/0xF125024a394C0518D85D7a416cc9df96177107f4#code" target="_blank" rel="noopener" style="color:var(--acc)">0xF125024a394C0518D85D7a416cc9df96177107f4 ↗</a></div>
+    <div class="box"><div class="n">COATS</div>The tool that stored the drawing program on Ethereum, in pieces.<br><a href="https://etherscan.io/address/0x87Dd36A3Da4dBEC5E8558719d4602D71440e708c#code" target="_blank" rel="noopener" style="color:var(--acc)">0x87Dd36A3Da4dBEC5E8558719d4602D71440e708c ↗</a></div>
+  </div>
+</section>
+
+<section id="smallweather">
+  <h2>SMALL WEATHER</h2>
+  <p class="note">SMALL WEATHER is a separate, earlier collection: a small animated loop, 96 by 96 pixels, made for each collector who answered GREENCROSS before STORMGLASS began, drawn from their own wallet address and stored on Ethereum. Each one can only be claimed by the wallet it was made for, for free apart from the network fee. GREENCROSS may also send an unclaimed one to its owner. Holders get a small ≈ mark next to their address on this page. SMALL WEATHER has no effect on STORMGLASS; the mark and the count below are features of this website. Its contract is not yet verified on Etherscan. <a href="/gift/" style="color:var(--acc)">Claim yours ↗</a></p>
   <div class="k" id="swCount" hidden style="margin-top:12px"></div>
 </section>
 
-<section id="ledger"><h2>THE LEDGER</h2><div class="grid" id="ledgerGrid"></div><div class="note" id="ledgerNote">Every plate hangs here once the ledger is on the chain: Plate Zero, then one a day.</div></section>
-<section id="seats"><h2>SEATS</h2><div class="note" id="seatsNote">Connect to see your seats.</div><div class="row" style="margin-top:8px"><button id="claim" disabled>CLAIM</button> <button id="withdraw" disabled style="display:none">WITHDRAW</button></div></section>
-<section id="rules" class="rules"><h2>THE RULES</h2>
-<p class="note">One plate a day. Its price starts at the greater of the founding price and four times the median of the last seven sales, plus what the day’s witnesses paid, and halves every 2.4 hours; the day closes at 4:20pm in Miami. The first buy wins and chooses tomorrow’s plate from thirty-two. An unsold day is bought by the vault at the reference price if it can pay and held forever; if it cannot, the Tombstone is minted and the collection is dead.</p>
-<p class="note">Plate Zero is sold by candle: an ascending auction, every bid rerolling the plate, going out at a moment drawn from a block hash inside a six-hour window after the first day. Outbid in the first day, you are refunded at once; bids in the window are held until the settle, then returned to all but the winner. The winning bid is the founding price, the price of a seat forever.</p>
-<p class="note">Witnesses pay any amount toward a day: a seat at the founding rate (one a day at most), a notch on the plate in the accent ink, and the day’s price rises by it. Seventy to the artist in the transaction, twenty to the seats, ten to the vault. Royalties 6.9% to the artist. No owner, no dials, nothing to expire: the engine, the print and the sky are on the chain. CC0. Greencross, always.</p>
+<section id="faq">
+  <h2>FAQ</h2>
+  <div class="cols">
+    <div class="box"><h3>HOW DO I BUY?</h3>1. Get a wallet app and some ETH on Ethereum mainnet. 2. Open this page between 4:20pm Miami time and the next 4:20pm. 3. Below the plate, choose tomorrow’s plate from the 32 options. 4. Press BUY NOW, check the amount in your wallet and confirm. Your wallet asks for about 10% more than the price shown; what is not needed comes straight back in the same transaction. If someone else bought first, your transaction fails and costs only the network fee.</div>
+    <div class="box"><h3>WHAT WALLET DO I NEED?</h3>Any Ethereum wallet that works in your browser, such as MetaMask, Rabby or Coinbase Wallet. On a phone, open dithervoid.art inside your wallet app’s own browser. Press CONNECT at the top of the page.</div>
+    <div class="box"><h3>WHY DOES MY WALLET WARN ME?</h3>Some wallets flag every payment to a new contract that passes money straight on, and STORMGLASS sends 70% of each payment to the artist in the same transaction. The contracts are verified on Etherscan and the warning has been reported as a mistake. Before you confirm, check that the address your wallet shows is 0xCf5E…064C.</div>
+    <div class="box"><h3>WHAT DO I ACTUALLY OWN?</h3>A plate is a token on Ethereum that records your wallet as its owner. You can keep it, sell it or send it like any NFT. The artwork is CC0, so owning the token does not give you exclusive rights to the image.</div>
+    <div class="box"><h3>CAN I LOSE MONEY ON A SEAT?</h3>A seat is not an investment and pays only if people keep paying for plates. It cannot be sold or moved, and if the series ends it stops earning. You may never get back what you paid. Pay only what you are happy to spend on the art.</div>
+    <div class="box"><h3>WHAT HAPPENS IF I’M OUTBID?</h3>The daily sale has no bids: the first person to pay gets the plate. If two people try at the same time, the one recorded first on Ethereum wins and the other transaction fails, costing only the network fee. Plate Zero’s auction is over.</div>
+    <div class="box"><h3>WHAT IS CC0?</h3>A public licence by which the artist gives up copyright. Anyone may copy, change, sell or build on the images, with no permission needed.</div>
+    <div class="box"><h3>WHAT IF THIS SITE GOES OFFLINE?</h3>Nothing that matters is on this site. The sale, the plates, the program that draws them and all the money are in the contracts on Ethereum, and anyone can use them through Etherscan or any other Ethereum tool.</div>
+  </div>
+</section>
+
+<section id="glossary">
+  <h2>GLOSSARY</h2>
+  <div class="sky">
+    <div><b>ETHEREUM</b>A public network of computers that records who owns what and runs programs (smart contracts) exactly as written.</div>
+    <div><b>ETH</b>Ethereum’s currency. Prices here are in ETH.</div>
+    <div><b>WALLET</b>An app that holds your ETH and tokens and signs your transactions. Its address (0x…) is your public identity on Ethereum.</div>
+    <div><b>GAS / NETWORK FEE</b>The small fee every transaction pays to Ethereum, not to the artist. Your wallet shows it before you confirm.</div>
+    <div><b>GWEI</b>A billionth of an ETH, used to quote network fees.</div>
+    <div><b>BASE FEE</b>The going network fee per unit of work at a given moment. It sets the weather.</div>
+    <div><b>BLOB FEE</b>The fee other networks pay to store data on Ethereum. It sets the hunger.</div>
+    <div><b>SMART CONTRACT</b>A program on Ethereum. STORMGLASS is one; it runs the sale and holds the rules.</div>
+    <div><b>NFT / ERC-721</b>A one-of-a-kind token on Ethereum. ERC-721 is the standard every plate follows.</div>
+    <div><b>SEED</b>The number a plate is drawn from. The same seed always gives the same plate under the same sky.</div>
+    <div><b>PLATE</b>One STORMGLASS artwork. Plate Zero was first; then one plate a day, numbered DAY 1, DAY 2 and so on.</div>
+    <div><b>FALLING-PRICE SALE</b>Also called a Dutch auction: the price drops over time and the first person to pay wins.</div>
+    <div><b>MEDIAN</b>The middle value of a list once it is sorted. With an even number of values, the average of the two in the middle.</div>
+    <div><b>FOUNDING PRICE</b>0.069 ETH: the price Plate Zero sold for. It sets the price of a seat forever.</div>
+    <div><b>REFERENCE PRICE</b>What the vault pays for an unsold day: the median of the last seven sales, or a tenth of the founding price if higher.</div>
+    <div><b>SEAT</b>A share of 20% of future payments, held by a wallet. Not a token.</div>
+    <div><b>WITNESS</b>Someone who pays toward the day’s plate without buying it. They get seats and a mark on the plate.</div>
+    <div><b>VAULT</b>The ETH the contract keeps to buy unsold plates.</div>
+    <div><b>TOMBSTONE</b>The last plate, made when the vault cannot buy an unsold day. It ends the series.</div>
+    <div><b>THE GLASS</b>The page a plate opens on, drawn by the program stored on Ethereum.</div>
+    <div><b>UNISWAP POOL</b>A trading contract on Ethereum. Two of its pools give the flood and the counterfeit their prices.</div>
+    <div><b>STABLECOIN</b>A token meant to be worth one US dollar, such as USDC or USDT.</div>
+    <div><b>UTC</b>World time, without summer time. Miami is UTC−4 in summer and UTC−5 in winter.</div>
+    <div><b>ETHERSCAN</b>A website for reading Ethereum: addresses, transactions and verified contract code.</div>
+    <div><b>CC0</b>“No rights reserved”: the artist gives up copyright on the images.</div>
+  </div>
 </section>
 
 <section id="engines-teaser">
   <h2>THE ENGINES</h2>
-  <p>STORMGLASS grew out of PANDORA, the box that mints ghosts, and both keep every step of their evolution. Every engine and workbench, from the first plate engine of September 4 to the one that prints today, and every PANDORA from the day the box went public, is archived under its version and runs as it ran that day.</p>
+  <p>STORMGLASS grew out of PANDORA, an earlier GREENCROSS project: a generator that makes animated loops anyone can save or mint. Every version of both programs is kept in the archive and still runs as it did on the day it was made.</p>
   <div class="row" style="flex-wrap:wrap;gap:10px"><a href="/engines/"><button class="prime">EXPLORE THE ENGINES</button></a><a href="/pandora/"><button>OPEN PANDORA</button></a></div>
 </section>
-<footer class="site"><div class="wrap"><nav><a href="/">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a><a href="/pandora/gardens.html">GARDENS</a><a href="/pandora/showcase.html">SHOWCASE</a><a href="/pandora/sealed.html">THE SEALED</a><a href="/glass/?seed=424242">THE GLASS</a><a href="https://github.com/0xgreencross/PANDORA" target="_blank" rel="noopener">SOURCE ↗</a></nav><div class="note" style="margin-top:10px">CC0. Greencross, always.</div></div></footer>
+<footer class="site"><div class="wrap"><nav><a href="/">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a><a href="/pandora/gardens.html">GARDENS</a><a href="/pandora/showcase.html">SHOWCASE</a><a href="/pandora/sealed.html">THE SEALED</a><a href="/glass/?seed=424242">THE GLASS</a><a href="https://github.com/0xgreencross/PANDORA" target="_blank" rel="noopener">SOURCE ↗</a></nav><div class="note" style="margin-top:10px">An art project by GREENCROSS. CC0.</div></div></footer>
+
 <iframe id="work" title="worker" aria-hidden="true"></iframe>
 <div id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
@@ -244,11 +340,13 @@ const HALF=8640, TWO=Math.LN2;
 const priceNow=(start,open,t)=>{ const dt=Math.max(0,t-open); return start*Math.pow(2,-dt/HALF); };
 const hms=s=>{ s=Math.max(0,s|0); const h=(s/3600)|0, m=((s%3600)/60)|0, x=s%60; return (h?h+'h ':'')+String(m).padStart(2,'0')+'m '+String(x).padStart(2,'0')+'s'; };
 const short=a=>a?a.slice(0,6)+'…'+a.slice(-4):'';
+const nextHalf=(open,t)=>{ const n=open+HALF*(Math.floor(Math.max(0,t-open)/HALF)+1); return 'THE PRICE HALVES AGAIN IN '+hms(n-t); };
+const LABEL={bid:'Your bid',settle:'Settling the auction',pledge:'Your pledge',sync:'Opening the day',buy:'Your purchase',witness:'Your witness payment',claim:'Claiming your seat earnings',withdraw:'Withdrawing'};
 
 /* ═══ SMALL WEATHER: the holder mark, the welcome back, the count */
 let giftC=null; const HOLDS=new Map(); let REDRAW=()=>{};
 const giftRead=()=>{ if(!CFG.gift) return null; if(!giftC) giftC=new ethers.Contract(CFG.gift,GIFT_ABI,ro||new ethers.JsonRpcProvider(CFG.rpc)); return giftC; };
-const MARK='<span class="sw" title="holds SMALL WEATHER">≈</span>';
+const MARK='<span class="sw" title="This wallet holds a SMALL WEATHER">≈</span>';
 function holds(a){ /* balanceOf, read once per address */
   if(!CFG.gift||!a||/^0x0+$/.test(a)) return Promise.resolve(false);
   if(DEMO_GIFT!=null) return Promise.resolve(+DEMO_GIFT>0);
@@ -265,7 +363,7 @@ async function welcome(addr){
     if(id>0){ if(!(await G.isClaimed(id))) mode='waiting'; else { const o=await G.ownerOf(id).catch(()=>null); if(o&&o.toLowerCase()===addr.toLowerCase()) mode='holder'; else id=0; } }
     if(!mode&&bal>0n){ mode='holder'; const ids=Array.from({length:Number(await G.gifts())},(_,i)=>i+1); const own=await Promise.all(ids.map(i=>G.ownerOf(i).catch(()=>null))); const k=own.findIndex(o=>o&&o.toLowerCase()===addr.toLowerCase()); id=k<0?0:ids[k]; } }
   if(!mode){ el.hidden=true; return; }
-  if(mode==='waiting'){ el.innerHTML='<span><b>YOUR SMALL WEATHER IS WAITING</b> · <a href="/gift/">CLAIM IT ↗</a></span>'; el.hidden=false; return; }
+  if(mode==='waiting'){ el.innerHTML='<span><b>A SMALL WEATHER WAS MADE FOR YOU</b> · <a href="/gift/">CLAIM IT ↗</a></span>'; el.hidden=false; return; }
   el.innerHTML=(id?'<img alt="SMALL WEATHER #'+id+'" id="swImg">':'')+'<span><b>SMALL WEATHER'+(id?' #'+id:'')+'</b> · welcome back</span>'; el.hidden=false;
   if(id){ try{ const b=ethers.getBytes(await giftRead().gif(id)); $('swImg').src=URL.createObjectURL(new Blob([b],{type:'image/gif'})); }catch(e){ const i=$('swImg'); if(i) i.remove(); } }
 }
@@ -298,24 +396,24 @@ async function bindRead(){ const net=ethers.Network.from(CFG.chainId); let src=R
 async function connectRead(){ if(!CFG.contract) return; await bindRead(); }
 async function connectWallet(){
   try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
-  const L=EP?[EP]:walletList(); if(!L.length){ toast('no wallet in this browser'); return; }
+  const L=EP?[EP]:walletList(); if(!L.length){ toast('No wallet found in this browser. Install a wallet such as MetaMask or Rabby, or open this page in your wallet app’s browser.'); return; }
   let bp=null, err=null;
   for(const P of L){ try{ await P.request({method:'eth_requestAccounts'}); bp=new ethers.BrowserProvider(P); EP=P; break; }
     catch(e){ const c=e&&e.code; if(c===4001||c===-32002) throw e; err=e; console.warn('wallet refused, trying the next one',e); } }
-  if(!bp){ if(L.length>1) throw new Error(errMsg(err)+' (more than one wallet extension is installed: switch off the others and reload)'); throw err; }
-  const net=await bp.getNetwork(); if(CFG.chainId&&Number(net.chainId)!==CFG.chainId){ toast('switch your wallet to chain '+CFG.chainId); }
+  if(!bp){ if(L.length>1) throw new Error(errMsg(err)+' (more than one wallet extension is installed: turn off the others and reload the page)'); throw err; }
+  const net=await bp.getNetwork(); if(CFG.chainId&&Number(net.chainId)!==CFG.chainId){ toast('Your wallet is on another network. Switch it to Ethereum mainnet.'); }
   signer=await bp.getSigner(); me=await signer.getAddress(); W=new ethers.Contract(CFG.contract,ABI,signer);
   $('wallet').textContent=short(me); welcome(me).catch(()=>{}); refreshSeats().catch(e=>console.error(e));
 }
 /* the wallet's own words: ethers hides wallet errors it does not know behind "could not coalesce error" */
 function errMsg(e){ const inner=(e&&(e.error||(e.info&&e.info.error)))||{}; const code=inner.code??(e&&e.code);
-  if(code===-32002) return 'Your wallet already has a request waiting: open it from the browser toolbar and finish it, then try again';
-  if(code===4001||code==='ACTION_REJECTED') return 'Cancelled in the wallet';
+  if(code===-32002) return 'Your wallet already has a request waiting. Open it from the browser toolbar, finish or cancel it, then try again.';
+  if(code===4001||code==='ACTION_REJECTED') return 'Cancelled in your wallet. Nothing was sent.';
   return String(inner.message||(e&&(e.reason||e.shortMessage||e.message))||e).slice(0,200); }
 $('wallet').addEventListener('click',()=>connectWallet().catch(e=>{ console.error(e); toast(errMsg(e)); }));
 /* every transaction carries room to spare: a wallet that is a smart account (EIP-7702) runs code when it is refunded, and wallets' estimates come in short */
 async function pad(m,args,ov={}){ let g=null; try{ g=await m.estimateGas(...args,ov); }catch(e){} if(g===null) return m(...args,ov); let L=g*3n/2n+60000n; if(L<250000n) L=250000n; if(L>15000000n) L=15000000n; return m(...args,{...ov,gasLimit:L}); }
-async function send(name,fn){ try{ if(!W){ await connectWallet(); if(!W) return; } toast(name+' … confirm in your wallet'); const tx=await fn(W); toast(name+' sent'); await tx.wait(); toast(name+' done'); await tick(true); }catch(e){ console.error(e); toast(errMsg(e)); } }
+async function send(name,fn){ try{ if(!W){ await connectWallet(); if(!W) return; } const L=LABEL[name]||name; toast(L+': confirm in your wallet'); const tx=await fn(W); toast(L+': sent, waiting for Ethereum to confirm'); await tx.wait(); toast(L+': confirmed'); await tick(true); }catch(e){ console.error(e); toast(errMsg(e)); } }
 
 /* ═══ THE PLATE ON THE GLASS: the token page itself, fed the seed and the sky */
 let pageSrc=null;
@@ -366,16 +464,16 @@ async function render(st){
   clearInterval(timer);
   if(!st.settled){
     const burn=st.candleOpen+24*3600; const windowEnd=st.candleOpen+30*3600;
-    $('state').textContent='THE CANDLE';
+    $('state').textContent='PLATE ZERO AUCTION';
     const sky=CFG.demo?{}:await skyOf(0);
-    await showPlate({seed:st.leader?st.leader.seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO · REROLLED BY EVERY BID');
+    await showPlate({seed:st.leader?st.leader.seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO · REDRAWN BY EVERY BID');
     const draw=()=>{ const t=now(); let line; const ki=$('bidAmt'); const keep=ki?{v:ki.value,f:document.activeElement===ki}:null;
-      if(t>=windowEnd) line='<div class="big warn">THE CANDLE IS OUT</div><div class="note">The window has closed. The moment the flame went out is drawn at the settle, from block '+st.revealBlock+(st.blk>st.revealBlock?'':' (now '+st.blk+')')+'; the leader at that moment takes Plate Zero and every other held bid is returned.</div>'+(st.blk>st.revealBlock?'<button class="prime" id="bSettle">SETTLE THE CANDLE</button>':'');
-      else if(t<burn) line='<div class="k">BURNING · SURE FOR</div><div class="big">'+hms(burn-t)+'</div>';
-      else line='<div class="k">INSIDE THE WINDOW</div><div class="big warn">IT MAY ALREADY BE OUT</div><div class="note">Until '+new Date(windowEnd*1000).toLocaleTimeString()+' at the latest. The moment is drawn after the window, from a block no one has seen yet. Bids now are held until the settle; the leader at the drawn moment wins and every other held bid is returned.</div>';
-      panel('<div class="k">PLATE ZERO · SOLD BY CANDLE</div>'
-        +(t<windowEnd?'<div class="cta"><div class="k">BID ON PLATE ZERO</div><div class="big">'+(st.leader?'Beat '+fmt(st.leader.amount)+' <small>ETH</small>':'Start at 0.05 <small>ETH</small>')+'</div><div class="row"><input id="bidAmt" placeholder="'+(st.leader?'ETH, at least '+fmt(st.leader.amount+st.leader.amount/20n):'ETH, at least 0.05')+'" inputmode="decimal"><button class="prime" id="bBid">BID</button></div><div class="note">Your wallet opens to confirm. Your bid redraws the plate above. '+(t<burn?'Outbid before the window: refunded at once.':'In the window, bids are held until the settle.')+'</div></div>':'')
-        +line+'<hr><div class="k">LEADING BID</div><div class="big">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+swMark(st.leader.bidder)+'</small>':'<small>none yet · reserve 0.05 ETH</small>')+'</div><div class="note">'+st.nBids+' bids. Every bid rerolls the plate; the plate you see is the leader’s. Each bid at least 5% over the last. Outbid before the window: refunded at once. In the window, bids are held until the settle. The winning bid becomes the founding price, the price of a seat forever. Seventy to the artist, thirty to the vault.</div>'
+      if(t>=windowEnd) line='<div class="big warn">BIDDING HAS CLOSED</div><div class="note">The secret end moment is worked out at the settle, from Ethereum block '+st.revealBlock+(st.blk>st.revealBlock?'':' (the network is at block '+st.blk+' now)')+'. The highest bid at that moment wins Plate Zero; every other held bid is refunded. Anyone can press SETTLE once that block exists.</div>'+(st.blk>st.revealBlock?'<button class="prime" id="bSettle">SETTLE THE AUCTION</button>':'');
+      else if(t<burn) line='<div class="k">THE AUCTION RUNS AT LEAST ANOTHER</div><div class="big">'+hms(burn-t)+'</div>';
+      else line='<div class="k">THE LAST 6 HOURS</div><div class="big warn">IT MAY ALREADY HAVE ENDED</div><div class="note">Bidding stays open until '+new Date(windowEnd*1000).toLocaleTimeString()+', but the real end is a secret moment in these 6 hours, worked out afterwards from a block nobody has seen yet. Bids now are held until the settle; the highest bid at the secret moment wins and every other held bid is refunded.</div>';
+      panel('<div class="k">PLATE ZERO · AUCTION</div>'
+        +(t<windowEnd?'<div class="cta"><div class="k">BID ON PLATE ZERO</div><div class="big">'+(st.leader?'Beat '+fmt(st.leader.amount)+' <small>ETH</small>':'Start at 0.05 <small>ETH</small>')+'</div><div class="row"><input id="bidAmt" placeholder="'+(st.leader?'ETH, at least '+fmt(st.leader.amount+st.leader.amount/20n):'ETH, at least 0.05')+'" inputmode="decimal"><button class="prime" id="bBid">BID</button></div><div class="note">Your wallet opens to confirm. Your bid redraws the plate above. '+(t<burn?'If someone outbids you now, your ETH comes back at once.':'In the last 6 hours, outbid bids are held until the settle, then refunded.')+'</div></div>':'')
+        +line+'<hr><div class="k">HIGHEST BID</div><div class="big">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+swMark(st.leader.bidder)+'</small>':'<small>none yet · minimum 0.05 ETH</small>')+'</div><div class="note">'+st.nBids+' bids so far. Each bid must be at least 5% above the last, and redraws the plate: the plate you see is the highest bidder’s. The winning bid becomes the founding price, the price of a seat forever. See HOW THE SALE WORKS below.</div>'
         +'');
       const ni=$('bidAmt'); if(keep&&ni){ ni.value=keep.v; if(keep.f){ ni.focus(); ni.setSelectionRange(ni.value.length,ni.value.length); } }
       const b=$('bBid'); if(b) b.onclick=()=>send('bid',W=>pad(W.bid,[],{value:ethers.parseEther($('bidAmt').value||'0')}));
@@ -385,22 +483,22 @@ async function render(st){
     $('candidates').style.display='none'; return;
   }
   if(st.dead){
-    $('state').textContent='DEAD';
+    $('state').textContent='THE SERIES HAS ENDED';
     const sky=CFG.demo?{}:await skyOf(st.tombId);
-    await showPlate({seed:st.day?st.day.seed:1,subject:45,frames:36,live:sky},'THE TOMBSTONE · DAY '+st.tombId);
-    panel('<div class="k">THE COLLECTION IS DEAD</div><div class="big">DAY '+st.tombId+'</div><div class="note">The vault could not pay the reference price for an unsold day. The Tombstone is minted and held by the vault forever. Every plate before it lives on, reading the sky each time it is looked at.</div><hr><div class="k">THE VAULT HOLDS</div><div class="big">'+fmt(st.vault)+' <small>ETH</small></div>');
+    await showPlate({seed:st.day?st.day.seed:1,subject:45,frames:36,live:sky},'THE TOMBSTONE · DAY '+st.tombId+' · THE LAST PLATE');
+    panel('<div class="k">THE SERIES HAS ENDED · THE TOMBSTONE</div><div class="big">DAY '+st.tombId+'</div><div class="note">Day '+st.tombId+' closed unsold and the vault held less than the reference price, so that plate became the Tombstone and no new plates will be made. Every plate before it keeps its owner, can still be traded, and still draws itself from live Ethereum data. Seat holders can still claim what they earned.</div><hr><div class="k">LOCKED IN THE VAULT FOREVER</div><div class="big">'+fmt(st.vault)+' <small>ETH</small></div>');
     $('candidates').style.display='none'; return;
   }
   if(now()<st.foundersEnd||st.today===0){
-    $('state').textContent="FOUNDERS' DAY";
+    $('state').textContent=now()<st.foundersEnd?"FOUNDERS' DAY":'DAY ONE SOON';
     const sky=CFG.demo?{}:await skyOf(0);
     await showPlate({seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO');
     const draw=()=>{ const t=now(); const open=t>=st.foundersEnd; const pi=$('plAmt'); const keep=pi?{v:pi.value,f:document.activeElement===pi}:null;
       const d1=closeAfter(st.foundersEnd); const ready=open&&t>=d1; const sp=st.dayOneStart!=null?fmt(st.dayOneStart):null;
-      if(!open) panel('<div class="k">FOUNDERS\' DAY</div><div class="big">'+hms(st.foundersEnd-t)+'</div><div class="note">Founding price '+fmt(st.FOUNDING)+' ETH. Pay anything today: seats at the founding rate, uncapped, and a notch on Plate Zero in the accent ink. No token. Seventy to the artist, twenty to the seats, ten to the vault.</div>'
+      if(!open) panel('<div class="k">FOUNDERS\' DAY</div><div class="big">'+hms(st.foundersEnd-t)+'</div><div class="note">Founding price '+fmt(st.FOUNDING)+' ETH. Pay any amount today and get seats at the founding price, with no limit: '+fmt(st.FOUNDING)+' ETH for one seat. Each payment also cuts a mark on Plate Zero. No artwork comes with it. Split: 70% to the artist, 20% to the seats, 10% to the vault.</div>'
         +'<div class="row"><input id="plAmt" placeholder="ETH" inputmode="decimal"><button class="prime" id="bPledge">PLEDGE</button></div>');
-      else if(!ready) panel('<div class="k">DAY ONE GOES ON SALE IN</div><div class="big">'+hms(d1-t)+'</div><div class="note">At 4:20pm in Miami ('+new Date(d1*1000).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+' your time) the first daily plate goes on sale'+(sp?' at '+sp+' ETH':'')+'. Its price halves every 2.4 hours until someone buys it. The buyer takes the plate, picks tomorrow\'s plate from thirty-two, and gets a seat: a full one at '+fmt(st.FOUNDING)+' ETH or more, a share of one below that. Founders\' day is over: Plate Zero went for '+fmt(st.FOUNDING)+' ETH, the price of a full seat from now on.</div>');
-      else panel('<div class="k">DAY ONE IS READY</div><div class="big">OPEN THE SALE</div><div class="note">4:20 in Miami has passed. The chain opens a day only when someone asks it to. One small transaction, gas only, no payment, opens day one for everyone. If someone already did, this page updates within half a minute.</div><button class="prime" id="bSync">OPEN DAY ONE</button>');
+      else if(!ready) panel('<div class="k">DAY ONE GOES ON SALE IN</div><div class="big">'+hms(d1-t)+'</div><div class="note">At 4:20pm in Miami ('+new Date(d1*1000).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+' your time) the first daily plate goes on sale'+(sp?' at '+sp+' ETH':'')+'. Its price halves every 2.4 hours until someone buys it, and the first person to pay gets it. The buyer takes the plate, picks tomorrow\'s plate from thirty-two, and gets a seat: a full one at '+fmt(st.FOUNDING)+' ETH or more, a share of one below that. Founders\' day is over: Plate Zero went for '+fmt(st.FOUNDING)+' ETH, the price of a full seat from now on.</div>');
+      else panel('<div class="k">DAY ONE IS READY</div><div class="big">OPEN THE SALE</div><div class="note">It is past 4:20pm in Miami. Ethereum only records a new day when someone sends a transaction, so the first visitor opens it for everyone. It costs only the network fee, no payment to the project. If someone already did, this page updates within half a minute.</div><button class="prime" id="bSync">OPEN DAY ONE</button>');
       const np=$('plAmt'); if(keep&&np){ np.value=keep.v; if(keep.f){ np.focus(); np.setSelectionRange(np.value.length,np.value.length); } }
       const b=$('bPledge'); if(b) b.onclick=()=>send('pledge',W=>pad(W.pledge,[],{value:ethers.parseEther($('plAmt').value||'0')}));
       const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[])); };
@@ -412,11 +510,11 @@ async function render(st){
   const start=+ethers.formatEther(D.start);
   const draw=()=>{ const t=now(); const wi=$('wAmt'); const keep=wi?{v:wi.value,f:document.activeElement===wi}:null;
     if(t>=D.close){ const can=st.vault>=D.ref; panel(D.sold
-        ?'<div class="k">DAY '+D.id+' HAS CLOSED</div><div class="big">OPEN DAY '+(D.id+1)+'</div><div class="note">4:20 in Miami has passed. The chain opens the next day only when someone asks it to. One small transaction, gas only, no payment, opens day '+(D.id+1)+' for everyone. If someone already did, this page updates within half a minute.</div><button class="prime" id="bSync">OPEN DAY '+(D.id+1)+'</button>'
-        :'<div class="k">DAY '+D.id+' CLOSED UNSOLD</div><div class="big">'+(can?'THE VAULT BUYS IT':'THE LAST DAY')+'</div><div class="note">Nobody bought day '+D.id+'. '+(can?'The next transaction settles it: the vault pays '+fmt(D.ref)+' ETH for it, keeps it forever, and day '+(D.id+1)+' opens.':'The vault holds '+fmt(st.vault)+' ETH, less than the '+fmt(D.ref)+' ETH it needs, so the next transaction ends the collection and mints the Tombstone.')+'</div><button id="bSync">SETTLE DAY '+D.id+'</button>'); const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[])); return; }
-    if(D.sold){ panel('<div class="k">DAY '+D.id+' · SOLD</div><div class="big">'+fmt(D.price)+' <small>ETH</small></div><div class="note">Taken by '+short(D.buyer)+swMark(D.buyer)+'. The next plate opens at 4:20 in Miami, in '+hms(D.close-t)+'.</div>'); return; }
+        ?'<div class="k">DAY '+D.id+' HAS CLOSED</div><div class="big">OPEN DAY '+(D.id+1)+'</div><div class="note">It is past 4:20pm in Miami. Ethereum only records the next day when someone sends a transaction, so the first visitor opens day '+(D.id+1)+' for everyone. It costs only the network fee, no payment to the project. If someone already did, this page updates within half a minute.</div><button class="prime" id="bSync">OPEN DAY '+(D.id+1)+'</button>'
+        :'<div class="k">DAY '+D.id+' CLOSED UNSOLD</div><div class="big">'+(can?'THE VAULT BUYS IT':'THE LAST DAY')+'</div><div class="note">Nobody bought day '+D.id+'. '+(can?'The next transaction settles it: the vault pays '+fmt(D.ref)+' ETH for it, keeps it forever, and day '+(D.id+1)+' opens.':'The vault holds '+fmt(st.vault)+' ETH, less than the '+fmt(D.ref)+' ETH it needs, so the next transaction turns day '+D.id+' into the Tombstone and the series ends.')+'</div><button id="bSync">SETTLE DAY '+D.id+'</button>'); const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[])); return; }
+    if(D.sold){ panel('<div class="k">DAY '+D.id+' · SOLD</div><div class="big">'+fmt(D.price)+' <small>ETH</small></div><div class="note">Bought by '+short(D.buyer)+swMark(D.buyer)+(D.buyer&&D.buyer.toLowerCase()===CFG.contract.toLowerCase()?' (the vault)':'')+'. The next plate goes on sale at 4:20pm Miami time, in '+hms(D.close-t)+'.</div>'); return; }
     const p=priceNow(start,D.open,t);
-    panel('<div class="k">DAY '+D.id+' · ON SALE · CLOSES IN '+hms(D.close-t)+'</div><div class="big" id="px">'+p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small></div><div class="note">It started at '+start.toFixed(4)+' ETH and halves every 2.4 hours. The first person to pay takes the plate, chooses tomorrow’s plate from the thirty-two below, and gets a seat: a full one at '+fmt(st.FOUNDING)+' ETH or more, a share of one below that.'+(pick==null?'':' You chose plate '+pick+'.')+' Your wallet asks for a little more than the price shown; whatever is over comes straight back in the same transaction.</div>'
+    panel('<div class="k">DAY '+D.id+' · ON SALE · CLOSES IN '+hms(D.close-t)+'</div><div class="big" id="px">'+p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small></div><div class="k" id="nxt">'+nextHalf(D.open,t)+'</div><div class="note">It started at '+start.toFixed(4)+' ETH and halves every 2.4 hours. The first person to pay takes the plate, chooses tomorrow’s plate from the thirty-two below, and gets a seat: a full one at '+fmt(st.FOUNDING)+' ETH or more, a share of one below that.'+(pick==null?'':' You chose plate '+pick+'.')+' Your wallet asks for a little more than the price shown; whatever is over comes straight back in the same transaction.</div>'
       +(pick==null?'<button class="prime" id="bPick">CHOOSE TOMORROW’S PLATE TO BUY</button>':'<button class="prime" id="bBuy">BUY NOW</button>')
       +'<hr><div class="k">WITNESS THIS DAY</div><div class="note">Not buying? Pay any amount to back this plate: your mark is cut into it, and you get a share of a seat, a full one at '+fmt(st.FOUNDING)+' ETH (one seat a day at most). What you pay is added to its price. Witnesses so far: '+fmt(D.witnessed)+' ETH.</div><div class="row"><input id="wAmt" placeholder="ETH" inputmode="decimal"><button id="bWit">WITNESS</button></div>');
     const nw=$('wAmt'); if(keep&&nw){ nw.value=keep.v; if(keep.f){ nw.focus(); nw.setSelectionRange(nw.value.length,nw.value.length); } }
@@ -424,7 +522,7 @@ async function render(st){
     const b=$('bBuy'); if(b) b.onclick=()=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; send('buy',W=>pad(W.buy,[D.id,pick],{value:pay})); };
     const w=$('bWit'); if(w) w.onclick=()=>send('witness',W=>pad(W.witness,[D.id],{value:ethers.parseEther($('wAmt').value||'0')}));
   };
-  draw(); REDRAW=draw; timer=setInterval(()=>{ const t=now(); const e=$('px'); if(e&&!D.sold&&t<D.close){ const p=priceNow(start,D.open,t); e.innerHTML=p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small>'; } if(t%10===0) draw(); },1000);
+  draw(); REDRAW=draw; timer=setInterval(()=>{ const t=now(); const e=$('px'); if(e&&!D.sold&&t<D.close){ const p=priceNow(start,D.open,t); e.innerHTML=p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small>'; const nx=$('nxt'); if(nx) nx.textContent=nextHalf(D.open,t); } if(t%10===0) draw(); },1000);
   if(D.onSale&&st.cands){ $('candidates').style.display='block'; const g=$('candGrid'); if(g.dataset.day!==String(D.id)){ g.dataset.day=String(D.id); g.innerHTML=''; pick=null;
       st.cands.forEach((seed,k)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+k+'</i>'; el.onclick=()=>{ pick=k; g.querySelectorAll('.card').forEach(c=>c.classList.remove('on')); el.classList.add('on'); draw(); }; g.appendChild(el); });
       (async()=>{ for(const [k,seed] of st.cands.entries()) await fillCard(g.children[k],{seed,live:lastSky}); })(); } }
@@ -433,7 +531,7 @@ async function render(st){
 async function renderLedger(st){
   const g=$('ledgerGrid'); const n=st.lastId; if(!st.settled||g.dataset.n===String(n)) return; g.dataset.n=String(n); g.innerHTML='';
   const ids=[]; for(let i=n;i>=0;i--) ids.push(i);
-  $('ledgerNote').textContent=(n+1)+' plates. Median of the last seven sales: '+(CFG.demo?'0.42':fmt(await storm.median7()))+' ETH. The vault holds '+fmt(st.vault)+' ETH.';
+  $('ledgerNote').textContent=(n+1)+(n?' plates so far, newest first.':' plate so far.')+' Tap one to see it on Etherscan. The median of the last seven sale prices is '+(CFG.demo?'0.42':fmt(await storm.median7()))+' ETH; the next day starts at 4 times that, or at the founding price if higher.';
   for(const id of ids){ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+(id===0?'ZERO':st.dead&&id===st.tombId?'TOMB':'DAY '+id)+'</i>'; g.appendChild(el);
     el.onclick=()=>{ window.open(CFG.explorer?CFG.explorer+'/nft/'+CFG.contract+'/'+id:'#','_blank'); }; }
   (async()=>{ for(const [k,id] of ids.entries()){ let seed=1,subject=null; if(CFG.demo){ seed=(313454022*(id+1))>>>0; if(id===0) subject=44; if(st.dead&&id===st.tombId) subject=45; } else { const P=await storm.plates(id); seed=Number(P.seed); if(id===0) subject=44; if(st.dead&&id===st.tombId) subject=45; }
@@ -442,20 +540,23 @@ async function renderLedger(st){
     if(DEMO_GIFT!=null) o=id%4===0?'0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359':null; else if(!(st.dead&&id===st.tombId)) o=await storm.ownerOf(id).catch(()=>null);
     if(o&&await holds(o)){ const i=el.querySelector('i'); if(i&&!i.querySelector('.sw')) i.insertAdjacentHTML('beforeend',MARK); } } })();
 }
+async function fillVault(st){ const el=$('vaultLive'); if(!el||!st||st.vault==null) return;
+  let ref=null; try{ ref=CFG.demo?ethers.parseEther('0.42'):await storm.referencePrice(); }catch(e){}
+  el.innerHTML='<div class="n">THE VAULT · LIVE</div><div class="big">'+fmt(st.vault)+' <small>ETH</small></div><div class="note">'+(st.dead?'The series has ended. This ETH stays in the contract forever.':ref==null?'':'To buy an unsold day the vault needs the reference price, now '+fmt(ref)+' ETH. '+(st.vault>=ref?'Today it could buy one.':'Today it could not: if a day closed unsold now, it would become the Tombstone and the series would end.'))+'</div>'; }
 async function refreshSeats(){
-  if(!me||CFG.demo){ if(CFG.demo&&me){ $('seatsNote').textContent='2.0000 seats of 17 · 0.0364 ETH pending'; $('claim').disabled=false; } return; }
+  if(!me||CFG.demo){ if(CFG.demo&&me){ $('seatsNote').textContent='You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.0364 ETH.'; $('claim').disabled=false; } return; }
   const [s,p,tot,o]=await Promise.all([storm.seats(me),storm.pending(me),storm.totalSeats(),storm.owed(me)]);
-  $('seatsNote').textContent=(+ethers.formatEther(s)).toFixed(4)+' seats of '+(+ethers.formatEther(tot)).toFixed(4)+' · '+fmt(p)+' ETH pending'+(o>0n?' · '+fmt(o)+' ETH owed to you (withdraw)':'');
+  $('seatsNote').textContent='You hold '+(+ethers.formatEther(s)).toFixed(4)+' seats out of '+(+ethers.formatEther(tot)).toFixed(4)+'. Earned and waiting for you: '+fmt(p)+' ETH'+(p>0n?' (press CLAIM)':'')+'.'+(o>0n?' The contract also holds '+fmt(o)+' ETH it could not send to your wallet: press WITHDRAW.':'');
   $('claim').disabled=p===0n; $('claim').onclick=()=>send('claim',W=>pad(W.claim,[]));
   $('withdraw').style.display=o>0n?'':'none'; $('withdraw').disabled=o===0n; $('withdraw').onclick=()=>send('withdraw',W=>pad(W.withdraw,[]));
 }
 let fails=0;
-async function tick(force){ try{ const st=await read(); fails=0; await render(st); await renderLedger(st); if(me) refreshSeats().catch(e=>console.error(e)); }
+async function tick(force){ try{ const st=await read(); fails=0; await render(st); await renderLedger(st); fillVault(st).catch(e=>console.error(e)); if(me) refreshSeats().catch(e=>console.error(e)); }
   catch(e){ console.error(e); fails++;
     if(!CFG.demo&&fails<READ_RPCS.length){ rpcAt++; await bindRead(); return tick(force); }   /* try the next source at once */
     fails=0; rpcAt++; await bindRead();
     if(ST&&ST.now){ $('state').textContent='RECONNECTING…'; return; }                   /* keep the last good panel: the bid box stays usable */
-    $('state').textContent='CANNOT READ THE CHAIN'; panel('<div class="k">THE CHAIN</div><div class="note warn">The public nodes did not answer from your network. Retrying every 30 seconds. With a browser wallet set to Ethereum mainnet, the page reads through it.</div>'); } }
+    $('state').textContent='CANNOT REACH ETHEREUM'; panel('<div class="k">CANNOT REACH ETHEREUM</div><div class="note warn">The public Ethereum nodes this page reads from did not answer from your network. The page tries again every 30 seconds. If you have a browser wallet set to Ethereum mainnet, the page can read through it instead.</div>'); } }
 (async()=>{
   if(!CFG.contract&&!CFG.demo){ return rehearsal(); }
   if(!CFG.demo) await connectRead();
