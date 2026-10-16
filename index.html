@@ -84,7 +84,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   #wsheet .k{color:var(--acc);letter-spacing:.18em;font-size:11px;margin-bottom:8px}
   #wsheet p{margin:0 0 12px;color:var(--ink)} #wsheet .note{color:var(--mut);font-size:11px;margin:10px 0 0}
   #wsheet a.wbtn,#wsheet button.wbtn{display:block;width:100%;text-align:center;border:1px solid var(--ink);padding:13px 14px;margin:8px 0 0;letter-spacing:.12em;font-size:12px}
-  #wsheet a.wbtn.prime{border-color:var(--acc);background:var(--acc);color:var(--bg);font-weight:700}
+  #wsheet .wbtn.prime{border-color:var(--acc);background:var(--acc);color:var(--bg);font-weight:700}
   #wsheet .x{display:block;margin:12px auto 0;border:0;color:var(--mut)}
   #toast{position:fixed;left:50%;bottom:calc(18px + var(--sab));transform:translateX(-50%);background:#111116;border:1px solid var(--hair);padding:8px 14px;font-size:11px;letter-spacing:.06em;display:none;max-width:92vw;z-index:9}
   #work{position:absolute;width:270px;height:270px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none}
@@ -270,12 +270,10 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
 <iframe id="work" title="worker" aria-hidden="true"></iframe>
 <div id="toast"></div>
 <div id="wsheet" role="dialog" aria-modal="true" aria-labelledby="wsk"><div class="box">
-  <div class="k" id="wsk">NO WALLET IN THIS BROWSER</div>
-  <p id="wsp">To collect, open dithervoid.art inside your wallet app. Tap your wallet below: it opens this page in the wallet's own browser, ready to connect.</p>
-  <a class="wbtn prime" id="wsMM" href="#" rel="noopener">OPEN IN METAMASK</a>
-  <a class="wbtn" id="wsTW" href="#" rel="noopener">OPEN IN TRUST WALLET</a>
-  <button class="wbtn" id="wsCopy">COPY THE LINK FOR ANOTHER WALLET</button>
-  <p class="note" id="wsn">Another wallet: open its built-in browser and paste the link. If a button does nothing, you are probably inside the X app: tap ··· and choose Open in browser, then try again.</p>
+  <div class="k" id="wsk">CONNECT YOUR WALLET</div>
+  <p id="wsp"></p>
+  <div id="wsBtns"></div>
+  <p class="note" id="wsn"></p>
   <button class="x" id="wsX">CLOSE</button>
 </div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
@@ -411,23 +409,56 @@ async function bindRead(){ const net=ethers.Network.from(CFG.chainId); let src=R
   else { const fr=new ethers.FetchRequest(src); fr.timeout=8000; fr.setThrottleParams({maxAttempts:1}); ro=new ethers.JsonRpcProvider(fr,net,{staticNetwork:net,batchMaxCount:4}); }
   storm=new ethers.Contract(CFG.contract,ABI,ro); glass=new ethers.Contract(CFG.glass,GABI,ro); giftC=null; }
 async function connectRead(){ if(!CFG.contract) return; await bindRead(); }
-/* NO WALLET: on a phone (often inside the X app's browser) offer to reopen this page inside a wallet app; on a computer, point to a wallet extension */
+/* PHONES. Safari and Chrome on a phone have no wallet, and Brave's own wallet is usually empty. So a phone that is not already inside a wallet app
+   connects through WalletConnect: the visitor taps MetaMask, Rainbow or Zerion, approves in that app, and comes back here to collect.
+   Same flow and same self-hosted bundle (/wc.js in this repo) as the PANDORA rooms; WalletConnect's own QR modal is not used. */
 const isPhone=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
-function noWallet(){
-  const here=location.host+location.pathname+location.search;
-  $('wsMM').href='https://link.metamask.io/dapp/'+here;
-  $('wsTW').href='https://link.trustwallet.com/open_url?coin_id=60&url='+encodeURIComponent('https://'+here);
-  const ph=isPhone();
-  $('wsp').textContent=ph?'To collect, open dithervoid.art inside your wallet app. Tap your wallet below: it opens this page in the wallet\u2019s own browser, ready to connect.':'This browser has no wallet extension. Install MetaMask or Rabby, reload this page and press CONNECT. On a phone, the buttons below open this page inside a wallet app.';
-  $('wsn').style.display=ph?'':'none';
-  $('wsheet').classList.add('on');
+const WC_INAPP=/MetaMaskMobile|Trust\/|TrustWallet|CoinbaseWallet|CoinbaseBrowser|Rainbow|Zerion|Phantom|imToken|OKApp|BitKeep|TokenPocket|SafePal|Ledger Live/i;
+function inWalletApp(){ const e=window.ethereum; if(!e||e.isBraveWallet) return false; if(WC_INAPP.test(navigator.userAgent)) return true;
+  try{ if(navigator.brave) return false; }catch(x){} return !!(e.isMetaMask||e.isCoinbaseWallet||e.isTrust||e.isTrustWallet||e.isZerion||e.isRainbow||e.isPhantom); }
+const WC_PID='9204f8b0f71b2868dece0e6e57a2950a';
+const WC_APPS=[['METAMASK','https://metamask.app.link'],['RAINBOW','https://rnbwapp.com'],['ZERION','https://link.zerion.io']];
+let _WC=null,_WCNS=null; const _wcGlobal=()=>globalThis['@walletconnect/ethereum-provider'];
+function wcLoad(){ if(_WCNS) return Promise.resolve(_WCNS); if(_wcGlobal()) return Promise.resolve(_WCNS=_wcGlobal());
+  return new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='/wc.js'; sc.async=true;
+    sc.onload=()=>{ const n=_wcGlobal(); if(n&&n.EthereumProvider) res(_WCNS=n); else rej(new Error('WalletConnect did not load.')); };
+    sc.onerror=()=>rej(new Error('WalletConnect could not load in this browser.')); document.head.appendChild(sc); }); }
+async function wcInit(){ const NS=await wcLoad();
+  const o={projectId:WC_PID,chains:[1],optionalChains:[1],showQrModal:false,metadata:{name:'DITHERVOID // STORMGLASS',description:'One artwork a day at a price that halves every 2.4 hours.',url:location.origin,icons:[location.origin+'/icon.png']}};
+  try{ return await NS.EthereumProvider.init(o); }catch(e){ try{ Object.keys(localStorage).filter(k=>/^wc@2:|^WALLETCONNECT/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(x){} return await NS.EthereumProvider.init(o); } }
+const sheetOff=()=>$('wsheet').classList.remove('on');
+function sheet(title,text,note,btns){ $('wsk').textContent=title; $('wsp').textContent=text; $('wsn').textContent=note||''; $('wsn').style.display=note?'':'none';
+  const B=$('wsBtns'); B.innerHTML=''; btns.forEach(([label,fn,prime])=>{ const b=document.createElement('button'); b.className='wbtn'+(prime?' prime':''); b.textContent=label; b.addEventListener('click',()=>fn(b)); B.appendChild(b); });
+  $('wsheet').classList.add('on'); return B; }
+const pageLink=()=>'https://'+location.host+location.pathname;
+async function copyTo(btn,txt,done){ try{ await navigator.clipboard.writeText(txt); btn.textContent=done; }catch(e){ btn.textContent=txt.slice(0,60); } }
+let SHEET_CLOSE=null;
+/* opens on the tap, before the relay answers; the wallet buttons wake when the connection link arrives. Resolves with a provider, or 'builtin' */
+function wcConnect(hasBuiltIn){
+  return new Promise((resolve,reject)=>{
+    let uri=null, done=false, p=null, dead=null;
+    const onUri=u=>{ uri=u; wake(true); $('wsp').textContent='Tap the app that holds your wallet.'; };
+    const finish=(f,v)=>{ if(done) return; done=true; clearTimeout(dead); SHEET_CLOSE=null; sheetOff(); try{ if(p) p.removeListener('display_uri',onUri); }catch(x){} f(v); };
+    const pick=a=>()=>{ if(!uri) return; try{ localStorage.setItem('WALLETCONNECT_DEEPLINK_CHOICE',JSON.stringify({name:a[0],href:a[1]})); }catch(x){} location.href=a[1]+'/wc?uri='+encodeURIComponent(uri); };
+    const builtin=hasBuiltIn?[['USE THIS BROWSER’S WALLET',()=>finish(resolve,'builtin')]]:[];
+    const btns=WC_APPS.map((a,i)=>[a[0],pick(a),i===0]).concat([['OTHER WALLET',()=>{ if(uri) location.href=uri; }],['COPY CONNECTION LINK',b=>{ if(uri) copyTo(b,uri,'COPIED: PASTE IT IN YOUR WALLET'); }]],builtin);
+    const B=sheet('CONNECT YOUR WALLET','Reaching WalletConnect, one moment…','Pick the app that holds your wallet. It opens, you approve the connection, then come back to this page to collect. Connecting costs nothing.',btns);
+    const wake=on=>[...B.children].forEach((b,i)=>{ if(i<WC_APPS.length+2){ b.disabled=!on; b.style.opacity=on?'':'.4'; } }); wake(false);
+    SHEET_CLOSE=()=>finish(reject,Object.assign(new Error('Cancelled. Nothing was sent.'),{code:4001}));
+    dead=setTimeout(()=>{ if(!uri&&!done){ sheet('WALLETCONNECT DID NOT ANSWER','This browser may be blocking it. Open dithervoid.art inside your wallet app instead: in MetaMask, Rainbow or Zerion, open the app’s own browser and paste the link.','',
+      [['OPEN IN METAMASK',()=>{ location.href='https://link.metamask.io/dapp/'+location.host+location.pathname; },true],['COPY THE LINK',b=>copyTo(b,pageLink(),'COPIED: PASTE IT IN YOUR WALLET’S BROWSER')]].concat(builtin)); } },20000);
+    (async()=>{ try{ p=_WC||(_WC=await wcInit()); if(done) return; if(p.accounts&&p.accounts.length) return finish(resolve,p);
+      p.on('display_uri',onUri); await p.enable(); finish(resolve,p); }catch(e){ console.warn('walletconnect',e); if(!done&&uri) finish(reject,e); } })();
+  });
 }
-$('wsX').addEventListener('click',()=>$('wsheet').classList.remove('on'));
-$('wsheet').addEventListener('click',e=>{ if(e.target.id==='wsheet') $('wsheet').classList.remove('on'); });
-$('wsCopy').addEventListener('click',async()=>{ const u='https://'+location.host+location.pathname; try{ await navigator.clipboard.writeText(u); $('wsCopy').textContent='COPIED: PASTE IT IN YOUR WALLET\u2019S BROWSER'; }catch(e){ $('wsCopy').textContent=u; } });
+/* a computer with no wallet extension */
+function noWalletDesk(){ sheet('NO WALLET IN THIS BROWSER','This browser has no wallet extension. Install MetaMask or Rabby, reload this page and press CONNECT. Or open dithervoid.art on your phone and connect with MetaMask, Rainbow or Zerion.','',[]); }
+$('wsX').addEventListener('click',()=>{ if(SHEET_CLOSE) SHEET_CLOSE(); else sheetOff(); });
+$('wsheet').addEventListener('click',e=>{ if(e.target.id==='wsheet') $('wsX').click(); });
 async function connectWallet(){
   try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
-  const L=EP?[EP]:walletList(); if(!L.length){ noWallet(); return; }
+  if(!EP&&isPhone()&&!inWalletApp()){ const r=await wcConnect(!!window.ethereum); if(r!=='builtin') EP=r; }
+  const L=EP?[EP]:walletList(); if(!L.length){ noWalletDesk(); return; }
   let bp=null, err=null;
   for(const P of L){ try{ await P.request({method:'eth_requestAccounts'}); bp=new ethers.BrowserProvider(P); EP=P; break; }
     catch(e){ const c=e&&e.code; if(c===4001||c===-32002) throw e; err=e; console.warn('wallet refused, trying the next one',e); } }
