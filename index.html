@@ -78,6 +78,14 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   .card.on{outline:2px solid var(--acc);outline-offset:-2px} .card.on i{color:var(--acc)}
   .card.wait::after{content:"";position:absolute;inset:45% 45%;border:1px solid var(--hair);animation:sp 1.2s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
+  #wsheet{position:fixed;inset:0;z-index:20;background:rgba(5,5,6,.86);display:none;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + var(--sab))}
+  #wsheet.on{display:flex}
+  #wsheet .box{background:var(--pane);border:1px solid var(--acc);width:100%;max-width:440px;padding:18px}
+  #wsheet .k{color:var(--acc);letter-spacing:.18em;font-size:11px;margin-bottom:8px}
+  #wsheet p{margin:0 0 12px;color:var(--ink)} #wsheet .note{color:var(--mut);font-size:11px;margin:10px 0 0}
+  #wsheet a.wbtn,#wsheet button.wbtn{display:block;width:100%;text-align:center;border:1px solid var(--ink);padding:13px 14px;margin:8px 0 0;letter-spacing:.12em;font-size:12px}
+  #wsheet a.wbtn.prime{border-color:var(--acc);background:var(--acc);color:var(--bg);font-weight:700}
+  #wsheet .x{display:block;margin:12px auto 0;border:0;color:var(--mut)}
   #toast{position:fixed;left:50%;bottom:calc(18px + var(--sab));transform:translateX(-50%);background:#111116;border:1px solid var(--hair);padding:8px 14px;font-size:11px;letter-spacing:.06em;display:none;max-width:92vw;z-index:9}
   #work{position:absolute;width:270px;height:270px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none}
   .sky{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:8px}
@@ -261,6 +269,15 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
 
 <iframe id="work" title="worker" aria-hidden="true"></iframe>
 <div id="toast"></div>
+<div id="wsheet" role="dialog" aria-modal="true" aria-labelledby="wsk"><div class="box">
+  <div class="k" id="wsk">NO WALLET IN THIS BROWSER</div>
+  <p id="wsp">To collect, open dithervoid.art inside your wallet app. Tap your wallet below: it opens this page in the wallet's own browser, ready to connect.</p>
+  <a class="wbtn prime" id="wsMM" href="#" rel="noopener">OPEN IN METAMASK</a>
+  <a class="wbtn" id="wsTW" href="#" rel="noopener">OPEN IN TRUST WALLET</a>
+  <button class="wbtn" id="wsCopy">COPY THE LINK FOR ANOTHER WALLET</button>
+  <p class="note" id="wsn">Another wallet: open its built-in browser and paste the link. If a button does nothing, you are probably inside the X app: tap ··· and choose Open in browser, then try again.</p>
+  <button class="x" id="wsX">CLOSE</button>
+</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
 <script>
 /* ═══ THE REHEARSAL. Until the ledger is on the chain (CFG.contract empty) the page runs on its own:
@@ -394,9 +411,23 @@ async function bindRead(){ const net=ethers.Network.from(CFG.chainId); let src=R
   else { const fr=new ethers.FetchRequest(src); fr.timeout=8000; fr.setThrottleParams({maxAttempts:1}); ro=new ethers.JsonRpcProvider(fr,net,{staticNetwork:net,batchMaxCount:4}); }
   storm=new ethers.Contract(CFG.contract,ABI,ro); glass=new ethers.Contract(CFG.glass,GABI,ro); giftC=null; }
 async function connectRead(){ if(!CFG.contract) return; await bindRead(); }
+/* NO WALLET: on a phone (often inside the X app's browser) offer to reopen this page inside a wallet app; on a computer, point to a wallet extension */
+const isPhone=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
+function noWallet(){
+  const here=location.host+location.pathname+location.search;
+  $('wsMM').href='https://link.metamask.io/dapp/'+here;
+  $('wsTW').href='https://link.trustwallet.com/open_url?coin_id=60&url='+encodeURIComponent('https://'+here);
+  const ph=isPhone();
+  $('wsp').textContent=ph?'To collect, open dithervoid.art inside your wallet app. Tap your wallet below: it opens this page in the wallet\u2019s own browser, ready to connect.':'This browser has no wallet extension. Install MetaMask or Rabby, reload this page and press CONNECT. On a phone, the buttons below open this page inside a wallet app.';
+  $('wsn').style.display=ph?'':'none';
+  $('wsheet').classList.add('on');
+}
+$('wsX').addEventListener('click',()=>$('wsheet').classList.remove('on'));
+$('wsheet').addEventListener('click',e=>{ if(e.target.id==='wsheet') $('wsheet').classList.remove('on'); });
+$('wsCopy').addEventListener('click',async()=>{ const u='https://'+location.host+location.pathname; try{ await navigator.clipboard.writeText(u); $('wsCopy').textContent='COPIED: PASTE IT IN YOUR WALLET\u2019S BROWSER'; }catch(e){ $('wsCopy').textContent=u; } });
 async function connectWallet(){
   try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
-  const L=EP?[EP]:walletList(); if(!L.length){ toast('No wallet found in this browser. Install a wallet such as MetaMask or Rabby, or open this page in your wallet app’s browser.'); return; }
+  const L=EP?[EP]:walletList(); if(!L.length){ noWallet(); return; }
   let bp=null, err=null;
   for(const P of L){ try{ await P.request({method:'eth_requestAccounts'}); bp=new ethers.BrowserProvider(P); EP=P; break; }
     catch(e){ const c=e&&e.code; if(c===4001||c===-32002) throw e; err=e; console.warn('wallet refused, trying the next one',e); } }
