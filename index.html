@@ -86,6 +86,23 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   #wsheet a.wbtn,#wsheet button.wbtn{display:block;width:100%;text-align:center;border:1px solid var(--ink);padding:13px 14px;margin:8px 0 0;letter-spacing:.12em;font-size:12px}
   #wsheet .wbtn.prime{border-color:var(--acc);background:var(--acc);color:var(--bg);font-weight:700}
   #wsheet .x{display:block;margin:12px auto 0;border:0;color:var(--mut)}
+  /* the plate card: a sold plate, its holder and its record */
+  #pcard{position:fixed;inset:0;z-index:21;background:rgba(5,5,6,.88);display:none;align-items:center;justify-content:center;padding:16px 16px calc(16px + var(--sab))}
+  #pcard.on{display:flex}
+  #pcard .box{background:var(--pane);border:1px solid var(--acc);width:100%;max-width:520px;max-height:calc(100dvh - 32px);overflow-y:auto;padding:16px;position:relative}
+  #pcard .k{color:var(--acc);letter-spacing:.18em;font-size:11px;margin:0 28px 10px 0}
+  #pcard .pv{position:relative;width:100%;aspect-ratio:1/1;background:#000;border:1px solid var(--hair)}
+  #pcard .pv iframe{width:100%;height:100%;border:0;display:block}
+  #pcard h3{margin:14px 0 4px;font-size:15px;letter-spacing:.06em;color:var(--ink)}
+  #pcard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:12px 0 0;font-size:12px}
+  #pcard dt{color:var(--mut);letter-spacing:.12em;font-size:10px;padding-top:2px}
+  #pcard dd{margin:0;overflow-wrap:anywhere;color:var(--ink)}
+  #pcard a{color:var(--acc)}
+  #pcard .desc{color:var(--mut);font-size:11px;margin:12px 0 0}
+  #pcard .links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  #pcard .links a{display:block;text-align:center;border:1px solid var(--ink);padding:11px 8px;letter-spacing:.12em;font-size:11px;color:var(--ink);text-decoration:none}
+  #pcard .links a.prime{border-color:var(--acc);background:var(--acc);color:var(--bg);font-weight:700}
+  #pcard .xx{position:absolute;top:10px;right:10px;border:0;color:var(--mut);font-size:18px;line-height:1;padding:4px 8px;background:none;cursor:pointer}
   #toast{position:fixed;left:50%;bottom:calc(18px + var(--sab));transform:translateX(-50%);background:#111116;border:1px solid var(--hair);padding:8px 14px;font-size:11px;letter-spacing:.06em;display:none;max-width:92vw;z-index:9}
   #work{position:absolute;width:270px;height:270px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none}
   .sky{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:8px}
@@ -276,6 +293,15 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   <p class="note" id="wsn"></p>
   <button class="x" id="wsX">CLOSE</button>
 </div></div>
+<div id="pcard" role="dialog" aria-modal="true" aria-labelledby="pck"><div class="box">
+  <button class="xx" id="pcX" aria-label="Close">×</button>
+  <div class="k" id="pck">THE PLATE</div>
+  <div class="pv"><iframe id="pcPlate" title="the plate"></iframe></div>
+  <h3 id="pcName"></h3>
+  <dl id="pcData"></dl>
+  <p class="desc" id="pcDesc"></p>
+  <div class="links" id="pcLinks"></div>
+</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
 <script>
 /* ═══ THE REHEARSAL. Until the ledger is on the chain (CFG.contract empty) the page runs on its own:
@@ -341,7 +367,7 @@ const ABI=[
   'function plates(uint256) view returns (uint32 seed,uint64 open,uint64 close,uint128 price,uint128 witnessed,address buyer,uint8 pick,bool sold)',
   'function onSale() view returns (uint256 id,uint256 price,uint256 close,bool open)','function startPrice(uint256) view returns (uint256)','function priceAt(uint256,uint256) view returns (uint256)','function referencePrice() view returns (uint256)','function median7() view returns (uint256)',
   'function candidates(uint256) view returns (uint32[32])','function picks(uint256) view returns (uint8)','function vault() view returns (uint256)','function seatPool() view returns (uint256)','function totalSeats() view returns (uint256)','function seats(address) view returns (uint256)','function pending(address) view returns (uint256)','function owed(address) view returns (uint256)',
-  'function ownerOf(uint256) view returns (address)','function witnessesOf(uint256) view returns (uint32[])','function handsOf(uint256) view returns (uint32[])',
+  'function ownerOf(uint256) view returns (address)','function tokenURI(uint256) view returns (string)','function witnessesOf(uint256) view returns (uint32[])','function handsOf(uint256) view returns (uint32[])',
   'function bid() payable','function settleCandle()','function pledge() payable','function sync()','function buy(uint256,uint8) payable','function witness(uint256) payable','function claim()','function withdraw()','function withdrawTo(address)'
 ];
 const GABI=['function sky(uint256) view returns (string)'];
@@ -601,14 +627,81 @@ async function render(st){ const gen=++RGEN;
       (async()=>{ for(const [k,seed] of st.cands.entries()) await fillCard(g.children[k],{seed,live:lastSky}); })(); } }
   else $('candidates').style.display='none';
 }
+/* ═══ THE PLATE CARD. Tap a plate in the ledger: the live plate, its title, who holds it (X handle when known, ENS or address),
+   its on-chain record (tokenURI, read straight from the contract) and the Etherscan link. */
+const HANDLES={ /* wallets that publicly map to an X account (bidders, buyers, SMALL WEATHER collectors tagged by GREENCROSS); ENS names too */
+  '0x561bc335f0fa57d8c6e8ae28f61c728fbb408724':'MitosAlexp','0x030eb0849964d125772155e252982f7e9cbf32e4':'sirsapient','txc0ld.eth':'tx_c0ld',
+  '0xe6148d5b54d51ed4e13a9b9a342b9737b18bfa42':'NFTMike42','0x5aec024c1d0f5fdf40769a51cad0be934ea86ac3':'maracatudo','0x6b85c6e03a939cb37942f882ee2310e5af3642bb':'AFuckingNobody',
+  '0x8caadf7c03b1b08c68685b9f156223f311d2eda2':'ByronHirsch','0x81772de3466a34901f0a13230869a3ac65f213dd':'hapsxo','0x0b9580c35db43c1df34096795c7434dca2069e9c':'p1gg0d',
+  '0xeebff2d3f395aaf95ac43c813290ac75711ee28f':'Lounge_Act1','0x4e0f0a3ef71bac23434f371b1dad4ee761cfefb3':'ohn0x4','xenin.eth':'x3n1n',
+  '0xd15d229fd52240f8030fa4694294189ed1dfbe4d':'num1crush','0x1776cfdcffc21cd51b35d1efaf5b3db4848da1d7':'resnepsid','06437.eth':'DankyHashpantz',
+  '0x50f5599518de902bfe491f1bebc4c011399f6146':'Tenfin9erz','fuzzyface.eth':'DCOT15','apocs.eth':'AP0CALYPSE','0x1556495a0028f89cce56a040c4bf5edafd9e4bdf':'sansfomo',
+  'mxjxn.eth':'mxjxn','0xc2fea212cb7635602b4b7993afeaecc97a873d5e':'subterranean_1','0xa2eae178f372220ff6c6d8cacd63efe4e4b44525':'StarkNaked23','seelawrie.eth':'seelawrie',
+  'cuatroceronueve.eth':'cuatroceronueve','urbagsarepoo.eth':'FrauShitcoinz','gmgt.eth':'GTSewell','0xdc8f09b81276cbacea5a9262774749f824756cb3':'jbgdpt',
+  '0x89d53e8612e8416bf960dc9444ce0e2a0878a582':'suparno67','0xe2e9f3e5e6793c313f76076271bfe535cb27f114':'eritaqua','0xa89f3db42cee7ac0cffaa9ba6176f2574ba4071a':'timewalker717',
+  'maning.eth':'Maniinng','0x1a1427a73b7cb0f4ea3f71c6c8090c4366c8ebe1':'jsheps','0xca9d4f6f4b688253bccdde6f491f4b9ccfbf8bc2':'_2T1_','desultor.eth':'desultor',
+  '0xebfd774c1c2008e56ce40e0a4504ebecc81b1921':'McHexleyOG','0xa6c3689380b2f13325ad655f3468a666ded64944':'SpaceMan_8_','0x0cb27e883e207905ad2a94f9b6ef0c7a99223c37':'blue_onchain',
+  'keepitwerid.eth':'arwyn_official','el314b.eth':'EL314B','fredm.eth':'HolomediaVn','shillypreston.eth':'shillypreston','0xc0ae85cd4ba82cbc440b2f7633fcaf8f4b29bab1':'darkb3at',
+  '0x3d869084c46d39de7ce06ddc4a96b86ec606dbbb':'xlvii47_eth','sykoe.eth':'_SYKOE','0xb8ad671479618b7e204b82c16d7d4aa675c71ca6':'ex_mortal_',
+  '0x25437b529fdf0f31221a465429d0c89e81a412e4':'CMYKRevolution','scamart.eth':'scamart','0x9f128b52128027dd6ea9892f741519979d36fa34':'scamart'
+};
+const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WHO=new Map();   /* address -> {ens, handle}, read once */
+async function whoIs(a){
+  const k=a.toLowerCase(); if(WHO.has(k)) return WHO.get(k);
+  let ens=null, handle=HANDLES[k]||null;
+  try{ ens=await ro.lookupAddress(a); }catch(e){}
+  if(!handle&&ens) handle=HANDLES[ens.toLowerCase()]||null;
+  if(!handle&&ens){ try{ const r=await ro.getResolver(ens); const t=r&&await r.getText('com.twitter'); const h=t&&String(t).trim().replace(/^https?:\/\/(www\.)?(x|twitter)\.com\//i,'').replace(/^@/,'').split(/[/?#]/)[0]; if(h&&/^[A-Za-z0-9_]{1,15}$/.test(h)) handle=h; }catch(e){} }
+  const v={ens,handle}; WHO.set(k,v); return v; }
+function decodeURI64(u){ /* the contract answers data:application/json;base64,… */
+  if(u.startsWith('data:application/json;base64,')){ const b=Uint8Array.from(atob(u.slice(29)),c=>c.charCodeAt(0)); return JSON.parse(new TextDecoder().decode(b)); }
+  if(u.startsWith('data:application/json,')) return JSON.parse(decodeURIComponent(u.slice(22)));
+  return JSON.parse(u); }
+const META=new Map();
+const pcOff=()=>{ $('pcard').classList.remove('on'); $('pcPlate').srcdoc=''; document.body.style.overflow=''; };
+$('pcX').addEventListener('click',pcOff);
+$('pcard').addEventListener('click',e=>{ if(e.target.id==='pcard') pcOff(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('pcard').classList.contains('on')) pcOff(); });
+async function plateCard(id,G,st){
+  const label=id===0?'PLATE ZERO':st&&st.dead&&id===st.tombId?'THE TOMBSTONE':'DAY '+id;
+  const nft=CFG.explorer+'/nft/'+CFG.contract+'/'+id;
+  $('pck').textContent='STORMGLASS · '+label; $('pcName').textContent=label; $('pcDesc').textContent='';
+  $('pcData').innerHTML='<dt>READING</dt><dd>the plate’s record from Ethereum…</dd>';
+  $('pcLinks').innerHTML='<a class="prime" href="'+esc(nft)+'" target="_blank" rel="noopener">ETHERSCAN ↗</a><a id="pcGlass" href="#" target="_blank" rel="noopener">THE GLASS ↗</a>';
+  $('pcard').classList.add('on'); document.body.style.overflow='hidden';
+  const P=CFG.demo?null:await storm.plates(id);
+  if(!G){ G={seed:P?Number(P.seed):1,live:CFG.demo?{}:await skyOf(id)}; if(id===0) G.subject=44; if(st&&st.dead&&id===st.tombId) G.subject=45; }
+  const src=await glassSrc(); $('pcPlate').srcdoc=src.replace('<body class="glass">','<body class="glass"><script>window.GLASS='+JSON.stringify(G)+';<\/script>');
+  $('pcGlass').href='/glass/?seed='+G.seed+(G.subject!=null?'&subject='+G.subject:'')+(G.live&&Object.keys(G.live).length?'&live='+encodeURIComponent(JSON.stringify(G.live)):'');
+  if(CFG.demo){ $('pcData').innerHTML='<dt>HELD BY</dt><dd>@demo · 0x0000…0d3e</dd><dt>SEED</dt><dd>'+G.seed+'</dd>'; return; }
+  const [owner,meta]=await Promise.all([
+    storm.ownerOf(id).catch(()=>null),
+    META.has(id)?Promise.resolve(META.get(id)):storm.tokenURI(id).then(u=>{ const m=decodeURI64(u); META.set(id,m); return m; }).catch(e=>{ console.warn('tokenURI',e); return null; })
+  ]);
+  if(!$('pcard').classList.contains('on')) return;
+  const rows=[];
+  const holder=async(a)=>{ if(!a) return '—';
+    if(a.toLowerCase()===CFG.contract.toLowerCase()) return 'THE VAULT · held by the contract forever';
+    const w=await whoIs(a); const addr='<a href="'+esc(CFG.explorer+'/address/'+a)+'" target="_blank" rel="noopener">'+esc(w.ens||short(a))+' ↗</a>';
+    return (w.handle?'<a href="https://x.com/'+esc(w.handle)+'" target="_blank" rel="noopener">@'+esc(w.handle)+' ↗</a><br>':'')+addr+swMark(a)+'<br><span style="color:var(--mut);font-size:10px">'+esc(a)+'</span>'; };
+  rows.push(['HELD BY',await holder(owner)]);
+  const buyer=P&&P.buyer&&!/^0x0+$/.test(P.buyer)?P.buyer:null;
+  if(buyer&&owner&&buyer.toLowerCase()!==owner.toLowerCase()) rows.push([id===0?'WON BY':'COLLECTED BY',await holder(buyer)]);
+  if(meta&&meta.name) $('pcName').textContent=meta.name;
+  (meta&&Array.isArray(meta.attributes)?meta.attributes:[]).forEach(t=>rows.push([String(t.trait_type||'').toUpperCase(),esc(t.value)]));
+  rows.push(['SEED',esc(G.seed)]); rows.push(['TOKEN','#'+id+' · ERC-721']);
+  $('pcData').innerHTML=rows.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+v+'</dd>').join('');
+  $('pcDesc').textContent=meta&&meta.description?meta.description:(meta?'':'The record could not be read from this browser just now; Etherscan has it.');
+}
 async function renderLedger(st){
   const g=$('ledgerGrid'); const n=st.lastId; if(!st.settled||g.dataset.n===String(n)) return; g.dataset.n=String(n); g.innerHTML='';
   const ids=[]; for(let i=n;i>=0;i--) ids.push(i);
-  $('ledgerNote').textContent=(n+1)+(n?' plates so far, newest first.':' plate so far.')+' Tap one to see it on Etherscan. The median of the last seven sale prices is '+(CFG.demo?'0.42':fmt(await storm.median7()))+' ETH; the next day starts at 4 times that, or at the founding price if higher.';
+  $('ledgerNote').textContent=(n+1)+(n?' plates so far, newest first.':' plate so far.')+' Tap one to see it, who holds it and its record. The median of the last seven sale prices is '+(CFG.demo?'0.42':fmt(await storm.median7()))+' ETH; the next day starts at 4 times that, or at the founding price if higher.';
   for(const id of ids){ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+(id===0?'ZERO':st.dead&&id===st.tombId?'TOMB':'DAY '+id)+'</i>'; g.appendChild(el);
-    el.onclick=()=>{ window.open(CFG.explorer?CFG.explorer+'/nft/'+CFG.contract+'/'+id:'#','_blank'); }; }
+    el.onclick=()=>plateCard(id,el._G,st).catch(e=>{ console.error(e); toast('Could not read this plate from Ethereum. Try again in a moment.'); }); }
   (async()=>{ for(const [k,id] of ids.entries()){ let seed=1,subject=null; if(CFG.demo){ seed=(313454022*(id+1))>>>0; if(id===0) subject=44; if(st.dead&&id===st.tombId) subject=45; } else { const P=await storm.plates(id); seed=Number(P.seed); if(id===0) subject=44; if(st.dead&&id===st.tombId) subject=45; }
-    const G={seed,live:CFG.demo?{}:await skyOf(id)}; if(subject!=null) G.subject=subject; await fillCard(g.children[k],G); } })();
+    const G={seed,live:CFG.demo?{}:await skyOf(id)}; if(subject!=null) G.subject=subject; if(g.children[k]) g.children[k]._G=G; await fillCard(g.children[k],G); } })();
   if(CFG.gift) (async()=>{ for(const [k,id] of ids.entries()){ const el=g.children[k]; if(!el) break; let o=null;
     if(DEMO_GIFT!=null) o=id%4===0?'0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359':null; else if(!(st.dead&&id===st.tombId)) o=await storm.ownerOf(id).catch(()=>null);
     if(o&&await holds(o)){ const i=el.querySelector('i'); if(i&&!i.querySelector('.sw')) i.insertAdjacentHTML('beforeend',MARK); } } })();
