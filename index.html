@@ -64,7 +64,8 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   .panel,.big{min-width:0;overflow-wrap:anywhere}
   #plateBox{position:relative;background:#000;border:1px solid var(--hair);aspect-ratio:1/1;width:min(100%, calc(100dvh - 140px));margin:0 auto}
   #plateBox iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000}
-  #plateBox iframe.back{opacity:0;pointer-events:none;z-index:0} #plateBox iframe.front{z-index:1} #plateTag{z-index:2}
+  #plateBox img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;background:#000;display:block}
+  #plateBox .back{opacity:0;pointer-events:none;z-index:0} #plateBox .front{z-index:1} #plateTag{z-index:2}
   #plateTag{position:absolute;left:10px;top:8px;font-size:10px;letter-spacing:.2em;color:var(--mut);background:rgba(0,0,0,.6);padding:3px 7px;pointer-events:none}
   .panel{border:1px solid var(--hair);background:var(--pane);padding:16px;display:flex;flex-direction:column;gap:14px;align-self:start}
   .big{font-size:34px;line-height:1.1;letter-spacing:.02em;font-weight:500}
@@ -133,7 +134,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
 <body>
 <header class="top"><div class="bar"><a class="brand" href="/">DITHERVOID // STORMGLASS</a><span id="state">READING THE CHAIN</span><nav><a href="/" aria-current="page">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a></nav><button id="wallet" class="act">CONNECT</button></div></header>
 <main class="hero" id="top">
-  <div><div id="plateBox"><iframe id="plate" class="front" title="the plate"></iframe><iframe id="plateB" class="back" title="the next drawing of the plate" aria-hidden="true" tabindex="-1"></iframe><div id="plateTag">STANDBY</div></div></div>
+  <div><div id="plateBox"><img id="plateImg" class="back" alt="the plate" aria-hidden="true"><iframe id="plate" class="back" title="the plate" aria-hidden="true" tabindex="-1"></iframe><iframe id="plateB" class="back" title="the plate" aria-hidden="true" tabindex="-1"></iframe><div id="plateTag">STANDBY</div></div></div>
   <div class="side"><div class="panel" id="panel"><div class="k">LOADING</div><div class="note">Reading the sale from Ethereum…</div></div><div class="welcome" id="welcome" hidden></div></div>
 </main>
 <section id="candidates" style="display:none"><h2>TOMORROW’S PLATE · THE BUYER PICKS ONE OF THESE 32</h2><p class="note" id="candNote" style="margin:-4px 0 10px">Tap one to watch it move. Choose it there, then collect today’s plate.</p><div class="grid" id="candGrid"></div></section>
@@ -524,41 +525,53 @@ async function send(name,fn){ try{ if(!W){ await connectWallet(); if(!W) return;
 /* ═══ THE PLATE ON THE GLASS: the token page itself, fed the seed and the sky */
 let pageSrc=null;
 async function glassSrc(){ if(!pageSrc) pageSrc=await (await fetch('/glass/index.html')).text(); return pageSrc; }
-/* Two frames, one in front and one behind (his order, Oct 18). A plate takes longer to draw than the page takes to
-   read a new sky, so redrawing in place meant the finished plate was never seen. Now: the plate in front stays until it
-   is finished and has been on show for HOLD; a newer sky draws in the frame behind; when that one is finished (and the
-   front one has had its HOLD) the two swap, and the new one gets its own HOLD. A different plate (a new day, a sale)
-   replaces the front at once. The engine is not touched: a frame is finished when its status line has faded (#gosd.off). */
-const HOLD=10000, PL={front:null,back:null,key:'',id:'',ready:false,readyAt:0,born:0,backKey:'',want:null};
+/* THE PLATE ON SHOW (his order, Oct 18): only a finished plate is ever on show, never a black square or a half-drawn one.
+   1. A plate first appears as its finished print, /plates/<seed>.gif (written for every day; the same engine and print).
+   2. Behind it, out of sight, the glass draws the plate again under the live sky.
+   3. Only when that drawing is completely finished, and what is on show has held for HOLD, do the two swap.
+   4. Every new sky draws behind in the same way; the finished one comes forward and holds HOLD, and so on.
+   A plate with no print file yet falls back to drawing in front. The engine is not touched: a frame is finished when
+   its status line has faded (#gosd.off). Nothing swaps while someone is using the glass (full screen, its menu open). */
+const HOLD=10000, PL={front:null,back:null,img:null,key:'',id:'',ready:false,readyAt:0,born:0,backKey:'',want:null,tok:0};
 const glassDoc=(src,G)=>src.replace('<body class="glass">','<body class="glass"><script>window.GLASS='+JSON.stringify(G)+';<\/script>');
 const plateId=G=>JSON.stringify([G.seed,G.subject==null?null:G.subject,G.frames||null]);
+const printUrl=G=>'/plates/'+(G.seed>>>0)+(G.subject==null?'':'-s'+G.subject)+'.gif';
+const isFrame=el=>el&&el.tagName==='IFRAME';
 function plateDone(f){ try{ const g=f.contentDocument&&f.contentDocument.getElementById('gosd'); return !!(g&&g.classList.contains('off')); }catch(e){ return false; } }
-function plateBusy(f){ try{ const d=f.contentDocument; return !!(d&&(d.fullscreenElement||d.webkitFullscreenElement||d.querySelector('.open'))); }catch(e){ return false; } }   /* someone is using the glass: no swap under their finger */
+function plateBusy(f){ if(!isFrame(f)) return false; try{ const d=f.contentDocument; return !!(d&&(d.fullscreenElement||d.webkitFullscreenElement||d.querySelector('.open'))); }catch(e){ return false; } }
+function plateForward(el){   /* el comes to the front; everything else steps back (frames behind are emptied unless drawing) */
+  [$('plateImg'),$('plate'),$('plateB')].forEach(x=>{ const on=x===el; x.className=on?'front':'back';
+    if(on){ x.removeAttribute('aria-hidden'); x.removeAttribute('tabindex'); } else { x.setAttribute('aria-hidden','true'); x.setAttribute('tabindex','-1'); } });
+  PL.front=el; }
+const spareFrame=()=>PL.front===$('plate')?$('plateB'):$('plate');
 async function showPlate(G,tag){
-  if(!PL.front){ PL.front=$('plate'); PL.back=$('plateB'); }
   $('plateTag').textContent=tag||'';
   const key=JSON.stringify(G);
-  if(plateId(G)!==PL.id){   /* another plate: straight to the front, drop whatever was drawing behind */
-    PL.id=plateId(G); PL.key=key; PL.ready=false; PL.readyAt=0; PL.born=Date.now(); PL.want=null; PL.backKey=''; PL.back.srcdoc='';
-    PL.front.srcdoc=glassDoc(await glassSrc(),G); return; }
+  if(plateId(G)!==PL.id){   /* another plate (a new day, a sale): its finished print at once, the live drawing behind */
+    const tok=++PL.tok; PL.id=plateId(G); PL.want=G; PL.backKey=''; PL.back=null; PL.ready=false; PL.key='';
+    $('plate').srcdoc=''; $('plateB').srcdoc='';
+    const url=printUrl(G), ok=await new Promise(res=>{ const im=new Image(); im.onload=()=>res(true); im.onerror=()=>res(false); im.src=url; });
+    if(tok!==PL.tok) return;
+    if(ok){ $('plateImg').src=url; plateForward($('plateImg')); PL.key='print'; PL.ready=true; PL.readyAt=Date.now(); }
+    else{ PL.want=null; plateForward($('plate')); PL.key=key; PL.born=Date.now(); $('plate').srcdoc=glassDoc(await glassSrc(),G); }   /* no print yet: draw in front */
+    platePump(); return; }
   if(key===PL.key||key===PL.backKey) return;
   PL.want=G; platePump();
 }
 async function platePump(){
   if(!PL.front) return;
   const now=Date.now();
-  if(!PL.ready){   /* finished, or a frame that never came up at all (no status line after 20s): only then move on */
+  if(!PL.ready){   /* the front is drawing (no print file): wait for it, or give up on a frame that never came up */
     const d=PL.front.contentDocument, broken=now-PL.born>20000&&!(d&&d.getElementById('gosd'));
     if(plateDone(PL.front)||broken){ PL.ready=true; PL.readyAt=now; } else return; }
   if(PL.backKey){
-    if(plateDone(PL.back)&&now-PL.readyAt>=HOLD&&!plateBusy(PL.front)){   /* swap: the finished one comes forward and holds */
-      const f=PL.back; PL.back=PL.front; PL.front=f;
-      PL.front.className='front'; PL.back.className='back'; PL.front.removeAttribute('aria-hidden'); PL.back.setAttribute('aria-hidden','true');
-      PL.front.removeAttribute('tabindex'); PL.back.setAttribute('tabindex','-1');
-      PL.key=PL.backKey; PL.backKey=''; PL.readyAt=now; PL.back.srcdoc=''; }
+    if(PL.back&&plateDone(PL.back)&&now-PL.readyAt>=HOLD&&!plateBusy(PL.front)){   /* finished behind: swap, then hold */
+      const old=PL.front; plateForward(PL.back); PL.back=null;
+      if(isFrame(old)) old.srcdoc='';
+      PL.key=PL.backKey; PL.backKey=''; PL.readyAt=now; }
     return; }
-  if(PL.want&&!document.hidden){ const G=PL.want, k=JSON.stringify(G); PL.want=null; if(k===PL.key) return;
-    PL.backKey=k; PL.back.srcdoc=glassDoc(await glassSrc(),G); }
+  if(PL.want&&!document.hidden){ const G=PL.want, k=JSON.stringify(G), tok=PL.tok; PL.want=null; if(k===PL.key) return;
+    const f=spareFrame(); PL.back=f; PL.backKey=k; const src=await glassSrc(); if(tok!==PL.tok) return; f.srcdoc=glassDoc(src,G); }
 }
 setInterval(platePump,500);
 /* the worker frame renders thumbnails through the glass page's side door, one at a time */
