@@ -581,7 +581,12 @@ const jobs={}; let jobId=0, workReady=false;
 window.addEventListener('message',e=>{ const m=e.data; if(!m||m.t!=='glass') return; if(m.hello){ workReady=true; return; } const j=jobs[m.id]; if(j){ delete jobs[m.id]; j(m); } });
 function thumb(G){ return new Promise(res=>{ const id=++jobId; jobs[id]=res; const post=()=>$('work').contentWindow.postMessage(Object.assign({t:'glass',id,frames:8,raster:135},G),'*'); if(workReady) post(); else setTimeout(post,1500); }); }
 let thumbsBusy=0;
-async function fillCard(el,G){ el.classList.add('wait'); thumbsBusy++; let r; try{ r=await thumb(G); } finally{ thumbsBusy--; } el.classList.remove('wait'); if(r.png){ const img=document.createElement('img'); img.src=r.png; el.prepend(img); } }
+async function fillCard(el,G){ el.classList.add('wait');
+  /* a finished thumbnail written ahead (plates/t/<seed>.png) costs the visitor nothing; draw only when there is none */
+  const tu='/plates/t/'+(G.seed>>>0)+'.png';
+  if(G.subject==null&&await new Promise(res=>{ const im=new Image(); im.onload=()=>res(true); im.onerror=()=>res(false); im.src=tu; })){
+    el.classList.remove('wait'); const img=document.createElement('img'); img.src=tu; el.prepend(img); return; }
+  thumbsBusy++; let r; try{ r=await thumb(G); } finally{ thumbsBusy--; } el.classList.remove('wait'); if(r.png){ const img=document.createElement('img'); img.src=r.png; el.prepend(img); } }
 (async()=>{ $('work').srcdoc=(await glassSrc()).replace('<body class="glass">','<body class="glass"><script>window.GLASS={seed:1,frames:24};<\/script>'); })();
 
 /* ═══ THE STATES */
