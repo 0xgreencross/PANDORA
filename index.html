@@ -87,22 +87,31 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   #wsheet .wbtn.prime{border-color:var(--acc);background:var(--acc);color:var(--bg);font-weight:700}
   #wsheet .x{display:block;margin:12px auto 0;border:0;color:var(--mut)}
   /* the plate card: a sold plate, its holder and its record */
-  #pcard{position:fixed;inset:0;z-index:21;background:rgba(5,5,6,.88);display:none;align-items:center;justify-content:center;padding:16px 16px calc(16px + var(--sab))}
-  #pcard.on{display:flex}
-  #pcard .box{background:var(--pane);border:1px solid var(--acc);width:100%;max-width:520px;max-height:calc(100dvh - 32px);overflow-y:auto;padding:16px;position:relative}
-  #pcard .k{color:var(--acc);letter-spacing:.18em;font-size:11px;margin:0 28px 10px 0}
-  #pcard .pv{position:relative;width:100%;aspect-ratio:1/1;background:#000;border:1px solid var(--hair)}
-  #pcard .pv iframe{width:100%;height:100%;border:0;display:block}
-  #pcard h3{margin:14px 0 4px;font-size:15px;letter-spacing:.06em;color:var(--ink)}
-  #pcard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:12px 0 0;font-size:12px}
-  #pcard dt{color:var(--mut);letter-spacing:.12em;font-size:10px;padding-top:2px}
-  #pcard dd{margin:0;overflow-wrap:anywhere;color:var(--ink)}
-  #pcard a{color:var(--acc)}
-  #pcard .desc{color:var(--mut);font-size:11px;margin:12px 0 0}
-  #pcard .links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-  #pcard .links a{display:block;text-align:center;border:1px solid var(--ink);padding:11px 8px;letter-spacing:.12em;font-size:11px;color:var(--ink);text-decoration:none}
-  #pcard .links a.prime{border-color:var(--acc);background:var(--acc);color:var(--bg);font-weight:700}
-  #pcard .xx{position:absolute;top:10px;right:10px;border:0;color:var(--mut);font-size:18px;line-height:1;padding:4px 8px;background:none;cursor:pointer}
+  #pcard,#ccard{position:fixed;inset:0;z-index:21;background:rgba(5,5,6,.88);display:none;align-items:center;justify-content:center;padding:16px 16px calc(16px + var(--sab))}
+  #pcard.on,#ccard.on{display:flex}
+  #pcard .box,#ccard .box{background:var(--pane);border:1px solid var(--acc);width:100%;max-width:520px;max-height:calc(100dvh - 32px);overflow-y:auto;padding:16px;position:relative}
+  #pcard .k,#ccard .k{color:var(--acc);letter-spacing:.18em;font-size:11px;margin:0 28px 10px 0}
+  #pcard .pv,#ccard .pv{position:relative;width:100%;aspect-ratio:1/1;background:#000;border:1px solid var(--hair)}
+  #pcard .pv iframe,#ccard .pv iframe{width:100%;height:100%;border:0;display:block}
+  #pcard h3,#ccard h3{margin:14px 0 4px;font-size:15px;letter-spacing:.06em;color:var(--ink)}
+  #pcard dl,#ccard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;margin:12px 0 0;font-size:12px}
+  #pcard dt,#ccard dt{color:var(--mut);letter-spacing:.12em;font-size:10px;padding-top:2px}
+  #pcard dd,#ccard dd{margin:0;overflow-wrap:anywhere;color:var(--ink)}
+  #pcard a,#ccard a{color:var(--acc)}
+  #pcard .desc,#ccard .desc{color:var(--mut);font-size:11px;margin:12px 0 0}
+  #pcard .links,#ccard .links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+  #pcard .links a,#ccard .links a{display:block;text-align:center;border:1px solid var(--ink);padding:11px 8px;letter-spacing:.12em;font-size:11px;color:var(--ink);text-decoration:none}
+  #pcard .links a.prime,#ccard .links a.prime{border-color:var(--acc);background:var(--acc);color:var(--bg);font-weight:700}
+  #pcard .xx,#ccard .xx{position:absolute;top:10px;right:10px;border:0;color:var(--mut);font-size:18px;line-height:1;padding:4px 8px;background:none;cursor:pointer}
+  /* the option card: one of tomorrow's thirty-two, full size and moving; choose it here, then collect */
+  #ccard .nav{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:10px}
+  #ccard .nav button{font-size:15px;padding:9px 16px;border-color:var(--hair)}
+  #ccard .nav .c{text-align:center;font-size:11px;letter-spacing:.14em;color:var(--mut)}
+  #ccard .acts{display:grid;gap:8px;margin-top:12px}
+  #ccard .acts button{width:100%;padding:13px 8px;font-size:12px;letter-spacing:.14em;white-space:normal}
+  #ccard .acts button.fill{background:var(--acc);color:var(--bg);font-weight:700}
+  #ccard .acts .k{margin:0;text-align:center}
+  #panel button{white-space:normal;max-width:100%}
   #toast{position:fixed;left:50%;bottom:calc(18px + var(--sab));transform:translateX(-50%);background:#111116;border:1px solid var(--hair);padding:8px 14px;font-size:11px;letter-spacing:.06em;display:none;max-width:92vw;z-index:9}
   #work{position:absolute;width:270px;height:270px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none}
   .sky{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:8px}
@@ -126,7 +135,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   <div><div id="plateBox"><iframe id="plate" title="the plate"></iframe><div id="plateTag">STANDBY</div></div></div>
   <div class="side"><div class="panel" id="panel"><div class="k">LOADING</div><div class="note">Reading the sale from Ethereum…</div></div><div class="welcome" id="welcome" hidden></div></div>
 </main>
-<section id="candidates" style="display:none"><h2>TOMORROW’S PLATE · THE BUYER PICKS ONE OF THESE 32</h2><div class="grid" id="candGrid"></div></section>
+<section id="candidates" style="display:none"><h2>TOMORROW’S PLATE · THE BUYER PICKS ONE OF THESE 32</h2><p class="note" id="candNote" style="margin:-4px 0 10px">Tap one to watch it move. Choose it there, then collect today’s plate.</p><div class="grid" id="candGrid"></div></section>
 
 <section id="project">
   <h2>WHAT THIS IS</h2>
@@ -292,6 +301,14 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   <div id="wsBtns"></div>
   <p class="note" id="wsn"></p>
   <button class="x" id="wsX">CLOSE</button>
+</div></div>
+<div id="ccard" role="dialog" aria-modal="true" aria-labelledby="cck"><div class="box">
+  <button class="xx" id="ccX" aria-label="Close">×</button>
+  <div class="k" id="cck">TOMORROW’S PLATE</div>
+  <div class="pv"><iframe id="ccPlate" title="the option, moving"></iframe></div>
+  <div class="nav"><button id="ccPrev" aria-label="Previous option">←</button><div class="c" id="ccNum"></div><button id="ccNext" aria-label="Next option">→</button></div>
+  <p class="desc" id="ccDesc"></p>
+  <div class="acts" id="ccActs"></div>
 </div></div>
 <div id="pcard" role="dialog" aria-modal="true" aria-labelledby="pck"><div class="box">
   <button class="xx" id="pcX" aria-label="Close">×</button>
@@ -613,7 +630,7 @@ async function render(st){ const gen=++RGEN;
         :'<div class="k">DAY '+D.id+' CLOSED UNSOLD</div><div class="big">'+(can?'THE VAULT BUYS IT':'THE LAST DAY')+'</div><div class="note">Nobody bought day '+D.id+'. '+(can?'The next transaction settles it: the vault pays '+fmt(D.ref)+' ETH for it, keeps it forever, and day '+(D.id+1)+' opens.':'The vault holds '+fmt(st.vault)+' ETH, less than the '+fmt(D.ref)+' ETH it needs, so the next transaction turns day '+D.id+' into the Tombstone and the series ends.')+'</div><button id="bSync">SETTLE DAY '+D.id+'</button>'); const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[])); return; }
     if(D.sold){ panel('<div class="k">DAY '+D.id+' · SOLD</div><div class="big">'+fmt(D.price)+' <small>ETH</small></div><div class="note">Bought by '+short(D.buyer)+swMark(D.buyer)+(D.buyer&&D.buyer.toLowerCase()===CFG.contract.toLowerCase()?' (the vault)':'')+'. The next plate goes on sale at 4:20pm Miami time, in '+hms(D.close-t)+'.</div>'); return; }
     const p=priceNow(start,D.open,t);
-    panel('<div class="k">DAY '+D.id+' · ON SALE · CLOSES IN '+hms(D.close-t)+'</div><div class="big" id="px">'+p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small></div><div class="k" id="nxt">'+nextHalf(D.open,t)+'</div><div class="note">It started at '+start.toFixed(4)+' ETH and halves every 2.4 hours. The first person to pay takes the plate, chooses tomorrow’s plate from the thirty-two below, and gets a seat: a full one at '+fmt(st.FOUNDING)+' ETH or more, a share of one below that.'+(pick==null?'':' You chose plate '+pick+'.')+' Your wallet asks for a little more than the price shown; whatever is over comes straight back in the same transaction.</div>'
+    panel('<div class="k">DAY '+D.id+' · ON SALE · CLOSES IN '+hms(D.close-t)+'</div><div class="big" id="px">'+p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small></div><div class="k" id="nxt">'+nextHalf(D.open,t)+'</div><div class="note">It started at '+start.toFixed(4)+' ETH and halves every 2.4 hours. The first person to pay takes the plate, chooses tomorrow’s plate from the thirty-two below, and gets a seat: a full one at '+fmt(st.FOUNDING)+' ETH or more, a share of one below that.'+(pick==null?'':' You chose option '+pick+'.')+' Your wallet asks for a little more than the price shown; whatever is over comes straight back in the same transaction.</div>'
       +(pick==null?'<button class="prime" id="bPick">CHOOSE TOMORROW’S PLATE TO COLLECT</button>':'<button class="prime" id="bBuy">COLLECT</button>')
       +'<hr><div class="k">WITNESS THIS DAY</div><div class="note">Not collecting? Pay any amount to back this plate: your mark is cut into it, and you get a share of a seat, a full one at '+fmt(st.FOUNDING)+' ETH (one seat a day at most). What you pay is added to its price. Witnesses so far: '+fmt(D.witnessed)+' ETH.</div><div class="row"><input id="wAmt" placeholder="ETH" inputmode="decimal"><button id="bWit">WITNESS</button></div>');
     const nw=$('wAmt'); if(keep&&nw){ nw.value=keep.v; if(keep.f){ nw.focus(); nw.setSelectionRange(nw.value.length,nw.value.length); } }
@@ -623,10 +640,38 @@ async function render(st){ const gen=++RGEN;
   };
   if(gen!==RGEN) return; clearInterval(timer); draw(); REDRAW=draw; timer=setInterval(()=>{ const t=now(); const e=$('px'); if(e&&!D.sold&&t<D.close){ const p=priceNow(start,D.open,t); e.innerHTML=p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small>'; const nx=$('nxt'); if(nx) nx.textContent=nextHalf(D.open,t); } if(t%10===0) draw(); },1000);
   if(D.onSale&&st.cands){ $('candidates').style.display='block'; const g=$('candGrid'); if(g.dataset.day!==String(D.id)){ g.dataset.day=String(D.id); g.innerHTML=''; pick=null;
-      st.cands.forEach((seed,k)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+k+'</i>'; el.onclick=()=>{ pick=k; g.querySelectorAll('.card').forEach(c=>c.classList.remove('on')); el.classList.add('on'); draw(); }; g.appendChild(el); });
+      const ctx={cands:st.cands,day:D.id,open:()=>!D.sold&&now()<D.close,price:()=>priceNow(start,D.open,now()),
+        choose:k=>{ pick=k; markPick(); draw(); },
+        buy:()=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; send('buy',W=>pad(W.buy,[D.id,pick],{value:pay})); }};
+      st.cands.forEach((seed,k)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+k+'</i>'; el.onclick=()=>candOpen(k,ctx); g.appendChild(el); });
       (async()=>{ for(const [k,seed] of st.cands.entries()) await fillCard(g.children[k],{seed,live:lastSky}); })(); } }
   else $('candidates').style.display='none';
 }
+/* ═══ THE OPTION CARD. Tap one of tomorrow's thirty-two: it opens full size and moving, under today's sky, with arrows to the
+   others. CHOOSE THIS ONE sets the pick; then COLLECT buys today's plate with that pick, right there. */
+let CC=null;
+function markPick(){ $('candGrid').querySelectorAll('.card').forEach((c,i)=>c.classList.toggle('on',i===pick)); }
+const ccOff=()=>{ $('ccard').classList.remove('on'); $('ccPlate').srcdoc=''; document.body.style.overflow=''; CC=null; };
+$('ccX').addEventListener('click',ccOff);
+$('ccard').addEventListener('click',e=>{ if(e.target.id==='ccard') ccOff(); });
+$('ccPrev').addEventListener('click',()=>{ if(CC) candShow((CC.k+31)%32); });
+$('ccNext').addEventListener('click',()=>{ if(CC) candShow((CC.k+1)%32); });
+document.addEventListener('keydown',e=>{ if(!CC) return; if(e.key==='Escape') ccOff(); else if(e.key==='ArrowLeft') candShow((CC.k+31)%32); else if(e.key==='ArrowRight') candShow((CC.k+1)%32); });
+function candActs(){ if(!CC) return; const k=CC.k, open=CC.open(), mine=pick===k;
+  if(!open){ $('ccActs').innerHTML='<div class="k">DAY '+CC.day+' IS NO LONGER ON SALE</div>'; return; }
+  const p=CC.price();
+  $('ccActs').innerHTML=mine
+    ?'<div class="k">YOU CHOSE OPTION '+k+'</div><button class="prime fill" id="ccBuy">COLLECT DAY '+CC.day+' · '+p.toFixed(p>=1?4:6)+' ETH</button>'
+    :'<button class="prime fill" id="ccPick">CHOOSE THIS ONE FOR TOMORROW</button>'+(pick==null?'':'<div class="note" style="text-align:center">You chose option '+pick+'. Choosing this one replaces it.</div>');
+  const cp=$('ccPick'); if(cp) cp.onclick=()=>{ CC.choose(k); candActs(); };
+  const cb=$('ccBuy'); if(cb) cb.onclick=()=>{ const buy=CC.buy; ccOff(); buy(); }; }
+async function candShow(k){ if(!CC) return; CC.k=k; const seed=CC.cands[k];
+  $('cck').textContent='TOMORROW’S PLATE · OPTION '+k; $('ccNum').textContent=(k+1)+' OF 32';
+  $('ccDesc').textContent='If you collect day '+CC.day+' and choose this one, it becomes day '+(CC.day+1)+' and goes on sale at the next 4:20pm Miami. The other 31 are never made. Shown here under today’s sky; on its own day it reads that day’s sky. Seed '+seed+'.';
+  candActs();
+  const src=await glassSrc(); if(!CC||CC.k!==k) return;
+  $('ccPlate').srcdoc=src.replace('<body class="glass">','<body class="glass"><script>window.GLASS='+JSON.stringify({seed,frames:36,live:lastSky})+';<\/script>'); }
+function candOpen(k,ctx){ CC=Object.assign({},ctx,{k}); $('ccard').classList.add('on'); document.body.style.overflow='hidden'; candShow(k); }
 /* ═══ THE PLATE CARD. Tap a plate in the ledger: the live plate, its title, who holds it (X handle when known, ENS or address),
    its on-chain record (tokenURI, read straight from the contract) and the Etherscan link. */
 const HANDLES={ /* wallets that publicly map to an X account (bidders, buyers, SMALL WEATHER collectors tagged by GREENCROSS); ENS names too */
