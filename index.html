@@ -63,7 +63,8 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   @media(max-width:900px){ main.hero{grid-template-columns:minmax(0,1fr)} }
   .panel,.big{min-width:0;overflow-wrap:anywhere}
   #plateBox{position:relative;background:#000;border:1px solid var(--hair);aspect-ratio:1/1;width:min(100%, calc(100dvh - 140px));margin:0 auto}
-  #plate{width:100%;height:100%;border:0;display:block;background:#000}
+  #plateBox iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000}
+  #plateBox iframe.back{opacity:0;pointer-events:none;z-index:0} #plateBox iframe.front{z-index:1} #plateTag{z-index:2}
   #plateTag{position:absolute;left:10px;top:8px;font-size:10px;letter-spacing:.2em;color:var(--mut);background:rgba(0,0,0,.6);padding:3px 7px;pointer-events:none}
   .panel{border:1px solid var(--hair);background:var(--pane);padding:16px;display:flex;flex-direction:column;gap:14px;align-self:start}
   .big{font-size:34px;line-height:1.1;letter-spacing:.02em;font-weight:500}
@@ -132,7 +133,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
 <body>
 <header class="top"><div class="bar"><a class="brand" href="/">DITHERVOID // STORMGLASS</a><span id="state">READING THE CHAIN</span><nav><a href="/" aria-current="page">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a></nav><button id="wallet" class="act">CONNECT</button></div></header>
 <main class="hero" id="top">
-  <div><div id="plateBox"><iframe id="plate" title="the plate"></iframe><div id="plateTag">STANDBY</div></div></div>
+  <div><div id="plateBox"><iframe id="plate" class="front" title="the plate"></iframe><iframe id="plateB" class="back" title="the next drawing of the plate" aria-hidden="true" tabindex="-1"></iframe><div id="plateTag">STANDBY</div></div></div>
   <div class="side"><div class="panel" id="panel"><div class="k">LOADING</div><div class="note">Reading the sale from Ethereum…</div></div><div class="welcome" id="welcome" hidden></div></div>
 </main>
 <section id="candidates" style="display:none"><h2>TOMORROW’S PLATE · THE BUYER PICKS ONE OF THESE 32</h2><p class="note" id="candNote" style="margin:-4px 0 10px">Tap one to watch it move. Choose it there, then collect today’s plate.</p><div class="grid" id="candGrid"></div></section>
@@ -523,13 +524,41 @@ async function send(name,fn){ try{ if(!W){ await connectWallet(); if(!W) return;
 /* ═══ THE PLATE ON THE GLASS: the token page itself, fed the seed and the sky */
 let pageSrc=null;
 async function glassSrc(){ if(!pageSrc) pageSrc=await (await fetch('/glass/index.html')).text(); return pageSrc; }
-let shown='';
+/* Two frames, one in front and one behind (his order, Oct 18). A plate takes longer to draw than the page takes to
+   read a new sky, so redrawing in place meant the finished plate was never seen. Now: the plate in front stays until it
+   is finished and has been on show for HOLD; a newer sky draws in the frame behind; when that one is finished (and the
+   front one has had its HOLD) the two swap, and the new one gets its own HOLD. A different plate (a new day, a sale)
+   replaces the front at once. The engine is not touched: a frame is finished when its status line has faded (#gosd.off). */
+const HOLD=10000, PL={front:null,back:null,key:'',id:'',ready:false,readyAt:0,born:0,backKey:'',want:null};
+const glassDoc=(src,G)=>src.replace('<body class="glass">','<body class="glass"><script>window.GLASS='+JSON.stringify(G)+';<\/script>');
+const plateId=G=>JSON.stringify([G.seed,G.subject==null?null:G.subject,G.frames||null]);
+function plateDone(f){ try{ const g=f.contentDocument&&f.contentDocument.getElementById('gosd'); return !!(g&&g.classList.contains('off')); }catch(e){ return false; } }
+function plateBusy(f){ try{ const d=f.contentDocument; return !!(d&&(d.fullscreenElement||d.webkitFullscreenElement||d.querySelector('.open'))); }catch(e){ return false; } }   /* someone is using the glass: no swap under their finger */
 async function showPlate(G,tag){
-  const key=JSON.stringify(G); if(key===shown) return; shown=key;
-  const src=await glassSrc();
-  $('plate').srcdoc=src.replace('<body class="glass">','<body class="glass"><script>window.GLASS='+JSON.stringify(G)+';<\/script>');
+  if(!PL.front){ PL.front=$('plate'); PL.back=$('plateB'); }
   $('plateTag').textContent=tag||'';
+  const key=JSON.stringify(G);
+  if(plateId(G)!==PL.id){   /* another plate: straight to the front, drop whatever was drawing behind */
+    PL.id=plateId(G); PL.key=key; PL.ready=false; PL.readyAt=0; PL.born=Date.now(); PL.want=null; PL.backKey=''; PL.back.srcdoc='';
+    PL.front.srcdoc=glassDoc(await glassSrc(),G); return; }
+  if(key===PL.key||key===PL.backKey) return;
+  PL.want=G; platePump();
 }
+async function platePump(){
+  if(!PL.front) return;
+  const now=Date.now();
+  if(!PL.ready){ if(plateDone(PL.front)||now-PL.born>180000){ PL.ready=true; PL.readyAt=now; } else return; }
+  if(PL.backKey){
+    if(plateDone(PL.back)&&now-PL.readyAt>=HOLD&&!plateBusy(PL.front)){   /* swap: the finished one comes forward and holds */
+      const f=PL.back; PL.back=PL.front; PL.front=f;
+      PL.front.className='front'; PL.back.className='back'; PL.front.removeAttribute('aria-hidden'); PL.back.setAttribute('aria-hidden','true');
+      PL.front.removeAttribute('tabindex'); PL.back.setAttribute('tabindex','-1');
+      PL.key=PL.backKey; PL.backKey=''; PL.readyAt=now; PL.back.srcdoc=''; }
+    return; }
+  if(PL.want&&!document.hidden){ const G=PL.want, k=JSON.stringify(G); PL.want=null; if(k===PL.key) return;
+    PL.backKey=k; PL.back.srcdoc=glassDoc(await glassSrc(),G); }
+}
+setInterval(platePump,500);
 /* the worker frame renders thumbnails through the glass page's side door, one at a time */
 const jobs={}; let jobId=0, workReady=false;
 window.addEventListener('message',e=>{ const m=e.data; if(!m||m.t!=='glass') return; if(m.hello){ workReady=true; return; } const j=jobs[m.id]; if(j){ delete jobs[m.id]; j(m); } });
