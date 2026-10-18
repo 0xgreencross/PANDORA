@@ -532,7 +532,7 @@ async function glassSrc(){ if(!pageSrc) pageSrc=await (await fetch('/glass/index
    4. Every new sky draws behind in the same way; the finished one comes forward and holds HOLD, and so on.
    A plate with no print file yet falls back to drawing in front. The engine is not touched: a frame is finished when
    its status line has faded (#gosd.off). Nothing swaps while someone is using the glass (full screen, its menu open). */
-const HOLD=10000, PL={front:null,back:null,img:null,key:'',id:'',ready:false,readyAt:0,born:0,backKey:'',want:null,tok:0};
+const HOLD=10000, REDRAW_GAP=120000, PL={front:null,back:null,img:null,key:'',id:'',ready:false,readyAt:0,born:0,backKey:'',want:null,tok:0};
 const glassDoc=(src,G)=>src.replace('<body class="glass">','<body class="glass"><script>window.GLASS='+JSON.stringify(G)+';<\/script>');
 const plateId=G=>JSON.stringify([G.seed,G.subject==null?null:G.subject,G.frames||null]);
 const printUrl=G=>'/plates/'+(G.seed>>>0)+(G.subject==null?'':'-s'+G.subject)+'.gif';
@@ -570,7 +570,9 @@ async function platePump(){
       if(isFrame(old)) old.srcdoc='';
       PL.key=PL.backKey; PL.backKey=''; PL.readyAt=now; }
     return; }
-  if(PL.want&&!document.hidden){ const G=PL.want, k=JSON.stringify(G), tok=PL.tok; PL.want=null; if(k===PL.key) return;
+  /* a redraw costs the visitor's machine a lot: wait until the thumbnails are done, no option card is open, and the
+     plate on show has been up for REDRAW_GAP (2 min); the page stays responsive for buying */
+  if(PL.want&&!document.hidden&&!thumbsBusy&&!CC&&now-PL.readyAt>=REDRAW_GAP){ const G=PL.want, k=JSON.stringify(G), tok=PL.tok; PL.want=null; if(k===PL.key) return;
     const f=spareFrame(); PL.back=f; PL.backKey=k; const src=await glassSrc(); if(tok!==PL.tok) return; f.srcdoc=glassDoc(src,G); }
 }
 setInterval(platePump,500);
@@ -578,7 +580,8 @@ setInterval(platePump,500);
 const jobs={}; let jobId=0, workReady=false;
 window.addEventListener('message',e=>{ const m=e.data; if(!m||m.t!=='glass') return; if(m.hello){ workReady=true; return; } const j=jobs[m.id]; if(j){ delete jobs[m.id]; j(m); } });
 function thumb(G){ return new Promise(res=>{ const id=++jobId; jobs[id]=res; const post=()=>$('work').contentWindow.postMessage(Object.assign({t:'glass',id,frames:8,raster:135},G),'*'); if(workReady) post(); else setTimeout(post,1500); }); }
-async function fillCard(el,G){ el.classList.add('wait'); const r=await thumb(G); el.classList.remove('wait'); if(r.png){ const img=document.createElement('img'); img.src=r.png; el.prepend(img); } }
+let thumbsBusy=0;
+async function fillCard(el,G){ el.classList.add('wait'); thumbsBusy++; let r; try{ r=await thumb(G); } finally{ thumbsBusy--; } el.classList.remove('wait'); if(r.png){ const img=document.createElement('img'); img.src=r.png; el.prepend(img); } }
 (async()=>{ $('work').srcdoc=(await glassSrc()).replace('<body class="glass">','<body class="glass"><script>window.GLASS={seed:1,frames:24};<\/script>'); })();
 
 /* ═══ THE STATES */
