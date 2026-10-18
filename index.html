@@ -547,7 +547,9 @@ async function showPlate(G,tag){
 async function platePump(){
   if(!PL.front) return;
   const now=Date.now();
-  if(!PL.ready){ if(plateDone(PL.front)||now-PL.born>180000){ PL.ready=true; PL.readyAt=now; } else return; }
+  if(!PL.ready){   /* finished, or a frame that never came up at all (no status line after 20s): only then move on */
+    const d=PL.front.contentDocument, broken=now-PL.born>20000&&!(d&&d.getElementById('gosd'));
+    if(plateDone(PL.front)||broken){ PL.ready=true; PL.readyAt=now; } else return; }
   if(PL.backKey){
     if(plateDone(PL.back)&&now-PL.readyAt>=HOLD&&!plateBusy(PL.front)){   /* swap: the finished one comes forward and holds */
       const f=PL.back; PL.back=PL.front; PL.front=f;
