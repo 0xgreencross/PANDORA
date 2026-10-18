@@ -644,7 +644,7 @@ async function render(st){ const gen=++RGEN;
         choose:k=>{ pick=k; markPick(); draw(); },
         buy:()=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; send('buy',W=>pad(W.buy,[D.id,pick],{value:pay})); }};
       st.cands.forEach((seed,k)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+k+'</i>'; el.onclick=()=>candOpen(k,ctx); g.appendChild(el); });
-      (async()=>{ for(const [k,seed] of st.cands.entries()) await fillCard(g.children[k],{seed,live:lastSky}); })(); } }
+      (async()=>{ for(const [k,seed] of st.cands.entries()){ while(CC) await new Promise(r=>setTimeout(r,400)); await fillCard(g.children[k],{seed,live:lastSky}); } })(); } }
   else $('candidates').style.display='none';
 }
 /* ═══ THE OPTION CARD. Tap one of tomorrow's thirty-two: it opens full size and moving, under today's sky, with arrows to the
