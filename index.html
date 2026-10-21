@@ -130,6 +130,13 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   .welcome b{color:var(--ink);font-weight:500} .welcome a{color:var(--acc)}
   .sw{color:var(--acc);margin-left:4px;cursor:help}
   .card i .sw{margin-left:3px}
+.traits{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:4px 8px;margin:10px 0 0;font-size:10px;letter-spacing:.1em;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);padding:7px 0}
+  .traits:empty{display:none}
+  .traits span{color:var(--mut)} .traits b{color:var(--ink);font-weight:400;overflow-wrap:anywhere} .traits b.s{color:var(--acc)}
+  #ccard .tline{position:absolute;left:0;right:0;bottom:0;padding:7px 10px;background:rgba(0,0,0,.62);font-size:10px;letter-spacing:.08em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+  #ccard .tline:empty{display:none}
+  #ccard .tline b{color:var(--acc);font-weight:600}
+  #ccard .tline.sg{background:var(--acc);color:var(--bg)} #ccard .tline.sg b{color:var(--bg)}
 </style></head>
 <body>
 <header class="top"><div class="bar"><a class="brand" href="/">DITHERVOID // STORMGLASS</a><span id="state">READING THE CHAIN</span><nav><a href="/" aria-current="page">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a></nav><button id="wallet" class="act">CONNECT</button></div></header>
@@ -307,7 +314,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
 <div id="ccard" role="dialog" aria-modal="true" aria-labelledby="cck"><div class="box">
   <button class="xx" id="ccX" aria-label="Close">×</button>
   <div class="k" id="cck">TOMORROW’S PLATE</div>
-  <div class="pv"><iframe id="ccPlate" title="the option, moving"></iframe></div>
+  <div class="pv"><iframe id="ccPlate" title="the option, moving"></iframe><div class="tline" id="ccTr"></div></div>
   <div class="nav"><button id="ccPrev" aria-label="Previous option">←</button><div class="c" id="ccNum"></div><button id="ccNext" aria-label="Next option">→</button></div>
   <p class="desc" id="ccDesc"></p>
   <div class="acts" id="ccActs"></div>
@@ -588,6 +595,16 @@ async function fillCard(el,G){ el.classList.add('wait');
     el.classList.remove('wait'); const img=document.createElement('img'); img.src=tu; el.prepend(img); return; }
   thumbsBusy++; let r; try{ r=await thumb(G); } finally{ thumbsBusy--; } el.classList.remove('wait'); if(r.png){ const img=document.createElement('img'); img.src=r.png; el.prepend(img); } }
 (async()=>{ $('work').srcdoc=(await glassSrc()).replace('<body class="glass">','<body class="glass"><script>window.GLASS={seed:1,frames:24};<\/script>'); })();
+/* ═══ THE TRAITS (his order, Oct 21): what the engine draws from a seed alone, asked of the glass already loaded in #work, never
+   drawn. Subject, palette, ground, dither, motion, inks: fixed by the seed. Weather and the hour are left out: the live sky moves them. */
+const TR=new Map(); let trFn=null;
+function traitsOf(seed){ seed=seed>>>0; if(TR.has(seed)) return TR.get(seed);
+  try{ if(!trFn){ const w=$('work').contentWindow; if(!w||typeof w.buildPlate!=='function') return null;
+      trFn=w.eval('(s=>{const P=buildPlate(s,{});const r=mulberry32((s^0x51CE)>>>0);const si=(r()*(SCHEME_KEYS.length+2))|0;return {subject:SUBJECTS[P.subject],sg:P.subject===46,palette:schemeOf(si,s).key,ground:GROUNDS[P.ground],dither:DITHERS[P.dither],motion:CAMS[P.cam],inks:P.inks};})'); }
+    const t=trFn(seed); TR.set(seed,t); return t; }catch(e){ return null; } }
+function whenTraits(seed,cb,n=0){ const t=traitsOf(seed); if(t) cb(t); else if(n<40) setTimeout(()=>whenTraits(seed,cb,n+1),750); }
+const trTable=t=>t?'<span>SUBJECT</span><b class="s">'+esc(t.subject)+(t.sg?' · 1 IN 100':'')+'</b><span>PALETTE</span><b>'+esc(t.palette)+'</b><span>GROUND</span><b>'+esc(t.ground)+'</b><span>DITHER</span><b>'+esc(t.dither)+'</b><span>MOTION</span><b>'+esc(t.motion)+'</b><span>INKS</span><b>'+t.inks+'</b>':'';
+const trLine=t=>t?(t.sg?'<b>STORMGLASS · 1 IN 100</b> · ':'<b>'+esc(t.subject)+'</b> · ')+[t.palette,t.ground,t.dither,t.motion].map(esc).join(' · '):'';
 
 /* ═══ THE STATES */
 let ST={}, pick=null, lastSky={}, timer=null;
@@ -682,11 +699,12 @@ async function render(st){ const gen=++RGEN;
         :'<div class="k">DAY '+D.id+' CLOSED UNSOLD</div><div class="big">'+(can?'THE VAULT BUYS IT':'THE LAST DAY')+'</div><div class="note">Nobody bought day '+D.id+'. '+(can?'The next transaction settles it: the vault pays '+fmt(D.ref)+' ETH for it, keeps it forever, and day '+(D.id+1)+' opens.':'The vault holds '+fmt(st.vault)+' ETH, less than the '+fmt(D.ref)+' ETH it needs, so the next transaction turns day '+D.id+' into the Tombstone and the series ends.')+'</div><button id="bSync">SETTLE DAY '+D.id+'</button>'); const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[])); return; }
     if(D.sold){ panel('<div class="k">DAY '+D.id+' · SOLD</div><div class="big">'+fmt(D.price)+' <small>ETH</small></div><div class="note">Bought by '+short(D.buyer)+swMark(D.buyer)+(D.buyer&&D.buyer.toLowerCase()===CFG.contract.toLowerCase()?' (the vault)':'')+'. The next plate goes on sale at 4:20pm Miami time, in '+hms(D.close-t)+'.</div>'); return; }
     const p=priceNow(start,D.open,t);
-    panel('<div class="k">DAY '+D.id+' · ON SALE · CLOSES IN '+hms(D.close-t)+'</div><div class="big" id="px">'+p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small></div><div class="k" id="nxt">'+nextHalf(D.open,t)+'</div><div class="note">It started at '+start.toFixed(4)+' ETH and halves every 2.4 hours. The first person to pay takes the plate, chooses tomorrow’s plate from the thirty-two below, and gets a seat: a full one at '+fmt(st.FOUNDING)+' ETH or more, a share of one below that.'+(pick==null?'':' You chose option '+pick+'.')+' Your wallet asks for a little more than the price shown; whatever is over comes straight back in the same transaction.</div>'
+    panel('<div class="k">DAY '+D.id+' · ON SALE · CLOSES IN '+hms(D.close-t)+'</div><div class="big" id="px">'+p.toFixed(p>=1?4:6)+' <small>ETH · FALLING</small></div><div class="k" id="nxt">'+nextHalf(D.open,t)+'</div><div class="traits" id="trT">'+trTable(traitsOf(D.seed))+'</div><div class="note">First to pay takes it, picks tomorrow’s plate and gets a seat.'+(pick==null?'':' You chose option '+pick+'.')+'</div>'
       +(pick==null?'<button class="prime" id="bPick">CHOOSE TOMORROW’S PLATE TO COLLECT</button>':'<button class="prime" id="bBuy">COLLECT</button>')
       +'<hr><div class="k">WITNESS THIS DAY</div><div class="note">Not collecting? Pay any amount to back this plate: your mark is cut into it, and you get a share of a seat, a full one at '+fmt(st.FOUNDING)+' ETH (one seat a day at most). What you pay is added to its price. Witnesses so far: '+fmt(D.witnessed)+' ETH.</div><div class="row"><input id="wAmt" placeholder="ETH" inputmode="decimal"><button id="bWit">WITNESS</button></div>');
     const nw=$('wAmt'); if(keep&&nw){ nw.value=keep.v; if(keep.f){ nw.focus(); nw.setSelectionRange(nw.value.length,nw.value.length); } }
     const bp=$('bPick'); if(bp) bp.onclick=()=>$('candidates').scrollIntoView({behavior:'smooth',block:'start'});
+    if(!traitsOf(D.seed)) whenTraits(D.seed,tt=>{ const e=$('trT'); if(e&&!e.innerHTML) e.innerHTML=trTable(tt); });
     const b=$('bBuy'); if(b) b.onclick=()=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; send('buy',W=>pad(W.buy,[D.id,pick],{value:pay})); };
     const w=$('bWit'); if(w) w.onclick=()=>send('witness',W=>pad(W.witness,[D.id],{value:ethers.parseEther($('wAmt').value||'0')}));
   };
@@ -721,6 +739,8 @@ async function candShow(k){ if(!CC) return; CC.k=k; const seed=CC.cands[k];
   $('cck').textContent='TOMORROW’S PLATE · OPTION '+k; $('ccNum').textContent=(k+1)+' OF 32';
   $('ccDesc').textContent='If you collect day '+CC.day+' and choose this one, it becomes day '+(CC.day+1)+' and goes on sale at the next 4:20pm Miami. The other 31 are never made. Shown here under today’s sky; on its own day it reads that day’s sky. Seed '+seed+'.';
   candActs();
+  const putTr=tt=>{ if(!CC||CC.k!==k) return; const tl=$('ccTr'); tl.className='tline'+(tt&&tt.sg?' sg':''); tl.innerHTML=trLine(tt); };
+  putTr(traitsOf(seed)); if(!traitsOf(seed)) whenTraits(seed,putTr);
   const src=await glassSrc(); if(!CC||CC.k!==k) return;
   $('ccPlate').srcdoc=src.replace('<body class="glass">','<body class="glass"><script>window.GLASS='+JSON.stringify({seed,frames:36,live:lastSky})+';<\/script>'); }
 function candOpen(k,ctx){ CC=Object.assign({},ctx,{k}); $('ccard').classList.add('on'); document.body.style.overflow='hidden'; candShow(k); }
@@ -740,7 +760,7 @@ const HANDLES={ /* wallets that publicly map to an X account (bidders, buyers, S
   '0xebfd774c1c2008e56ce40e0a4504ebecc81b1921':'McHexleyOG','0xa6c3689380b2f13325ad655f3468a666ded64944':'SpaceMan_8_','0x0cb27e883e207905ad2a94f9b6ef0c7a99223c37':'blue_onchain',
   'keepitwerid.eth':'arwyn_official','el314b.eth':'EL314B','fredm.eth':'HolomediaVn','shillypreston.eth':'shillypreston','0xc0ae85cd4ba82cbc440b2f7633fcaf8f4b29bab1':'darkb3at',
   '0x3d869084c46d39de7ce06ddc4a96b86ec606dbbb':'xlvii47_eth','sykoe.eth':'_SYKOE','0xb8ad671479618b7e204b82c16d7d4aa675c71ca6':'ex_mortal_',
-  '0x25437b529fdf0f31221a465429d0c89e81a412e4':'CMYKRevolution','0x4320e8eaacf0cd2def63e5fc3e85801162eacbc0':'dallasjfitz1','scamart.eth':'scamart','0x9f128b52128027dd6ea9892f741519979d36fa34':'scamart'
+  '0x25437b529fdf0f31221a465429d0c89e81a412e4':'CMYKRevolution','0x4320e8eaacf0cd2def63e5fc3e85801162eacbc0':'dallasjfitz1','0xdf1fa21aad71c50e642fca3aa4332da17bbea409':'IWannabeeNFT','iwannabee.eth':'IWannabeeNFT','scamart.eth':'scamart','0x9f128b52128027dd6ea9892f741519979d36fa34':'scamart'
 };
 const esc=t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const WHO=new Map();   /* address -> {ens, handle}, read once */
