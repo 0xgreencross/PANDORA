@@ -389,6 +389,32 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     footer.site{padding-bottom:calc(22px + var(--sab))}
   }
   @media(max-width:359px){ header.top .brand{font-size:11px;letter-spacing:.12em} }
+  /* ═══ LANDSCAPE PHONE (iPhone on its side, with or without the browser toolbar): two columns, plate = the full height, no bottom bar */
+  @media(max-height:520px) and (orientation:landscape){
+    :root{--disp:40px;--bar:0px}
+    body{padding-bottom:0}
+    header.top nav{display:flex} header.top #nx-chip{display:none} header.top .act{margin-left:4px}
+    .nx-strip{display:none}
+    main.hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;padding:8px var(--gut);height:auto;min-height:0}
+    .nx-stage{display:block}
+    #plateBox{width:max(200px,calc(100dvh - var(--head) - 16px));margin:0;border:1px solid var(--hair)}
+    body.nx-form #plateBox{width:max(200px,calc(100dvh - var(--head) - 16px))}
+    .nx-pcap{display:none}
+    .nx-col{height:auto;padding:0}
+    .panel{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+    .panel > .big,.panel > #nxt,.panel > .nx-sub{display:block} .panel > .nx-cta,.panel .cta .nx-cta,.panel .row .nx-cta{display:inline-block}
+    .panel > .note.nx-dup{display:block}
+    .nx-bar{display:none!important}
+    .nx-exp{display:none;padding:8px;gap:12px;grid-template-columns:auto minmax(0,1fr);grid-template-rows:1fr;align-content:stretch;justify-items:stretch}
+    #ccard.exp .nx-exp{display:grid}
+    .nx-exp .pvw{align-items:flex-start}
+    .nx-exp .nx-side{position:static;max-width:none;width:auto;gap:6px;padding:0 2px;overflow:auto;background:none;border:0}
+    .nx-side .why summary{display:flex}
+    #ccard .acts .ln:nth-child(1),#ccard .acts .ln:nth-child(2),#ccard .acts .sp{display:inline} #ccard .acts button{min-height:44px;padding:8px}
+    #nx-ccMore .note{display:none}
+    #ccard.exp .nx-pf{display:none} .nx-pf .note{display:none}
+    #ccard .tline{display:none}
+  }
   @media(prefers-reduced-motion:reduce){ *,*::before,*::after{transition:none!important;animation:none!important} .cur::after{animation:none} html{scroll-behavior:auto} }
 </style></head>
 <body>
@@ -1090,9 +1116,11 @@ $('ccPrev').addEventListener('click',()=>{ if(CC&&!NX.tx) candShow((CC.k+31)%32)
 $('ccNext').addEventListener('click',()=>{ if(CC&&!NX.tx) candShow((CC.k+1)%32); });
 document.addEventListener('keydown',e=>{ if(!NX.pop||$('wsheet').classList.contains('on')) return; if(e.key==='Escape'){ if(NX.tx!=='pending') ccOff(); return; } if(!CC||NX.tx) return; if(e.key==='ArrowLeft') candShow((CC.k+31)%32); else if(e.key==='ArrowRight') candShow((CC.k+1)%32); });
 (()=>{ let x0=null; const pv=$('nx-pv'); pv.addEventListener('touchstart',e=>{ x0=e.touches[0].clientX; },{passive:true}); pv.addEventListener('touchend',e=>{ if(x0==null||!CC||NX.tx) return; const dx=e.changedTouches[0].clientX-x0; x0=null; if(dx>40) candShow((CC.k+31)%32); else if(dx<-40) candShow((CC.k+1)%32); },{passive:true}); })();
-function fitGrid(){ if(!NX.pop) return; const area=$('candidates'); const W=area.clientWidth, H=area.clientHeight; if(!W||!H) return; const cols=(innerWidth<700||innerWidth<innerHeight)?4:8, rows=32/cols, gap=innerWidth<700?6:8, pad=innerWidth<700?8:16;
+function fitGrid(){ if(!NX.pop) return; const area=$('candidates'); const W=area.clientWidth, H=area.clientHeight; if(!W||!H) return; const land=isLand(); const cols=(innerWidth<700||innerWidth<innerHeight)?4:8, rows=32/cols, gap=(innerWidth<700||land)?6:8, pad=(innerWidth<700||land)?8:16;
   const cell=Math.max(24,Math.floor(Math.min((W-2*pad-(cols-1)*gap)/cols,(H-2*pad-(rows-1)*gap)/rows))); const g=$('candGrid'); g.style.gap=gap+'px'; g.style.gridTemplateColumns='repeat('+cols+','+cell+'px)'; g.style.gridAutoRows=cell+'px'; }
-function fitExp(){ if(!CC) return; const pv=$('nx-pv'), w=$('nx-exp'); const mob=innerWidth<700, stacked=innerWidth<900; const why=document.querySelector('#nx-side .why'); if(why&&!stacked) why.open=true;
+const isLand=()=>innerHeight<=520&&innerWidth>innerHeight;
+function fitExp(){ if(!CC) return; const pv=$('nx-pv'), w=$('nx-exp'); const land=isLand(), mob=innerWidth<700&&!land, stacked=innerWidth<900&&!land; const why=document.querySelector('#nx-side .why'); if(why&&!stacked&&!land) why.open=true;
+  if(land){ const s=Math.max(120,w.clientHeight-16); pv.style.width=s+'px'; pv.style.height=s+'px'; pv.style.margin=''; pv.parentElement.style.height=''; return; }
   if(stacked){ const sd=$('nx-side'); const side=Math.max(sd.offsetHeight,sd.scrollHeight); pv.parentElement.style.height=mob?Math.max(120,w.clientHeight-side)+'px':''; const s=Math.max(120,Math.min(mob?innerWidth:w.clientWidth-24,w.clientHeight-side-(mob?0:40))); pv.style.width=s+'px'; pv.style.height=s+'px'; pv.style.margin='0 auto'; if(!fitExp.again){ fitExp.again=true; requestAnimationFrame(()=>{ fitExp(); fitExp.again=false; }); } }
   else { const wrap=pv.parentElement; wrap.style.height=''; const s=Math.max(120,Math.min(wrap.clientWidth,wrap.clientHeight)); pv.style.width=s+'px'; pv.style.height=s+'px'; pv.style.margin=''; } }
 window.addEventListener('resize',()=>{ fitGrid(); fitExp(); });
@@ -1146,7 +1174,7 @@ async function candShow(k){ if(!CC) return; CC.k=k; const seed=CC.cands[k];
   putTr(traitsOf(seed)); if(!traitsOf(seed)) whenTraits(seed,putTr);
   const src=await glassSrc(); if(!CC||CC.k!==k) return;
   $('ccPlate').srcdoc=src.replace('<body class="glass">','<body class="glass"><script>window.GLASS='+JSON.stringify({seed,frames:36,live:lastSky})+';<\/script>'); }
-function candOpen(k,ctx){ CC=Object.assign({},ctx,{k}); const why=document.querySelector('#nx-side .why'); if(why&&innerWidth<900) why.open=false; if(!NX.pop){ NX.pop=true; $('ccard').classList.add('on'); document.body.style.overflow='hidden'; pfTick(); } popMode('exp'); NX.tx=null; candShow(k); fitExp(); setTimeout(fitExp,50); }
+function candOpen(k,ctx){ CC=Object.assign({},ctx,{k}); const why=document.querySelector('#nx-side .why'); if(why&&(innerWidth<900||isLand())) why.open=false; if(!NX.pop){ NX.pop=true; $('ccard').classList.add('on'); document.body.style.overflow='hidden'; pfTick(); } popMode('exp'); NX.tx=null; candShow(k); fitExp(); setTimeout(fitExp,50); }
 /* ═══ THE PLATE CARD. Tap a plate in the ledger: the live plate, its title, who holds it (X handle when known, ENS or address),
    its on-chain record (tokenURI, read straight from the contract) and the Etherscan link. */
 const HANDLES={ /* wallets that publicly map to an X account (bidders, buyers, SMALL WEATHER collectors tagged by GREENCROSS); ENS names too */
