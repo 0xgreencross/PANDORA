@@ -1226,14 +1226,26 @@ function panelM(html){ morph($('panel'),html); }
 const keepOf=id=>{ const i=$(id); return i?{node:i,v:i.value,f:document.activeElement===i,s:i.selectionStart,e:i.selectionEnd,d:i.selectionDirection}:null; };
 function keepTo(id,k){ const n=$(id); if(!k||!n||n===k.node) return; n.value=k.v; if(k.f){ n.focus(); try{ n.setSelectionRange(k.s,k.e,k.d||'none'); }catch(e){} } }
 /* what a write sends is read when it is pressed: typing or a redraw while the wallet thinks cannot change it */
-const amountOf=id=>{ const i=$(id); return (i&&i.value)||'0'; };
+const AMOUNT_HINT='Type an amount like 0.01';
+/* a typed amount to wei, or null. Phone keypads in comma locales type 0,001 and ethers.parseEther rejects the comma: trim, drop spaces (NBSP and narrow NBSP too),
+   take one "." or "," as the decimal point; no sign, no letters, no two separators (1,000.5 and 1.000,5 are ambiguous), nothing over 18 decimals, nothing zero. */
+function parseAmount(str){
+  const t=String(str==null?'':str).replace(/[\s\u00A0\u202F]/g,'');
+  if(!/^[0-9]*[.,]?[0-9]*$/.test(t)) throw new Error(AMOUNT_HINT);
+  const p=t.split(/[.,]/), whole=p[0], frac=p[1]||'';
+  if((whole+frac)===''||frac.length>18) throw new Error(AMOUNT_HINT);
+  const wei=BigInt(whole||'0')*10n**18n+BigInt(frac.padEnd(18,'0')||'0');
+  if(wei<=0n) throw new Error(AMOUNT_HINT);
+  return wei; }
+/* read when the button is pressed; a bad amount is a toast and nothing is sent. The box keeps what was typed. */
+const amountOf=id=>{ const i=$(id); try{ return parseAmount(i&&i.value); }catch(e){ toast(e.message); return null; } };
 let RGEN=0;
 /* the witness sheet (Q7): the input and the WITNESS button left the hero; same ids, same call. Opened from the call-to-action under COLLECT (panel and phone bar) and from the seats board. */
 function witOpen(){ $('nx-wit').classList.add('on'); const i=$('wAmt'); if(i&&matchMedia('(pointer:fine)').matches) i.focus(); }
 function witnessSheet(st,D,keep){ const body=$('nx-witBody');
   morph(body,'<div class="note">Not collecting? Pay any amount to back this plate: your mark is cut into it, and you get a share of a seat, a full one at '+fmt(st.FOUNDING)+' ETH (one seat a day at most). What you pay is added to its price. Witnesses so far: '+fmt(D.witnessed)+' ETH.</div><div class="row" style="flex-wrap:nowrap;margin-top:10px"><input id="wAmt" placeholder="ETH" inputmode="decimal"><button id="bWit">WITNESS</button></div>');
   keepTo('wAmt',keep);
-  const w=$('bWit'); if(w) w.onclick=()=>{ const amt=amountOf('wAmt'); send('witness',W=>pad(W.witness,[D.id],{value:ethers.parseEther(amt)})); };
+  const w=$('bWit'); if(w) w.onclick=()=>{ const amt=amountOf('wAmt'); if(amt===null) return; send('witness',W=>pad(W.witness,[D.id],{value:amt})); };
   $('nx-witBtn').style.display=''; }
 async function render(st){ const gen=++RGEN;
   ST=st; const now=()=>Math.floor(Date.now()/1000)+st.skew; NX.now=now;
@@ -1252,7 +1264,7 @@ async function render(st){ const gen=++RGEN;
         +'<hr><div class="k">HIGHEST BID</div><div class="num">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+swMark(st.leader.bidder)+'</small>':'<small>none yet · minimum 0.05 ETH</small>')+'</div><div class="note">'+st.nBids+' bids so far. Each bid must be at least 5% above the last, and redraws the plate: the plate you see is the highest bidder’s. The winning bid becomes the founding price, the price of a seat forever. See HOW THE SALE WORKS below.</div>'
         +'');
       keepTo('bidAmt',keep);
-      const b=$('bBid'); if(b) b.onclick=()=>{ const amt=amountOf('bidAmt'); send('bid',W=>pad(W.bid,[],{value:ethers.parseEther(amt)})); };
+      const b=$('bBid'); if(b) b.onclick=()=>{ const amt=amountOf('bidAmt'); if(amt===null) return; send('bid',W=>pad(W.bid,[],{value:amt})); };
       const s3=$('bSettle'); if(s3) s3.onclick=()=>send('settle',W=>pad(W.settleCandle,[]));
       barFromPanel(); document.body.classList.toggle('nx-form',!!b); if(b) setBar({num:$('nx-barNum').innerHTML,numCls:$('nx-barNum').className.replace('big nx-num',''),sub:$('nx-barSub').textContent,btn:'BID',onclick:()=>{ const i=$('bidAmt'); if(i&&!i.value){ $('panel').scrollIntoView({behavior:smooth(),block:'start'}); i.focus(); } else $('bBid').click(); }});
     };
@@ -1278,7 +1290,7 @@ async function render(st){ const gen=++RGEN;
       else if(gone){ const ref=st.dayOneRef; const can=ref!=null&&st.vault>=ref; panelM('<div class="k nx-lab">DAY 1 CLOSED UNSOLD</div><div class="big nx-num" data-probe="numeral">'+(can?'THE VAULT COLLECTS IT':'THE LAST DAY')+'</div><button class="nx-cta" id="bSync" data-probe="button">SETTLE DAY 1</button><div class="note">Nobody collected day 1. '+(ref==null?'':can?'The next transaction settles it: the vault pays '+fmt(ref)+' ETH for it, keeps it forever, and day 2 opens.':'The vault holds '+fmt(st.vault)+' ETH, less than the '+fmt(ref)+' ETH it needs, so the next transaction turns day 1 into the Tombstone and the series ends.')+'</div>'); }
       else panelM('<div class="k nx-lab">DAY ONE IS READY</div><div class="big nx-num" data-probe="numeral">OPEN THE SALE</div><button class="nx-cta" id="bSync" data-probe="button">OPEN DAY ONE</button><div class="note">It is past 4:20pm in Miami. Ethereum only records a new day when someone sends a transaction, so the first visitor opens it for everyone. It costs only the network fee, no payment to the project. If someone already did, this page updates within half a minute.</div>');
       keepTo('plAmt',keep);
-      const b=$('bPledge'); if(b) b.onclick=()=>{ const amt=amountOf('plAmt'); send('pledge',W=>pad(W.pledge,[],{value:ethers.parseEther(amt)})); };
+      const b=$('bPledge'); if(b) b.onclick=()=>{ const amt=amountOf('plAmt'); if(amt===null) return; send('pledge',W=>pad(W.pledge,[],{value:amt})); };
       const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[]));
       barFromPanel(); document.body.classList.toggle('nx-form',!!b); if(b) setBar({num:$('nx-barNum').innerHTML,numCls:'acc',sub:$('nx-barSub').textContent,btn:'PLEDGE',onclick:()=>{ const i=$('plAmt'); if(i&&!i.value){ $('panel').scrollIntoView({behavior:smooth(),block:'start'}); i.focus(); } else $('bPledge').click(); }}); };
     if(gen!==RGEN) return; clearInterval(timer); draw(); REDRAW=draw; timer=setInterval(draw,1000); noSale(); $('candidates').style.display='none'; return;
