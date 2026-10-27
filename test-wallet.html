@@ -71,6 +71,9 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   #practiceBanner{position:sticky;top:0;z-index:7;box-sizing:border-box;height:var(--pbh);display:flex;align-items:center;justify-content:center;padding:0 var(--gut);background:var(--acc);color:#050506;font-size:11px;font-weight:700;letter-spacing:.08em;line-height:1.3;text-align:center;overflow:hidden}
   body.practice{--pbh:28px} body.practice header.top{top:var(--pbh)}
   @media (max-width:700px){ body.practice{--pbh:40px} #practiceBanner{font-size:10.5px;letter-spacing:.05em} }
+  /* the banner takes --pbh of the screen: the hero and the plate give it back, so the page still fits one screen (desktop) and COLLECT + WITNESS stay on the first screen (tablet) */
+  @media (min-width:900px){ body.practice main.hero{height:calc(100vh - var(--head) - var(--pbh));height:calc(100dvh - var(--head) - var(--pbh))} body.practice #plateBox{width:min(100%, calc(100vh - var(--head) - var(--pbh) - 32px - 44px));width:min(100%, calc(100dvh - var(--head) - var(--pbh) - 32px - 44px))} }
+  @media (min-width:700px) and (max-width:899px){ body.practice.nx-hasw #plateBox{width:min(100%, calc(100vh - var(--head) - var(--pbh) - 262px));width:min(100%, calc(100dvh - var(--head) - var(--pbh) - 262px))} }
   header.top .bar{display:flex;align-items:center;gap:12px;padding:0 var(--gut);height:var(--head);max-width:1240px;margin:0 auto}
   header.top .brand{letter-spacing:.18em;font-weight:600;font-size:11px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;height:44px}
   header.top .brand span{color:var(--lab);font-weight:500}
@@ -105,6 +108,11 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   .panel button{white-space:normal;max-width:100%}
   .nx-cta{width:100%;min-height:48px;font-size:11px;letter-spacing:.12em;font-weight:700;background:var(--acc);color:var(--bg);border-color:var(--acc)}
   .nx-cta:disabled{background:none;color:var(--lab);border-color:var(--hair);opacity:1}
+  /* THE WITNESS CALL-TO-ACTION: a quiet second button under the main buy button, in the panel and in the phone bar; only while a day is on sale */
+  .nx-wc{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;border-top:1px solid var(--hair);padding-top:10px}
+  .nx-wc[hidden]{display:none}
+  .nx-wc span{flex:1 1 140px;min-width:0;font-size:12px;line-height:1.35;letter-spacing:.04em;color:var(--lab)}
+  .nx-wc button{flex:0 0 auto;min-height:44px;border-color:var(--lab)}
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .cta{border:1px solid var(--acc);padding:14px;margin:4px 0} .cta .k{color:var(--acc)} .cta .row{margin-top:10px;flex-wrap:nowrap} .cta input{flex:1;min-width:0} .cta .note{margin-top:8px}
   .nx-sky{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
@@ -338,6 +346,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     #plateBox{width:min(100%, calc(100vh - var(--head) - 200px));width:min(100%, calc(100dvh - var(--head) - 200px))}
     body.nx-form #plateBox{width:min(100%, calc(100vh - var(--head) - 320px));width:min(100%, calc(100dvh - var(--head) - 320px))}
     #plateBox{margin:0 auto}
+    @media(min-width:700px){ body.nx-hasw #plateBox{width:min(100%, calc(100vh - var(--head) - 262px));width:min(100%, calc(100dvh - var(--head) - 262px))} }
     .nx-col{height:auto}
     .panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 24px;align-items:center}
     .panel > *{grid-column:1 / -1}
@@ -364,9 +373,10 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     .nx-col{padding:0 var(--gut)}
     .panel{display:flex;flex-direction:column;gap:8px;align-items:stretch}
     .panel > .note.clamp:not(.open){display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;cursor:pointer}
-    .panel > .big,.panel > #nxt,.panel > .nx-cta,.panel > .nx-sub,.panel .cta .nx-cta,.panel .row .nx-cta{display:none}
+    .panel > .big,.panel > #nxt,.panel > .nx-cta,.panel > .nx-sub,.panel .cta .nx-cta,.panel .row .nx-cta,.panel > .nx-wc{display:none}
     .nx-col{gap:8px} .panel{display:contents} .panel > .traits{order:2} #welcome{order:1} .nx-col > .nx-sky{order:3}
     .nx-bar{display:block}
+    .nx-bar .nx-wc{margin-top:6px;padding-top:0;border-top:0;flex-wrap:nowrap} .nx-bar .nx-wc span{flex:1 1 0;font-size:11px;line-height:1.3} .nx-bar .nx-wc button{flex:0 1 auto;max-width:54%;padding:5px 10px;white-space:normal;line-height:1.25} body.nx-hasw{--bar:calc(192px + var(--sab))}
     .nx-ph .nx-long{display:none}
     .nx-ph{padding-left:4px} #ccard.exp #cck{display:none} .nx-ph #ccX{font-size:18px;padding:0 12px}
     .nx-exp{display:none;padding:0;grid-template-columns:1fr;grid-template-rows:auto 1fr}
@@ -400,7 +410,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   /* ═══ LANDSCAPE PHONE (iPhone on its side, with or without the browser toolbar): two columns, plate = the full height, no bottom bar */
   @media(max-height:520px) and (orientation:landscape){
     :root{--disp:40px;--bar:0px}
-    body{padding-bottom:0}
+    body,body.nx-hasw{--bar:0px;padding-bottom:0}
     header.top nav{display:flex} header.top #nx-chip{display:none} header.top .act{margin-left:4px}
     .nx-strip{display:none}
     main.hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;padding:8px var(--gut);height:auto;min-height:0}
@@ -411,7 +421,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     .nx-col{height:auto;padding:0}
     .panel{display:flex;flex-direction:column;gap:6px;align-items:stretch}
     .panel > .big,.panel > #nxt,.panel > .nx-sub{display:block} .panel > .nx-cta,.panel .cta .nx-cta,.panel .row .nx-cta{display:inline-block}
-    .panel > .note.nx-dup{display:block}
+    .panel > .note.nx-dup{display:block} .panel > .nx-wc{display:flex}
     .nx-bar{display:none!important}
     .nx-exp{display:none;padding:8px;gap:12px;grid-template-columns:auto minmax(0,1fr);grid-template-rows:1fr;align-content:stretch;justify-items:stretch}
     #ccard.exp .nx-exp{display:grid}
@@ -436,7 +446,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     <div class="nx-sky" id="nx-sky"><h2 class="nx-t"><b>THE SKY NOW</b><button class="nx-q" data-ref="#sky" aria-label="What the sky is"></button></h2><div class="nx-rows" id="nx-skyRows"></div><p class="cap">What today’s plate is reading from Ethereum right now. [?] opens the explanation of each row.</p></div>
   </div>
 </main>
-<div class="nx-bar" id="nx-bar"><div class="big dim nx-num" id="nx-barNum" data-probe="numeral">––––</div><span class="k" id="nx-barSub">READING THE CHAIN</span><button class="nx-cta" id="nx-barBtn" data-probe="button" disabled>READING THE CHAIN</button></div>
+<div class="nx-bar" id="nx-bar"><div class="big dim nx-num" id="nx-barNum" data-probe="numeral">––––</div><span class="k" id="nx-barSub">READING THE CHAIN</span><button class="nx-cta" id="nx-barBtn" data-probe="button" disabled>READING THE CHAIN</button><div class="nx-wc" id="nx-barWc" hidden><span>Want a cut of every future sale instead?</span><button id="nx-barWit">WITNESS · ANY AMOUNT</button></div></div>
 
 <div class="nx-inst nx-wrap" id="nx-instruments">
   <div class="nx-i c6"><h2 class="nx-t"><b>PRICE CURVE</b><button class="nx-q" data-ref="#sale" aria-label="How the sale works"></button></h2>
@@ -996,7 +1006,7 @@ function setBar(o){ const b=$('nx-bar'); if(!o){ return; } const n=$('nx-barNum'
 function pcap(t){ const e=$('nx-pcap'); if(e) e.textContent=t||''; }
 function tagText(pre,t){ const el=$('plateTag'); el.dataset.pre=pre; el.textContent=t; }
 function syncCap(){ const n=$('panel').querySelector('.note'); const c=$('nx-pcap'); if(n&&c){ n.classList.toggle('nx-dup',n.textContent.replace(/≈/g,'').trim()===c.textContent.trim()); if(n.textContent.length>140){ n.classList.add('clamp'); n.classList.toggle('open',!!NX.noteOpen); n.onclick=()=>{ NX.noteOpen=!NX.noteOpen; n.classList.toggle('open',NX.noteOpen); }; } } }
-function barFromPanel(){ syncCap(); placeSky(); const P=$('panel'); const num=P.querySelector('.nx-num'); const subEl=P.querySelector('.nx-sub'); const btn=P.querySelector('.nx-cta'); let numHtml=num?num.innerHTML:'––––', sub=subEl?subEl.textContent:''; const sm=num&&num.querySelector('small'); if(sm&&sm.textContent.length>14){ numHtml=num.innerHTML.replace(sm.outerHTML,''); if(!sub) sub=sm.textContent; } setBar({num:numHtml,numCls:num?(num.classList.contains('acc')?'acc':'')+(num.classList.contains('cur')?' cur':'')+(num.classList.contains('dim')?' dim':''):'dim',sub,btn:btn?btn.textContent:'',disabled:!btn||btn.disabled,onclick:btn&&!btn.disabled?()=>btn.click():null}); }
+function barFromPanel(){ syncCap(); placeSky(); const P=$('panel'); const wOn=!!P.querySelector('#bWitCta'); $('nx-barWc').hidden=!wOn; document.body.classList.toggle('nx-hasw',wOn); const num=P.querySelector('.nx-num'); const subEl=P.querySelector('.nx-sub'); const btn=P.querySelector('.nx-cta'); let numHtml=num?num.innerHTML:'––––', sub=subEl?subEl.textContent:''; const sm=num&&num.querySelector('small'); if(sm&&sm.textContent.length>14){ numHtml=num.innerHTML.replace(sm.outerHTML,''); if(!sub) sub=sm.textContent; } setBar({num:numHtml,numCls:num?(num.classList.contains('acc')?'acc':'')+(num.classList.contains('cur')?' cur':'')+(num.classList.contains('dim')?' dim':''):'dim',sub,btn:btn?btn.textContent:'',disabled:!btn||btn.disabled,onclick:btn&&!btn.disabled?()=>btn.click():null}); }
 /* the wallet's chain, read only; the label in the header; the one new wallet call (Q3): wallet_switchEthereumChain */
 async function nxWrong(){ if(NX_WRONG) return true; const gen=SES; try{ const P=EP||anyWallet(); if(!P||!me) return false; const c=await chainOf(P); if(gen!==SES) return NX.wrong; NX.wrong=c!==CFG.chainId; }catch(e){ if(gen!==SES) return NX.wrong; NX.wrong=false; } walletLabel(); return NX.wrong; }
 async function switchChain(){ const P=EP||anyWallet(); if(!P){ toast('Your wallet is on another network. Switch it to Ethereum mainnet.'); return false; } try{ await ask(P,'wallet_switchEthereumChain',[{chainId:'0x1'}]); }catch(e){ console.warn('switch',e); toast(errMsg(e)); } const w=await nxWrong(); return !w; }
@@ -1218,7 +1228,8 @@ function keepTo(id,k){ const n=$(id); if(!k||!n||n===k.node) return; n.value=k.v
 /* what a write sends is read when it is pressed: typing or a redraw while the wallet thinks cannot change it */
 const amountOf=id=>{ const i=$(id); return (i&&i.value)||'0'; };
 let RGEN=0;
-/* the witness sheet (Q7): the input and the WITNESS button left the hero; same ids, same call */
+/* the witness sheet (Q7): the input and the WITNESS button left the hero; same ids, same call. Opened from the call-to-action under COLLECT (panel and phone bar) and from the seats board. */
+function witOpen(){ $('nx-wit').classList.add('on'); const i=$('wAmt'); if(i&&matchMedia('(pointer:fine)').matches) i.focus(); }
 function witnessSheet(st,D,keep){ const body=$('nx-witBody');
   morph(body,'<div class="note">Not collecting? Pay any amount to back this plate: your mark is cut into it, and you get a share of a seat, a full one at '+fmt(st.FOUNDING)+' ETH (one seat a day at most). What you pay is added to its price. Witnesses so far: '+fmt(D.witnessed)+' ETH.</div><div class="row" style="flex-wrap:nowrap;margin-top:10px"><input id="wAmt" placeholder="ETH" inputmode="decimal"><button id="bWit">WITNESS</button></div>');
   keepTo('wAmt',keep);
@@ -1288,9 +1299,11 @@ async function render(st){ const gen=++RGEN;
     const p=priceNow(start,D.open,t); tagText('[LIVE]','DAY '+D.id+' · ON SALE'); pcap('First to pay takes it, picks tomorrow’s plate and gets a seat.'+(pick==null?'':' You chose option '+pick+'.'));
     panel('<div class="k nx-lab">DAY '+D.id+' · ON SALE · CLOSES IN '+clock(D.close-t)+'</div><div class="big acc nx-num" id="px" data-probe="numeral"><span class="cur">'+fmtP(p)+'</span> <small>ETH · FALLING</small></div><div class="k nx-sub" id="nxt">'+nextHalf(D.open,t)+'</div><button class="nx-cta" id="bPick" data-probe="button">SELECT PLATE TO COLLECT · '+fmtP(p)+' ETH</button><div class="note">First to pay takes it, picks tomorrow’s plate and gets a seat.'+(pick==null?'':' You chose option '+pick+'.')+'</div>'
       +(pick==null?'':'<button class="prime" id="bBuy">COLLECT</button>')
+      +'<div class="nx-wc"><span>Want a cut of every future sale instead?</span><button id="bWitCta">WITNESS · ANY AMOUNT</button></div>'
       +'<div class="traits" id="trT">'+trTable(traitsOf(D.seed))+'</div>');
     witnessSheet(st,D,keep);
     const bp=$('bPick'); if(bp) bp.onclick=()=>popOpen(pick);
+    const wc=$('bWitCta'); if(wc) wc.onclick=witOpen;
     if(!traitsOf(D.seed)) whenTraits(D.seed,tt=>{ const e=$('trT'); if(e&&!e.innerHTML) e.innerHTML=trTable(tt); });
     const b=$('bBuy'); if(b) b.onclick=()=>{ popOpen(pick); nxCollect(); };
     barFromPanel();
@@ -1596,7 +1609,7 @@ document.addEventListener('click',e=>{ const q=e.target.closest('.nx-q'); if(!q)
 $('nx-sheetX').addEventListener('click',sheetClose); $('nx-sheet').addEventListener('click',e=>{ if(e.target.id==='nx-sheet') sheetClose(); });
 $('nx-witX').addEventListener('click',()=>$('nx-wit').classList.remove('on')); $('nx-wit').addEventListener('click',e=>{ if(e.target.id==='nx-wit') $('nx-wit').classList.remove('on'); });
 document.querySelector('#nx-side .why').addEventListener('toggle',()=>{ if(CC) fitExp(); });
-$('nx-witBtn').addEventListener('click',()=>{ $('nx-wit').classList.add('on'); const i=$('wAmt'); if(i&&matchMedia('(pointer:fine)').matches) i.focus(); });
+$('nx-witBtn').addEventListener('click',witOpen); $('nx-barWit').addEventListener('click',witOpen);
 document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; if($('nx-sheet').classList.contains('on')) sheetClose(); if($('nx-wit').classList.contains('on')) $('nx-wit').classList.remove('on'); tipHide(); });
 document.querySelectorAll('.nx-row').forEach(b=>b.addEventListener('click',()=>{ openChapter(b.getAttribute('aria-controls')); if(b.getAttribute('aria-controls')==='glossary') return; }));
 $('nx-manAll').addEventListener('click',()=>manualAll($('nx-manAll').getAttribute('aria-expanded')!=='true'));
