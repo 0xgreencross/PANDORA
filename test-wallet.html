@@ -67,6 +67,10 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   .num.acc{color:var(--acc)} .num small{font-size:11px;color:var(--lab);letter-spacing:.14em;margin-left:4px}
   /* ═══ HEADER: one row, 48px, sticky. The nav strip under it scrolls away on mobile (Q2). */
   header.top{position:sticky;top:0;z-index:5;background:rgba(5,5,6,.94);border-bottom:1px solid var(--hair);backdrop-filter:blur(6px)}
+  /* PRACTICE (?practice=1 on the test page): the banner sits in the flow above the sticky header, which moves down by its height */
+  #practiceBanner{position:sticky;top:0;z-index:7;box-sizing:border-box;height:var(--pbh);display:flex;align-items:center;justify-content:center;padding:0 var(--gut);background:var(--acc);color:#050506;font-size:11px;font-weight:700;letter-spacing:.08em;line-height:1.3;text-align:center;overflow:hidden}
+  body.practice{--pbh:28px} body.practice header.top{top:var(--pbh)}
+  @media (max-width:700px){ body.practice{--pbh:40px} #practiceBanner{font-size:10.5px;letter-spacing:.05em} }
   header.top .bar{display:flex;align-items:center;gap:12px;padding:0 var(--gut);height:var(--head);max-width:1240px;margin:0 auto}
   header.top .brand{letter-spacing:.18em;font-weight:600;font-size:11px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;height:44px}
   header.top .brand span{color:var(--lab);font-weight:500}
@@ -722,6 +726,12 @@ async function rehearsal(){
 <script>
 /* ═══ THE CONFIG. Set once the ledger is deployed. Empty means the page shows the design on a rehearsal. */
 const CFG={ chainId:1, contract:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C', glass:'0xF125024a394C0518D85D7a416cc9df96177107f4', gift:'0xFda639d346Cf2Dd8456aefCB741109861256A614', rpc:'https://ethereum-rpc.publicnode.com', explorer:'https://etherscan.io', demo:new URLSearchParams(location.search).has('demo') };
+/* PRACTICE MODE (test page only, ?practice=1): the page shows an OPEN sale for day 9999, a day that can never exist on chain
+   (STORMGLASS.sol buy()/witness() revert "nothing on sale" / "that day is gone"), so the owner can rehearse the whole buy flow with a real wallet.
+   One override point (read() below), one guard on every send (practiceGuard), the banner here. Without ?practice=1 none of it runs. */
+const PRACTICE=!CFG.demo&&new URLSearchParams(location.search).get('practice')==='1', PRACTICE_DAY=9999, PR={open:0,lastId:0};
+if(PRACTICE){ const pb=document.createElement('div'); pb.id='practiceBanner'; pb.setAttribute('role','status'); pb.textContent='PRACTICE · nothing here is really on sale · reject every payment in your wallet';
+  document.body.classList.add('practice'); document.body.insertBefore(pb,document.body.firstChild); }
 const ABI=[
   'function candleOpen() view returns (uint256)','function candleClose() view returns (uint256)','function candleSettled() view returns (bool)','function revealBlock() view returns (uint256)',
   'function zeroSeed() view returns (uint32)','function bidsCount() view returns (uint256)','function bids(uint256) view returns (address bidder,uint128 amount,uint64 at,uint32 seed)',
@@ -962,7 +972,8 @@ function errMsg(e){ const inner=(e&&(e.error||(e.info&&e.info.error)))||{}; cons
   return String(inner.message||(e&&(e.reason||e.shortMessage||e.message))||e).slice(0,200); }
 $('wallet').addEventListener('click',()=>{ if(me) return walletMenu(); connectWallet().catch(e=>{ console.error(e); toast(errMsg(e)); }); });
 /* every transaction carries room to spare: a wallet that is a smart account (EIP-7702) runs code when it is refunded, and wallets' estimates come in short */
-async function pad(m,args,ov={}){ let g=null; try{ g=await m.estimateGas(...args,ov); }catch(e){} if(g===null) return m(...args,ov); let L=g*3n/2n+60000n; if(L<250000n) L=250000n; if(L>15000000n) L=15000000n; return m(...args,{...ov,gasLimit:L}); }
+async function pad(m,args,ov={}){ if(PRACTICE) return m(...args,{...ov,gasLimit:400000n});   /* day 9999 cannot be estimated: it reverts. A fixed limit lets the wallet open. */
+  let g=null; try{ g=await m.estimateGas(...args,ov); }catch(e){} if(g===null) return m(...args,ov); let L=g*3n/2n+60000n; if(L<250000n) L=250000n; if(L>15000000n) L=15000000n; return m(...args,{...ov,gasLimit:L}); }
 /* ═══ THE REDESIGN (Oct 24 2026): new rendering only. Every contract call, its arguments and the wallet code above are the live page's, byte for byte. */
 const NX={pre:'',wrong:false,ctx:null,pop:false,tx:null,plates:new Map(),boardKey:'',lastMe:null,now:()=>Math.floor(Date.now()/1000)};
 const NX_WRONG=CFG.demo&&new URLSearchParams(location.search).get('chain')==='wrong';   /* ?demo=…&chain=wrong: the wrong-chain rendering without a wallet (Q1) */
@@ -1018,7 +1029,7 @@ async function opCheck(op){ opLive(op);
    (no queue in between: the request goes straight to the captured provider), and the chain id written into the request */
 class OpSigner extends ethers.JsonRpcSigner{
   constructor(op){ super(op.bp,op.acct); this.op=op; }
-  async sendUncheckedTransaction(_tx){ const op=this.op, tx={..._tx,from:this.address};
+  async sendUncheckedTransaction(_tx){ practiceGuard(_tx); const op=this.op, tx={..._tx,from:this.address};
     if(tx.gasLimit==null) tx.gasLimit=await this.provider.estimateGas(tx);
     if(tx.to!=null) tx.to=await ethers.resolveAddress(tx.to,this.provider);
     tx.chainId=op.chain;
@@ -1044,6 +1055,7 @@ async function followTx(hash,op){ const R=()=>ro||op.bp, nap=ms=>new Promise(r=>
   for(;;){ let rc=null; try{ rc=await R().getTransactionReceipt(hash); }catch(e){ console.warn('receipt',e); } if(rc) return okRc(rc); await nap(3000); } }
 /* send(): the live page's, with one optional observer so the pick popup can show CONFIRM / PENDING / COLLECTED / FAILED (and WRONG NETWORK) */
 async function send(name,fn,on){ const ob=(...a)=>{ try{ if(on) on(...a); }catch(x){ console.warn('observer',x); } };
+  if(PRACTICE&&name!=='buy'&&name!=='witness'){ toast('PRACTICE: only COLLECT and WITNESS can be tried here. Nothing was sent.'); return; }
   try{ if(!W){ await connectWallet(); if(!W){ ob('nowallet'); return; } }
     const op=await opBegin(); if(!op){ toast('Your wallet is on another network. Switch it to Ethereum mainnet. Nothing was sent.'); ob('wrong'); return; }
     const L=LABEL[name]||name; ob('confirm'); toast(L+': confirm in your wallet');
@@ -1130,12 +1142,25 @@ const trLine=t=>t?(t.sg?'<b>STORMGLASS · 1 IN 100</b> · ':'<b>'+esc(t.subject)
 
 /* ═══ THE STATES */
 let ST={}, pick=null, lastSky={}, timer=null;
-const skyOf=async id=>{ try{ return JSON.parse(await glass.sky(id)); }catch(e){ return {}; } };
+const skyOf=async id=>{ if(PRACTICE&&id===PRACTICE_DAY) id=PR.lastId; try{ return JSON.parse(await glass.sky(id)); }catch(e){ return {}; } };
 const seedFor=(sd,k)=>Number(BigInt(ethers.solidityPackedKeccak256(['uint32','uint8'],[sd>>>0,k]))&0xffffffffn);   /* the contract's _seedFor */
 async function nextDay(st,id,seed,open){ const close=closeAfter(open); if(st.now>=close) return null;
   const [start,ref]=await Promise.all([storm.startPrice(id),storm.referencePrice()]);
   return {day:{id,seed,pick:0,open,close,sold:false,buyer:ethers.ZeroAddress,witnessed:0n,price:0n,onSale:true,priceNow:0n,start,ref,virtual:true}, cands:Array.from({length:32},(_,k)=>seedFor(seed,k))}; }
-async function read(){
+async function read(){ const st=await readChain(); return PRACTICE?practiceState(st):st; }
+/* PRACTICE: after the real state is read, day 9999 on sale: opened 10 minutes ago (fixed for the visit), closing in about 24 h, unsold,
+   start price 0.0001 ETH, the seed and the 32 options of the latest real day. Re-reads rebuild it the same way, so the clock never flips it back. */
+function practiceState(st){ const t=st.now; if(!PR.open||t>PR.open+86400-600) PR.open=t-600; PR.lastId=st.lastId;
+  const seed=(st.day&&st.day.seed)||st.zeroSeed||1, start=ethers.parseEther('0.0001'), open=PR.open;
+  const cands=(st.cands&&st.cands.length===32)?st.cands.slice():Array.from({length:32},(_,k)=>seedFor(seed,k));
+  return {...st,settled:true,dead:false,foundersEnd:t-86400*30,cands,
+    day:{id:PRACTICE_DAY,seed,pick:0,open,close:open+86400,sold:false,buyer:ethers.ZeroAddress,witnessed:0n,price:0n,onSale:true,priceNow:start,start,ref:start}}; }
+/* the last look before eth_sendTransaction, from OpSigner: only buy(9999,..) or witness(9999) to the contract, and only a tiny amount */
+function practiceGuard(tx){ if(!PRACTICE) return; let d=null;
+  try{ d=new ethers.Interface(ABI).parseTransaction({data:tx.data||'0x'}); }catch(e){}
+  const ok=d&&(d.name==='buy'||d.name==='witness')&&BigInt(d.args[0])===BigInt(PRACTICE_DAY)&&String(tx.to||'').toLowerCase()===CFG.contract.toLowerCase()&&BigInt(tx.value||0)<=ethers.parseEther('0.01');
+  if(!ok) throw Object.assign(new Error('PRACTICE: refused. Only buy or witness for day '+PRACTICE_DAY+' with a tiny amount can be sent here. Nothing was sent.'),{code:'PRACTICE_REFUSED'}); }
+async function readChain(){
   if(CFG.demo) return demoState();
   const s=storm;
   const [settled, dead, today, lastId, candleClose, candleOpen, nBids, zeroSeed, FOUNDING, foundersEnd, revealBlock, vault, seatPool, totalSeats]=await Promise.all([s.candleSettled(),s.dead(),s.today(),s.lastId(),s.candleClose(),s.candleOpen(),s.bidsCount(),s.zeroSeed(),s.FOUNDING(),s.foundersEnd(),s.revealBlock(),s.vault(),s.seatPool(),s.totalSeats()]);
