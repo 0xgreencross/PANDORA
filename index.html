@@ -101,6 +101,11 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   .panel button{white-space:normal;max-width:100%}
   .nx-cta{width:100%;min-height:48px;font-size:11px;letter-spacing:.12em;font-weight:700;background:var(--acc);color:var(--bg);border-color:var(--acc)}
   .nx-cta:disabled{background:none;color:var(--lab);border-color:var(--hair);opacity:1}
+  /* THE WITNESS CALL-TO-ACTION: a quiet second button under the main buy button, in the panel and in the phone bar; only while a day is on sale */
+  .nx-wc{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;border-top:1px solid var(--hair);padding-top:10px}
+  .nx-wc[hidden]{display:none}
+  .nx-wc span{flex:1 1 140px;min-width:0;font-size:12px;line-height:1.35;letter-spacing:.04em;color:var(--lab)}
+  .nx-wc button{flex:0 0 auto;min-height:44px;border-color:var(--lab)}
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .cta{border:1px solid var(--acc);padding:14px;margin:4px 0} .cta .k{color:var(--acc)} .cta .row{margin-top:10px;flex-wrap:nowrap} .cta input{flex:1;min-width:0} .cta .note{margin-top:8px}
   .nx-sky{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
@@ -244,6 +249,8 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   #wsheet a.wbtn,#wsheet button.wbtn{display:block;width:100%;text-align:center;border:1px solid var(--ink);padding:13px 14px;margin:8px 0 0;letter-spacing:.12em;font-size:12px}
   #wsheet .wbtn.prime{border-color:var(--acc);background:var(--acc);color:var(--bg);font-weight:700}
   #wsheet .x{display:block;margin:12px auto 0;border:0;color:var(--lab)}
+  #wsheet .wbtn img{width:20px;height:20px;vertical-align:middle;margin:-3px 10px 0 0}
+  #wsheet #wsp{overflow-wrap:anywhere}
   /* ═══ THE PLATE CARD (ledger detail), unchanged structure */
   #pcard{position:fixed;inset:0;z-index:21;background:rgba(5,5,6,.88);display:none;align-items:center;justify-content:center;padding:16px 16px calc(16px + var(--sab))}
   #pcard.on{display:flex}
@@ -332,6 +339,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     #plateBox{width:min(100%, calc(100vh - var(--head) - 200px));width:min(100%, calc(100dvh - var(--head) - 200px))}
     body.nx-form #plateBox{width:min(100%, calc(100vh - var(--head) - 320px));width:min(100%, calc(100dvh - var(--head) - 320px))}
     #plateBox{margin:0 auto}
+    @media(min-width:700px){ body.nx-hasw #plateBox{width:min(100%, calc(100vh - var(--head) - 262px));width:min(100%, calc(100dvh - var(--head) - 262px))} }
     .nx-col{height:auto}
     .panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px 24px;align-items:center}
     .panel > *{grid-column:1 / -1}
@@ -358,9 +366,10 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     .nx-col{padding:0 var(--gut)}
     .panel{display:flex;flex-direction:column;gap:8px;align-items:stretch}
     .panel > .note.clamp:not(.open){display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;cursor:pointer}
-    .panel > .big,.panel > #nxt,.panel > .nx-cta,.panel > .nx-sub,.panel .cta .nx-cta,.panel .row .nx-cta{display:none}
+    .panel > .big,.panel > #nxt,.panel > .nx-cta,.panel > .nx-sub,.panel .cta .nx-cta,.panel .row .nx-cta,.panel > .nx-wc{display:none}
     .nx-col{gap:8px} .panel{display:contents} .panel > .traits{order:2} #welcome{order:1} .nx-col > .nx-sky{order:3}
     .nx-bar{display:block}
+    .nx-bar .nx-wc{margin-top:6px;padding-top:0;border-top:0;flex-wrap:nowrap} .nx-bar .nx-wc span{flex:1 1 0;font-size:11px;line-height:1.3} .nx-bar .nx-wc button{flex:0 1 auto;max-width:54%;padding:5px 10px;white-space:normal;line-height:1.25} body.nx-hasw{--bar:calc(192px + var(--sab))}
     .nx-ph .nx-long{display:none}
     .nx-ph{padding-left:4px} #ccard.exp #cck{display:none} .nx-ph #ccX{font-size:18px;padding:0 12px}
     .nx-exp{display:none;padding:0;grid-template-columns:1fr;grid-template-rows:auto 1fr}
@@ -394,7 +403,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
   /* ═══ LANDSCAPE PHONE (iPhone on its side, with or without the browser toolbar): two columns, plate = the full height, no bottom bar */
   @media(max-height:520px) and (orientation:landscape){
     :root{--disp:40px;--bar:0px}
-    body{padding-bottom:0}
+    body,body.nx-hasw{--bar:0px;padding-bottom:0}
     header.top nav{display:flex} header.top #nx-chip{display:none} header.top .act{margin-left:4px}
     .nx-strip{display:none}
     main.hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;padding:8px var(--gut);height:auto;min-height:0}
@@ -405,7 +414,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     .nx-col{height:auto;padding:0}
     .panel{display:flex;flex-direction:column;gap:6px;align-items:stretch}
     .panel > .big,.panel > #nxt,.panel > .nx-sub{display:block} .panel > .nx-cta,.panel .cta .nx-cta,.panel .row .nx-cta{display:inline-block}
-    .panel > .note.nx-dup{display:block}
+    .panel > .note.nx-dup{display:block} .panel > .nx-wc{display:flex}
     .nx-bar{display:none!important}
     .nx-exp{display:none;padding:8px;gap:12px;grid-template-columns:auto minmax(0,1fr);grid-template-rows:1fr;align-content:stretch;justify-items:stretch}
     #ccard.exp .nx-exp{display:grid}
@@ -430,7 +439,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     <div class="nx-sky" id="nx-sky"><h2 class="nx-t"><b>THE SKY NOW</b><button class="nx-q" data-ref="#sky" aria-label="What the sky is"></button></h2><div class="nx-rows" id="nx-skyRows"></div><p class="cap">What today’s plate is reading from Ethereum right now. [?] opens the explanation of each row.</p></div>
   </div>
 </main>
-<div class="nx-bar" id="nx-bar"><div class="big dim nx-num" id="nx-barNum" data-probe="numeral">––––</div><span class="k" id="nx-barSub">READING THE CHAIN</span><button class="nx-cta" id="nx-barBtn" data-probe="button" disabled>READING THE CHAIN</button></div>
+<div class="nx-bar" id="nx-bar"><div class="big dim nx-num" id="nx-barNum" data-probe="numeral">––––</div><span class="k" id="nx-barSub">READING THE CHAIN</span><button class="nx-cta" id="nx-barBtn" data-probe="button" disabled>READING THE CHAIN</button><div class="nx-wc" id="nx-barWc" hidden><span>Want a cut of every future sale instead?</span><button id="nx-barWit">WITNESS · ANY AMOUNT</button></div></div>
 
 <div class="nx-inst nx-wrap" id="nx-instruments">
   <div class="nx-i c6"><h2 class="nx-t"><b>PRICE CURVE</b><button class="nx-q" data-ref="#sale" aria-label="How the sale works"></button></h2>
@@ -762,7 +771,8 @@ async function welcome(addr){
   if(DEMO_GIFT!=null){ if(DEMO_GIFT==='waiting') mode='waiting'; else if(+DEMO_GIFT>0){ mode='holder'; id=+DEMO_GIFT; } }
   else { const G=giftRead(); const [bal,gid]=await Promise.all([G.balanceOf(addr),G.giftOf(addr)]); id=Number(gid);
     if(id>0){ if(!(await G.isClaimed(id))) mode='waiting'; else { const o=await G.ownerOf(id).catch(()=>null); if(o&&o.toLowerCase()===addr.toLowerCase()) mode='holder'; else id=0; } }
-    if(!mode&&bal>0n){ mode='holder'; const ids=Array.from({length:Number(await G.gifts())},(_,i)=>i+1); const own=await Promise.all(ids.map(i=>G.ownerOf(i).catch(()=>null))); const k=own.findIndex(o=>o&&o.toLowerCase()===addr.toLowerCase()); id=k<0?0:ids[k]; } }
+    if(!mode&&bal>0n){ mode='holder'; const ids=Array.from({length:Number(await G.gifts())},(_,i)=>i+1); const own=await Promise.all(ids.map(i=>G.ownerOf(i).catch(()=>null))); const k=own.findIndex(o=>o&&o.toLowerCase()===addr.toLowerCase()); id=k<0?0:ids[k]; }
+    if(!sameAddr(addr,me)){ if(welcomed===addr) welcomed=''; return; } }   /* the wallet changed or left while this was read */
   if(!mode){ el.hidden=true; return; }
   if(mode==='waiting'){ el.innerHTML='<span><b>A SMALL WEATHER WAS MADE FOR YOU</b> · <a href="/gift/">CLAIM IT ↗</a></span>'; el.hidden=false; return; }
   el.innerHTML=(id?'<img alt="SMALL WEATHER #'+id+'" id="swImg">':'')+'<span><b>SMALL WEATHER'+(id?' #'+id:'')+'</b> · welcome back</span>'; el.hidden=false;
@@ -783,6 +793,14 @@ const READ_RPCS=[CFG.rpc,'https://rpc.mevblocker.io','https://eth.drpc.org','wal
 /* EIP-6963: every installed wallet announces itself. Ask MetaMask first, then the others, then window.ethereum:
    when two wallet extensions fight over window.ethereum, the one that wins may refuse ("dapp interaction disabled") */
 const WALLETS=[]; let EP=null;
+/* THE WALLET SESSION: a provider (EP), an account (me) and a number (SES). Every connect, disconnect and change of account or
+   provider bumps SES; work that started under an older number stops before it reaches the wallet (see opBegin). */
+let SES=0;
+const STALE=()=>Object.assign(new Error('Your wallet changed while this was waiting. Nothing was sent.'),{code:'STALE'});
+const sameAddr=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.toLowerCase()===b.toLowerCase();
+/* a wallet that throws instead of answering is a failed request, not a crash */
+const ask=(P,method,params)=>{ try{ return Promise.resolve(P.request(params===undefined?{method}:{method,params})); }catch(e){ return Promise.reject(e); } };
+const chainOf=async P=>{ const c=await ask(P,'eth_chainId'); return typeof c==='string'&&/^0x[0-9a-f]+$/i.test(c)?parseInt(c,16):Number.isInteger(c)?c:NaN; };
 window.addEventListener('eip6963:announceProvider',e=>{ const d=e&&e.detail; if(d&&d.provider&&!WALLETS.some(w=>w.provider===d.provider)) WALLETS.push(d); });
 try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
 const isMM=w=>!!(w&&w.info&&w.info.rdns==='io.metamask');
@@ -814,7 +832,7 @@ async function wcInit(){ const NS=await wcLoad();
   try{ return await NS.EthereumProvider.init(o); }catch(e){ try{ Object.keys(localStorage).filter(k=>/^wc@2:|^WALLETCONNECT/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(x){} return await NS.EthereumProvider.init(o); } }
 const sheetOff=()=>$('wsheet').classList.remove('on');
 function sheet(title,text,note,btns){ $('wsk').textContent=title; $('wsp').textContent=text; $('wsn').textContent=note||''; $('wsn').style.display=note?'':'none';
-  const B=$('wsBtns'); B.innerHTML=''; btns.forEach(([label,fn,prime])=>{ const b=document.createElement('button'); b.className='wbtn'+(prime?' prime':''); b.textContent=label; b.addEventListener('click',()=>fn(b)); B.appendChild(b); });
+  const B=$('wsBtns'); B.innerHTML=''; btns.forEach(([label,fn,prime,icon])=>{ const b=document.createElement('button'); b.className='wbtn'+(prime?' prime':''); if(icon&&/^data:image\//.test(icon)){ const i=document.createElement('img'); i.src=icon; i.alt=''; b.appendChild(i); } b.appendChild(document.createTextNode(label)); b.addEventListener('click',()=>fn(b)); B.appendChild(b); });
   $('wsheet').classList.add('on'); return B; }
 const pageLink=()=>'https://'+location.host+location.pathname;
 async function copyTo(btn,txt,done){ try{ await navigator.clipboard.writeText(txt); btn.textContent=done; }catch(e){ btn.textContent=txt.slice(0,60); } }
@@ -841,24 +859,115 @@ function wcConnect(hasBuiltIn){
 function noWalletDesk(){ sheet('NO WALLET IN THIS BROWSER','This browser has no wallet extension. Install MetaMask or Rabby, reload this page and press CONNECT. Or open dithervoid.art on your phone and connect with MetaMask, Rainbow or Zerion.','',[]); }
 $('wsX').addEventListener('click',()=>{ if(SHEET_CLOSE) SHEET_CLOSE(); else sheetOff(); });
 $('wsheet').addEventListener('click',e=>{ if(e.target.id==='wsheet') $('wsX').click(); });
-async function connectWallet(){
-  try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
-  if(!EP&&isPhone()&&!inWalletApp()){ const r=await wcConnect(!!window.ethereum); if(r!=='builtin') EP=r; }
-  const L=EP?[EP]:walletList(); if(!L.length){ noWalletDesk(); return; }
-  let bp=null, err=null;
-  for(const P of L){ try{ await P.request({method:'eth_requestAccounts'}); bp=new ethers.BrowserProvider(P); EP=P; break; }
-    catch(e){ const c=e&&e.code; if(c===4001||c===-32002) throw e; err=e; console.warn('wallet refused, trying the next one',e); } }
-  if(!bp){ if(L.length>1) throw new Error(errMsg(err)+' (more than one wallet extension is installed: turn off the others and reload the page)'); throw err; }
-  const net=await bp.getNetwork(); if(CFG.chainId&&Number(net.chainId)!==CFG.chainId){ toast('Your wallet is on another network. Switch it to Ethereum mainnet.'); }
-  signer=await bp.getSigner(); me=await signer.getAddress(); W=new ethers.Contract(CFG.contract,ABI,signer);
-  $('wallet').textContent=short(me); welcome(me).catch(()=>{}); refreshSeats().catch(e=>console.error(e));
+/* PR #1. THE CHOOSER (computers). Every wallet the browser offers goes on the list: each EIP-6963 announcement, window.ethereum and
+   window.ethereum.providers[], once each (the same object, or the same rdns, is one wallet). A wallet asleep or wedged (an
+   un-onboarded MetaMask, a crashed extension) never answers, throws, or answers nonsense, so each is pinged with eth_chainId (no
+   popup) on its own, and the ones that fail or stay silent for 1.5 s are left off; one bad wallet cannot spoil the list. One
+   left: no list. The choice is remembered once the wallet says yes, and asked directly next time; a no forgets it. Only the
+   chosen wallet is ever asked to connect: a refusal is the answer, the page does not try another wallet behind it.
+   The list is the wallet sheet (#wsheet), with each wallet's EIP-6963 icon. */
+const WKEY='stormglass.wallet';
+const alive=P=>new Promise(res=>{ const t=setTimeout(()=>res(false),1500); const done=v=>{ clearTimeout(t); res(v); };
+  ask(P,'eth_chainId').then(c=>done(typeof c==='string'&&/^0x[0-9a-f]+$/i.test(c)),()=>done(false)); });
+const legacyName=P=>{ try{ return P.isRabby?'Rabby':P.isCoinbaseWallet?'Coinbase Wallet':P.isBraveWallet?'Brave Wallet':P.isPhantom?'Phantom':P.isMetaMask?'MetaMask':'Browser wallet'; }catch(e){ return 'Browser wallet'; } };
+function walletChoices(){
+  const seen=new Set(), rd=new Set(), out=[];
+  const add=(P,info)=>{ try{ if(!P||typeof P.request!=='function'||seen.has(P)) return; }catch(e){ return; }
+    const rdns=info&&typeof info.rdns==='string'?info.rdns:''; if(rdns&&rd.has(rdns)) return; seen.add(P); if(rdns) rd.add(rdns);
+    const name=String(info&&typeof info.name==='string'&&info.name||legacyName(P)).slice(0,40);
+    out.push({provider:P,name,key:rdns||('legacy:'+name),icon:info&&typeof info.icon==='string'?info.icon:''}); };
+  WALLETS.forEach(w=>add(w.provider,w.info));
+  let eth=null; try{ eth=window.ethereum; }catch(e){}
+  if(eth){ add(eth,null); let ps=null; try{ ps=eth.providers; }catch(e){} if(Array.isArray(ps)) ps.forEach(p=>add(p,null)); }
+  return out; }
+const remember=k=>{ try{ if(k) localStorage.setItem(WKEY,k); else localStorage.removeItem(WKEY); }catch(e){} };
+async function chooseWallet(){
+  await new Promise(r=>setTimeout(r,60));   /* announcements answer the request event asynchronously */
+  const all=walletChoices(); if(!all.length){ noWalletDesk(); return null; }
+  const up=await Promise.all(all.map(w=>alive(w.provider))); const live=all.filter((w,k)=>up[k]);
+  if(!live.length){ toast('No wallet answered. Unlock your wallet and reload the page.'); return null; }
+  let saved=null; try{ saved=localStorage.getItem(WKEY); }catch(e){}
+  const hit=saved&&live.find(w=>w.key===saved); if(hit) return hit;
+  if(live.length===1) return live[0];
+  return new Promise(res=>{   /* CLOSE, Esc and the backdrop all come through SHEET_CLOSE: the list always answers, a wallet or null */
+    SHEET_CLOSE=()=>{ SHEET_CLOSE=null; sheetOff(); res(null); };
+    sheet('CONNECT WITH','Choose the wallet to connect.','',live.map(w=>[w.name.toUpperCase(),()=>{ if(!SHEET_CLOSE) return; SHEET_CLOSE=null; sheetOff(); res(w); },false,w.icon]));
+  });
 }
+/* the connected address opens the same sheet, with DISCONNECT */
+const walletName=P=>{ const w=walletChoices().find(w=>w.provider===P); return w?w.name:'your wallet'; };
+function walletMenu(){ sheet('CONNECTED',me,'Connected with '+walletName(EP)+'.',[['DISCONNECT',()=>{ sheetOff(); disconnect(true); },true]]); }
+/* the page lets go of the wallet (DISCONNECT here, or the wallet's own disconnect or empty account list). DISCONNECT also asks the
+   wallet to forget the site (wallet_revokePermissions, EIP-2255; MetaMask and Rabby honor it), so the next CONNECT asks again; a
+   wallet without the call refuses or throws, and the page is disconnected all the same. A CONNECT right after waits for that
+   answer first (5 s at most), so a late revocation cannot take back the new connection. */
+let REVOKING=null;
+function disconnect(revoke){
+  const P=EP; SES++; EP=null; signer=null; me=null; W=null; welcomed=''; NX.wrong=false;
+  if(revoke) remember(null);
+  walletLabel(); $('welcome').hidden=true; $('nx-mine').hidden=true; markMe();
+  $('seatsNote').textContent='Connect your wallet to see your seats and what they have earned.'; $('claim').disabled=true; $('withdraw').style.display='none';
+  if(revoke&&P){ const q=ask(P,'wallet_revokePermissions',[{eth_accounts:{}}]).catch(e=>console.warn('revoke',e)).then(()=>{ if(REVOKING&&REVOKING.q===q) REVOKING=null; }); REVOKING={P,q}; }
+  if(revoke) toast('Disconnected.');
+}
+const revoked=P=>REVOKING&&REVOKING.P===P?Promise.race([REVOKING.q,new Promise(r=>setTimeout(r,5000))]):null;
+/* switching account, network or disconnecting inside the wallet itself: followed, for the session's own provider only (events
+   from a wallet the page has let go of are ignored). A new account comes from the event (or eth_accounts), never from
+   eth_requestAccounts, so it opens no popup. */
+const HEARD=new WeakSet();
+const isAddr=a=>typeof a==='string'&&ethers.isAddress(a);
+function follow(P){ if(!P||HEARD.has(P)||typeof P.on!=='function') return; HEARD.add(P);
+  const on=(ev,f)=>{ try{ P.on(ev,f); }catch(e){ console.warn('wallet events',e); } };
+  on('accountsChanged',a=>{ onAccounts(P,a).catch(e=>console.error(e)); });
+  on('disconnect',()=>{ if(P===EP) disconnect(false); });
+  on('chainChanged',c=>{ if(P!==EP) return; NX.wrong=(typeof c==='string'?parseInt(c,16):Number(c))!==CFG.chainId; walletLabel(); }); }
+async function onAccounts(P,a){ if(P!==EP) return; const gen=SES;
+  let list=Array.isArray(a)?a.filter(isAddr):[];
+  if(!list.length){   /* an empty list may be a revocation a newer grant already replaced: the wallet's eth_accounts decides */
+    try{ const r=await Promise.race([ask(P,'eth_accounts'),new Promise((_,j)=>setTimeout(()=>j(new Error('timeout')),1500))]); list=Array.isArray(r)?r.filter(isAddr):[]; }catch(e){ list=[]; }
+    if(gen!==SES||P!==EP) return; }
+  if(!list.length){ disconnect(false); return; }
+  if(sameAddr(list[0],me)) return;
+  setSession(P,list[0]); welcome(me).catch(()=>{}); refreshSeats().catch(e=>console.error(e)); }
+/* one connection attempt at a time: a second CONNECT (or a write that needs a wallet) joins the one in flight. An attempt the
+   wallet has left unanswered for 15 s can be replaced by a new one; the old one's late answer is then ignored. */
+let CONNECTING=null;
+function connectWallet(){
+  if(CONNECTING&&Date.now()-CONNECTING.t<15000) return CONNECTING.p;
+  const c={t:Date.now()}; c.p=connectOnce().finally(()=>{ if(CONNECTING===c) CONNECTING=null; }); CONNECTING=c; return c.p; }
+async function connectOnce(){
+  try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
+  const gen=++SES, stale=()=>gen!==SES;   /* a disconnect, or a newer attempt, while this one waits: it stops and changes nothing */
+  let P=EP;
+  if(!P&&isPhone()&&!inWalletApp()){ const r=await wcConnect(!!window.ethereum); if(stale()) return; if(r!=='builtin') P=r; }
+  if(P||isPhone()){   /* phones, and a wallet already chosen: as before */
+    const L=P?[P]:walletList(); if(!L.length){ noWalletDesk(); return; }
+    let err=null, got=null;
+    for(const Q of L){ try{ await revoked(Q); if(stale()) return; await Q.request({method:'eth_requestAccounts'}); got=Q; break; }
+      catch(e){ const c=e&&e.code; if(c===4001||c===-32002) throw e; err=e; console.warn('wallet refused, trying the next one',e); } }
+    if(!got){ if(L.length>1) throw new Error(errMsg(err)+' (more than one wallet extension is installed: turn off the others and reload the page)'); throw err; }
+    P=got;
+  } else {
+    const w=await chooseWallet(); if(stale()||!w) return; P=w.provider;
+    await revoked(P); if(stale()) return;
+    try{ await ask(P,'eth_requestAccounts'); }
+    catch(e){ remember(null); throw e; }   /* a no forgets the choice: the next CONNECT shows the list again */
+    remember(w.key);
+  }
+  if(stale()) return;
+  const c=await chainOf(P); if(stale()) return; if(CFG.chainId&&c!==CFG.chainId){ toast('Your wallet is on another network. Switch it to Ethereum mainnet.'); }
+  const s=await new ethers.BrowserProvider(P).getSigner(); if(stale()) return;
+  setSession(P,s.address); follow(P);
+  welcome(me).catch(()=>{}); refreshSeats().catch(e=>console.error(e));
+}
+/* the one place the session is set: a new number, so anything still running for the old one stops */
+function setSession(P,acct){ SES++; EP=P; me=ethers.getAddress(acct); signer=new ethers.JsonRpcSigner(new ethers.BrowserProvider(P),me); W=new ethers.Contract(CFG.contract,ABI,signer); welcomed=''; walletLabel(); }
 /* the wallet's own words: ethers hides wallet errors it does not know behind "could not coalesce error" */
 function errMsg(e){ const inner=(e&&(e.error||(e.info&&e.info.error)))||{}; const code=inner.code??(e&&e.code);
   if(code===-32002) return 'Your wallet already has a request waiting. Open it from the browser toolbar, finish or cancel it, then try again.';
   if(code===4001||code==='ACTION_REJECTED') return 'Cancelled in your wallet. Nothing was sent.';
   return String(inner.message||(e&&(e.reason||e.shortMessage||e.message))||e).slice(0,200); }
-$('wallet').addEventListener('click',()=>connectWallet().catch(e=>{ console.error(e); toast(errMsg(e)); }));
+$('wallet').addEventListener('click',()=>{ if(me) return walletMenu(); connectWallet().catch(e=>{ console.error(e); toast(errMsg(e)); }); });
 /* every transaction carries room to spare: a wallet that is a smart account (EIP-7702) runs code when it is refunded, and wallets' estimates come in short */
 async function pad(m,args,ov={}){ let g=null; try{ g=await m.estimateGas(...args,ov); }catch(e){} if(g===null) return m(...args,ov); let L=g*3n/2n+60000n; if(L<250000n) L=250000n; if(L>15000000n) L=15000000n; return m(...args,{...ov,gasLimit:L}); }
 /* ═══ THE REDESIGN (Oct 24 2026): new rendering only. Every contract call, its arguments and the wallet code above are the live page's, byte for byte. */
@@ -883,16 +992,71 @@ function setBar(o){ const b=$('nx-bar'); if(!o){ return; } const n=$('nx-barNum'
 function pcap(t){ const e=$('nx-pcap'); if(e) e.textContent=t||''; }
 function tagText(pre,t){ const el=$('plateTag'); el.dataset.pre=pre; el.textContent=t; }
 function syncCap(){ const n=$('panel').querySelector('.note'); const c=$('nx-pcap'); if(n&&c){ n.classList.toggle('nx-dup',n.textContent.replace(/≈/g,'').trim()===c.textContent.trim()); if(n.textContent.length>140){ n.classList.add('clamp'); n.classList.toggle('open',!!NX.noteOpen); n.onclick=()=>{ NX.noteOpen=!NX.noteOpen; n.classList.toggle('open',NX.noteOpen); }; } } }
-function barFromPanel(){ syncCap(); placeSky(); const P=$('panel'); const num=P.querySelector('.nx-num'); const subEl=P.querySelector('.nx-sub'); const btn=P.querySelector('.nx-cta'); let numHtml=num?num.innerHTML:'––––', sub=subEl?subEl.textContent:''; const sm=num&&num.querySelector('small'); if(sm&&sm.textContent.length>14){ numHtml=num.innerHTML.replace(sm.outerHTML,''); if(!sub) sub=sm.textContent; } setBar({num:numHtml,numCls:num?(num.classList.contains('acc')?'acc':'')+(num.classList.contains('cur')?' cur':'')+(num.classList.contains('dim')?' dim':''):'dim',sub,btn:btn?btn.textContent:'',disabled:!btn||btn.disabled,onclick:btn&&!btn.disabled?()=>btn.click():null}); }
+function barFromPanel(){ syncCap(); placeSky(); const P=$('panel'); const wOn=!!P.querySelector('#bWitCta'); $('nx-barWc').hidden=!wOn; document.body.classList.toggle('nx-hasw',wOn); const num=P.querySelector('.nx-num'); const subEl=P.querySelector('.nx-sub'); const btn=P.querySelector('.nx-cta'); let numHtml=num?num.innerHTML:'––––', sub=subEl?subEl.textContent:''; const sm=num&&num.querySelector('small'); if(sm&&sm.textContent.length>14){ numHtml=num.innerHTML.replace(sm.outerHTML,''); if(!sub) sub=sm.textContent; } setBar({num:numHtml,numCls:num?(num.classList.contains('acc')?'acc':'')+(num.classList.contains('cur')?' cur':'')+(num.classList.contains('dim')?' dim':''):'dim',sub,btn:btn?btn.textContent:'',disabled:!btn||btn.disabled,onclick:btn&&!btn.disabled?()=>btn.click():null}); }
 /* the wallet's chain, read only; the label in the header; the one new wallet call (Q3): wallet_switchEthereumChain */
-async function nxWrong(){ if(NX_WRONG) return true; try{ const P=EP||anyWallet(); if(!P||!me) return false; const c=Number(await P.request({method:'eth_chainId'})); NX.wrong=c!==CFG.chainId; }catch(e){ NX.wrong=false; } walletLabel(); return NX.wrong; }
-async function switchChain(){ const P=EP||anyWallet(); if(!P){ toast('Your wallet is on another network. Switch it to Ethereum mainnet.'); return false; } try{ await P.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x1'}]}); }catch(e){ console.warn('switch',e); toast(errMsg(e)); } const w=await nxWrong(); return !w; }
+async function nxWrong(){ if(NX_WRONG) return true; const gen=SES; try{ const P=EP||anyWallet(); if(!P||!me) return false; const c=await chainOf(P); if(gen!==SES) return NX.wrong; NX.wrong=c!==CFG.chainId; }catch(e){ if(gen!==SES) return NX.wrong; NX.wrong=false; } walletLabel(); return NX.wrong; }
+async function switchChain(){ const P=EP||anyWallet(); if(!P){ toast('Your wallet is on another network. Switch it to Ethereum mainnet.'); return false; } try{ await ask(P,'wallet_switchEthereumChain',[{chainId:'0x1'}]); }catch(e){ console.warn('switch',e); toast(errMsg(e)); } const w=await nxWrong(); return !w; }
 function walletLabel(){ const b=$('wallet'); const a=me||(NX_WRONG&&DEMO_GIFT!=null?NX_DEMO_ME:null); const wrong=!!a&&(NX_WRONG||NX.wrong); $('nx-chainBar').hidden=!wrong; if(!a){ b.textContent='CONNECT'; b.classList.remove('bad'); return; } b.textContent=short(a)+(swMark(a)?' ≈':'')+(wrong?(innerWidth<900?' [!]':' · [!] NOT MAINNET'):''); b.classList.toggle('bad',!!wrong); }
 $('nx-chainBar').addEventListener('click',()=>switchChain());
 const NX_HOOKED=new WeakSet();
 setInterval(()=>{ if(me!==NX.lastMe){ NX.lastMe=me; walletLabel(); nxWrong(); } if(EP&&EP.on&&!NX_HOOKED.has(EP)){ NX_HOOKED.add(EP); try{ EP.on('chainChanged',()=>nxWrong()); }catch(e){} } },1000);
-/* send(): the live page's, with one optional observer so the pick popup can show CONFIRM / PENDING / COLLECTED / FAILED */
-async function send(name,fn,on){ const ob=(...a)=>{ try{ if(on) on(...a); }catch(x){ console.warn('observer',x); } }; try{ if(!W){ await connectWallet(); if(!W){ ob('nowallet'); return; } } const L=LABEL[name]||name; ob('confirm'); toast(L+': confirm in your wallet'); const tx=await fn(W); ob('sent',tx); toast(L+': sent, waiting for Ethereum to confirm'); const rc=await tx.wait(); ob('confirmed',rc); toast(L+': confirmed'); await tick(true); }catch(e){ console.error(e); toast(errMsg(e)); ob('error',e); } }
+/* EVERY WRITE IS AN OPERATION. It captures the session as it is when the action starts (provider, account, number), checks the
+   chain and asks the wallet to switch if it must (a wallet left on Base or Arbitrum would otherwise send the ETH to this same
+   address on that chain, where no contract lives), then builds its own provider, signer and contract from what it captured:
+   never the globals, never a provider made before a switch. Right before the wallet is asked to send, it looks again: the same
+   session number, the same provider, the same account first in eth_accounts, the same chain. Anything else, nothing is sent. */
+function opLive(op){ if(op.gen!==SES||op.P!==EP||!sameAddr(op.acct,me)) throw STALE(); }
+async function opBegin(){
+  const op={gen:SES,P:EP,acct:me,chain:CFG.chainId}; if(!op.P||!op.acct) throw STALE();
+  let c=await chainOf(op.P); opLive(op);
+  if(c!==op.chain){
+    try{ await ask(op.P,'wallet_switchEthereumChain',[{chainId:'0x'+op.chain.toString(16)}]); }catch(e){ console.warn('switch',e); }
+    opLive(op); c=await chainOf(op.P); opLive(op);
+    if(c!==op.chain){ NX.wrong=true; walletLabel(); return null; } }
+  op.bp=new ethers.BrowserProvider(op.P,op.chain);   /* made after the check and bound to mainnet */
+  op.signer=new OpSigner(op); op.C=new ethers.Contract(CFG.contract,ABI,op.signer);
+  return op;
+}
+async function opCheck(op){ opLive(op);
+  const [acc,c]=await Promise.all([ask(op.P,'eth_accounts'),chainOf(op.P)]); opLive(op);
+  if(!Array.isArray(acc)||!sameAddr(acc[0],op.acct)) throw STALE();
+  if(c!==op.chain) throw Object.assign(new Error('Your wallet moved to another network. Nothing was sent.'),{code:'WRONG_CHAIN'}); }
+/* the operation's signer: ethers' own, with the last look placed between the filled-in transaction and eth_sendTransaction
+   (no queue in between: the request goes straight to the captured provider), and the chain id written into the request */
+class OpSigner extends ethers.JsonRpcSigner{
+  constructor(op){ super(op.bp,op.acct); this.op=op; }
+  async sendUncheckedTransaction(_tx){ const op=this.op, tx={..._tx,from:this.address};
+    if(tx.gasLimit==null) tx.gasLimit=await this.provider.estimateGas(tx);
+    if(tx.to!=null) tx.to=await ethers.resolveAddress(tx.to,this.provider);
+    tx.chainId=op.chain;
+    const rpc=this.provider.getRpcTransaction(tx);
+    await opCheck(op);
+    const h=await ask(op.P,'eth_sendTransaction',[rpc]); op.hash=h; return h; }
+  async sendTransaction(_tx){ try{ this.op.block=await (ro||this.provider).getBlockNumber(); }catch(e){ this.op.block=null; }   /* as ethers does: the tx cannot be mined before this block */
+    const h=await this.sendUncheckedTransaction(_tx);
+    return new ethers.TransactionResponse({hash:h,from:this.address,to:_tx.to||null,data:_tx.data||'0x',value:BigInt(_tx.value||0),gasLimit:_tx.gasLimit==null?null:BigInt(_tx.gasLimit),chainId:BigInt(this.op.chain),nonce:null,type:null,signature:null,blockNumber:null,blockHash:null,index:null,gasPrice:null},this.provider); }
+}
+/* a transaction the wallet has taken is followed to its receipt on the page's own mainnet reader, whatever the wallet or the
+   session does next; it never puts the old session back on screen */
+const okRc=rc=>{ if(rc.status===0) throw Object.assign(new Error('The transaction failed on Ethereum (reverted).'),{receipt:rc}); return rc; };
+async function followTx(hash,op){ const R=()=>ro||op.bp, nap=ms=>new Promise(r=>setTimeout(r,ms));
+  /* its nonce and sender, from the wallet that took it or from the reader (about a minute), so a sped-up or cancelled
+     transaction is recognised the way ethers' own wait() does it; a speed-up that lands counts as done */
+  let t=null;
+  for(let k=0;k<40&&!t;k++){ for(const src of [op.bp,R()]){ try{ t=await src.getTransaction(hash); }catch(e){} if(t) break; }
+    if(!t){ try{ const rc=await R().getTransactionReceipt(hash); if(rc) return okRc(rc); }catch(e){ if(e&&e.receipt) throw e; } await nap(1500); } }
+  const sb=op.block!=null?op.block:await R().getBlockNumber().catch(()=>null);
+  if(t&&sb!=null){ try{ return await new ethers.TransactionResponse(t,R()).replaceableTransaction(sb).wait(); }
+    catch(e){ if(e&&e.code==='TRANSACTION_REPLACED'&&e.reason==='repriced'&&e.receipt&&e.receipt.status===1) return e.receipt; throw e; } }
+  for(;;){ let rc=null; try{ rc=await R().getTransactionReceipt(hash); }catch(e){ console.warn('receipt',e); } if(rc) return okRc(rc); await nap(3000); } }
+/* send(): the live page's, with one optional observer so the pick popup can show CONFIRM / PENDING / COLLECTED / FAILED (and WRONG NETWORK) */
+async function send(name,fn,on){ const ob=(...a)=>{ try{ if(on) on(...a); }catch(x){ console.warn('observer',x); } };
+  try{ if(!W){ await connectWallet(); if(!W){ ob('nowallet'); return; } }
+    const op=await opBegin(); if(!op){ toast('Your wallet is on another network. Switch it to Ethereum mainnet. Nothing was sent.'); ob('wrong'); return; }
+    const L=LABEL[name]||name; ob('confirm'); toast(L+': confirm in your wallet');
+    const tx=await fn(op.C); ob('sent',tx); toast(L+': sent, waiting for Ethereum to confirm');
+    const rc=await followTx(tx.hash,op); ob('confirmed',rc); toast(L+': confirmed'); await tick(true); }
+  catch(e){ console.error(e); if(e&&e.code==='WRONG_CHAIN'){ NX.wrong=true; walletLabel(); toast(e.message); ob('wrong'); } else { toast(errMsg(e)); ob('error',e); } } }
 
 /* ═══ THE PLATE ON THE GLASS: the token page itself, fed the seed and the sky */
 let pageSrc=null;
@@ -1012,12 +1176,48 @@ function demoState(){
   return base;
 }
 function panel(html){ $('panel').innerHTML=html; }
+/* THE BOXES THAT TAKE AN AMOUNT (bid, pledge, witness) sit in panels that redraw on a clock: the founders' countdown every second,
+   the candle every 5 s, the witness sheet on every read. Those panels are patched in place, not rebuilt: text and attributes
+   change, a node that is still there stays, so the amount being typed keeps its value, focus, selection (and its direction)
+   and any IME composition. While a composition is open nothing is added or removed. If a box does have to be made anew (the
+   panel changed shape), keepOf/keepTo carry the value, focus and selection across. */
+let COMPOSING=null;
+document.addEventListener('compositionstart',e=>{ COMPOSING=e.target; },true);
+document.addEventListener('compositionend',()=>{ COMPOSING=null; },true);
+function morph(el,html){ const t=document.createElement('template'); t.innerHTML=html; syncNodes(el,t.content,!!(COMPOSING&&el.contains(COMPOSING))); }
+const sameNode=(o,n)=>o.nodeType===n.nodeType&&(o.nodeType!==1||(o.tagName===n.tagName&&o.id===n.id&&(o.tagName!=='INPUT'||o.type===n.type)));
+function syncNodes(a,b,soft){ const A=[...a.childNodes], B=[...b.childNodes];
+  B.forEach((n,i)=>{ const o=A[i];
+    if(o&&sameNode(o,n)){ if(o.nodeType!==1){ if(o.nodeValue!==n.nodeValue) o.nodeValue=n.nodeValue; return; }
+      for(const at of [...o.attributes]) if(at.name!=='value'&&!n.hasAttribute(at.name)) o.removeAttribute(at.name);
+      for(const at of [...n.attributes]) if(at.name!=='value'&&o.getAttribute(at.name)!==at.value) o.setAttribute(at.name,at.value);
+      if(o.tagName!=='INPUT'&&o.tagName!=='TEXTAREA') syncNodes(o,n,soft); }
+    else if(!soft){ if(o) a.replaceChild(n,o); else a.appendChild(n); } });
+  if(!soft) A.slice(B.length).forEach(o=>o.remove()); }
+function panelM(html){ morph($('panel'),html); }
+const keepOf=id=>{ const i=$(id); return i?{node:i,v:i.value,f:document.activeElement===i,s:i.selectionStart,e:i.selectionEnd,d:i.selectionDirection}:null; };
+function keepTo(id,k){ const n=$(id); if(!k||!n||n===k.node) return; n.value=k.v; if(k.f){ n.focus(); try{ n.setSelectionRange(k.s,k.e,k.d||'none'); }catch(e){} } }
+/* what a write sends is read when it is pressed: typing or a redraw while the wallet thinks cannot change it */
+const AMOUNT_HINT='Type an amount like 0.01';
+/* a typed amount to wei, or null. Phone keypads in comma locales type 0,001 and ethers.parseEther rejects the comma: trim, drop spaces (NBSP and narrow NBSP too),
+   take one "." or "," as the decimal point; no sign, no letters, no two separators (1,000.5 and 1.000,5 are ambiguous), nothing over 18 decimals, nothing zero. */
+function parseAmount(str){
+  const t=String(str==null?'':str).replace(/[\s\u00A0\u202F]/g,'');
+  if(!/^[0-9]*[.,]?[0-9]*$/.test(t)) throw new Error(AMOUNT_HINT);
+  const p=t.split(/[.,]/), whole=p[0], frac=p[1]||'';
+  if((whole+frac)===''||frac.length>18) throw new Error(AMOUNT_HINT);
+  const wei=BigInt(whole||'0')*10n**18n+BigInt(frac.padEnd(18,'0')||'0');
+  if(wei<=0n) throw new Error(AMOUNT_HINT);
+  return wei; }
+/* read when the button is pressed; a bad amount is a toast and nothing is sent. The box keeps what was typed. */
+const amountOf=id=>{ const i=$(id); try{ return parseAmount(i&&i.value); }catch(e){ toast(e.message); return null; } };
 let RGEN=0;
-/* the witness sheet (Q7): the input and the WITNESS button left the hero; same ids, same call */
+/* the witness sheet (Q7): the input and the WITNESS button left the hero; same ids, same call. Opened from the call-to-action under COLLECT (panel and phone bar) and from the seats board. */
+function witOpen(){ $('nx-wit').classList.add('on'); const i=$('wAmt'); if(i&&matchMedia('(pointer:fine)').matches) i.focus(); }
 function witnessSheet(st,D,keep){ const body=$('nx-witBody');
-  body.innerHTML='<div class="note">Not collecting? Pay any amount to back this plate: your mark is cut into it, and you get a share of a seat, a full one at '+fmt(st.FOUNDING)+' ETH (one seat a day at most). What you pay is added to its price. Witnesses so far: '+fmt(D.witnessed)+' ETH.</div><div class="row" style="flex-wrap:nowrap;margin-top:10px"><input id="wAmt" placeholder="ETH" inputmode="decimal"><button id="bWit">WITNESS</button></div>';
-  const nw=$('wAmt'); if(keep&&nw){ nw.value=keep.v; if(keep.f){ nw.focus(); nw.setSelectionRange(nw.value.length,nw.value.length); } }
-  const w=$('bWit'); if(w) w.onclick=()=>send('witness',W=>pad(W.witness,[D.id],{value:ethers.parseEther($('wAmt').value||'0')}));
+  morph(body,'<div class="note">Not collecting? Pay any amount to back this plate: your mark is cut into it, and you get a share of a seat, a full one at '+fmt(st.FOUNDING)+' ETH (one seat a day at most). Seats share 20% of every sale after yours. What you pay is added to its price. Witnesses so far: '+fmt(D.witnessed)+' ETH.</div><div class="row" style="flex-wrap:nowrap;margin-top:10px"><input id="wAmt" placeholder="ETH" inputmode="decimal"><button id="bWit">WITNESS</button></div>');
+  keepTo('wAmt',keep);
+  const w=$('bWit'); if(w) w.onclick=()=>{ const amt=amountOf('wAmt'); if(amt===null) return; send('witness',W=>pad(W.witness,[D.id],{value:amt})); };
   $('nx-witBtn').style.display=''; }
 async function render(st){ const gen=++RGEN;
   ST=st; const now=()=>Math.floor(Date.now()/1000)+st.skew; NX.now=now;
@@ -1027,16 +1227,16 @@ async function render(st){ const gen=++RGEN;
     setChip('[LIVE]','PLATE ZERO AUCTION');
     const sky=CFG.demo?{}:await skyOf(0);
     await showPlate({seed:st.leader?st.leader.seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO · REDRAWN BY EVERY BID');
-    const draw=()=>{ const t=now(); let line; const ki=$('bidAmt'); const keep=ki?{v:ki.value,f:document.activeElement===ki}:null;
+    const draw=()=>{ const t=now(); let line; const keep=keepOf('bidAmt');
       if(t>=windowEnd) line='<div class="big warn nx-num" data-probe="numeral">BIDDING HAS CLOSED</div><div class="note">The secret end moment is worked out at the settle, from Ethereum block '+st.revealBlock+(st.blk>st.revealBlock?'':' (the network is at block '+st.blk+' now)')+'. The highest bid at that moment wins Plate Zero; every other held bid is refunded. Anyone can press SETTLE once that block exists.</div>'+(st.blk>st.revealBlock?'<button class="nx-cta" id="bSettle" data-probe="button">SETTLE THE AUCTION</button>':'');
       else if(t<burn) line='<div class="k nx-sub">THE AUCTION RUNS AT LEAST ANOTHER</div><div class="big acc nx-num" data-probe="numeral"><span class="cur">'+clock(burn-t)+'</span></div>';
       else line='<div class="k nx-sub">THE LAST 6 HOURS</div><div class="big warn nx-num" data-probe="numeral">IT MAY ALREADY HAVE ENDED</div><div class="note">Bidding stays open until '+new Date(windowEnd*1000).toLocaleTimeString()+', but the real end is a secret moment in these 6 hours, worked out afterwards from a block nobody has seen yet. Bids now are held until the settle; the highest bid at the secret moment wins and every other held bid is refunded.</div>';
-      pcap('Plate Zero, redrawn by every bid.'); panel('<div class="k nx-lab">PLATE ZERO · AUCTION</div>'+line
+      pcap('Plate Zero, redrawn by every bid.'); panelM('<div class="k nx-lab">PLATE ZERO · AUCTION</div>'+line
         +(t<windowEnd?'<div class="cta"><div class="k">BID ON PLATE ZERO</div><div class="num acc">'+(st.leader?'Beat '+fmt(st.leader.amount)+' <small>ETH</small>':'Start at 0.05 <small>ETH</small>')+'</div><div class="row"><input id="bidAmt" placeholder="'+(st.leader?'ETH, at least '+fmt(st.leader.amount+st.leader.amount/20n):'ETH, at least 0.05')+'" inputmode="decimal"><button class="prime fill nx-cta" id="bBid" data-probe="button" style="width:auto">BID</button></div><div class="note">Your wallet opens to confirm. Your bid redraws the plate above. '+(t<burn?'If someone outbids you now, your ETH comes back at once.':'In the last 6 hours, outbid bids are held until the settle, then refunded.')+'</div></div>':'')
         +'<hr><div class="k">HIGHEST BID</div><div class="num">'+(st.leader?fmt(st.leader.amount)+' <small>ETH · '+short(st.leader.bidder)+swMark(st.leader.bidder)+'</small>':'<small>none yet · minimum 0.05 ETH</small>')+'</div><div class="note">'+st.nBids+' bids so far. Each bid must be at least 5% above the last, and redraws the plate: the plate you see is the highest bidder’s. The winning bid becomes the founding price, the price of a seat forever. See HOW THE SALE WORKS below.</div>'
         +'');
-      const ni=$('bidAmt'); if(keep&&ni){ ni.value=keep.v; if(keep.f){ ni.focus(); ni.setSelectionRange(ni.value.length,ni.value.length); } }
-      const b=$('bBid'); if(b) b.onclick=()=>send('bid',W=>pad(W.bid,[],{value:ethers.parseEther($('bidAmt').value||'0')}));
+      keepTo('bidAmt',keep);
+      const b=$('bBid'); if(b) b.onclick=()=>{ const amt=amountOf('bidAmt'); if(amt===null) return; send('bid',W=>pad(W.bid,[],{value:amt})); };
       const s3=$('bSettle'); if(s3) s3.onclick=()=>send('settle',W=>pad(W.settleCandle,[]));
       barFromPanel(); document.body.classList.toggle('nx-form',!!b); if(b) setBar({num:$('nx-barNum').innerHTML,numCls:$('nx-barNum').className.replace('big nx-num',''),sub:$('nx-barSub').textContent,btn:'BID',onclick:()=>{ const i=$('bidAmt'); if(i&&!i.value){ $('panel').scrollIntoView({behavior:smooth(),block:'start'}); i.focus(); } else $('bBid').click(); }});
     };
@@ -1054,15 +1254,15 @@ async function render(st){ const gen=++RGEN;
     setChip(now()<st.foundersEnd?'[LIVE]':'[WAIT]',now()<st.foundersEnd?"FOUNDERS' DAY":'DAY ONE SOON');
     const sky=CFG.demo?{}:await skyOf(0);
     await showPlate({seed:st.zeroSeed,subject:44,frames:36,live:sky},'PLATE ZERO');
-    const draw=()=>{ const t=now(); const open=t>=st.foundersEnd; const pi=$('plAmt'); const keep=pi?{v:pi.value,f:document.activeElement===pi}:null;
+    const draw=()=>{ const t=now(); const open=t>=st.foundersEnd; const keep=keepOf('plAmt');
       const d1=closeAfter(st.foundersEnd); const ready=open&&t>=d1; const gone=open&&t>=closeAfter(d1); const sp=st.dayOneStart!=null?fmt(st.dayOneStart):null;
       pcap(!open?'Founders’ day: pay any amount for seats at the founding price.':!ready?'At 4:20pm in Miami the first daily plate goes on sale'+(sp?' at '+sp+' ETH':'')+'.':gone?'Nobody collected day 1.':'It is past 4:20pm in Miami. The first visitor opens day one for everyone.');
-      if(!open) panel('<div class="k nx-lab">FOUNDERS\' DAY</div><div class="big acc nx-num" data-probe="numeral"><span class="cur">'+clock(st.foundersEnd-t)+'</span></div><div class="row" style="flex-wrap:nowrap"><input id="plAmt" placeholder="ETH" inputmode="decimal"><button class="prime fill nx-cta" id="bPledge" data-probe="button" style="width:auto">PLEDGE</button></div><div class="note">Founding price '+fmt(st.FOUNDING)+' ETH. Pay any amount today and get seats at the founding price, with no limit: '+fmt(st.FOUNDING)+' ETH for one seat. Each payment also cuts a mark on Plate Zero. No artwork comes with it. Split: 70% to the artist, 20% to the seats, 10% to the vault.</div>');
-      else if(!ready) panel('<div class="k nx-lab">DAY ONE GOES ON SALE IN</div><div class="big acc nx-num" data-probe="numeral"><span class="cur">'+clock(d1-t)+'</span></div><button class="nx-cta" data-probe="button" disabled>OPENS IN '+clock(d1-t)+'</button><div class="note">At 4:20pm in Miami ('+new Date(d1*1000).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+' your time) the first daily plate goes on sale'+(sp?' at '+sp+' ETH':'')+'. Its price halves every 2.4 hours until someone buys it, and the first person to pay gets it. The buyer takes the plate, picks tomorrow\'s plate from thirty-two, and gets a seat: a full one at '+fmt(st.FOUNDING)+' ETH or more, a share of one below that. Founders\' day is over: Plate Zero went for '+fmt(st.FOUNDING)+' ETH, the price of a full seat from now on.</div>');
-      else if(gone){ const ref=st.dayOneRef; const can=ref!=null&&st.vault>=ref; panel('<div class="k nx-lab">DAY 1 CLOSED UNSOLD</div><div class="big nx-num" data-probe="numeral">'+(can?'THE VAULT COLLECTS IT':'THE LAST DAY')+'</div><button class="nx-cta" id="bSync" data-probe="button">SETTLE DAY 1</button><div class="note">Nobody collected day 1. '+(ref==null?'':can?'The next transaction settles it: the vault pays '+fmt(ref)+' ETH for it, keeps it forever, and day 2 opens.':'The vault holds '+fmt(st.vault)+' ETH, less than the '+fmt(ref)+' ETH it needs, so the next transaction turns day 1 into the Tombstone and the series ends.')+'</div>'); }
-      else panel('<div class="k nx-lab">DAY ONE IS READY</div><div class="big nx-num" data-probe="numeral">OPEN THE SALE</div><button class="nx-cta" id="bSync" data-probe="button">OPEN DAY ONE</button><div class="note">It is past 4:20pm in Miami. Ethereum only records a new day when someone sends a transaction, so the first visitor opens it for everyone. It costs only the network fee, no payment to the project. If someone already did, this page updates within half a minute.</div>');
-      const np=$('plAmt'); if(keep&&np){ np.value=keep.v; if(keep.f){ np.focus(); np.setSelectionRange(np.value.length,np.value.length); } }
-      const b=$('bPledge'); if(b) b.onclick=()=>send('pledge',W=>pad(W.pledge,[],{value:ethers.parseEther($('plAmt').value||'0')}));
+      if(!open) panelM('<div class="k nx-lab">FOUNDERS\' DAY</div><div class="big acc nx-num" data-probe="numeral"><span class="cur">'+clock(st.foundersEnd-t)+'</span></div><div class="row" style="flex-wrap:nowrap"><input id="plAmt" placeholder="ETH" inputmode="decimal"><button class="prime fill nx-cta" id="bPledge" data-probe="button" style="width:auto">PLEDGE</button></div><div class="note">Founding price '+fmt(st.FOUNDING)+' ETH. Pay any amount today and get seats at the founding price, with no limit: '+fmt(st.FOUNDING)+' ETH for one seat. Each payment also cuts a mark on Plate Zero. No artwork comes with it. Split: 70% to the artist, 20% to the seats, 10% to the vault.</div>');
+      else if(!ready) panelM('<div class="k nx-lab">DAY ONE GOES ON SALE IN</div><div class="big acc nx-num" data-probe="numeral"><span class="cur">'+clock(d1-t)+'</span></div><button class="nx-cta" data-probe="button" disabled>OPENS IN '+clock(d1-t)+'</button><div class="note">At 4:20pm in Miami ('+new Date(d1*1000).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+' your time) the first daily plate goes on sale'+(sp?' at '+sp+' ETH':'')+'. Its price halves every 2.4 hours until someone buys it, and the first person to pay gets it. The buyer takes the plate, picks tomorrow\'s plate from thirty-two, and gets a seat: a full one at '+fmt(st.FOUNDING)+' ETH or more, a share of one below that. Founders\' day is over: Plate Zero went for '+fmt(st.FOUNDING)+' ETH, the price of a full seat from now on.</div>');
+      else if(gone){ const ref=st.dayOneRef; const can=ref!=null&&st.vault>=ref; panelM('<div class="k nx-lab">DAY 1 CLOSED UNSOLD</div><div class="big nx-num" data-probe="numeral">'+(can?'THE VAULT COLLECTS IT':'THE LAST DAY')+'</div><button class="nx-cta" id="bSync" data-probe="button">SETTLE DAY 1</button><div class="note">Nobody collected day 1. '+(ref==null?'':can?'The next transaction settles it: the vault pays '+fmt(ref)+' ETH for it, keeps it forever, and day 2 opens.':'The vault holds '+fmt(st.vault)+' ETH, less than the '+fmt(ref)+' ETH it needs, so the next transaction turns day 1 into the Tombstone and the series ends.')+'</div>'); }
+      else panelM('<div class="k nx-lab">DAY ONE IS READY</div><div class="big nx-num" data-probe="numeral">OPEN THE SALE</div><button class="nx-cta" id="bSync" data-probe="button">OPEN DAY ONE</button><div class="note">It is past 4:20pm in Miami. Ethereum only records a new day when someone sends a transaction, so the first visitor opens it for everyone. It costs only the network fee, no payment to the project. If someone already did, this page updates within half a minute.</div>');
+      keepTo('plAmt',keep);
+      const b=$('bPledge'); if(b) b.onclick=()=>{ const amt=amountOf('plAmt'); if(amt===null) return; send('pledge',W=>pad(W.pledge,[],{value:amt})); };
       const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[]));
       barFromPanel(); document.body.classList.toggle('nx-form',!!b); if(b) setBar({num:$('nx-barNum').innerHTML,numCls:'acc',sub:$('nx-barSub').textContent,btn:'PLEDGE',onclick:()=>{ const i=$('plAmt'); if(i&&!i.value){ $('panel').scrollIntoView({behavior:smooth(),block:'start'}); i.focus(); } else $('bPledge').click(); }}); };
     if(gen!==RGEN) return; clearInterval(timer); draw(); REDRAW=draw; timer=setInterval(draw,1000); noSale(); $('candidates').style.display='none'; return;
@@ -1074,7 +1274,7 @@ async function render(st){ const gen=++RGEN;
   const start=+ethers.formatEther(D.start);
   const soldText=t=>'Bought by '+short(D.buyer)+(D.buyer&&D.buyer.toLowerCase()===CFG.contract.toLowerCase()?' (the vault)':'')+'. The next plate goes on sale at 4:20pm Miami time, in '+hms(D.close-t)+'.';
   const soldHtml=t=>'Bought by '+short(D.buyer)+swMark(D.buyer)+(D.buyer&&D.buyer.toLowerCase()===CFG.contract.toLowerCase()?' (the vault)':'')+'. The next plate goes on sale at 4:20pm Miami time, in '+hms(D.close-t)+'.';
-  const draw=()=>{ const t=now(); const wi=$('wAmt'); const keep=wi?{v:wi.value,f:document.activeElement===wi}:null;
+  const draw=()=>{ const t=now(); const keep=keepOf('wAmt');
     if(t>=D.close){ const can=st.vault>=D.ref; setChip(D.sold?'[SOLD]':'[HOLD]','DAY '+D.id); if(D.sold){ tagText('[SOLD]','DAY '+D.id); pcap('It is past 4:20pm in Miami. The first visitor opens day '+(D.id+1)+' for everyone.'); } else { tagText('[HOLD]','DAY '+D.id+' · CLOSED UNSOLD'); pcap('Nobody bought day '+D.id+'. '+(can?'The vault buys it at the reference price.':'The vault cannot buy it: the next transaction makes the Tombstone.')); } panel(D.sold
         ?'<div class="k nx-lab">DAY '+D.id+' HAS CLOSED</div><div class="big nx-num" data-probe="numeral">OPEN DAY '+(D.id+1)+'</div><button class="nx-cta" id="bSync" data-probe="button">OPEN DAY '+(D.id+1)+'</button><div class="note">It is past 4:20pm in Miami. Ethereum only records the next day when someone sends a transaction, so the first visitor opens day '+(D.id+1)+' for everyone. It costs only the network fee, no payment to the project. If someone already did, this page updates within half a minute.</div>'
         :'<div class="k nx-lab">DAY '+D.id+' CLOSED UNSOLD · '+(can?'THE VAULT BUYS IT':'THE LAST DAY')+'</div><div class="big nx-num" data-probe="numeral">'+fmt(can?D.ref:st.vault)+' <small>ETH · '+(can?'THE REFERENCE PRICE':'IN THE VAULT')+'</small></div><button class="nx-cta" id="bSync" data-probe="button">SETTLE DAY '+D.id+'</button><div class="note">Nobody bought day '+D.id+'. '+(can?'The next transaction settles it: the vault pays '+fmt(D.ref)+' ETH for it, keeps it forever, and day '+(D.id+1)+' opens.':'The vault holds '+fmt(st.vault)+' ETH, less than the '+fmt(D.ref)+' ETH it needs, so the next transaction turns day '+D.id+' into the Tombstone and the series ends.')+'</div>'); const s2=$('bSync'); if(s2) s2.onclick=()=>send('sync',W=>pad(W.sync,[])); barFromPanel(); return; }
@@ -1083,9 +1283,11 @@ async function render(st){ const gen=++RGEN;
     const p=priceNow(start,D.open,t); tagText('[LIVE]','DAY '+D.id+' · ON SALE'); pcap('First to pay takes it, picks tomorrow’s plate and gets a seat.'+(pick==null?'':' You chose option '+pick+'.'));
     panel('<div class="k nx-lab">DAY '+D.id+' · ON SALE · CLOSES IN '+clock(D.close-t)+'</div><div class="big acc nx-num" id="px" data-probe="numeral"><span class="cur">'+fmtP(p)+'</span> <small>ETH · FALLING</small></div><div class="k nx-sub" id="nxt">'+nextHalf(D.open,t)+'</div><button class="nx-cta" id="bPick" data-probe="button">SELECT PLATE TO COLLECT · '+fmtP(p)+' ETH</button><div class="note">First to pay takes it, picks tomorrow’s plate and gets a seat.'+(pick==null?'':' You chose option '+pick+'.')+'</div>'
       +(pick==null?'':'<button class="prime" id="bBuy">COLLECT</button>')
+      +'<div class="nx-wc"><span>Want a cut of every future sale instead?</span><button id="bWitCta">WITNESS · ANY AMOUNT</button></div>'
       +'<div class="traits" id="trT">'+trTable(traitsOf(D.seed))+'</div>');
     witnessSheet(st,D,keep);
     const bp=$('bPick'); if(bp) bp.onclick=()=>popOpen(pick);
+    const wc=$('bWitCta'); if(wc) wc.onclick=witOpen;
     if(!traitsOf(D.seed)) whenTraits(D.seed,tt=>{ const e=$('trT'); if(e&&!e.innerHTML) e.innerHTML=trTable(tt); });
     const b=$('bBuy'); if(b) b.onclick=()=>{ popOpen(pick); nxCollect(); };
     barFromPanel();
@@ -1094,7 +1296,7 @@ async function render(st){ const gen=++RGEN;
   if(D.onSale&&st.cands){ $('candidates').style.display='block'; const g=$('candGrid');
       const ctx={cands:st.cands,day:D.id,close:D.close,seed:D.seed,open:()=>!D.sold&&now()<D.close&&now()>=D.open,price:()=>priceNow(start,D.open,now()),
         choose:k=>{ pick=k; markPick(); draw(); },
-        buy:on=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; return send('buy',W=>pad(W.buy,[D.id,pick],{value:pay}),on); }};
+        buy:(on,k=pick)=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; return send('buy',W=>pad(W.buy,[D.id,k],{value:pay}),on); }};   /* the option chosen when COLLECT was pressed */
       NX.ctx=ctx;
       if(g.dataset.day!==String(D.id)){ g.dataset.day=String(D.id); g.innerHTML=''; pick=null;
       st.cands.forEach((seed,k)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+k+'</i>'; el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-label','Option '+k); el.onclick=()=>candOpen(k,NX.ctx); el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); candOpen(k,NX.ctx); } }; g.appendChild(el); });
@@ -1168,7 +1370,7 @@ async function nxCollect(){ if(!CC) return; const k=CC.k; if(!saleOpen()){ txVie
   if(!W){ try{ await connectWallet(); }catch(e){ txView('failed',errMsg(e)); return; } if(!W){ if(CC) candActs(); return; } }
   if(await nxWrong()){ txView('wrong'); return; }
   if(!CC||CC.k!==k) return; if(!saleOpen()){ txView('closed'); return; }
-  await NX.ctx.buy(async(ph,x)=>{ if(!CC) return; if(ph==='sent') txView('pending',x); else if(ph==='confirmed') txView('done',x); else if(ph==='error') txView('failed',await failReason(x)); else if(ph==='nowallet') candActs(); });
+  await NX.ctx.buy(async(ph,x)=>{ if(!CC) return; if(ph==='sent') txView('pending',x); else if(ph==='confirmed') txView('done',x); else if(ph==='error') txView('failed',await failReason(x)); else if(ph==='wrong') txView('wrong'); else if(ph==='nowallet') candActs(); },k);
 }
 async function candShow(k){ if(!CC) return; CC.k=k; const seed=CC.cands[k];
   $('cck').textContent='TOMORROW’S PLATE · OPTION '+k; $('ccNum').textContent=(k+1)+' OF 32';
@@ -1371,9 +1573,9 @@ async function renderBoard(st){ if(!st.settled) return; const key=st.lastId+':'+
   list.forEach(r=>whoIsOnce(r.addr).then(w=>{ const s=tb.querySelector('tr[data-a="'+r.addr.toLowerCase()+'"] .who'); if(!s) return; if(w.handle) s.innerHTML='<a href="https://x.com/'+esc(w.handle)+'" target="_blank" rel="noopener">@'+esc(w.handle)+' ↗</a>'; else if(w.ens) s.textContent=w.ens; }).catch(()=>{}));
   markMe(); }
 function markMe(){ const tb=$('nx-seatRows'); tb.querySelectorAll('tr').forEach(tr=>tr.classList.toggle('me',!!me&&tr.dataset.a===me.toLowerCase())); }
-async function refreshSeats(){
+async function refreshSeats(){ const gen=SES, a=me;
   if(!me||CFG.demo){ if(CFG.demo&&me){ $('seatsNote').textContent='You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.0364 ETH.'; $('claim').disabled=false; $('nx-mine').hidden=false; $('nx-mySeats').textContent='2.0000'; $('nx-myPend').innerHTML='0.0364 <small>ETH</small>'; $('nx-myOwed').innerHTML='0 <small>ETH</small>'; markMe(); } return; }
-  const [s,p,tot,o]=await Promise.all([storm.seats(me),storm.pending(me),storm.totalSeats(),storm.owed(me)]);
+  const [s,p,tot,o]=await Promise.all([storm.seats(a),storm.pending(a),storm.totalSeats(),storm.owed(a)]); if(gen!==SES||a!==me) return;
   $('seatsNote').textContent='You hold '+(+ethers.formatEther(s)).toFixed(4)+' seats out of '+(+ethers.formatEther(tot)).toFixed(4)+'. Earned and waiting for you: '+fmt(p)+' ETH'+(p>0n?' (press CLAIM)':'')+'.'+(o>0n?' The contract also holds '+fmt(o)+' ETH it could not send to your wallet: press WITHDRAW.':'');
   $('nx-mine').hidden=false; $('nx-mySeats').textContent=fmtS(s); $('nx-myPend').innerHTML=fmt(p)+' <small>ETH</small>'; $('nx-myOwed').innerHTML=fmt(o)+' <small>ETH</small>';
   $('claim').disabled=p===0n; $('claim').onclick=()=>send('claim',W=>pad(W.claim,[]));
@@ -1391,7 +1593,7 @@ document.addEventListener('click',e=>{ const q=e.target.closest('.nx-q'); if(!q)
 $('nx-sheetX').addEventListener('click',sheetClose); $('nx-sheet').addEventListener('click',e=>{ if(e.target.id==='nx-sheet') sheetClose(); });
 $('nx-witX').addEventListener('click',()=>$('nx-wit').classList.remove('on')); $('nx-wit').addEventListener('click',e=>{ if(e.target.id==='nx-wit') $('nx-wit').classList.remove('on'); });
 document.querySelector('#nx-side .why').addEventListener('toggle',()=>{ if(CC) fitExp(); });
-$('nx-witBtn').addEventListener('click',()=>{ $('nx-wit').classList.add('on'); const i=$('wAmt'); if(i&&matchMedia('(pointer:fine)').matches) i.focus(); });
+$('nx-witBtn').addEventListener('click',witOpen); $('nx-barWit').addEventListener('click',witOpen);
 document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; if($('nx-sheet').classList.contains('on')) sheetClose(); if($('nx-wit').classList.contains('on')) $('nx-wit').classList.remove('on'); tipHide(); });
 document.querySelectorAll('.nx-row').forEach(b=>b.addEventListener('click',()=>{ openChapter(b.getAttribute('aria-controls')); if(b.getAttribute('aria-controls')==='glossary') return; }));
 $('nx-manAll').addEventListener('click',()=>manualAll($('nx-manAll').getAttribute('aria-expanded')!=='true'));
