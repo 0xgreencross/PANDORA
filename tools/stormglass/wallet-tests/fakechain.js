@@ -1,6 +1,9 @@
 /* A deterministic fake of the public Ethereum RPCs the page reads from (publicnode, mevblocker, drpc, blastapi).
    It answers eth_call for the STORMGLASS, GLASS and SMALL WEATHER ABIs with a day on sale, and answers every tx hash with a
-   mined receipt unless the test holds receipts. Nothing here ever reaches a real network. */
+   mined receipt unless the test holds receipts. Nothing here ever reaches a real network.
+   Hooks a test can replace: S.tx(hash) and S.rc(hash) (the answers to eth_getTransactionByHash / eth_getTransactionReceipt),
+   S.blockTxs(n) (full transactions in block n), S.nonceLatest (eth_getTransactionCount), S.hostMode(host,body) ('500', 'hang',
+   'rpcerror' or null, applied per request by the test's route), S.mkTx / S.mkRc / S.blockNo to build answers. S.hits counts requests. */
 const {ethers}=require('ethers');
 const ABI=[
   'function candleOpen() view returns (uint256)','function candleClose() view returns (uint256)','function candleSettled() view returns (bool)','function revealBlock() view returns (uint256)',
@@ -18,7 +21,7 @@ const E=v=>ethers.parseEther(String(v));
 const HOST=/(publicnode\.com|mevblocker\.io|drpc\.org|blastapi\.io)/;
 function makeChain(){
   const t0=Math.floor(Date.now()/1000), open=t0-3*3600, close=open+86400, BUYER='0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359';
-  const S={ calls:[], holdReceipts:false, receiptsAsked:0, block0:21000000, t0,
+  const S={ calls:[], holdReceipts:false, receiptsAsked:0, block0:21000000, t0, nonceLatest:0, hits:{}, hostMode:()=>null, blockTxs:()=>[],
     values:{ candleOpen:t0-86400*14, candleClose:t0-86400*13, candleSettled:true, revealBlock:0, zeroSeed:313454022, bidsCount:0, FOUNDING:E('0.42'), foundersEnd:t0-86400*13, today:13, lastId:12, dead:false, tombId:0,
       onSale:[13n,E('0.70'),BigInt(close),true], startPrice:E('1.68'), priceAt:E('0.7'), referencePrice:E('0.42'), median7:E('0.42'), picks:0, vault:E('1.2'), seatPool:E('0.31'), totalSeats:E('17'),
       seats:E('2'), pending:E('0.0364'), owed:0n, ownerOf:BUYER, tokenURI:'', witnessesOf:[], handsOf:[], sky:'{}', balanceOf:0n, giftOf:0n, isClaimed:false, gifts:79n, minted:78n, gif:'0x' },
@@ -26,8 +29,12 @@ function makeChain(){
     cands:()=>Array.from({length:32},(_,k)=>((396693683*(k+7)+k*7919)>>>0)) };
   const blockNo=()=>S.block0+Math.floor((Date.now()/1000-t0)/2);
   const block=n=>({number:ethers.toQuantity(n),hash:ethers.zeroPadValue(ethers.toBeHex(n),32),parentHash:ethers.zeroPadValue(ethers.toBeHex(n-1),32),timestamp:ethers.toQuantity(Math.floor(Date.now()/1000)),nonce:'0x0000000000000000',difficulty:'0x0',gasLimit:'0x1c9c380',gasUsed:'0x0',miner:ethers.ZeroAddress,extraData:'0x',baseFeePerGas:'0x3b9aca00',blobGasUsed:'0x0',excessBlobGas:'0x0',transactions:[],stateRoot:ethers.ZeroHash,receiptsRoot:ethers.ZeroHash,mixHash:ethers.ZeroHash,parentBeaconBlockRoot:ethers.ZeroHash});
-  const txOf=h=>({hash:h,blockHash:ethers.zeroPadValue('0x01',32),blockNumber:ethers.toQuantity(blockNo()-1),transactionIndex:'0x0',from:'0x00000000000000000000000000000000000000aa',to:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C',nonce:'0x0',gas:'0x3d090',gasPrice:'0x3b9aca00',maxFeePerGas:'0x3b9aca00',maxPriorityFeePerGas:'0x1',input:'0x',value:'0x0',type:'0x2',chainId:'0x1',accessList:[],v:'0x0',r:ethers.zeroPadValue('0x01',32),s:ethers.zeroPadValue('0x01',32),yParity:'0x0'});
-  const rcOf=h=>({transactionHash:h,blockHash:ethers.zeroPadValue('0x01',32),blockNumber:ethers.toQuantity(blockNo()-1),transactionIndex:'0x0',from:'0x00000000000000000000000000000000000000aa',to:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C',cumulativeGasUsed:'0x30d40',gasUsed:'0x30d40',effectiveGasPrice:'0x3b9aca00',contractAddress:null,logs:[],logsBloom:'0x'+'00'.repeat(256),status:'0x1',type:'0x2'});
+  const txOf=(h,o={})=>Object.assign({hash:h,blockHash:ethers.zeroPadValue('0x01',32),blockNumber:ethers.toQuantity(blockNo()-1),transactionIndex:'0x0',from:'0x00000000000000000000000000000000000000aa',to:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C',nonce:'0x0',gas:'0x3d090',gasPrice:'0x3b9aca00',maxFeePerGas:'0x3b9aca00',maxPriorityFeePerGas:'0x1',input:'0x',value:'0x0',type:'0x2',chainId:'0x1',accessList:[],v:'0x0',r:ethers.zeroPadValue('0x01',32),s:ethers.zeroPadValue('0x01',32),yParity:'0x0'},o);
+  const rcOf=(h,o={})=>Object.assign({transactionHash:h,blockHash:ethers.zeroPadValue('0x01',32),blockNumber:ethers.toQuantity(blockNo()-1),transactionIndex:'0x0',from:'0x00000000000000000000000000000000000000aa',to:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C',cumulativeGasUsed:'0x30d40',gasUsed:'0x30d40',effectiveGasPrice:'0x3b9aca00',contractAddress:null,logs:[],logsBloom:'0x'+'00'.repeat(256),status:'0x1',type:'0x2'},o);
+  S.blockNo=blockNo; S.mkTx=txOf; S.mkRc=rcOf;
+  /* the defaults: a hash is pending until its receipt is released (holdReceipts), then mined with status 1 */
+  S.tx=h=>S.holdReceipts?txOf(h,{blockHash:null,blockNumber:null,transactionIndex:null}):txOf(h);
+  S.rc=h=>S.holdReceipts?null:rcOf(h);
   function call(data){
     const sel=data.slice(0,10); let f; try{ f=IF.getFunction(sel); }catch(e){ f=null; } if(!f) return '0x';
     const args=IF.decodeFunctionData(f,data); let out;
@@ -43,15 +50,15 @@ function makeChain(){
     switch(q.method){
       case 'eth_chainId': return r('0x1'); case 'net_version': return r('1');
       case 'eth_blockNumber': return r(ethers.toQuantity(blockNo()));
-      case 'eth_getBlockByNumber': return r(block(q.params&&q.params[0]==='latest'?blockNo():Number(q.params[0])));
+      case 'eth_getBlockByNumber': { const n=q.params&&q.params[0]==='latest'?blockNo():Number(q.params[0]); const b=block(n); const txs=S.blockTxs(n)||[]; b.transactions=q.params&&q.params[1]?txs:txs.map(t=>t.hash); return r(b); }
       case 'eth_call': return r(call(q.params[0].data||q.params[0].input||'0x'));
       case 'eth_getLogs': return r([]);
       case 'eth_getCode': return r('0x6080');
       case 'eth_gasPrice': return r('0x3b9aca00'); case 'eth_maxPriorityFeePerGas': return r('0x1');
       case 'eth_blobBaseFee': return r('0x1');
-      case 'eth_getTransactionByHash': return r(txOf(q.params[0]));
-      case 'eth_getTransactionReceipt': S.receiptsAsked++; return r(S.holdReceipts?null:rcOf(q.params[0]));
-      case 'eth_getTransactionCount': return r('0x1');
+      case 'eth_getTransactionByHash': return r(S.tx(q.params[0]));
+      case 'eth_getTransactionReceipt': S.receiptsAsked++; return r(S.rc(q.params[0]));
+      case 'eth_getTransactionCount': return r(ethers.toQuantity(S.nonceLatest));
       default: return {jsonrpc:'2.0',id:q.id,error:{code:-32601,message:'method not found: '+q.method}};
     }
   }

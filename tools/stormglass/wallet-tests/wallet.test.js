@@ -24,14 +24,21 @@ async function boot(cfg,o={}){
     if(u.hostname==='127.0.0.1'){
       if(u.pathname==='/'||u.pathname==='/index.html') return route.fulfill({status:200,contentType:'text/html; charset=utf-8',body:PAGE});
       if(u.pathname==='/glass/index.html') return route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><html><body class="glass"></body></html>'});
+      if(u.pathname==='/wc.js'&&cfg.wc) return route.fulfill({status:404,body:''});   /* the WalletConnect mock stands in; the real bundle never loads */
       return route.continue(); }
     if(u.hostname==='cdnjs.cloudflare.com'&&/ethers\/6\.13\.2\/ethers\.umd\.min\.js$/.test(u.pathname)) return route.fulfill({status:200,contentType:'application/javascript',body:ETHERS});
-    if(HOST.test(u.hostname)) return route.fulfill({status:200,contentType:'application/json',body:chain.handle(req.postData())});
+    if(HOST.test(u.hostname)){ const body=req.postData(); let m0='?'; try{ const q=JSON.parse(body||'{}'); m0=Array.isArray(q)?q.map(x=>x.method).join('+'):q.method; }catch(e){}
+      const hk=u.hostname+' '+m0; chain.hits[hk]=(chain.hits[hk]||0)+1;
+      const mode=chain.hostMode(u.hostname,body);
+      if(mode==='500') return route.fulfill({status:500,contentType:'text/plain',body:'upstream error'});
+      if(mode==='rpcerror') return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,error:{code:-32000,message:'header not found'}})});
+      if(mode==='hang') return new Promise(r=>setTimeout(()=>route.abort().catch(()=>{}).then(r),20000));
+      return route.fulfill({status:200,contentType:'application/json',body:chain.handle(body)}); }
     outside.push(u.hostname); return route.fulfill({status:404,body:''}); });
   await ctx.addInitScript(installMock,cfg);
   if(o.store) await ctx.addInitScript(s=>{ try{ for(const k in s) localStorage.setItem(k,s[k]); }catch(e){} },o.store);
   const page=await ctx.newPage(); const errors=[], consoleErr=[];
-  page.on('pageerror',e=>errors.push(String(e).slice(0,200)));
+  page.on('pageerror',e=>errors.push(String(e).slice(0,200))); page.on('crash',()=>errors.push('page crashed'));
   page.on('console',m=>{ if(m.type()==='error') consoleErr.push(m.text().slice(0,200)); });
   await page.goto(BASE+(o.query||''));
   await page.waitForFunction(()=>typeof ST!=='undefined'&&ST&&ST.now&&document.getElementById('panel')&&document.getElementById('panel').textContent.length>10,null,{timeout:30000});
@@ -100,27 +107,27 @@ T('c','provider swap mid-operation: A checks mainnet, B on 8453 takes over: noth
   await E.until(async()=>/0x/.test(await E.label()),6000);
   await E.P('A').set({gate:{}}); await E.P('A').release('eth_chainId'); await sleep(4000);
   const s=await E.sends(), t=await E.toasts();
-  return {pass:!s.some(x=>x.pid==='B'), ev:{gateHit:g,sends:s.map(x=>x.pid+'@'+x.chain),label:await E.label(),toasts:t.slice(-2)}}; });
+  return {pass:g&&!s.some(x=>x.pid==='B'), ev:{gateHit:g,sends:s.map(x=>x.pid+'@'+x.chain),label:await E.label(),toasts:t.slice(-2)}}; });
 T('d','disconnect while the wallet answers slowly: no send, W not restored',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await E.P('A').set({gate:{eth_accounts:true}}); await witness(E,'0.01');
   const g=await E.waitGate('A','eth_accounts',6000);
   await disconnectUI(E); await sleep(200); await E.P('A').set({gate:{}}); await E.P('A').release('eth_accounts'); await sleep(3500);
   const s=await E.sends(), st=await E.state(), lab=await E.label();
-  return {pass:s.length===0&&!st.W&&!st.me&&/CONNECT/.test(lab), ev:{gateHit:g,sends:s.length,state:st,label:lab}}; });
+  return {pass:g&&s.length===0&&!st.W&&!st.me&&/CONNECT/.test(lab), ev:{gateHit:g,sends:s.length,state:st,label:lab}}; });
 T('e','accountsChanged to another account mid-operation: no send from the old account',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); const rq0=await E.P('A').count('eth_requestAccounts'); await E.P('A').set({gate:{eth_estimateGas:true}}); await witness(E,'0.01');
   const g=await E.waitGate('A','eth_estimateGas',6000);
   await E.P('A').set({accounts:[A2,A1]}); await E.P('A').emit('accountsChanged',[A2]); await sleep(500);
   await E.P('A').set({gate:{}}); await E.P('A').release('eth_estimateGas'); await sleep(3500);
   const s=await E.sends(); const old=s.filter(x=>(x.params[0].from||'').toLowerCase()===A1);
-  return {pass:old.length===0, ev:{gateHit:g,sends:s.map(x=>x.params[0].from),label:await E.label(),requestAccountsAfter:(await E.P('A').count('eth_requestAccounts'))-rq0}}; });
+  return {pass:g&&old.length===0, ev:{gateHit:g,sends:s.map(x=>x.params[0].from),label:await E.label(),requestAccountsAfter:(await E.P('A').count('eth_requestAccounts'))-rq0}}; });
 T('f','chainChanged to 8453 right before submit: no send',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await E.P('A').set({gate:{eth_estimateGas:true}}); await witness(E,'0.01');
   const g=await E.waitGate('A','eth_estimateGas',6000);
   await E.P('A').set({chainId:'0x2105'}); await E.P('A').emit('chainChanged','0x2105'); await sleep(200);
   await E.P('A').set({gate:{}}); await E.P('A').release('eth_estimateGas'); await sleep(3500);
   const s=await E.sends(), t=await E.toasts();
-  return {pass:s.length===0, ev:{gateHit:g,sends:s.map(x=>x.chain),toasts:t.slice(-2)}}; });
+  return {pass:g&&s.length===0, ev:{gateHit:g,sends:s.map(x=>x.chain),toasts:t.slice(-2)}}; });
 T('g','a submitted tx is followed after DISCONNECT; the UI stays disconnected',{wallets:[one('A',undefined,{gate:{}})],ethereum:'A'},async E=>{
   await connect(E); E.chain.holdReceipts=true; await E.P('A').set({gate:{eth_getTransactionReceipt:true}}); const rq0=await E.P('A').count('eth_requestAccounts');
   await witness(E,'0.01'); const sent=await E.until(async()=>(await E.sends()).length>0,8000); await sleep(800);
@@ -204,7 +211,7 @@ T('k2','revoke answering after an immediate reconnect leaves the new session int
   await E.page.click('#wallet'); await sleep(500); await E.P('A').set({gate:{}}); await E.P('A').release('wallet_revokePermissions');
   await sleep(3000); const lab=await E.label(), st=await E.state();
   const acc=await E.page.evaluate(()=>__MW.P.A.provider.request({method:'eth_accounts'}));
-  return {pass:/0x/.test(lab)&&!!st.W&&acc.length>0, ev:{gateHit:g,label:lab,state:st,walletAccounts:acc}}; });
+  return {pass:g&&/0x/.test(lab)&&!!st.W&&acc.length>0, ev:{gateHit:g,label:lab,state:st,walletAccounts:acc}}; });
 T('l1','witness box: select all, clock redraw, type: replaced; selection and direction kept; snapshot at click',{wallets:[one('A')],ethereum:'A'},async E=>{
   const page=E.page; const hasBtn=await page.evaluate(()=>!!document.getElementById('nx-witBtn'));
   if(hasBtn){ await page.evaluate(()=>document.getElementById('nx-witBtn').click()); await page.waitForSelector('#nx-wit.on'); }
@@ -217,11 +224,11 @@ T('l1','witness box: select all, clock redraw, type: replaced; selection and dir
   /* snapshot: click WITNESS with 0.05, change the box while the wallet thinks, the clicked amount goes out */
   await connect(E); if(hasBtn&&!(await page.$('#nx-wit.on'))){ await page.evaluate(()=>document.getElementById('nx-witBtn').click()); await page.waitForSelector('#nx-wit.on'); }
   await E.P('A').set({gate:{eth_chainId:true,eth_estimateGas:true}}); await page.fill('#wAmt','0.05'); await page.click('#bWit');
-  await E.until(async()=>(await E.P('A').waiting('eth_chainId'))+(await E.P('A').waiting('eth_estimateGas'))>0,4000);
+  const gl=await E.until(async()=>(await E.P('A').waiting('eth_chainId'))+(await E.P('A').waiting('eth_estimateGas'))>0,4000);
   await page.fill('#wAmt','9'); await E.P('A').set({gate:{}}); await E.P('A').release('eth_chainId'); await sleep(300); await E.P('A').release('eth_estimateGas');
   await E.until(async()=>(await E.sends()).length>0,6000); const s=await E.sends();
   const val=s[0]&&s[0].params[0].value;
-  return {pass:v1==='7'&&sel.s===1&&sel.e===4&&sel.d==='backward'&&sel.focus&&kept&&val===ETH(0.05), ev:{afterSelectAllRedrawType:v1,selection:sel,nodeKeptWhileComposing:kept,sentValue:val,want:ETH(0.05)}}; });
+  return {pass:gl&&v1==='7'&&sel.s===1&&sel.e===4&&sel.d==='backward'&&sel.focus&&kept&&val===ETH(0.05), ev:{gateHit:gl,afterSelectAllRedrawType:v1,selection:sel,nodeKeptWhileComposing:kept,sentValue:val,want:ETH(0.05)}}; });
 T('l2','pledge box (founders day, redrawn every second): select all, wait, type: replaced; caret kept',{wallets:[one('A')],ethereum:'A'},async E=>{
   const page=E.page; await page.waitForSelector('#plAmt'); await page.click('#plAmt'); await page.keyboard.type('0.25');
   await page.evaluate(()=>document.getElementById('plAmt').select()); await sleep(1300); await page.keyboard.type('9'); const v=await page.inputValue('#plAmt');
@@ -244,6 +251,26 @@ T('m1','phone (iPhone Safari): the WalletConnect sheet, no picker, no wallet ask
   await E.page.click('#wallet'); await E.until(()=>sheetOpen(E.page),4000); const title=await sheetTitle(E.page), btns=await sheetButtons(E.page);
   await sleep(500); const rq=(await E.P('A').count('eth_requestAccounts'))+(await E.P('B').count('eth_requestAccounts'));
   return {pass:/CONNECT YOUR WALLET/.test(title)&&btns.some(b=>/METAMASK/.test(b))&&rq===0, ev:{title,buttons:btns,requestAccounts:rq}}; },
+  {ua:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',viewport:{width:390,height:844},mobile:true});
+T('m9','phone WalletConnect buy: no jump before the request is out; the OPEN button carries requestId+topic; the sheet closes on the answer',{wallets:[]},async E=>{
+  const page=E.page, jumps=[];
+  await page.route('https://link.zerion.io/**',r=>{ jumps.push(r.request().url()); r.fulfill({status:204,body:''}); });
+  const a=await page.evaluate(()=>{ localStorage.setItem('WALLETCONNECT_DEEPLINK_CHOICE',JSON.stringify({name:'ZERION',href:'https://link.zerion.io'})); localStorage.removeItem('SG_WC_APP');
+    const app=wcApp(); const ev={h:{},on(n,f){(this.h[n]=this.h[n]||[]).push(f)},emit(n,x){(this.h[n]||[]).forEach(f=>f(x))}};
+    const fake={signer:{client:ev},request:()=>new Promise(r=>{ window.__answer=r; })}; window.__ev=ev; _WC=fake; wcHook(fake);
+    window.__done=false; ask(fake,'eth_sendTransaction',[{}]).then(()=>{ window.__done=true; });
+    const b=document.querySelector('#wsBtns button');
+    return {app, libKey:localStorage.getItem('WALLETCONNECT_DEEPLINK_CHOICE'), title:document.getElementById('wsk').textContent, on:document.getElementById('wsheet').classList.contains('on'), btn:b&&b.textContent, disabled:!!(b&&b.disabled)}; });
+  await page.evaluate(()=>document.querySelector('#wsBtns button').click()); await sleep(300); const early=jumps.length;
+  await page.evaluate(()=>window.__ev.emit('session_request_sent',{id:1730000000123456,topic:'t0pic',request:{method:'eth_sendTransaction'},chainId:'eip155:1'}));
+  const b=await page.evaluate(()=>{ const x=document.querySelector('#wsBtns button'); return {disabled:x.disabled,text:document.getElementById('wsp').textContent}; });
+  await page.evaluate(()=>document.querySelector('#wsBtns button').click()); await E.until(async()=>jumps.length>0,3000);
+  await page.evaluate(()=>window.__answer('0x'+'11'.repeat(32))); await sleep(300);
+  const c=await page.evaluate(()=>({on:document.getElementById('wsheet').classList.contains('on'),done:window.__done}));
+  const url=jumps[0]||'';
+  return {pass:a.app&&a.app.name==='ZERION'&&a.libKey===null&&/CONFIRM IN ZERION/.test(a.title)&&a.on&&a.disabled&&early===0&&!b.disabled&&/in ZERION now/.test(b.text)
+      &&url==='https://link.zerion.io/wc?requestId=1730000000123456&sessionTopic=t0pic'&&!c.on&&c.done&&E.errors.length===0,
+    ev:{a,early,b,url,c,errors:E.errors}}; },
   {ua:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',viewport:{width:390,height:844},mobile:true});
 T('m2','phone in MetaMask: COLLECT on the wrong chain, SWITCH, the buy goes out once on chain 1',{wallets:[one('A','0x2105',{flags:{isMetaMask:true}})],ethereum:'A'},async E=>{
   await connect(E); await buy(E); const wrong=await E.until(async()=>/ANOTHER NETWORK/.test(await popText(E.page)),6000);
@@ -358,17 +385,33 @@ T('n6','parseAmount table (in the page): wei exact, 18 decimals ok, 19 rejected,
   const bad=rows.filter(r=>r.got!==r.want);
   return {pass:bad.length===0,ev:{n:rows.length,bad}}; });
 
-module.exports={boot,connect,sheetOpen,sheetButtons,setBrowser:b=>{ browser=b; },sleep,one:(...a)=>one(...a),witGeo,witPass,witClick,witSheet,witOk,closeWit,ETH};
+module.exports={boot,connect,sheetOpen,sheetButtons,setBrowser:b=>{ browser=b; },sleep,one:(...a)=>one(...a),witGeo,witPass,witClick,witSheet,witOk,closeWit,ETH,
+  T,CASES,clickSheet,sheetTitle,cancelSheet,disconnectUI,witness,buy,popText,openWit,typeAndPress,sendName,DONE,A1,A2,B1,FOUNDERS,CANDLE};
+/* THE RUN. Exit status: 0 only when every selected case passed. A case fails on its own assertion, on an exception, or on any
+   uncaught page error or page crash (o.allowPageErrors to opt out). CASES must name known cases (or the groups @orig, @audit2);
+   an unknown id, or a selection of zero cases, is a harness failure (exit 2). */
 if(require.main===module) (async()=>{
+  const ORIG=CASES.map(c=>c.id);
+  require('./audit2.test.js');
+  const AUDIT=CASES.map(c=>c.id).filter(id=>!ORIG.includes(id));
+  const want=(process.env.CASES||'').split(',').map(x=>x.trim()).filter(Boolean).flatMap(x=>x==='@orig'?ORIG:x==='@audit2'?AUDIT:[x]);
+  if(process.env.CASES!=null&&process.env.CASES.trim()!==''&&!want.length){ console.log('HARNESS FAIL CASES='+JSON.stringify(process.env.CASES)+' selects no case'); process.exit(2); }
+  const known=new Set(CASES.map(c=>c.id)), unknown=want.filter(x=>!known.has(x));
+  if(unknown.length){ console.log('HARNESS FAIL unknown case ids in CASES: '+unknown.join(',')); process.exit(2); }
+  const sel=CASES.filter(c=>!want.length||want.includes(c.id));
+  if(!sel.length){ console.log('HARNESS FAIL no cases selected'); process.exit(2); }
   browser=await chromium.launch({args:['--no-sandbox','--disable-background-networking','--disable-component-update','--no-first-run'],executablePath:process.env.CHROMIUM||'/opt/pw-browsers/chromium'});
-  const want=(process.env.CASES||'').split(',').filter(Boolean); const res=[];
-  for(const c of CASES){ if(want.length&&!want.includes(c.id)) continue; let E=null, r;
-    try{ E=await boot(c.cfg,c.o||{}); r=await c.run(E); r.pageErrors=E.errors.slice(0,3); }
+  const res=[];
+  for(const c of sel){ let E=null, r;
+    try{ E=await boot(c.cfg,c.o||{}); r=await c.run(E); if(!r||typeof r!=='object') r={pass:false,ev:{bad:'case returned '+r}}; r.ev=r.ev||{}; r.pageErrors=E.errors.slice(0,3);
+      if(E.errors.length&&!(c.o&&c.o.allowPageErrors)){ r.pass=false; r.ev.failedOnPageErrors=E.errors.slice(0,3); } }
     catch(e){ r={pass:false,ev:{exception:String(e&&e.message||e).slice(0,300)}}; }
     finally{ if(E) await E.close().catch(()=>{}); }
-    res.push({id:c.id,name:c.name,pass:!!r.pass,ev:r.ev,pageErrors:r.pageErrors});
-    console.log((r.pass?'PASS ':'FAIL ')+c.id.padEnd(3)+' '+c.name+'\n     '+JSON.stringify(r.ev).slice(0,400)); }
+    res.push({id:c.id,name:c.name,pass:r.pass===true,ev:r.ev,pageErrors:r.pageErrors});
+    console.log((r.pass===true?'PASS ':'FAIL ')+c.id.padEnd(3)+' '+c.name+'\n     '+JSON.stringify(r.ev).slice(0,400)); }
   await browser.close();
   fs.mkdirSync(OUT,{recursive:true}); fs.writeFileSync(path.join(OUT,'results-'+LABEL+'.json'),JSON.stringify(res,null,1));
-  console.log(LABEL+': '+res.filter(r=>r.pass).length+'/'+res.length+' passed');
+  const failed=res.filter(r=>!r.pass);
+  console.log(LABEL+': '+(res.length-failed.length)+'/'+res.length+' passed'+(failed.length?' · FAILED: '+failed.map(r=>r.id).join(','):''));
+  process.exit(failed.length?1:0);
 })().catch(e=>{ console.log('HARNESS FAIL',e&&e.stack||e); process.exit(1); });

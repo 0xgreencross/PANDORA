@@ -18,3 +18,4 @@ NODE_PATH=${NODE_PATH:-/home/claude/node_modules} PORT=$PORT node "$DIR/${SCRIPT
 RC=$?
 kill $SRV 2>/dev/null
 echo "XDONE rc=$RC"
+exit $RC
