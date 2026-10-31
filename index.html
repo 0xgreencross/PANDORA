@@ -799,7 +799,10 @@ let SES=0;
 const STALE=()=>Object.assign(new Error('Your wallet changed while this was waiting. Nothing was sent.'),{code:'STALE'});
 const sameAddr=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.toLowerCase()===b.toLowerCase();
 /* a wallet that throws instead of answering is a failed request, not a crash */
-const ask=(P,method,params)=>{ try{ return Promise.resolve(P.request(params===undefined?{method}:{method,params})); }catch(e){ return Promise.reject(e); } };
+const WC_NEEDS=new Set(['eth_sendTransaction','personal_sign','eth_signTypedData_v4','wallet_switchEthereumChain','wallet_addEthereumChain']);
+const ask=(P,method,params)=>{ const nud=!!P&&P===_WC&&WC_NEEDS.has(method)&&isPhone(), n=nud?wcNudge(method):null;
+  let r; try{ r=Promise.resolve(P.request(params===undefined?{method}:{method,params})); }catch(e){ r=Promise.reject(e); }
+  return n?r.finally(()=>wcNudgeOff(n)):r; };
 const chainOf=async P=>{ const c=await ask(P,'eth_chainId'); return typeof c==='string'&&/^0x[0-9a-f]+$/i.test(c)?parseInt(c,16):Number.isInteger(c)?c:NaN; };
 window.addEventListener('eip6963:announceProvider',e=>{ const d=e&&e.detail; if(d&&d.provider&&!WALLETS.some(w=>w.provider===d.provider)) WALLETS.push(d); });
 try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
@@ -827,7 +830,8 @@ function wcLoad(){ if(_WCNS) return Promise.resolve(_WCNS); if(_wcGlobal()) retu
   return new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='/wc.js'; sc.async=true;
     sc.onload=()=>{ const n=_wcGlobal(); if(n&&n.EthereumProvider) res(_WCNS=n); else rej(new Error('WalletConnect did not load.')); };
     sc.onerror=()=>rej(new Error('WalletConnect could not load in this browser.')); document.head.appendChild(sc); }); }
-async function wcInit(){ const NS=await wcLoad();
+async function wcInit(){ const p=await wcInit0(); wcHook(p); return p; }
+async function wcInit0(){ const NS=await wcLoad();
   const o={projectId:WC_PID,chains:[1],optionalChains:[1],showQrModal:false,metadata:{name:'DITHERVOID // STORMGLASS',description:'One artwork a day at a price that halves every 2.4 hours.',url:location.origin,icons:[location.origin+'/icon.png']}};
   try{ return await NS.EthereumProvider.init(o); }catch(e){ try{ Object.keys(localStorage).filter(k=>/^wc@2:|^WALLETCONNECT/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(x){} return await NS.EthereumProvider.init(o); } }
 const sheetOff=()=>$('wsheet').classList.remove('on');
@@ -837,13 +841,37 @@ function sheet(title,text,note,btns){ $('wsk').textContent=title; $('wsp').textC
 const pageLink=()=>'https://'+location.host+location.pathname;
 async function copyTo(btn,txt,done){ try{ await navigator.clipboard.writeText(txt); btn.textContent=done; }catch(e){ btn.textContent=txt.slice(0,60); } }
 let SHEET_CLOSE=null;
+/* WALLETCONNECT ON A PHONE (found Oct 31 on the practice page with Zerion inside an in-app browser): the library opens the wallet app
+   at the same moment it publishes the request, with window.open(_blank) = a blank window in in-app browsers, and iOS freezes this
+   page before the request is out, so the wallet shows "Awaiting request from Dapp" forever. Its own jump is switched off (it only
+   jumps when WALLETCONNECT_DEEPLINK_CHOICE is stored; the picked app is kept under SG_WC_APP instead). This sheet offers the jump
+   only after the relay has the request (session_request_sent), on the visitor's tap. Closing the sheet cancels nothing. */
+const WC_APP_KEY='SG_WC_APP';
+function wcApp(){ try{ const o=localStorage.getItem('WALLETCONNECT_DEEPLINK_CHOICE');
+    if(o){ if(!localStorage.getItem(WC_APP_KEY)) localStorage.setItem(WC_APP_KEY,o); localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE'); }
+    const a=JSON.parse(localStorage.getItem(WC_APP_KEY)||'null'); return a&&typeof a.name==='string'&&typeof a.href==='string'&&/^https:\/\/[^\s]+$/.test(a.href)?a:null; }catch(e){ return null; } }
+let NUDGE=null;
+function wcNudge(method){ const app=wcApp(), n={method,app,ev:null,btn:null,timer:null,close:null};
+  const go=()=>{ if(!n.btn||n.btn.disabled) return; const base=app.href.replace(/\/+$/,'');
+    location.href=n.ev?base+'/wc?requestId='+encodeURIComponent(n.ev.id)+'&sessionTopic='+encodeURIComponent(n.ev.topic):base+'/wc'; };
+  const B=sheet(app?'CONFIRM IN '+app.name:'CONFIRM IN YOUR WALLET','Sending the request to your wallet, one moment…','Nothing is paid until you confirm it in the wallet. You can reject it there too. Closing this box cancels nothing.',app?[['OPEN '+app.name,go,true]]:[]);
+  n.btn=app?B.firstChild:null; if(n.btn){ n.btn.disabled=true; n.btn.style.opacity='.4'; }
+  n.close=()=>wcNudgeOff(n); SHEET_CLOSE=n.close; NUDGE=n;
+  n.timer=setTimeout(()=>{ if(NUDGE===n&&!n.ev) wcNudgeSent(null); },8000);   /* no event after 8 s: the jump is offered anyway (the wallet lists what is waiting) */
+  return n; }
+function wcNudgeSent(ev){ const n=NUDGE; if(!n) return; if(ev) n.ev=ev; clearTimeout(n.timer); if(n.btn){ n.btn.disabled=false; n.btn.style.opacity=''; }
+  $('wsp').textContent=n.app?'The request is in '+n.app.name+' now. Open it, check it, confirm or reject, then come back to this page.':'The request is in your wallet now. Open your wallet app, check it, confirm or reject, then come back to this page.'; }
+function wcNudgeOff(n){ if(!n||NUDGE!==n) return; NUDGE=null; clearTimeout(n.timer); if(SHEET_CLOSE===n.close){ SHEET_CLOSE=null; sheetOff(); } }
+function wcHook(p){ try{ const c=p&&p.signer&&p.signer.client; if(!c||c.__sg) return; c.__sg=1;
+    c.on('session_request_sent',ev=>{ const n=NUDGE; if(n&&ev&&ev.request&&ev.request.method===n.method&&ev.id!=null&&ev.topic) wcNudgeSent(ev); }); }catch(e){ console.warn('walletconnect hook',e); } }
+wcApp();
 /* opens on the tap, before the relay answers; the wallet buttons wake when the connection link arrives. Resolves with a provider, or 'builtin' */
 function wcConnect(hasBuiltIn){
   return new Promise((resolve,reject)=>{
     let uri=null, done=false, p=null, dead=null;
     const onUri=u=>{ uri=u; wake(true); $('wsp').textContent='Tap the app that holds your wallet.'; };
     const finish=(f,v)=>{ if(done) return; done=true; clearTimeout(dead); SHEET_CLOSE=null; sheetOff(); try{ if(p) p.removeListener('display_uri',onUri); }catch(x){} f(v); };
-    const pick=a=>()=>{ if(!uri) return; try{ localStorage.setItem('WALLETCONNECT_DEEPLINK_CHOICE',JSON.stringify({name:a[0],href:a[1]})); }catch(x){} location.href=a[1]+'/wc?uri='+encodeURIComponent(uri); };
+    const pick=a=>()=>{ if(!uri) return; try{ localStorage.setItem(WC_APP_KEY,JSON.stringify({name:a[0],href:a[1]})); localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE'); }catch(x){} location.href=a[1]+'/wc?uri='+encodeURIComponent(uri); };
     const builtin=hasBuiltIn?[['USE THIS BROWSER’S WALLET',()=>finish(resolve,'builtin')]]:[];
     const btns=WC_APPS.map((a,i)=>[a[0],pick(a),i===0]).concat([['OTHER WALLET',()=>{ if(uri) location.href=uri; }],['COPY CONNECTION LINK',b=>{ if(uri) copyTo(b,uri,'COPIED: PASTE IT IN YOUR WALLET'); }]],builtin);
     const B=sheet('CONNECT YOUR WALLET','Reaching WalletConnect, one moment…','Pick the app that holds your wallet. It opens, you approve the connection, then come back to this page to collect. Connecting costs nothing.',btns);
@@ -860,10 +888,13 @@ function noWalletDesk(){ sheet('NO WALLET IN THIS BROWSER','This browser has no 
 $('wsX').addEventListener('click',()=>{ if(SHEET_CLOSE) SHEET_CLOSE(); else sheetOff(); });
 $('wsheet').addEventListener('click',e=>{ if(e.target.id==='wsheet') $('wsX').click(); });
 /* PR #1. THE CHOOSER (computers). Every wallet the browser offers goes on the list: each EIP-6963 announcement, window.ethereum and
-   window.ethereum.providers[], once each (the same object, or the same rdns, is one wallet). A wallet asleep or wedged (an
+   window.ethereum.providers[], once each (the same provider object is one wallet; two objects are two wallets even when they give
+   the same rdns or name: EIP-6963 metadata is self-reported, so it never decides which one is used). A wallet asleep or wedged (an
    un-onboarded MetaMask, a crashed extension) never answers, throws, or answers nonsense, so each is pinged with eth_chainId (no
    popup) on its own, and the ones that fail or stay silent for 1.5 s are left off; one bad wallet cannot spoil the list. One
-   left: no list. The choice is remembered once the wallet says yes, and asked directly next time; a no forgets it. Only the
+   left: no list. Wallets that share a name are told apart on the list (NAME · 1, NAME · 2). The choice is remembered once the wallet
+   says yes, and asked directly next time only if exactly one answering wallet carries that key; if two do, the list is shown and the
+   visitor picks again. A no forgets it. Only the
    chosen wallet is ever asked to connect: a refusal is the answer, the page does not try another wallet behind it.
    The list is the wallet sheet (#wsheet), with each wallet's EIP-6963 icon. */
 const WKEY='stormglass.wallet';
@@ -871,9 +902,9 @@ const alive=P=>new Promise(res=>{ const t=setTimeout(()=>res(false),1500); const
   ask(P,'eth_chainId').then(c=>done(typeof c==='string'&&/^0x[0-9a-f]+$/i.test(c)),()=>done(false)); });
 const legacyName=P=>{ try{ return P.isRabby?'Rabby':P.isCoinbaseWallet?'Coinbase Wallet':P.isBraveWallet?'Brave Wallet':P.isPhantom?'Phantom':P.isMetaMask?'MetaMask':'Browser wallet'; }catch(e){ return 'Browser wallet'; } };
 function walletChoices(){
-  const seen=new Set(), rd=new Set(), out=[];
+  const seen=new Set(), out=[];
   const add=(P,info)=>{ try{ if(!P||typeof P.request!=='function'||seen.has(P)) return; }catch(e){ return; }
-    const rdns=info&&typeof info.rdns==='string'?info.rdns:''; if(rdns&&rd.has(rdns)) return; seen.add(P); if(rdns) rd.add(rdns);
+    const rdns=info&&typeof info.rdns==='string'?info.rdns:''; seen.add(P);
     const name=String(info&&typeof info.name==='string'&&info.name||legacyName(P)).slice(0,40);
     out.push({provider:P,name,key:rdns||('legacy:'+name),icon:info&&typeof info.icon==='string'?info.icon:''}); };
   WALLETS.forEach(w=>add(w.provider,w.info));
@@ -887,11 +918,13 @@ async function chooseWallet(){
   const up=await Promise.all(all.map(w=>alive(w.provider))); const live=all.filter((w,k)=>up[k]);
   if(!live.length){ toast('No wallet answered. Unlock your wallet and reload the page.'); return null; }
   let saved=null; try{ saved=localStorage.getItem(WKEY); }catch(e){}
-  const hit=saved&&live.find(w=>w.key===saved); if(hit) return hit;
+  const hits=saved?live.filter(w=>w.key===saved):[]; if(hits.length===1) return hits[0];   /* two answering wallets with the saved key: ambiguous, ask */
   if(live.length===1) return live[0];
+  const N=new Map(); live.forEach(w=>{ const u=w.name.toUpperCase(); N.set(u,(N.get(u)||0)+1); });
+  const seenN=new Map(), label=w=>{ const u=w.name.toUpperCase(); if(N.get(u)<2) return u; const i=(seenN.get(u)||0)+1; seenN.set(u,i); return u+' · '+i; };
   return new Promise(res=>{   /* CLOSE, Esc and the backdrop all come through SHEET_CLOSE: the list always answers, a wallet or null */
     SHEET_CLOSE=()=>{ SHEET_CLOSE=null; sheetOff(); res(null); };
-    sheet('CONNECT WITH','Choose the wallet to connect.','',live.map(w=>[w.name.toUpperCase(),()=>{ if(!SHEET_CLOSE) return; SHEET_CLOSE=null; sheetOff(); res(w); },false,w.icon]));
+    sheet('CONNECT WITH',hits.length>1||N.size<live.length?'Two wallets here go by the same name. Choose the one to connect.':'Choose the wallet to connect.','',live.map(w=>[label(w),()=>{ if(!SHEET_CLOSE) return; SHEET_CLOSE=null; sheetOff(); res(w); },false,w.icon]));
   });
 }
 /* the connected address opens the same sheet, with DISCONNECT */
@@ -899,18 +932,31 @@ const walletName=P=>{ const w=walletChoices().find(w=>w.provider===P); return w?
 function walletMenu(){ sheet('CONNECTED',me,'Connected with '+walletName(EP)+'.',[['DISCONNECT',()=>{ sheetOff(); disconnect(true); },true]]); }
 /* the page lets go of the wallet (DISCONNECT here, or the wallet's own disconnect or empty account list). DISCONNECT also asks the
    wallet to forget the site (wallet_revokePermissions, EIP-2255; MetaMask and Rabby honor it), so the next CONNECT asks again; a
-   wallet without the call refuses or throws, and the page is disconnected all the same. A CONNECT right after waits for that
-   answer first (5 s at most), so a late revocation cannot take back the new connection. */
-let REVOKING=null;
+   wallet without the call refuses or throws, and the page is disconnected all the same. A WalletConnect session is ended with the
+   provider's own disconnect() instead (a revocation request over the relay may never be answered, and the session would live on).
+   A CONNECT to the same wallet waits until that request is over (see revoked()), so a late revocation cannot take back a new
+   connection; another wallet is not held up. If a revocation does land on a connection (one made from another tab, say), the
+   wallet's empty account list is followed: the page shows itself disconnected. */
+const REVOKING=new Map();   /* provider -> its revocation still in flight */
 function disconnect(revoke){
   const P=EP; SES++; EP=null; signer=null; me=null; W=null; welcomed=''; NX.wrong=false;
+  if(OPLOCK&&!OPLOCK.handed){ OPLOCK.dead=true; OPLOCK=null; }   /* a write still on its way to the wallet stops (opLive); one the wallet holds keeps the lock */
   if(revoke) remember(null);
   walletLabel(); $('welcome').hidden=true; $('nx-mine').hidden=true; markMe();
   $('seatsNote').textContent='Connect your wallet to see your seats and what they have earned.'; $('claim').disabled=true; $('withdraw').style.display='none';
-  if(revoke&&P){ const q=ask(P,'wallet_revokePermissions',[{eth_accounts:{}}]).catch(e=>console.warn('revoke',e)).then(()=>{ if(REVOKING&&REVOKING.q===q) REVOKING=null; }); REVOKING={P,q}; }
+  if(revoke&&P&&!REVOKING.has(P)){ const r={}, wc=P===_WC&&typeof P.disconnect==='function';
+    r.q=(wc?Promise.resolve().then(()=>P.disconnect()):ask(P,'wallet_revokePermissions',[{eth_accounts:{}}])).catch(e=>console.warn('revoke',e)).then(()=>{ if(REVOKING.get(P)===r) REVOKING.delete(P); });
+    REVOKING.set(P,r); }
   if(revoke) toast('Disconnected.');
 }
-const revoked=P=>REVOKING&&REVOKING.P===P?Promise.race([REVOKING.q,new Promise(r=>setTimeout(r,5000))]):null;
+/* before asking a wallet to connect: is a revocation of this same wallet still in flight? A short wait is silent; a longer one says so
+   and lasts until the wallet answers, or until the visitor presses CANCEL (the page then stays disconnected). Resolves true when the
+   way is clear, false when they gave up. It never times out into a connection the old request could take back. */
+async function revoked(P){ const r=P&&REVOKING.get(P); if(!r) return true;
+  if(await Promise.race([r.q.then(()=>true),new Promise(res=>setTimeout(()=>res(false),1500))])) return true;
+  return new Promise(res=>{ let over=false; const end=v=>{ if(over) return; over=true; if(SHEET_CLOSE===stop) SHEET_CLOSE=null; sheetOff(); res(v); }, stop=()=>end(false);
+    sheet('STILL DISCONNECTING','Your wallet has not yet answered the request to disconnect this site. Open your wallet (unlock it if needed): this page connects again as soon as that request is finished.','Connecting before then could be undone by that earlier request, so the page waits.',[['CANCEL',stop]]);
+    SHEET_CLOSE=stop; r.q.then(()=>end(true)); }); }
 /* switching account, network or disconnecting inside the wallet itself: followed, for the session's own provider only (events
    from a wallet the page has let go of are ignored). A new account comes from the event (or eth_accounts), never from
    eth_requestAccounts, so it opens no popup. */
@@ -939,17 +985,18 @@ async function connectOnce(){
   try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
   const gen=++SES, stale=()=>gen!==SES;   /* a disconnect, or a newer attempt, while this one waits: it stops and changes nothing */
   let P=EP;
-  if(!P&&isPhone()&&!inWalletApp()){ const r=await wcConnect(!!window.ethereum); if(stale()) return; if(r!=='builtin') P=r; }
+  if(!P&&isPhone()&&!inWalletApp()){ if(_WC&&!(await revoked(_WC))) return; if(stale()) return;   /* a WalletConnect session still closing: pair anew after it */
+    const r=await wcConnect(!!window.ethereum); if(stale()) return; if(r!=='builtin') P=r; }
   if(P||isPhone()){   /* phones, and a wallet already chosen: as before */
     const L=P?[P]:walletList(); if(!L.length){ noWalletDesk(); return; }
     let err=null, got=null;
-    for(const Q of L){ try{ await revoked(Q); if(stale()) return; await Q.request({method:'eth_requestAccounts'}); got=Q; break; }
+    for(const Q of L){ try{ if(!(await revoked(Q))||stale()) return; await Q.request({method:'eth_requestAccounts'}); got=Q; break; }
       catch(e){ const c=e&&e.code; if(c===4001||c===-32002) throw e; err=e; console.warn('wallet refused, trying the next one',e); } }
     if(!got){ if(L.length>1) throw new Error(errMsg(err)+' (more than one wallet extension is installed: turn off the others and reload the page)'); throw err; }
     P=got;
   } else {
     const w=await chooseWallet(); if(stale()||!w) return; P=w.provider;
-    await revoked(P); if(stale()) return;
+    if(!(await revoked(P))||stale()) return;
     try{ await ask(P,'eth_requestAccounts'); }
     catch(e){ remember(null); throw e; }   /* a no forgets the choice: the next CONNECT shows the list again */
     remember(w.key);
@@ -1000,14 +1047,29 @@ function walletLabel(){ const b=$('wallet'); const a=me||(NX_WRONG&&DEMO_GIFT!=n
 $('nx-chainBar').addEventListener('click',()=>switchChain());
 const NX_HOOKED=new WeakSet();
 setInterval(()=>{ if(me!==NX.lastMe){ NX.lastMe=me; walletLabel(); nxWrong(); } if(EP&&EP.on&&!NX_HOOKED.has(EP)){ NX_HOOKED.add(EP); try{ EP.on('chainChanged',()=>nxWrong()); }catch(e){} } },1000);
+/* ONE WRITE AT A TIME. A press takes the lock at once, before anything waits (the wallet connection included), so a second press on
+   any write button (a double click, a redraw, a second action awaiting the same connection) only says so. The lock is let go when
+   the wallet answers eth_sendTransaction (a hash, or a refusal) or when the write stops before the wallet was asked; a press after
+   that is a new, deliberate payment. While the wallet holds an unanswered request the lock stays: the wallet may still send it. */
+let OPLOCK=null;
+function opLock(name){ if(OPLOCK){ toast((LABEL[OPLOCK.name]||OPLOCK.name)+' is still waiting for your wallet. Finish or cancel it there first.'); return null; }
+  return OPLOCK={name,handed:false,dead:false}; }
+const opFree=L=>{ if(L&&OPLOCK===L) OPLOCK=null; };
+/* once eth_sendTransaction is in the wallet's hands, an error means "nothing was sent" only when the wallet says so plainly: refused
+   (4001), unauthorized (4100), unsupported (4200, -32601), disconnected (4900, 4901), bad request (-32602), busy (-32002). Any other
+   answer (an internal error, a lost connection, a malformed hash) may come after it broadcast: the outcome is unknown, and nothing is
+   sent again by itself. */
+const NOT_SENT=new Set([4001,4100,4200,4900,4901,-32601,-32602,-32002,'ACTION_REJECTED']);
+const codeOf=e=>{ const inner=(e&&(e.error||(e.info&&e.info.error)))||{}; return inner.code??(e&&e.code); };
+const UNSURE=x=>Object.assign(new Error('Your wallet did not say whether it sent this. Check your wallet’s activity before trying again.'),{code:'UNSURE',cause:x});
 /* EVERY WRITE IS AN OPERATION. It captures the session as it is when the action starts (provider, account, number), checks the
    chain and asks the wallet to switch if it must (a wallet left on Base or Arbitrum would otherwise send the ETH to this same
    address on that chain, where no contract lives), then builds its own provider, signer and contract from what it captured:
    never the globals, never a provider made before a switch. Right before the wallet is asked to send, it looks again: the same
    session number, the same provider, the same account first in eth_accounts, the same chain. Anything else, nothing is sent. */
-function opLive(op){ if(op.gen!==SES||op.P!==EP||!sameAddr(op.acct,me)) throw STALE(); }
-async function opBegin(){
-  const op={gen:SES,P:EP,acct:me,chain:CFG.chainId}; if(!op.P||!op.acct) throw STALE();
+function opLive(op){ if(op.gen!==SES||op.P!==EP||!sameAddr(op.acct,me)||(op.lock&&op.lock.dead)) throw STALE(); }
+async function opBegin(L){
+  const op={gen:SES,P:EP,acct:me,chain:CFG.chainId,lock:L||null}; if(!op.P||!op.acct||(L&&L.dead)) throw STALE();
   let c=await chainOf(op.P); opLive(op);
   if(c!==op.chain){
     try{ await ask(op.P,'wallet_switchEthereumChain',[{chainId:'0x'+op.chain.toString(16)}]); }catch(e){ console.warn('switch',e); }
@@ -1031,32 +1093,77 @@ class OpSigner extends ethers.JsonRpcSigner{
     tx.chainId=op.chain;
     const rpc=this.provider.getRpcTransaction(tx);
     await opCheck(op);
-    const h=await ask(op.P,'eth_sendTransaction',[rpc]); op.hash=h; return h; }
-  async sendTransaction(_tx){ try{ this.op.block=await (ro||this.provider).getBlockNumber(); }catch(e){ this.op.block=null; }   /* as ethers does: the tx cannot be mined before this block */
+    op.handed=true; if(op.lock) op.lock.handed=true;   /* from here the wallet holds it */
+    let h; try{ h=await ask(op.P,'eth_sendTransaction',[rpc]); }catch(e){ if(NOT_SENT.has(codeOf(e))) throw e; throw UNSURE(e); }
+    if(typeof h!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(h)) throw UNSURE(h);
+    op.hash=h; op.req=rpc; return h; }
+  async sendTransaction(_tx){ try{ const b=await Promise.race([trackRpc('eth_blockNumber',[]),new Promise(r=>setTimeout(()=>r(null),3000))]); this.op.block=b==null?null:Number(BigInt(b)); }catch(e){ this.op.block=null; }   /* as ethers does: the tx cannot be mined before this block (a mainnet HTTP reader, 3 s at most) */
     const h=await this.sendUncheckedTransaction(_tx);
     return new ethers.TransactionResponse({hash:h,from:this.address,to:_tx.to||null,data:_tx.data||'0x',value:BigInt(_tx.value||0),gasLimit:_tx.gasLimit==null?null:BigInt(_tx.gasLimit),chainId:BigInt(this.op.chain),nonce:null,type:null,signature:null,blockNumber:null,blockHash:null,index:null,gasPrice:null},this.provider); }
 }
-/* a transaction the wallet has taken is followed to its receipt on the page's own mainnet reader, whatever the wallet or the
-   session does next; it never puts the old session back on screen */
-const okRc=rc=>{ if(rc.status===0) throw Object.assign(new Error('The transaction failed on Ethereum (reverted).'),{receipt:rc}); return rc; };
-async function followTx(hash,op){ const R=()=>ro||op.bp, nap=ms=>new Promise(r=>setTimeout(r,ms));
-  /* its nonce and sender, from the wallet that took it or from the reader (about a minute), so a sped-up or cancelled
-     transaction is recognised the way ethers' own wait() does it; a speed-up that lands counts as done */
-  let t=null;
-  for(let k=0;k<40&&!t;k++){ for(const src of [op.bp,R()]){ try{ t=await src.getTransaction(hash); }catch(e){} if(t) break; }
-    if(!t){ try{ const rc=await R().getTransactionReceipt(hash); if(rc) return okRc(rc); }catch(e){ if(e&&e.receipt) throw e; } await nap(1500); } }
-  const sb=op.block!=null?op.block:await R().getBlockNumber().catch(()=>null);
-  if(t&&sb!=null){ try{ return await new ethers.TransactionResponse(t,R()).replaceableTransaction(sb).wait(); }
-    catch(e){ if(e&&e.code==='TRANSACTION_REPLACED'&&e.reason==='repriced'&&e.receipt&&e.receipt.status===1) return e.receipt; throw e; } }
-  for(;;){ let rc=null; try{ rc=await R().getTransactionReceipt(hash); }catch(e){ console.warn('receipt',e); } if(rc) return okRc(rc); await nap(3000); } }
+/* FOLLOWING A SUBMITTED TRANSACTION. Only mainnet HTTP readers are asked: never the wallet's provider and never `ro` (which can be
+   the wallet), so a wallet that goes quiet, switches account or disconnects cannot stop it. Every request is bounded (TRACK.timeout)
+   and moves to the next reader when one fails. It tells apart: pending; confirmed; reverted; sped up (the same call again with a
+   higher fee: its receipt is the answer); cancelled (the nonce spent on 0 ETH to the sender); replaced (the nonce spent on another
+   call); unknown (no result after TRACK.lost, no reader answering for that long, or the nonce spent by a transaction it cannot find).
+   After "unknown" it keeps looking until TRACK.stop, and a late receipt still counts. The nonce comes from a reader, or from the
+   wallet when the readers have not seen it (a private mempool), never waiting on it for longer than TRACK.timeout. */
+const TRACK={rpcs:[CFG.rpc,'https://rpc.mevblocker.io','https://eth.drpc.org'],timeout:8000,poll:3000,lost:600000,stop:3600000,scan:24};
+let trackAt=0;
+async function trackRpc(method,params){ let err=null; const n=TRACK.rpcs.length;
+  for(let i=0;i<n;i++){ const k=(trackAt+i)%n, ac=new AbortController(), tm=setTimeout(()=>ac.abort(),TRACK.timeout);
+    try{ const r=await fetch(TRACK.rpcs[k],{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),signal:ac.signal});
+      const j=await r.json(); if(j&&typeof j==='object'&&!j.error&&'result' in j){ trackAt=k; return j.result; } err=new Error(String(j&&j.error&&j.error.message||'bad answer')); }
+    catch(e){ err=e; } finally{ clearTimeout(tm); } }
+  throw err||new Error('no reader answered'); }
+const big=v=>{ try{ return v==null?null:BigInt(v); }catch(e){ return null; } };
+const lc=a=>typeof a==='string'?a.toLowerCase():'';
+async function trackTx(op,hash,tell){ const nap=ms=>new Promise(r=>setTimeout(r,ms)), t0=Date.now(), from=lc(op.acct), want=op.req||{};
+  const mined=rc=>!!(rc&&typeof rc==='object'&&rc.blockNumber), result=rc=>big(rc.status)===1n?'confirmed':'reverted';
+  let lastOk=t0, nonce=null, scanAt=op.block, unknown=false, walletAsks=0;
+  const nonceOf=t=>t&&typeof t==='object'&&lc(t.from)===from&&big(t.nonce)!=null?big(t.nonce):null;
+  for(;;){ let ok=false;
+    try{ const rc=await trackRpc('eth_getTransactionReceipt',[hash]); ok=true; if(mined(rc)) return {state:result(rc),rc}; }catch(e){}
+    if(nonce==null){ try{ nonce=nonceOf(await trackRpc('eth_getTransactionByHash',[hash])); ok=true; }catch(e){}
+      if(nonce==null&&walletAsks++<5){ try{ nonce=nonceOf(await Promise.race([ask(op.P,'eth_getTransactionByHash',[hash]),nap(TRACK.timeout).then(()=>null)])); }catch(e){} } }
+    if(nonce!=null){ try{
+      const used=big(await trackRpc('eth_getTransactionCount',[op.acct,'latest'])); ok=true;
+      if(used!=null&&used>nonce){   /* the nonce is spent: by this transaction (its receipt a block behind) or by another one */
+        const top=Number(big(await trackRpc('eth_blockNumber',[])));
+        if(scanAt==null) scanAt=Math.max(0,top-TRACK.scan);
+        for(let b=scanAt;b<=Math.min(top,scanAt+TRACK.scan-1);b++){ const blk=await trackRpc('eth_getBlockByNumber',['0x'+b.toString(16),true]);
+          for(const x of (blk&&Array.isArray(blk.transactions)?blk.transactions:[])){
+            if(!x||typeof x!=='object'||lc(x.from)!==from||big(x.nonce)!==nonce) continue;
+            const rc=await trackRpc('eth_getTransactionReceipt',[x.hash]); if(!mined(rc)) continue;
+            if(lc(x.hash)===lc(hash)) return {state:result(rc),rc};
+            const data=lc(x.input||x.data||'0x');
+            if(lc(x.to)===lc(want.to)&&data===lc(want.data||'0x')&&big(x.value)===big(want.value||'0x0')) return {state:result(rc),rc,repriced:true,by:x.hash};
+            if(data==='0x'&&lc(x.to)===from&&big(x.value)===0n) return {state:'cancelled',rc,by:x.hash};
+            return {state:'replaced',rc,by:x.hash}; }
+          scanAt=b+1; }
+        if(scanAt>top&&!unknown){ unknown=true; tell('unknown'); } }   /* spent by a transaction this page cannot find */
+    }catch(e){} }
+    if(ok) lastOk=Date.now();
+    if(!unknown&&(Date.now()-t0>=TRACK.lost||Date.now()-lastOk>=TRACK.lost)){ unknown=true; tell('unknown'); }
+    if(Date.now()-t0>=TRACK.stop) return {state:'unknown'};
+    await nap(TRACK.poll); } }
 /* send(): the live page's, with one optional observer so the pick popup can show CONFIRM / PENDING / COLLECTED / FAILED (and WRONG NETWORK) */
-async function send(name,fn,on){ const ob=(...a)=>{ try{ if(on) on(...a); }catch(x){ console.warn('observer',x); } };
-  try{ if(!W){ await connectWallet(); if(!W){ ob('nowallet'); return; } }
-    const op=await opBegin(); if(!op){ toast('Your wallet is on another network. Switch it to Ethereum mainnet. Nothing was sent.'); ob('wrong'); return; }
+async function send(name,fn,on,lock){ const ob=(...a)=>{ try{ if(on) on(...a); }catch(x){ console.warn('observer',x); } };
+  const K=lock||opLock(name); if(!K){ ob('busy'); return; }   /* taken before the first await */
+  try{ if(!W){ await connectWallet(); if(K.dead||!W){ ob('nowallet'); return; } }
+    const op=await opBegin(K); if(!op){ toast('Your wallet is on another network. Switch it to Ethereum mainnet. Nothing was sent.'); ob('wrong'); return; }
     const L=LABEL[name]||name; ob('confirm'); toast(L+': confirm in your wallet');
-    const tx=await fn(op.C); ob('sent',tx); toast(L+': sent, waiting for Ethereum to confirm');
-    const rc=await followTx(tx.hash,op); ob('confirmed',rc); toast(L+': confirmed'); await tick(true); }
-  catch(e){ console.error(e); if(e&&e.code==='WRONG_CHAIN'){ NX.wrong=true; walletLabel(); toast(e.message); ob('wrong'); } else { toast(errMsg(e)); ob('error',e); } } }
+    const tx=await fn(op.C); opFree(K); const h=tx.hash; ob('sent',tx); toast(L+': sent ('+short(h)+'), waiting for Ethereum to confirm');
+    const unk=fin=>{ ob('unknown',{hash:h,final:fin}); toast(L+': sent ('+short(h)+'), but this page cannot confirm it yet. Look it up on Etherscan before paying again.'); };
+    const res=await trackTx(op,h,s=>{ if(s==='unknown') unk(false); });
+    if(res.state==='confirmed'){ ob('confirmed',res.rc); toast(L+': confirmed'+(res.repriced?' (sped up in your wallet)':'')); }
+    else if(res.state==='reverted'){ ob('reverted',res.rc); toast(L+': sent, but it failed on Ethereum (reverted). Only the network fee was spent.'); }
+    else if(res.state==='cancelled'){ ob('cancelled',res); toast(L+': cancelled in your wallet after it was sent. It did not go through; only network fees were spent.'); }
+    else if(res.state==='replaced'){ ob('replaced',res); toast(L+': your wallet replaced it with another transaction, so this one did not go through. Check your wallet.'); }
+    else unk(true);
+    await tick(true); }
+  catch(e){ console.error(e); if(e&&e.code==='UNSURE'){ toast(e.message); ob('unsure',e); } else if(e&&e.code==='WRONG_CHAIN'){ NX.wrong=true; walletLabel(); toast(e.message); ob('wrong'); } else { toast(errMsg(e)); ob('error',e); } }
+  finally{ opFree(K); } }
 
 /* ═══ THE PLATE ON THE GLASS: the token page itself, fed the seed and the sky */
 let pageSrc=null;
@@ -1179,12 +1286,14 @@ function panel(html){ $('panel').innerHTML=html; }
 /* THE BOXES THAT TAKE AN AMOUNT (bid, pledge, witness) sit in panels that redraw on a clock: the founders' countdown every second,
    the candle every 5 s, the witness sheet on every read. Those panels are patched in place, not rebuilt: text and attributes
    change, a node that is still there stays, so the amount being typed keeps its value, focus, selection (and its direction)
-   and any IME composition. While a composition is open nothing is added or removed. If a box does have to be made anew (the
-   panel changed shape), keepOf/keepTo carry the value, focus and selection across. */
+   and any IME composition. While a composition is open nothing is added or removed, as long as the new panel still has the box
+   being composed; a panel that no longer has it (founders' day over, the sale closed) is redrawn at once, so no stale box or
+   button (a PLEDGE after founders' day) stays on screen. If a box does have to be made anew (the panel changed shape),
+   keepOf/keepTo carry the value, focus and selection across. */
 let COMPOSING=null;
 document.addEventListener('compositionstart',e=>{ COMPOSING=e.target; },true);
 document.addEventListener('compositionend',()=>{ COMPOSING=null; },true);
-function morph(el,html){ const t=document.createElement('template'); t.innerHTML=html; syncNodes(el,t.content,!!(COMPOSING&&el.contains(COMPOSING))); }
+function morph(el,html){ const t=document.createElement('template'); t.innerHTML=html; syncNodes(el,t.content,!!(COMPOSING&&el.contains(COMPOSING)&&COMPOSING.id&&t.content.getElementById(COMPOSING.id))); }
 const sameNode=(o,n)=>o.nodeType===n.nodeType&&(o.nodeType!==1||(o.tagName===n.tagName&&o.id===n.id&&(o.tagName!=='INPUT'||o.type===n.type)));
 function syncNodes(a,b,soft){ const A=[...a.childNodes], B=[...b.childNodes];
   B.forEach((n,i)=>{ const o=A[i];
@@ -1296,7 +1405,7 @@ async function render(st){ const gen=++RGEN;
   if(D.onSale&&st.cands){ $('candidates').style.display='block'; const g=$('candGrid');
       const ctx={cands:st.cands,day:D.id,close:D.close,seed:D.seed,open:()=>!D.sold&&now()<D.close&&now()>=D.open,price:()=>priceNow(start,D.open,now()),
         choose:k=>{ pick=k; markPick(); draw(); },
-        buy:(on,k=pick)=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; return send('buy',W=>pad(W.buy,[D.id,k],{value:pay}),on); }};   /* the option chosen when COLLECT was pressed */
+        buy:(on,k=pick,lock)=>{ const v=ethers.parseEther(priceNow(start,D.open,now()+30).toFixed(18)); const pay=v+v/10n; return send('buy',W=>pad(W.buy,[D.id,k],{value:pay}),on,lock); }};   /* the option chosen when COLLECT was pressed */
       NX.ctx=ctx;
       if(g.dataset.day!==String(D.id)){ g.dataset.day=String(D.id); g.innerHTML=''; pick=null;
       st.cands.forEach((seed,k)=>{ const el=document.createElement('div'); el.className='card'; el.innerHTML='<i>'+k+'</i>'; el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-label','Option '+k); el.onclick=()=>candOpen(k,NX.ctx); el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); candOpen(k,NX.ctx); } }; g.appendChild(el); });
@@ -1304,8 +1413,8 @@ async function render(st){ const gen=++RGEN;
   else { noSale(); $('candidates').style.display='none'; }
 }
 /* no plate on sale: the pick context goes, an open popup says so, the witness sheet closes */
-function noSale(){ NX.ctx=null; $('nx-wit').classList.remove('on'); if(NX.pop&&CC&&!['pending','done','closed'].includes(NX.tx)) txView('closed'); if(NX.pop) pfTick(); }
-function saleOpen(){ const D=ST&&ST.day; const t=NX.now(); return !!(D&&NX.ctx&&NX.ctx.day===D.id&&D.onSale&&!D.sold&&t<D.close&&t>=D.open); }
+function noSale(){ NX.ctx=null; $('nx-wit').classList.remove('on'); if(NX.pop&&CC&&!['pending','done','closed','unknown'].includes(NX.tx)) txView('closed'); if(NX.pop) pfTick(); }
+function saleOpen(day){ const D=ST&&ST.day; const t=NX.now(); return !!(D&&NX.ctx&&NX.ctx.day===D.id&&(day==null||D.id===day)&&D.onSale&&!D.sold&&t<D.close&&t>=D.open); }   /* day: the dialog's own day */
 /* ═══ THE PICK POPUP (#ccard, full viewport). GRID: the 32 options the page already holds. EXPANDED: one option moving, its seed and
    traits, COLLECT. TX: confirm, pending, collected, failed, wrong chain, sale closed. Thumbnail and option drawing is the live page's. */
 let CC=null;
@@ -1331,10 +1440,10 @@ function fitExp(){ if(!CC) return; const pv=$('nx-pv'), w=$('nx-exp'); const lan
   if(stacked){ const sd=$('nx-side'); const side=Math.max(sd.offsetHeight,sd.scrollHeight); pv.parentElement.style.height=mob?Math.max(120,w.clientHeight-side)+'px':''; const s=Math.max(120,Math.min(mob?innerWidth:w.clientWidth-24,w.clientHeight-side-(mob?0:40))); pv.style.width=s+'px'; pv.style.height=s+'px'; pv.style.margin='0 auto'; if(!fitExp.again){ fitExp.again=true; requestAnimationFrame(()=>{ fitExp(); fitExp.again=false; }); } }
   else { const wrap=pv.parentElement; wrap.style.height=''; const s=Math.max(120,Math.min(wrap.clientWidth,wrap.clientHeight)); pv.style.width=s+'px'; pv.style.height=s+'px'; pv.style.margin=''; } }
 window.addEventListener('resize',()=>{ fitGrid(); fitExp(); });
-function pfTick(){ if(!NX.pop) return; const c=NX.ctx||CC; if(!c) return; const t=NX.now(); const el=$('nx-pfPrice');
-  if(saleOpen()) el.textContent=fmtP(c.price())+' ETH · CLOSES IN '+clock(c.close-t);
-  else { el.textContent='DAY '+c.day+' IS NO LONGER ON SALE'; if(CC&&NX.tx!=='pending'&&NX.tx!=='done'&&NX.tx!=='closed') txView('closed'); } }
-function candActs(){ if(!CC) return; const k=CC.k, open=saleOpen(), mine=pick===k; NX.tx=null;
+function pfTick(){ if(!NX.pop) return; const c=CC||NX.ctx; if(!c) return; const t=NX.now(); const el=$('nx-pfPrice');
+  if(saleOpen(c.day)) el.textContent=fmtP(c.price())+' ETH · CLOSES IN '+clock(c.close-t);
+  else { el.textContent='DAY '+c.day+' IS NO LONGER ON SALE'; if(CC&&!['pending','done','closed','unknown'].includes(NX.tx)) txView('closed'); } }
+function candActs(){ if(!CC) return; const k=CC.k, open=saleOpen(CC.day), mine=pick===k; NX.tx=null;
   if(!open){ $('ccActs').innerHTML='<div class="k">DAY '+CC.day+' IS NO LONGER ON SALE</div><button class="ghost" id="nx-txClose">CLOSE</button>'; $('nx-txClose').onclick=ccOff; fitExp(); return; }
   const p=CC.price();
   $('ccActs').innerHTML=(mine?'<div class="k">YOU CHOSE OPTION '+k+'</div>':'')
@@ -1350,11 +1459,12 @@ function txView(v,x){ if(!CC) return; NX.tx=v; const D=CC; let h=''; $('nx-ccMor
   else if(v==='failed') h='<div class="st bad">[!!] NOT COLLECTED</div><div class="note" id="nx-txWhy">'+esc(x||'')+'</div><button class="ghost" id="nx-txBack">BACK</button>';
   else if(v==='wrong') h='<div class="st bad">[!!] YOUR WALLET IS ON ANOTHER NETWORK</div><div class="note">Your wallet is on another network. Switch it to Ethereum mainnet.</div><button class="fill" id="nx-switch">SWITCH TO ETHEREUM</button><button class="ghost" id="nx-txBack">BACK</button>';
   else if(v==='closed') h='<div class="k">DAY '+D.day+' IS NO LONGER ON SALE</div><button class="ghost" id="nx-txClose">CLOSE</button>';
+  else if(v==='unknown') h='<div class="st bad">[??] RESULT UNKNOWN</div><div class="note">'+(x&&x.hash?'Your wallet sent it, but this page cannot confirm the result yet. It keeps checking. Look it up before paying again.':'Your wallet did not say whether it sent this. Check your wallet’s activity before trying again.')+'</div><div class="tx">'+(x&&x.hash?'<a href="'+esc(CFG.explorer+'/tx/'+x.hash)+'" target="_blank" rel="noopener">'+esc(short(x.hash))+' ↗</a>':'')+'</div><button class="ghost" id="nx-txClose">CLOSE</button>';
   $('ccActs').innerHTML=h;
   const bk=$('nx-txBack'); if(bk) bk.onclick=()=>candActs();
   const cl=$('nx-txClose'); if(cl) cl.onclick=ccOff;
   const sw=$('nx-switch'); if(sw) sw.onclick=async()=>{ sw.disabled=true; const ok=await switchChain(); sw.disabled=false; if(ok) nxCollect(); };
-  if(v==='done'){ (async()=>{ let s=CFG.demo?'2.0000':'––'; try{ if(storm&&me) s=fmtS(await storm.seats(me)); }catch(e){} const e=$('nx-txSeats'); if(e) e.textContent=s; })(); }
+  if(v==='done'){ const who=x&&isAddr(x.from)?x.from:me; (async()=>{ let s=CFG.demo?'2.0000':'––'; try{ if(storm&&who) s=fmtS(await storm.seats(who)); }catch(e){} const e=$('nx-txSeats'); if(e) e.textContent=s; })(); }   /* the seats of the account that paid */
   fitExp(); }
 async function failReason(e){ const inner=(e&&(e.error||(e.info&&e.info.error)))||{}; const code=inner.code??(e&&e.code); const msg=String(inner.message||(e&&(e.reason||e.shortMessage||e.message))||'').toLowerCase();
   if(code===4001||code==='ACTION_REJECTED'||code===-32002) return errMsg(e);
@@ -1364,13 +1474,26 @@ async function failReason(e){ const inner=(e&&(e.error||(e.info&&e.info.error)))
   if(await nxWrong()) return 'Your wallet is on another network. Switch it to Ethereum mainnet.';
   try{ if(storm){ const o=await storm.onSale(); if(o[3]===false||Number(o[0])!==(CC?CC.day:-1)) return 'Someone bought first.'; } }catch(x){}
   return errMsg(e); }
-async function nxCollect(){ if(!CC) return; const k=CC.k; if(!saleOpen()){ txView('closed'); return; } if(pick!==k){ NX.ctx.choose(k); }
+const soldTo=async day=>{ try{ if(storm){ const o=await storm.onSale(); if(o[3]===false||Number(o[0])!==day) return 'Someone bought first. '; } }catch(x){} return ''; };
+async function nxCollect(){ if(!CC) return; const cc=CC, k=CC.k, day=CC.day; if(!saleOpen(day)){ txView('closed'); return; }
+  const L=opLock('buy'); if(!L) return; let handed=false;   /* one write at a time: taken before anything waits */
+  /* the dialog this press belongs to: this dialog instance, this option, this day. Anything that answers later (the connection, the
+     wallet, the chain) updates it only if it is still that one: closed and reopened, moved to another option or overtaken by a new
+     day, it is left alone (the toasts still report, and a submitted transaction is followed regardless). A new day while the wallet
+     connects means nothing is bought: the option was one of the old day's. */
+  const mine=()=>NX.pop&&CC===cc&&CC.k===k&&CC.day===day;
+  try{ if(pick!==k){ NX.ctx.choose(k); }
   txView('confirm');
   if(NX_WRONG){ txView('wrong'); return; }
-  if(!W){ try{ await connectWallet(); }catch(e){ txView('failed',errMsg(e)); return; } if(!W){ if(CC) candActs(); return; } }
-  if(await nxWrong()){ txView('wrong'); return; }
-  if(!CC||CC.k!==k) return; if(!saleOpen()){ txView('closed'); return; }
-  await NX.ctx.buy(async(ph,x)=>{ if(!CC) return; if(ph==='sent') txView('pending',x); else if(ph==='confirmed') txView('done',x); else if(ph==='error') txView('failed',await failReason(x)); else if(ph==='wrong') txView('wrong'); else if(ph==='nowallet') candActs(); },k);
+  if(!W){ try{ await connectWallet(); }catch(e){ if(mine()) txView('failed',errMsg(e)); return; } if(L.dead||!W){ if(mine()) candActs(); return; } }
+  if(await nxWrong()){ if(mine()) txView('wrong'); return; }
+  if(!mine()) return; if(!saleOpen(day)){ txView('closed'); return; }
+  const run=NX.ctx.buy(async(ph,x)=>{ if(!mine()) return; if(ph==='sent') txView('pending',x); else if(ph==='confirmed') txView('done',x); else if(ph==='unsure') txView('unknown',null); else if(ph==='unknown') txView('unknown',x);
+    else if(ph==='reverted') txView('failed','It reached Ethereum but failed (reverted). '+(await soldTo(day))+'Only the network fee was spent.');
+    else if(ph==='cancelled') txView('failed','You cancelled it in your wallet after it was sent, so it did not go through. Only network fees were spent.');
+    else if(ph==='replaced') txView('failed','Your wallet replaced it with another transaction, so it did not go through. Check your wallet.'); else if(ph==='error') txView('failed',await failReason(x)); else if(ph==='wrong') txView('wrong'); else if(ph==='nowallet') candActs(); },k,L);
+  handed=true; await run;   /* send() owns the lock from here and lets it go */
+  } finally{ if(!handed) opFree(L); }
 }
 async function candShow(k){ if(!CC) return; CC.k=k; const seed=CC.cands[k];
   $('cck').textContent='TOMORROW’S PLATE · OPTION '+k; $('ccNum').textContent=(k+1)+' OF 32';
