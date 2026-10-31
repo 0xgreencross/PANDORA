@@ -812,7 +812,10 @@ let SES=0;
 const STALE=()=>Object.assign(new Error('Your wallet changed while this was waiting. Nothing was sent.'),{code:'STALE'});
 const sameAddr=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.toLowerCase()===b.toLowerCase();
 /* a wallet that throws instead of answering is a failed request, not a crash */
-const ask=(P,method,params)=>{ try{ return Promise.resolve(P.request(params===undefined?{method}:{method,params})); }catch(e){ return Promise.reject(e); } };
+const WC_NEEDS=new Set(['eth_sendTransaction','personal_sign','eth_signTypedData_v4','wallet_switchEthereumChain','wallet_addEthereumChain']);
+const ask=(P,method,params)=>{ const nud=!!P&&P===_WC&&WC_NEEDS.has(method)&&isPhone(), n=nud?wcNudge(method):null;
+  let r; try{ r=Promise.resolve(P.request(params===undefined?{method}:{method,params})); }catch(e){ r=Promise.reject(e); }
+  return n?r.finally(()=>wcNudgeOff(n)):r; };
 const chainOf=async P=>{ const c=await ask(P,'eth_chainId'); return typeof c==='string'&&/^0x[0-9a-f]+$/i.test(c)?parseInt(c,16):Number.isInteger(c)?c:NaN; };
 window.addEventListener('eip6963:announceProvider',e=>{ const d=e&&e.detail; if(d&&d.provider&&!WALLETS.some(w=>w.provider===d.provider)) WALLETS.push(d); });
 try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
@@ -840,7 +843,8 @@ function wcLoad(){ if(_WCNS) return Promise.resolve(_WCNS); if(_wcGlobal()) retu
   return new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='/wc.js'; sc.async=true;
     sc.onload=()=>{ const n=_wcGlobal(); if(n&&n.EthereumProvider) res(_WCNS=n); else rej(new Error('WalletConnect did not load.')); };
     sc.onerror=()=>rej(new Error('WalletConnect could not load in this browser.')); document.head.appendChild(sc); }); }
-async function wcInit(){ const NS=await wcLoad();
+async function wcInit(){ const p=await wcInit0(); wcHook(p); return p; }
+async function wcInit0(){ const NS=await wcLoad();
   const o={projectId:WC_PID,chains:[1],optionalChains:[1],showQrModal:false,metadata:{name:'DITHERVOID // STORMGLASS',description:'One artwork a day at a price that halves every 2.4 hours.',url:location.origin,icons:[location.origin+'/icon.png']}};
   try{ return await NS.EthereumProvider.init(o); }catch(e){ try{ Object.keys(localStorage).filter(k=>/^wc@2:|^WALLETCONNECT/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(x){} return await NS.EthereumProvider.init(o); } }
 const sheetOff=()=>$('wsheet').classList.remove('on');
@@ -850,13 +854,37 @@ function sheet(title,text,note,btns){ $('wsk').textContent=title; $('wsp').textC
 const pageLink=()=>'https://'+location.host+location.pathname;
 async function copyTo(btn,txt,done){ try{ await navigator.clipboard.writeText(txt); btn.textContent=done; }catch(e){ btn.textContent=txt.slice(0,60); } }
 let SHEET_CLOSE=null;
+/* WALLETCONNECT ON A PHONE (found Oct 31 on the practice page with Zerion inside an in-app browser): the library opens the wallet app
+   at the same moment it publishes the request, with window.open(_blank) = a blank window in in-app browsers, and iOS freezes this
+   page before the request is out, so the wallet shows "Awaiting request from Dapp" forever. Its own jump is switched off (it only
+   jumps when WALLETCONNECT_DEEPLINK_CHOICE is stored; the picked app is kept under SG_WC_APP instead). This sheet offers the jump
+   only after the relay has the request (session_request_sent), on the visitor's tap. Closing the sheet cancels nothing. */
+const WC_APP_KEY='SG_WC_APP';
+function wcApp(){ try{ const o=localStorage.getItem('WALLETCONNECT_DEEPLINK_CHOICE');
+    if(o){ if(!localStorage.getItem(WC_APP_KEY)) localStorage.setItem(WC_APP_KEY,o); localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE'); }
+    const a=JSON.parse(localStorage.getItem(WC_APP_KEY)||'null'); return a&&typeof a.name==='string'&&typeof a.href==='string'&&/^https:\/\/[^\s]+$/.test(a.href)?a:null; }catch(e){ return null; } }
+let NUDGE=null;
+function wcNudge(method){ const app=wcApp(), n={method,app,ev:null,btn:null,timer:null,close:null};
+  const go=()=>{ if(!n.btn||n.btn.disabled) return; const base=app.href.replace(/\/+$/,'');
+    location.href=n.ev?base+'/wc?requestId='+encodeURIComponent(n.ev.id)+'&sessionTopic='+encodeURIComponent(n.ev.topic):base+'/wc'; };
+  const B=sheet(app?'CONFIRM IN '+app.name:'CONFIRM IN YOUR WALLET','Sending the request to your wallet, one moment…','Nothing is paid until you confirm it in the wallet. You can reject it there too. Closing this box cancels nothing.',app?[['OPEN '+app.name,go,true]]:[]);
+  n.btn=app?B.firstChild:null; if(n.btn){ n.btn.disabled=true; n.btn.style.opacity='.4'; }
+  n.close=()=>wcNudgeOff(n); SHEET_CLOSE=n.close; NUDGE=n;
+  n.timer=setTimeout(()=>{ if(NUDGE===n&&!n.ev) wcNudgeSent(null); },8000);   /* no event after 8 s: the jump is offered anyway (the wallet lists what is waiting) */
+  return n; }
+function wcNudgeSent(ev){ const n=NUDGE; if(!n) return; if(ev) n.ev=ev; clearTimeout(n.timer); if(n.btn){ n.btn.disabled=false; n.btn.style.opacity=''; }
+  $('wsp').textContent=n.app?'The request is in '+n.app.name+' now. Open it, check it, confirm or reject, then come back to this page.':'The request is in your wallet now. Open your wallet app, check it, confirm or reject, then come back to this page.'; }
+function wcNudgeOff(n){ if(!n||NUDGE!==n) return; NUDGE=null; clearTimeout(n.timer); if(SHEET_CLOSE===n.close){ SHEET_CLOSE=null; sheetOff(); } }
+function wcHook(p){ try{ const c=p&&p.signer&&p.signer.client; if(!c||c.__sg) return; c.__sg=1;
+    c.on('session_request_sent',ev=>{ const n=NUDGE; if(n&&ev&&ev.request&&ev.request.method===n.method&&ev.id!=null&&ev.topic) wcNudgeSent(ev); }); }catch(e){ console.warn('walletconnect hook',e); } }
+wcApp();
 /* opens on the tap, before the relay answers; the wallet buttons wake when the connection link arrives. Resolves with a provider, or 'builtin' */
 function wcConnect(hasBuiltIn){
   return new Promise((resolve,reject)=>{
     let uri=null, done=false, p=null, dead=null;
     const onUri=u=>{ uri=u; wake(true); $('wsp').textContent='Tap the app that holds your wallet.'; };
     const finish=(f,v)=>{ if(done) return; done=true; clearTimeout(dead); SHEET_CLOSE=null; sheetOff(); try{ if(p) p.removeListener('display_uri',onUri); }catch(x){} f(v); };
-    const pick=a=>()=>{ if(!uri) return; try{ localStorage.setItem('WALLETCONNECT_DEEPLINK_CHOICE',JSON.stringify({name:a[0],href:a[1]})); }catch(x){} location.href=a[1]+'/wc?uri='+encodeURIComponent(uri); };
+    const pick=a=>()=>{ if(!uri) return; try{ localStorage.setItem(WC_APP_KEY,JSON.stringify({name:a[0],href:a[1]})); localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE'); }catch(x){} location.href=a[1]+'/wc?uri='+encodeURIComponent(uri); };
     const builtin=hasBuiltIn?[['USE THIS BROWSER’S WALLET',()=>finish(resolve,'builtin')]]:[];
     const btns=WC_APPS.map((a,i)=>[a[0],pick(a),i===0]).concat([['OTHER WALLET',()=>{ if(uri) location.href=uri; }],['COPY CONNECTION LINK',b=>{ if(uri) copyTo(b,uri,'COPIED: PASTE IT IN YOUR WALLET'); }]],builtin);
     const B=sheet('CONNECT YOUR WALLET','Reaching WalletConnect, one moment…','Pick the app that holds your wallet. It opens, you approve the connection, then come back to this page to collect. Connecting costs nothing.',btns);
