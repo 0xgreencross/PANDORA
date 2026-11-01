@@ -1,0 +1,46 @@
+# Audit 4, Part 1: does the STORMGLASS wallet harness report truthfully? (fresh verification)
+
+Worktree /home/claude/wt-a4-scan, branch audit/wallet-4-scan (from f1026a0 = main 0cd4ea4 + the @audit4 registration commit). Harness files read in full: run.sh, wallet.test.js (runner), mockwallet.js, fakechain.js, ritual.js, harness.test.js and every case file. index.html untouched (sha256 8b0c08c6…f2ef = the baseline). Nothing pushed.
+
+Method: controlled runs with a TEMPORARY self-test file (`audit4zz_selftest.test.js`, cases st1-st14, stc, std) and temporary duplicate/malformed-id files, then removed (the worktree holds only audit4scan.test.js as a new file; the self-test file is kept outside the repo in the session scratchpad for re-use). Evidence: /home/claude/audit4/ev/scan/h/ (logs, results-selftest.json).
+
+## Verdict per item
+
+| # | Item | Verdict | Evidence |
+|---|---|---|---|
+| 1 | Assertion failure fails | OK | st1 `pass:false`, st6 returns `undefined`, st7 `pass:'yes'` all FAIL (runner requires `pass===true`). selftest.log, rc=1. |
+| 2 | Exception in the case fails | OK | st2 throws: FAIL `{"exception":"st2 boom"}`. |
+| 3 | Uncaught page error fails | OK | st3: FAIL `failedOnPageErrors:["Error: st3 uncaught in page"]`. |
+| 4 | Unhandled rejection in the page fails | OK | st4: FAIL `failedOnPageErrors:["Error: st4 unhandled rejection"]` (Chromium reports it through `pageerror`). |
+| 5 | Renderer crash fails | OK | st5 (`chrome://crash`): FAIL `["page crashed"]`. |
+| 6 | Errors in inner `boot()` contexts fail | OK | st9: FAIL `["Error: st9 inner context"]`. |
+| 7 | Browser crash detected | OK for the status, **gap G1** for the report | stc (CDP `Browser.crash`): `HARNESS FAIL the run stopped before it finished, in case stc`, rc=1 (crash.log, crash2.log). But in this path (`beforeExit`) the cases selected after stc are NOT listed (crash2: `std` selected, never mentioned), no `RAN` line is printed and **no results JSON is written**, so the passes before the crash (st8) are lost. The README says "the cases not run are listed": true only in the other path (browser `disconnected` noticed after a case returns: timeout.log shows `NOT RUN (browser gone): st13,st14`). |
+| 8 | Launch failure detected | OK | `CHROMIUM=/nonexistent`: `HARNESS FAIL browserType.launch…`, rc=1 (launch.log). |
+| 9 | run.sh preserves the exit status | OK | node's status equals run.sh's in every probe: 0 (target.log), 1 (selftest, crash, launch), 2 (unknown, empty, dup, badid). Port already taken: `HARNESS FAIL the HTTP server on 127.0.0.1:8954 did not start`, rc=1 (port.log). An outer `timeout` kill: rc 124, the log has no `XDONE` line, no node/python/chromium left behind (timeout.log/.rc). A poller must treat a missing `XDONE rc=0` as a failure. |
+| 10 | Unknown ids fail clearly (exit 2) | OK | `CASES=nope` and `CASES=a1,zz9`: `HARNESS FAIL unknown case ids in CASES: …`, rc=2. |
+| 11 | Duplicate / malformed ids fail (exit 2) | OK | a file re-registering `a1`: `HARNESS FAIL duplicate case id a1`, rc=2; id `bad id!`: `HARNESS FAIL bad case id`, rc=2 (dup.log, badid.log). |
+| 12 | Empty selection fails (exit 2) | OK | `CASES=','` and `CASES=@audit4` with no audit4 file present: `selects no case`, rc=2 (empty.log, group-empty.log). |
+| 13 | Subset runs print selected and executed ids | OK (one note) | `SELECTED n of N: ids · target <path> sha256 <16 hex>` and `RAN n: ids` in every log. Note: cases run in registration order, not in the order written in CASES (crash.log: `CASES=st8,stc,st1` ran st1, st8, stc). Harmless, but the log order is not the request order. |
+| 14 | Race barriers reached | OK where gated; **list G3** of sleep-bounded cases | Gated cases require `gateHit`/`g` (waitGate returns true only when the mock holds the request). Static scan of every case body (gates vs `sleep(`): see "Cases relying on sleeps" below. |
+| 15 | "Wallet asked" vs "mocked broadcast" distinguished | OK | mockwallet logs every request in `__MW.log`; only an `eth_sendTransaction` that passes gate/never/reject/enforceChainId reaches `__MW.sends`. Results carry `wallet:[{asked,sent}]` per context. Baseline: q4 2/1, q5 1/0, q6 1/0, v3 1/0, u13 2/1; everywhere else asked = sent. New a4s cases count requests (`__MW.log`), not broadcasts. |
+| 16 | Isolation: contexts, storage, timers, pending mock answers | OK | hz2 PASS (baseline). New probe st11/st12: st11 leaves a wallet request held at a gate, a 200 ms interval and a 1.5 s timer that write storage and call a probe RPC; st12 (next case) waits 2.5 s: probe counters unchanged (tick 2 → 2, leak 0), localStorage/sessionStorage empty, mock log empty, no held request (`waiting:0`), no sends. |
+| 17 | Unexpected external traffic blocked and recorded (incl. WebSockets) | OK for requests and sockets; **gap G2** for WebRTC/UDP | hz1 PASS. st13: sendBeacon, `<img>`, EventSource, `fetch(no-cors)` to outside hosts all refused (404) and recorded in `outsideRefused`; `wss://ws.example.net` and even `ws://127.0.0.1:8961` refused (1008) and recorded. A `<link rel=preconnect>` to a local listener made no connection. **WebRTC: an RTCPeerConnection with `stun:127.0.0.1:8962` sent 4 UDP packets to a local listener, and nothing was recorded** (Playwright routing does not see UDP). Neither index.html nor wc.js uses RTCPeerConnection (grep: 0), so no case is affected today; the probe used only 127.0.0.1. Refused traffic is reported per case but does not fail it (by choice since audit 3). |
+| 18 | No real wallet / RPC write / signing / relay reachable | OK | hz1 PASS in the baseline: `eth_sendRawTransaction` to drpc/publicnode answered by the fake chain; relay.walletconnect.org/.com (https) and example.com refused and recorded; `wss://relay.walletconnect.org` never opens; no `window.ethereum`, no announcement, no extension target. Wallet writes exist only in the in-page mock. Limitation: Chromium's own background connections (not page requests) are outside routing; audit 3 saw attempts to mtalk.google.com in the proxy log. |
+| 19 | Tests run the production page | OK | st14 fetches `/` through the page's own origin and hashes it: equal to sha256(TARGET) for index.html (8b0c08c6…) and for a marked copy outside the repo (a218a8fe…, marker present in the DOM); the SELECTED line prints the same first 16 hex. Only `/` and `/index.html` come from TARGET; every other same-origin file (wc.js, /glass, images) comes from the worktree run.sh serves. |
+| 20 | Console errors | documented, not failing | st10: a `console.error` alone passes (only uncaught errors, rejections and crashes fail). Pages log a `Failed to load resource: 404` from a same-origin file the worktree server does not have (the server log shows missing plate thumbnails, plates/t/*.png). |
+
+## Cases relying on sleeps (G3)
+Static scan of every case body (counts of waitGate/lkHeld/gate vs `sleep(n)`), then read by hand. Not timing-safe:
+- **Delay instead of a barrier:** q1 (send delayed 1500 ms, 5 presses in ~0.3 s), i4 (requestAccounts delayed 600 ms, 3 clicks in ~0.1 s). Known since audit 3.
+- **"Nothing sent" asserted after a fixed sleep, with no terminal state asserted:** c (4 s after release), d (3.5 s), e (3.5 s), f (3.5 s), a2 (2.5 s + 2 s). If the page took longer than the sleep to send, these would pass falsely. p3, p4, v1, v2, z1, u6, a1 wait for their terminal toast/view first and are sound.
+- **A redraw assumed from a sleep, never asserted:** l2 (1.3 s, pledge box redrawn each second) and l3 (5.6 s, bid box redrawn every 5 s) assert the caret/selection after the sleep but not that a redraw happened in between; they would pass vacuously if the timer stopped. l1, c1 call `REDRAW()` themselves; l4, c2 assert the page moved on.
+- Inherent timers, asserted: u2 (8 s fallback: asserts the text changed), u12 (20 s), k3/k5 (1.5 s cut: assert the STILL DISCONNECTING sheet), y7/y8 (time bounds with wide margins), a4s5 (20 s).
+
+## Gaps found (harness only; not fixed here, no runner change made)
+- **G1** Browser crash: exit status right (1), but no NOT RUN list, no RAN line and no results JSON in the `beforeExit` path. Suggested repair: keep `sel`/`res` at module scope, and in `beforeExit` print `RAN`/`NOT RUN` and write the partial results before `process.exit(1)`; also race each case against the `disconnected` event so the normal path is taken.
+- **G2** UDP (WebRTC/STUN) is neither blocked nor recorded. Suggested repair: launch Chromium with `--force-webrtc-ip-handling-policy=disable_non_proxied_udp` (or `--webrtc-ip-handling-policy=disable_non_proxied_udp`) and add an `RTCPeerConnection` probe to hz1.
+- **G3** The sleep-bounded negative assertions above (c, d, e, f, a2) and the unasserted redraws (l2, l3). Suggested repair: assert a terminal state (the stop toast, `OPLOCK===null`) before asserting "nothing sent"; count draw() calls (wrap `REDRAW`) in l2/l3.
+- Run order is registration order, not CASES order (cosmetic).
+
+## Runs (all on untouched 0cd4ea4 page)
+selftest.log (14 cases: 8 FAIL as designed, 6 PASS, rc=1), crash.log, crash2.log, launch.log, unknown.log, unknown2.log, empty.log, dup.log, badid.log, port.log, group-empty.log, timeout.log/.rc, target.log. Baseline full run 113/113 (ev/baseline-0cd4ea4.log). Full run with the new @audit4 scan cases: see SCAN_REPORT.md.
