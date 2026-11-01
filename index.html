@@ -798,10 +798,21 @@ const WALLETS=[]; let EP=null;
    provider bumps SES; work that started under an older number stops before it reaches the wallet (see opBegin). */
 let SES=0;
 const STALE=()=>Object.assign(new Error('Your wallet changed while this was waiting. Nothing was sent.'),{code:'STALE'});
+/* THE OPERATION'S CHAIN. Every chainChanged event that names a chain other than mainnet (or nothing readable) is counted for the
+   provider that sent it (follow). A write keeps that count as it stood just before the wallet last said "mainnet" (opBegin), and opLive
+   stops the write once the count moves, even if the wallet is back on mainnet when the page looks again: the wallet was seen on another
+   network after the check. Events naming mainnet count for nothing (the write's own switch announces mainnet, early or late), and
+   another provider's events never touch it. SES is not bumped: the session did not change, only this write is stopped. */
+const CHAINREV=new WeakMap(), chainRev=P=>CHAINREV.get(P)||0;
+const MOVED=()=>Object.assign(new Error('Your wallet changed network while this was waiting. Nothing was sent.'),{code:'STALE'});
+const OTHER_ACCT=()=>Object.assign(new Error('Your wallet changed to another account. Nothing was sent.'),{code:'STALE'});
+const NO_ACCT=()=>Object.assign(new Error('Your wallet gives this page no account now (locked or disconnected). Nothing was sent.'),{code:'STALE'});
 const sameAddr=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.toLowerCase()===b.toLowerCase();
 /* a wallet that throws instead of answering is a failed request, not a crash */
 const WC_NEEDS=new Set(['eth_sendTransaction','personal_sign','eth_signTypedData_v4','wallet_switchEthereumChain','wallet_addEthereumChain']);
-const ask=(P,method,params)=>{ const nud=!!P&&P===_WC&&WC_NEEDS.has(method)&&isPhone(), n=nud?wcNudge(method):null;
+const ask=(P,method,params)=>{ const nud=!!P&&P===_WC&&WC_NEEDS.has(method)&&isPhone();
+  if(nud&&Array.isArray(params)) params=params.slice();   /* this request's own params array: the sheet knows its request by it (wcHook) */
+  const n=nud?wcNudge(method,P,params):null;
   let r; try{ r=Promise.resolve(P.request(params===undefined?{method}:{method,params})); }catch(e){ r=Promise.reject(e); }
   return n?r.finally(()=>wcNudgeOff(n)):r; };
 const chainOf=async P=>{ const c=await ask(P,'eth_chainId'); return typeof c==='string'&&/^0x[0-9a-f]+$/i.test(c)?parseInt(c,16):Number.isInteger(c)?c:NaN; };
@@ -810,10 +821,15 @@ try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
 const isMM=w=>!!(w&&w.info&&w.info.rdns==='io.metamask');
 function walletList(){ const L=[]; if(window.ethereum) L.push(window.ethereum); WALLETS.slice().sort((a,b)=>isMM(b)-isMM(a)).forEach(w=>{ if(!L.includes(w.provider)) L.push(w.provider); }); return L; }   /* the browser's default wallet first (the one the user chose), then every other announced wallet as a fallback */
 function anyWallet(){ return EP||walletList()[0]||null; }
-async function walletReads(){ try{ const P=anyWallet(); return !!P && Number(await P.request({method:'eth_chainId'}))===CFG.chainId; }catch(e){ return false; } }
+async function walletReads(){ let P=null; try{ P=anyWallet(); }catch(e){} if(!P) return false;   /* the picker's 1.5 s cut: a wallet that never answers is no reader, and the first tick still ends (CANNOT REACH ETHEREUM, then the 30 s retry) */
+  const c=await Promise.race([chainOf(P).catch(()=>NaN),new Promise(r=>setTimeout(()=>r(NaN),1500))]); return c===CFG.chainId; }
+/* the wallet as a reader gets the public readers' 8 s per request (fr.timeout): a wallet that answers eth_chainId but never a read cannot
+   hold the tick (a4v2); it reads only, so only request() is passed on */
+const cutReads=P=>({request:a=>new Promise((res,rej)=>{ const t=setTimeout(()=>rej(new Error('The wallet did not answer the read in 8 seconds.')),8000);
+  Promise.resolve().then(()=>P.request(a)).then(v=>{ clearTimeout(t); res(v); },e=>{ clearTimeout(t); rej(e); }); })});
 async function bindRead(){ const net=ethers.Network.from(CFG.chainId); let src=READ_RPCS[rpcAt%READ_RPCS.length];
   if(src==='wallet'&&!(await walletReads())){ rpcAt++; src=READ_RPCS[rpcAt%READ_RPCS.length]; }
-  if(src==='wallet'){ ro=new ethers.BrowserProvider(anyWallet(),net); }
+  if(src==='wallet'){ ro=new ethers.BrowserProvider(cutReads(anyWallet()),net); }
   else { const fr=new ethers.FetchRequest(src); fr.timeout=8000; fr.setThrottleParams({maxAttempts:1}); ro=new ethers.JsonRpcProvider(fr,net,{staticNetwork:net,batchMaxCount:4}); }
   storm=new ethers.Contract(CFG.contract,ABI,ro); glass=new ethers.Contract(CFG.glass,GABI,ro); giftC=null; }
 async function connectRead(){ if(!CFG.contract) return; await bindRead(); }
@@ -846,43 +862,61 @@ let SHEET_CLOSE=null;
    at the same moment it publishes the request, with window.open(_blank) = a blank window in in-app browsers, and iOS freezes this
    page before the request is out, so the wallet shows "Awaiting request from Dapp" forever. Its own jump is switched off (it only
    jumps when WALLETCONNECT_DEEPLINK_CHOICE is stored; the picked app is kept under SG_WC_APP instead). This sheet offers the jump
-   only after the relay has the request (session_request_sent), on the visitor's tap. Closing the sheet cancels nothing. */
+   only after the relay has the request (session_request_sent), on the visitor's tap. Closing the sheet cancels nothing.
+   WHICH REQUEST: the event is taken only for the sheet's own request: from the client of the provider the request went to, for the same
+   method, with the very params array the page passed (the shipped wc.js hands it through: EthereumProvider.request ->
+   UniversalProvider.request {request:{...args}} -> engine.request emits {topic,request,chainId,id}; the id is made inside the engine,
+   so the page cannot know it earlier), with the topic of that provider's session when the request was made, and a numeric id. Only
+   then does OPEN carry requestId + sessionTopic. Anything less (a switch request, which wc.js rebuilds; no session topic; a second,
+   different event for the same request; a bad id) gives no request-specific link: after 8 s OPEN only opens the wallet, and the text
+   does not claim the request is there. Events for other sheets, sessions or providers change nothing. */
 const WC_APP_KEY='SG_WC_APP';
 function wcApp(){ try{ const o=localStorage.getItem('WALLETCONNECT_DEEPLINK_CHOICE');
     if(o){ if(!localStorage.getItem(WC_APP_KEY)) localStorage.setItem(WC_APP_KEY,o); localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE'); }
     const a=JSON.parse(localStorage.getItem(WC_APP_KEY)||'null'); return a&&typeof a.name==='string'&&typeof a.href==='string'&&/^https:\/\/[^\s]+$/.test(a.href)?a:null; }catch(e){ return null; } }
 let NUDGE=null;
-function wcNudge(method){ const app=wcApp(), n={method,app,ev:null,btn:null,timer:null,close:null};
+const wcTopic=P=>{ try{ const s=P&&P.session, t=s&&s.topic; return typeof t==='string'&&t?t:null; }catch(e){ return null; } };
+function wcNudge(method,P,params){ const app=wcApp(), n={method,app,ev:null,btn:null,timer:null,close:null,P,params:Array.isArray(params)?params:null,topic:wcTopic(P),amb:false};
   const go=()=>{ if(!n.btn||n.btn.disabled) return; const base=app.href.replace(/\/+$/,'');
     location.href=n.ev?base+'/wc?requestId='+encodeURIComponent(n.ev.id)+'&sessionTopic='+encodeURIComponent(n.ev.topic):base+'/wc'; };
   const B=sheet(app?'CONFIRM IN '+app.name:'CONFIRM IN YOUR WALLET','Sending the request to your wallet, one moment…','Nothing is paid until you confirm it in the wallet. You can reject it there too. Closing this box cancels nothing.',app?[['OPEN '+app.name,go,true]]:[]);
   n.btn=app?B.firstChild:null; if(n.btn){ n.btn.disabled=true; n.btn.style.opacity='.4'; }
   n.close=()=>wcNudgeOff(n); SHEET_CLOSE=n.close; NUDGE=n;
-  n.timer=setTimeout(()=>{ if(NUDGE===n&&!n.ev) wcNudgeSent(null); },8000);   /* no event after 8 s: the jump is offered anyway (the wallet lists what is waiting) */
+  n.timer=setTimeout(()=>{ if(NUDGE===n&&!n.ev) wcNudgeSent(n,null); },8000);   /* no event after 8 s: the jump is offered anyway (the wallet lists what is waiting) */
   return n; }
-function wcNudgeSent(ev){ const n=NUDGE; if(!n) return; if(ev) n.ev=ev; clearTimeout(n.timer); if(n.btn){ n.btn.disabled=false; n.btn.style.opacity=''; }
+function wcNudgeSent(n,ev){ if(!n||NUDGE!==n) return; n.ev=ev||null; clearTimeout(n.timer); if(n.btn){ n.btn.disabled=false; n.btn.style.opacity=''; }
   $('wsp').textContent=n.ev?(n.app?'The request is in '+n.app.name+' now. Open it, check it, confirm or reject, then come back to this page.':'The request is in your wallet now. Open your wallet app, check it, confirm or reject, then come back to this page.')
     :'No word yet that the request reached '+(n.app?n.app.name:'your wallet')+'. Open '+(n.app?n.app.name:'your wallet app')+' and look: if it is waiting there, check it, confirm or reject, then come back to this page.'; }   /* no session_request_sent after 8 s: the page has not seen it leave */
 function wcNudgeOff(n){ if(!n||NUDGE!==n) return; NUDGE=null; clearTimeout(n.timer); if(SHEET_CLOSE===n.close){ SHEET_CLOSE=null; sheetOff(); } }
 function wcHook(p){ try{ const c=p&&p.signer&&p.signer.client; if(!c||c.__sg) return; c.__sg=1;
-    c.on('session_request_sent',ev=>{ const n=NUDGE; if(n&&ev&&ev.request&&ev.request.method===n.method&&ev.id!=null&&ev.topic) wcNudgeSent(ev); }); }catch(e){ console.warn('walletconnect hook',e); } }
+    c.on('session_request_sent',ev=>{ const n=NUDGE; if(!n||n.amb||!n.params) return;
+      let own=false; try{ own=!!n.P&&n.P.signer.client===c; }catch(e){} if(!own) return;   /* another provider's client */
+      const q=ev&&typeof ev==='object'?ev.request:null;
+      if(!q||typeof q!=='object'||q.method!==n.method||q.params!==n.params) return;   /* not this sheet's request */
+      if(n.ev){ if(ev.id!==n.ev.id||ev.topic!==n.ev.topic){ n.amb=true; wcNudgeSent(n,null); } return; }   /* the same event again: kept; a different one: which id is right cannot be told */
+      if(!n.topic||ev.topic!==n.topic||!(Number.isSafeInteger(ev.id)&&ev.id>0)){ n.amb=true; return; }   /* this request, but its session or id cannot be trusted: the 8 s fallback only opens the wallet */
+      wcNudgeSent(n,ev); }); }catch(e){ console.warn('walletconnect hook',e); } }
 wcApp();
 /* opens on the tap, before the relay answers; the wallet buttons wake when the connection link arrives. Resolves with a provider, or 'builtin' */
 function wcConnect(hasBuiltIn){
   return new Promise((resolve,reject)=>{
-    let uri=null, done=false, p=null, dead=null;
-    const onUri=u=>{ uri=u; wake(true); $('wsp').textContent='Tap the app that holds your wallet.'; };
+    let uri=null, done=false, p=null, dead=null, gone=false, picked=false;   /* gone: the 20 s sheet has replaced the app buttons; picked: an app button was tapped for this pairing */
+    const onUri=u=>{ uri=u; if(gone){ gone=false; pickSheet(); } wake(true); $('wsp').textContent='Tap the app that holds your wallet.'; };   /* a link that comes after the 20 s sheet brings the app buttons back first */
     const finish=(f,v)=>{ if(done) return; done=true; clearTimeout(dead); SHEET_CLOSE=null; sheetOff(); try{ if(p) p.removeListener('display_uri',onUri); }catch(x){} f(v); };
-    const pick=a=>()=>{ if(!uri) return; try{ localStorage.setItem(WC_APP_KEY,JSON.stringify({name:a[0],href:a[1]})); localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE'); }catch(x){} location.href=a[1]+'/wc?uri='+encodeURIComponent(uri); };
+    /* THE REMEMBERED APP belongs to the pairing it was tapped for: OTHER WALLET, COPY CONNECTION LINK, or a pairing that completes with no app
+       button tapped, forgets an older one, so a confirmation sheet never names or opens an app that does not hold this session */
+    const forget=()=>{ picked=false; try{ localStorage.removeItem(WC_APP_KEY); localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE'); }catch(x){} };
+    const pick=a=>()=>{ if(!uri) return; picked=true; try{ localStorage.setItem(WC_APP_KEY,JSON.stringify({name:a[0],href:a[1]})); localStorage.removeItem('WALLETCONNECT_DEEPLINK_CHOICE'); }catch(x){} location.href=a[1]+'/wc?uri='+encodeURIComponent(uri); };
     const builtin=hasBuiltIn?[['USE THIS BROWSER’S WALLET',()=>finish(resolve,'builtin')]]:[];
-    const btns=WC_APPS.map((a,i)=>[a[0],pick(a),i===0]).concat([['OTHER WALLET',()=>{ if(uri) location.href=uri; }],['COPY CONNECTION LINK',b=>{ if(uri) copyTo(b,uri,'COPIED: PASTE IT IN YOUR WALLET'); }]],builtin);
-    const B=sheet('CONNECT YOUR WALLET','Reaching WalletConnect, one moment…','Pick the app that holds your wallet. It opens, you approve the connection, then come back to this page to collect. Connecting costs nothing.',btns);
+    const btns=WC_APPS.map((a,i)=>[a[0],pick(a),i===0]).concat([['OTHER WALLET',()=>{ if(uri){ forget(); location.href=uri; } }],['COPY CONNECTION LINK',b=>{ if(uri){ forget(); copyTo(b,uri,'COPIED: PASTE IT IN YOUR WALLET'); } }]],builtin);
+    const pickSheet=()=>sheet('CONNECT YOUR WALLET','Reaching WalletConnect, one moment…','Pick the app that holds your wallet. It opens, you approve the connection, then come back to this page to collect. Connecting costs nothing.',btns);
+    const B=pickSheet();   /* #wsBtns: the same box for every sheet; wake() acts on the buttons it holds now */
     const wake=on=>[...B.children].forEach((b,i)=>{ if(i<WC_APPS.length+2){ b.disabled=!on; b.style.opacity=on?'':'.4'; } }); wake(false);
     SHEET_CLOSE=()=>finish(reject,Object.assign(new Error('Cancelled. Nothing was sent.'),{code:4001}));
-    dead=setTimeout(()=>{ if(!uri&&!done){ sheet('WALLETCONNECT DID NOT ANSWER','This browser may be blocking it. Open dithervoid.art inside your wallet app instead: in MetaMask, Rainbow or Zerion, open the app’s own browser and paste the link.','',
+    dead=setTimeout(()=>{ if(!uri&&!done){ gone=true; sheet('WALLETCONNECT DID NOT ANSWER','This browser may be blocking it. Open dithervoid.art inside your wallet app instead: in MetaMask, Rainbow or Zerion, open the app’s own browser and paste the link.','',
       [['OPEN IN METAMASK',()=>{ location.href='https://link.metamask.io/dapp/'+location.host+location.pathname; },true],['COPY THE LINK',b=>copyTo(b,pageLink(),'COPIED: PASTE IT IN YOUR WALLET’S BROWSER')]].concat(builtin)); } },20000);
     (async()=>{ try{ p=_WC||(_WC=await wcInit()); if(done) return; if(p.accounts&&p.accounts.length) return finish(resolve,p);
-      p.on('display_uri',onUri); await p.enable(); finish(resolve,p); }catch(e){ console.warn('walletconnect',e); if(!done&&uri) finish(reject,e); } })();
+      p.on('display_uri',onUri); await p.enable(); if(!done&&!picked) forget(); finish(resolve,p); }catch(e){ console.warn('walletconnect',e); if(!done&&uri) finish(reject,e); } })();
   });
 }
 /* a computer with no wallet extension */
@@ -942,10 +976,11 @@ function walletMenu(){ sheet('CONNECTED',me,'Connected with '+walletName(EP)+'.'
 const REVOKING=new Map();   /* provider -> its revocation still in flight */
 function disconnect(revoke){
   const P=EP; SES++; EP=null; signer=null; me=null; W=null; welcomed=''; NX.wrong=false;
-  if(OPLOCK&&!OPLOCK.handed){ OPLOCK.dead=true; OPLOCK=null; }   /* a write still on its way to the wallet stops (opLive); one the wallet holds keeps the lock */
+  let K=null; if(OPLOCK&&!OPLOCK.handed){ K=OPLOCK; K.dead=true; OPLOCK=null; }   /* a write still on its way to the wallet stops (opLive); one the wallet holds keeps the lock */
   if(revoke) remember(null);
   walletLabel(); $('welcome').hidden=true; $('nx-mine').hidden=true; markMe();
   $('seatsNote').textContent='Connect your wallet to see your seats and what they have earned.'; $('claim').disabled=true; $('withdraw').style.display='none';
+  if(K&&typeof K.onDead==='function'){ try{ K.onDead(); }catch(e){ console.warn('stopped write',e); } }   /* its owner says it stopped (COLLECT's dialog) */
   if(revoke&&P&&!REVOKING.has(P)){ const r={}, wc=P===_WC&&typeof P.disconnect==='function';
     r.q=(wc?Promise.resolve().then(()=>P.disconnect()):ask(P,'wallet_revokePermissions',[{eth_accounts:{}}])).catch(e=>console.warn('revoke',e)).then(()=>{ if(REVOKING.get(P)===r) REVOKING.delete(P); });
     REVOKING.set(P,r); }
@@ -968,7 +1003,8 @@ function follow(P){ if(!P||HEARD.has(P)||typeof P.on!=='function') return; HEARD
   const on=(ev,f)=>{ try{ P.on(ev,f); }catch(e){ console.warn('wallet events',e); } };
   on('accountsChanged',a=>{ onAccounts(P,a).catch(e=>console.error(e)); });
   on('disconnect',()=>{ if(P===EP) disconnect(false); });
-  on('chainChanged',c=>{ if(P!==EP) return; NX.wrong=(typeof c==='string'?parseInt(c,16):Number(c))!==CFG.chainId; walletLabel(); }); }
+  on('chainChanged',c=>{ const id=typeof c==='string'?parseInt(c,16):Number(c); if(id!==CFG.chainId) CHAINREV.set(P,chainRev(P)+1);   /* counted for any provider: a write bound to it stops (opLive) */
+    if(P!==EP) return; NX.wrong=id!==CFG.chainId; walletLabel(); }); }
 async function onAccounts(P,a){ if(P!==EP) return; const gen=SES;
   let list=Array.isArray(a)?a.filter(isAddr):[];
   if(!list.length){   /* an empty list may be a revocation a newer grant already replaced: the wallet's eth_accounts decides */
@@ -1016,7 +1052,10 @@ async function connectOnce(){
   return true;
 }
 /* the one place the session is set: a new number, so anything still running for the old one stops */
-function setSession(P,acct){ SES++; EP=P; me=ethers.getAddress(acct); signer=new ethers.JsonRpcSigner(new ethers.BrowserProvider(P),me); W=new ethers.Contract(CFG.contract,ABI,signer); welcomed=''; walletLabel(); }
+function setSession(P,acct){ const was=me; SES++; EP=P; me=ethers.getAddress(acct); signer=new ethers.JsonRpcSigner(new ethers.BrowserProvider(P),me); W=new ethers.Contract(CFG.contract,ABI,signer); welcomed=''; walletLabel(); if(!sameAddr(was,me)) seatsReading(); }
+/* the seats view belongs to one account: on a new account nothing of the old one stays on screen (seats, earnings, the board's row,
+   CLAIM, WITHDRAW) until refreshSeats answers for the new one; a read that fails leaves it so until the next tick reads again */
+function seatsReading(){ $('nx-mine').hidden=true; $('seatsNote').textContent='Reading your seats…'; $('claim').disabled=true; $('withdraw').style.display='none'; markMe(); }
 /* the wallet's own words: ethers hides wallet errors it does not know behind "could not coalesce error" */
 function errMsg(e){ const inner=(e&&(e.error||(e.info&&e.info.error)))||{}; const code=inner.code??(e&&e.code);
   if(code===-32002) return 'Your wallet already has a request waiting. Open it from the browser toolbar, finish or cancel it, then try again.';
@@ -1078,22 +1117,28 @@ const UNSURE=x=>Object.assign(new Error('Your wallet did not say whether it sent
    chain and asks the wallet to switch if it must (a wallet left on Base or Arbitrum would otherwise send the ETH to this same
    address on that chain, where no contract lives), then builds its own provider, signer and contract from what it captured:
    never the globals, never a provider made before a switch. Right before the wallet is asked to send, it looks again: the same
-   session number, the same provider, the same account first in eth_accounts, the same chain. Anything else, nothing is sent. */
-function opLive(op){ if(op.gen!==SES||op.P!==EP||!sameAddr(op.acct,me)||(op.lock&&op.lock.dead)) throw STALE(); }
+   session number, the same provider, the same account first in eth_accounts, the same chain. Anything else, nothing is sent.
+   The chain is also held by events: once the wallet has said mainnet, a chainChanged naming another chain from this provider stops the
+   write at the next opLive (see CHAINREV), and the last opLive runs with nothing awaited before the provider is invoked. */
+function opLive(op){ if(op.gen!==SES||op.P!==EP||!sameAddr(op.acct,me)||(op.lock&&op.lock.dead)) throw STALE(); if(op.crev!=null&&chainRev(op.P)!==op.crev) throw MOVED(); }
 async function opBegin(L){
-  const op={gen:SES,P:EP,acct:me,chain:CFG.chainId,lock:L||null}; if(!op.P||!op.acct||(L&&L.dead)) throw STALE();
-  let c=await chainOf(op.P); opLive(op);
-  if(c!==op.chain){
+  const op={gen:SES,P:EP,acct:me,chain:CFG.chainId,lock:L||null,crev:null}; if(!op.P||!op.acct||(L&&L.dead)) throw STALE();
+  let r=chainRev(op.P), c=await chainOf(op.P); opLive(op);
+  if(c!==op.chain){   /* establishing the chain: the write's own switch (what the wallet announces while it switches is not held against it) */
     try{ await ask(op.P,'wallet_switchEthereumChain',[{chainId:'0x'+op.chain.toString(16)}]); }catch(e){ console.warn('switch',e); }
-    opLive(op); c=await chainOf(op.P); opLive(op);
+    opLive(op); r=chainRev(op.P); c=await chainOf(op.P); opLive(op);
     if(c!==op.chain){ NX.wrong=true; walletLabel(); return null; } }
+  op.crev=r; opLive(op);   /* bound from the read that said mainnet: another chain announced since then stops this write */
   op.bp=new ethers.BrowserProvider(op.P,op.chain);   /* made after the check and bound to mainnet */
   op.signer=new OpSigner(op); op.C=new ethers.Contract(CFG.contract,ABI,op.signer);
   return op;
 }
 async function opCheck(op){ opLive(op);
   const [acc,c]=await Promise.all([ask(op.P,'eth_accounts'),chainOf(op.P)]); opLive(op);
-  if(!Array.isArray(acc)||!sameAddr(acc[0],op.acct)) throw STALE();
+  if(!Array.isArray(acc)||!sameAddr(acc[0],op.acct)){   /* the wallet is on another account, or gives none, and sent no event: this write stops, and the page
+       follows what it saw (onAccounts, as for the event: another account is taken; none is double-checked, then disconnects) */
+    if(!Array.isArray(acc)||(acc.length&&!isAddr(acc[0]))) throw STALE();   /* malformed (not a list, or a first entry that is no address): stop, follow nothing */
+    onAccounts(op.P,acc.slice(0,1)).catch(e=>console.error(e)); throw acc.length?OTHER_ACCT():NO_ACCT(); }
   if(c!==op.chain) throw Object.assign(new Error('Your wallet moved to another network. Nothing was sent.'),{code:'WRONG_CHAIN'}); }
 /* the operation's signer: ethers' own, with the last look placed between the filled-in transaction and eth_sendTransaction
    (no queue in between: the request goes straight to the captured provider), and the chain id written into the request */
@@ -1122,20 +1167,38 @@ class OpSigner extends ethers.JsonRpcSigner{
    wallet when the readers have not seen it (a private mempool), never waiting on it for longer than TRACK.timeout. */
 const TRACK={rpcs:[CFG.rpc,'https://rpc.mevblocker.io','https://eth.drpc.org'],timeout:8000,poll:3000,lost:600000,stop:3600000,scan:24};
 let trackAt=0;
-async function trackRpc(method,params){ let err=null; const n=TRACK.rpcs.length;
+async function trackRpc(method,params,use){ let err=null; const n=TRACK.rpcs.length;   /* use(result) false: an unusable answer, the next reader is asked */
   for(let i=0;i<n;i++){ const k=(trackAt+i)%n, ac=new AbortController(), tm=setTimeout(()=>ac.abort(),TRACK.timeout);
     try{ const r=await fetch(TRACK.rpcs[k],{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),signal:ac.signal});
-      const j=await r.json(); if(j&&typeof j==='object'&&!j.error&&'result' in j){ trackAt=k; return j.result; } err=new Error(String(j&&j.error&&j.error.message||'bad answer')); }
+      const j=await r.json(); if(j&&typeof j==='object'&&!j.error&&'result' in j){ if(!use||use(j.result)){ trackAt=k; return j.result; } err=new Error('unusable answer'); }
+      else err=new Error(String(j&&j.error&&j.error.message||'bad answer')); }
     catch(e){ err=e; } finally{ clearTimeout(tm); } }
   throw err||new Error('no reader answered'); }
 const big=v=>{ try{ return v==null?null:BigInt(v); }catch(e){ return null; } };
 const lc=a=>typeof a==='string'?a.toLowerCase():'';
+/* A RECEIPT COUNTS only when it is the receipt of the transaction asked about and is well formed: transactionHash is that hash (any
+   case), blockNumber a hex quantity at or after the block read just before sending (op.block, when known), blockHash 32 bytes of hex,
+   status exactly "0x0" or "0x1" (the readers are raw JSON-RPC over fetch: hex strings, never numbers), from the sender and to the
+   address the transaction named. null is an answer: not mined yet (for that reader). Anything else is an unusable answer: the next
+   reader is asked, and with no trustworthy answer the payment stays pending ("cannot confirm" at TRACK.lost), never reverted or
+   confirmed. THE CONFIRMATION POLICY: one valid receipt, from whichever reader answered it, decides (0x1 confirmed, 0x0 reverted). The
+   readers are not cross-checked and nothing is re-checked for a reorg later: "confirmed" means seen mined in one block, not final. */
+const HASH32=/^0x[0-9a-fA-F]{64}$/;
+const rcGood=w=>rc=>{ if(rc===null) return true; if(!rc||typeof rc!=='object'||Array.isArray(rc)) return false;
+  if(typeof rc.transactionHash!=='string'||!HASH32.test(rc.transactionHash)||lc(rc.transactionHash)!==lc(w.hash)) return false;
+  if(typeof rc.blockNumber!=='string'||!/^0x[0-9a-fA-F]+$/.test(rc.blockNumber)) return false;
+  const b=Number(BigInt(rc.blockNumber)); if(!(b>0)||(w.min!=null&&b<w.min)) return false;
+  if(typeof rc.blockHash!=='string'||!HASH32.test(rc.blockHash)) return false;
+  if(rc.status!=='0x0'&&rc.status!=='0x1') return false;
+  if(typeof rc.from!=='string'||lc(rc.from)!==lc(w.from)) return false;
+  if(w.to!==undefined&&(w.to==null?rc.to!=null:(typeof rc.to!=='string'||lc(rc.to)!==lc(w.to)))) return false;
+  return true; };
 async function trackTx(op,hash,tell){ const nap=ms=>new Promise(r=>setTimeout(r,ms)), t0=Date.now(), from=lc(op.acct), want=op.req||{};
-  const mined=rc=>!!(rc&&typeof rc==='object'&&rc.blockNumber), result=rc=>big(rc.status)===1n?'confirmed':'reverted';
+  const own=rcGood({hash,from:op.acct,to:want.to,min:op.block}), result=rc=>rc.status==='0x1'?'confirmed':'reverted';   /* only validated receipts reach result() */
   let lastOk=t0, nonce=null, scanAt=op.block, unknown=false, walletAsks=0;
   const nonceOf=t=>t&&typeof t==='object'&&lc(t.from)===from&&big(t.nonce)!=null?big(t.nonce):null;
   for(;;){ let ok=false;
-    try{ const rc=await trackRpc('eth_getTransactionReceipt',[hash]); ok=true; if(mined(rc)) return {state:result(rc),rc}; }catch(e){}
+    try{ const rc=await trackRpc('eth_getTransactionReceipt',[hash],own); ok=true; if(rc) return {state:result(rc),rc}; }catch(e){}
     if(nonce==null){ try{ nonce=nonceOf(await trackRpc('eth_getTransactionByHash',[hash])); ok=true; }catch(e){}
       if(nonce==null&&walletAsks++<5){ try{ nonce=nonceOf(await Promise.race([ask(op.P,'eth_getTransactionByHash',[hash]),nap(TRACK.timeout).then(()=>null)])); }catch(e){} } }
     if(nonce!=null){ try{
@@ -1155,7 +1218,7 @@ async function trackTx(op,hash,tell){ const nap=ms=>new Promise(r=>setTimeout(r,
             if(!blk||typeof blk!=='object'||!Array.isArray(blk.transactions)||blk.transactions.some(x=>!x||typeof x!=='object')){ trackAt=(trackAt+1)%TRACK.rpcs.length; break; }   /* and next round the next reader is asked first */
             for(const x of blk.transactions){
               if(lc(x.from)!==from||big(x.nonce)!==nonce) continue;
-              const rc=await trackRpc('eth_getTransactionReceipt',[x.hash]); if(!mined(rc)){ trackAt=(trackAt+1)%TRACK.rpcs.length; break batch; }
+              const rc=await trackRpc('eth_getTransactionReceipt',[x.hash],rcGood({hash:x.hash,from:x.from,to:x.to,min:op.block})); if(!rc){ trackAt=(trackAt+1)%TRACK.rpcs.length; break batch; }   /* every reader unusable: it throws, the cursor stays on this block */
               if(lc(x.hash)===lc(hash)) return {state:result(rc),rc};
               const data=lc(x.input||x.data||'0x');
               if(lc(x.to)===lc(want.to)&&data===lc(want.data||'0x')&&big(x.value)===big(want.value||'0x0')) return {state:result(rc),rc,repriced:true,by:x.hash};
@@ -1169,7 +1232,7 @@ async function trackTx(op,hash,tell){ const nap=ms=>new Promise(r=>setTimeout(r,
     if(Date.now()-t0>=TRACK.stop) return {state:'unknown'};
     await nap(TRACK.poll); } }
 /* send(): the live page's, with one optional observer so the pick popup can show CONFIRM / PENDING / COLLECTED / FAILED (and WRONG NETWORK) */
-async function send(name,fn,on,lock){ const ob=(...a)=>{ try{ if(on) on(...a); }catch(x){ console.warn('observer',x); } };
+async function send(name,fn,on,lock){ const ob=(...a)=>{ try{ const r=on&&on(...a); if(r&&typeof r.then==='function') r.then(null,x=>console.warn('observer',x)); }catch(x){ console.warn('observer',x); } };   /* an async observer's rejection is contained too (a4v4) */
   const K=lock||opLock(name); if(!K){ ob('busy'); return; }   /* taken before the first await */
   try{ if(!W){ const ok=await connectWallet(); if(K.dead||!W||ok!==true){ ob('nowallet'); return; } }
     const op=await opBegin(K); if(!op){ toast('Your wallet is on another network. Switch it to Ethereum mainnet. Nothing was sent.'); ob('wrong'); return; }
@@ -1505,7 +1568,8 @@ async function nxCollect(){ if(!CC) return; const cc=CC, k=CC.k, day=CC.day; if(
      regardless). A late explanation (who bought first, why it failed) is looked up first and the dialog is checked again right
      before it is written, with nothing awaited in between. A new day while the wallet connects means nothing is bought: the
      option was one of the old day's. */
-  const mine=()=>NX.pop&&CC===cc&&CC.k===k&&CC.day===day&&NX.op===tok;
+  let stopped=false; const mine=()=>!stopped&&NX.pop&&CC===cc&&CC.k===k&&CC.day===day&&NX.op===tok;
+  L.onDead=()=>{ const m=mine(); stopped=true; if(m) txView('failed','Disconnected before the payment reached your wallet. Nothing was sent.'); };   /* DISCONNECT stopped this press before the hand-off: the dialog says so at once, and nothing later from this press touches it */
   try{ if(pick!==k){ NX.ctx.choose(k); }
   txView('confirm');
   if(NX_WRONG){ txView('wrong'); return; }
