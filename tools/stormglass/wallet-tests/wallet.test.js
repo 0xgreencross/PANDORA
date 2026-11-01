@@ -104,10 +104,16 @@ T('a1','wrong chain, switch refused: witness and claim send nothing',{wallets:[o
   const asked={eth_estimateGas:await E.P('A').count('eth_estimateGas'),eth_sendTransaction:await E.P('A').count('eth_sendTransaction')}, prompt=t.some(x=>/confirm in your wallet/i.test(x));
   return {pass:s.length===0&&t.some(x=>/another network|switch your wallet/i.test(x))&&asked.eth_estimateGas===0&&asked.eth_sendTransaction===0&&!prompt, ev:{sends:s.map(x=>x.chain+' '+x.params[0].value),asked,confirmPrompt:prompt,toasts:t.slice(-3)}}; });
 T('a2','wrong chain, switch refused: COLLECT sends nothing',{wallets:[one('A','0x2105',{switchReject:{code:4001}})],ethereum:'A'},async E=>{
-  await connect(E); await buy(E); await sleep(2500);
-  const sw=await E.page.$('#nx-switch'); if(sw){ await sw.click(); await sleep(2000); }
-  const s=await E.sends(), t=await E.toasts(), p=await popText(E.page);
-  return {pass:s.length===0, ev:{sends:s.map(x=>x.chain),popup:p.slice(0,90),toasts:t.slice(-2)}}; });
+  await connect(E); await buy(E);
+  /* barriers (audit 4, G3): the COLLECT press has ended in the wrong-network view with the lock free, and the refused switch is over
+     (its toast came and SWITCH is pressable again); only then is "nothing sent" asserted */
+  const stopped=await E.until(()=>E.page.evaluate(()=>NX.tx==='wrong'&&OPLOCK===null),8000);
+  const sw=await E.page.$('#nx-switch'); let refused=false;
+  if(sw){ const n=(await E.toasts()).length; await sw.click();
+    refused=await E.until(async()=>(await E.toasts()).slice(n).some(x=>/switch was cancelled|another network/i.test(x))&&await E.page.evaluate(()=>{ const b=document.getElementById('nx-switch'); return !!b&&!b.disabled&&OPLOCK===null; }),8000); }
+  await sleep(300);
+  const s=await E.sends(), t=await E.toasts(), p=await popText(E.page), asked=await E.P('A').count('eth_sendTransaction');
+  return {pass:stopped&&!!sw&&refused&&s.length===0&&asked===0, ev:{stoppedInWrongView:stopped,switchRefusedAndOver:refused,sends:s.map(x=>x.chain),asked,popup:p.slice(0,90),toasts:t.slice(-2)}}; });
 T('b','wrong chain, switch accepted: one send, on chain 1, no "network changed"',{wallets:[one('A','0x2105')],ethereum:'A'},async E=>{
   await connect(E); await witness(E,'0.01'); await E.until(async()=>(await E.toasts()).some(x=>DONE.test(x)||/network changed/i.test(x)),12000);
   const s=await E.sends(), t=await E.toasts(); const nc=t.concat(E.consoleErr).some(x=>/network changed/i.test(x));
@@ -119,29 +125,34 @@ T('c','provider swap mid-operation: A checks mainnet, B on 8453 takes over: noth
   await disconnectUI(E); await sleep(200); await E.page.click('#wallet');
   if(await E.until(()=>sheetOpen(E.page),2500)) await clickSheet(E.page,/WALLET B/).catch(()=>{});
   await E.until(async()=>/0x/.test(await E.label()),6000);
-  await E.P('A').set({gate:{}}); await E.P('A').release('eth_chainId'); await sleep(4000);
-  const s=await E.sends(), t=await E.toasts();
-  return {pass:g&&!s.some(x=>x.pid==='B'), ev:{gateHit:g,sends:s.map(x=>x.pid+'@'+x.chain),label:await E.label(),toasts:t.slice(-2)}}; });
+  const n=(await E.toasts()).length; await E.P('A').set({gate:{}}); await E.P('A').release('eth_chainId');
+  const ended=await E.until(async()=>(await E.toasts()).slice(n).some(x=>/Nothing was sent/i.test(x))&&await E.page.evaluate(()=>OPLOCK===null),8000); await sleep(500);   /* barrier (G3): the write has ended */
+  const s=await E.sends(), t=await E.toasts(), askedB=await E.P('B').count('eth_sendTransaction');
+  return {pass:g&&ended&&!s.some(x=>x.pid==='B')&&askedB===0, ev:{gateHit:g,ended,sends:s.map(x=>x.pid+'@'+x.chain),askedB,label:await E.label(),toasts:t.slice(-2)}}; });
 T('d','disconnect while the wallet answers slowly: no send, W not restored',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await E.P('A').set({gate:{eth_accounts:true}}); await witness(E,'0.01');
   const g=await E.waitGate('A','eth_accounts',6000);
-  await disconnectUI(E); await sleep(200); await E.P('A').set({gate:{}}); await E.P('A').release('eth_accounts'); await sleep(3500);
-  const s=await E.sends(), st=await E.state(), lab=await E.label();
-  return {pass:g&&s.length===0&&!st.W&&!st.me&&/CONNECT/.test(lab), ev:{gateHit:g,sends:s.length,state:st,label:lab}}; });
+  await disconnectUI(E); await sleep(200); const n=(await E.toasts()).length; await E.P('A').set({gate:{}}); await E.P('A').release('eth_accounts');
+  const ended=await E.until(async()=>(await E.toasts()).slice(n).some(x=>/Nothing was sent/i.test(x))&&await E.page.evaluate(()=>OPLOCK===null),8000); await sleep(500);   /* barrier (G3): the write has ended */
+  const s=await E.sends(), st=await E.state(), lab=await E.label(), asked=await E.P('A').count('eth_sendTransaction');
+  return {pass:g&&ended&&s.length===0&&asked===0&&!st.W&&!st.me&&/CONNECT/.test(lab), ev:{gateHit:g,ended,sends:s.length,asked,state:st,label:lab}}; });
 T('e','accountsChanged to another account mid-operation: no send from the old account',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); const rq0=await E.P('A').count('eth_requestAccounts'); await E.P('A').set({gate:{eth_estimateGas:true}}); await witness(E,'0.01');
   const g=await E.waitGate('A','eth_estimateGas',6000);
   await E.P('A').set({accounts:[A2,A1]}); await E.P('A').emit('accountsChanged',[A2]); await sleep(500);
-  await E.P('A').set({gate:{}}); await E.P('A').release('eth_estimateGas'); await sleep(3500);
+  const n=(await E.toasts()).length; await E.P('A').set({gate:{}}); await E.P('A').release('eth_estimateGas');
+  const ended=await E.until(async()=>(await E.toasts()).slice(n).some(x=>/Nothing was sent/i.test(x))&&await E.page.evaluate(()=>OPLOCK===null),8000); await sleep(500);   /* barrier (G3): the write has ended */
   const s=await E.sends(); const old=s.filter(x=>(x.params[0].from||'').toLowerCase()===A1);
-  return {pass:g&&old.length===0, ev:{gateHit:g,sends:s.map(x=>x.params[0].from),label:await E.label(),requestAccountsAfter:(await E.P('A').count('eth_requestAccounts'))-rq0}}; });
+  const askedOld=(await E.log()).filter(x=>x.method==='eth_sendTransaction'&&String(x.params&&x.params[0]&&x.params[0].from).toLowerCase()===A1).length;
+  return {pass:g&&ended&&old.length===0&&askedOld===0, ev:{gateHit:g,ended,sends:s.map(x=>x.params[0].from),askedOld,label:await E.label(),requestAccountsAfter:(await E.P('A').count('eth_requestAccounts'))-rq0}}; });
 T('f','chainChanged to 8453 right before submit: no send',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await E.P('A').set({gate:{eth_estimateGas:true}}); await witness(E,'0.01');
   const g=await E.waitGate('A','eth_estimateGas',6000);
   await E.P('A').set({chainId:'0x2105'}); await E.P('A').emit('chainChanged','0x2105'); await sleep(200);
-  await E.P('A').set({gate:{}}); await E.P('A').release('eth_estimateGas'); await sleep(3500);
-  const s=await E.sends(), t=await E.toasts();
-  return {pass:g&&s.length===0, ev:{gateHit:g,sends:s.map(x=>x.chain),toasts:t.slice(-2)}}; });
+  const n=(await E.toasts()).length; await E.P('A').set({gate:{}}); await E.P('A').release('eth_estimateGas');
+  const ended=await E.until(async()=>(await E.toasts()).slice(n).some(x=>/Nothing was sent/i.test(x))&&await E.page.evaluate(()=>OPLOCK===null),8000); await sleep(500);   /* barrier (G3): the write has ended */
+  const s=await E.sends(), t=await E.toasts(), asked=await E.P('A').count('eth_sendTransaction');
+  return {pass:g&&ended&&s.length===0&&asked===0, ev:{gateHit:g,ended,sends:s.map(x=>x.chain),asked,toasts:t.slice(-2)}}; });
 T('g','a submitted tx is followed after DISCONNECT; the UI stays disconnected',{wallets:[one('A',undefined,{gate:{}})],ethereum:'A'},async E=>{
   await connect(E); E.chain.holdReceipts=true; await E.P('A').set({gate:{eth_getTransactionReceipt:true}}); const rq0=await E.P('A').count('eth_requestAccounts');
   await witness(E,'0.01'); const sent=await E.until(async()=>(await E.sends()).length>0,8000); await sleep(800);
@@ -245,18 +256,22 @@ T('l1','witness box: select all, clock redraw, type: replaced; selection and dir
   await E.until(async()=>(await E.sends()).length>0,6000); const s=await E.sends();
   const val=s[0]&&s[0].params[0].value;
   return {pass:gl&&v1==='7'&&sel.s===1&&sel.e===4&&sel.d==='backward'&&sel.focus&&kept&&val===ETH(0.05), ev:{gateHit:gl,afterSelectAllRedrawType:v1,selection:sel,nodeKeptWhileComposing:kept,sentValue:val,want:ETH(0.05)}}; });
+/* G3 (audit 4): l2/l3 wait for the panel's own timer to redraw; they count the redraws (morph() on #panel, the redesign's only way to
+   redraw a panel that holds an amount box) and require at least one during each wait, so a stopped timer cannot pass them vacuously */
+const countDraws=page=>page.evaluate(()=>{ if(window.__draws!=null) return; window.__draws=0; const m=window.morph; window.morph=function(el){ if(el&&el.id==='panel') window.__draws++; return m.apply(this,arguments); }; });
+const draws=page=>page.evaluate(()=>window.__draws);
 T('l2','pledge box (founders day, redrawn every second): select all, wait, type: replaced; caret kept',{wallets:[one('A')],ethereum:'A'},async E=>{
-  const page=E.page; await page.waitForSelector('#plAmt'); await page.click('#plAmt'); await page.keyboard.type('0.25');
-  await page.evaluate(()=>document.getElementById('plAmt').select()); await sleep(1300); await page.keyboard.type('9'); const v=await page.inputValue('#plAmt');
-  await page.fill('#plAmt','0.25'); await page.evaluate(()=>{ const i=document.getElementById('plAmt'); i.focus(); i.setSelectionRange(2,2); }); await sleep(1300);
+  const page=E.page; await page.waitForSelector('#plAmt'); await countDraws(page); await page.click('#plAmt'); await page.keyboard.type('0.25');
+  await page.evaluate(()=>document.getElementById('plAmt').select()); const d0=await draws(page); await sleep(1300); const d1=await draws(page); await page.keyboard.type('9'); const v=await page.inputValue('#plAmt');
+  await page.fill('#plAmt','0.25'); await page.evaluate(()=>{ const i=document.getElementById('plAmt'); i.focus(); i.setSelectionRange(2,2); }); const d2=await draws(page); await sleep(1300); const d3=await draws(page);
   const c=await page.evaluate(()=>{ const i=document.getElementById('plAmt'); return {s:i.selectionStart,e:i.selectionEnd,focus:document.activeElement===i}; });
-  return {pass:v==='9'&&c.s===2&&c.e===2&&c.focus, ev:{value:v,caret:c}}; },
+  return {pass:v==='9'&&c.s===2&&c.e===2&&c.focus&&d1>d0&&d3>d2, ev:{value:v,caret:c,redrawsWhileSelected:d1-d0,redrawsWhileCaret:d3-d2}}; },
   {chain:c=>{ c.values.today=0; c.values.lastId=0; c.values.foundersEnd=c.t0+5*3600; c.values.onSale=[0n,0n,0n,false]; }});
 T('l3','bid box (the candle, redrawn every 5 s): selection direction kept, node kept',{wallets:[one('A')],ethereum:'A'},async E=>{
-  const page=E.page; await page.waitForSelector('#bidAmt'); await page.click('#bidAmt'); await page.keyboard.type('0.123');
-  await page.evaluate(()=>{ const i=document.getElementById('bidAmt'); i.setSelectionRange(1,4,'backward'); window.__node=i; }); await sleep(5600);
+  const page=E.page; await page.waitForSelector('#bidAmt'); await countDraws(page); await page.click('#bidAmt'); await page.keyboard.type('0.123');
+  await page.evaluate(()=>{ const i=document.getElementById('bidAmt'); i.setSelectionRange(1,4,'backward'); window.__node=i; }); const d0=await draws(page); await sleep(5600); const d1=await draws(page);
   const c=await page.evaluate(()=>{ const i=document.getElementById('bidAmt'); return {v:i.value,s:i.selectionStart,e:i.selectionEnd,d:i.selectionDirection,focus:document.activeElement===i,same:i===window.__node}; });
-  return {pass:c.v==='0.123'&&c.s===1&&c.e===4&&c.d==='backward'&&c.focus, ev:c}; },
+  return {pass:c.v==='0.123'&&c.s===1&&c.e===4&&c.d==='backward'&&c.focus&&d1>d0, ev:Object.assign(c,{redraws:d1-d0})}; },
   {chain:c=>{ c.values.candleSettled=false; c.values.today=0; c.values.lastId=0; c.values.candleOpen=c.t0-2*3600; c.values.onSale=[0n,0n,0n,false]; }});
 T('l4','founders day ends while typing: the page moves on without errors',{wallets:[one('A')],ethereum:'A'},async E=>{
   const page=E.page; const had=await page.$('#plAmt'); if(had){ await page.click('#plAmt'); await page.keyboard.type('0.2'); }
@@ -273,12 +288,13 @@ T('m9','phone WalletConnect buy: no jump before the request is out; the OPEN but
   await page.route('https://link.zerion.io/**',r=>{ jumps.push(r.request().url()); r.fulfill({status:204,body:''}); });
   const a=await page.evaluate(()=>{ localStorage.setItem('WALLETCONNECT_DEEPLINK_CHOICE',JSON.stringify({name:'ZERION',href:'https://link.zerion.io'})); localStorage.removeItem('SG_WC_APP');
     const app=wcApp(); const ev={h:{},on(n,f){(this.h[n]=this.h[n]||[]).push(f)},emit(n,x){(this.h[n]||[]).forEach(f=>f(x))}};
-    const fake={signer:{client:ev},request:()=>new Promise(r=>{ window.__answer=r; })}; window.__ev=ev; _WC=fake; wcHook(fake);
+    /* as the shipped wc.js: the provider has a session (its topic), and the event carries {...args} of the request it was given (audit 4) */
+    const fake={session:{topic:'t0pic'},signer:{client:ev},request:a=>new Promise(r=>{ window.__req=a; window.__answer=r; })}; window.__ev=ev; _WC=fake; wcHook(fake);
     window.__done=false; ask(fake,'eth_sendTransaction',[{}]).then(()=>{ window.__done=true; });
     const b=document.querySelector('#wsBtns button');
     return {app, libKey:localStorage.getItem('WALLETCONNECT_DEEPLINK_CHOICE'), title:document.getElementById('wsk').textContent, on:document.getElementById('wsheet').classList.contains('on'), btn:b&&b.textContent, disabled:!!(b&&b.disabled)}; });
   await page.evaluate(()=>document.querySelector('#wsBtns button').click()); await sleep(300); const early=jumps.length;
-  await page.evaluate(()=>window.__ev.emit('session_request_sent',{id:1730000000123456,topic:'t0pic',request:{method:'eth_sendTransaction'},chainId:'eip155:1'}));
+  await page.evaluate(()=>window.__ev.emit('session_request_sent',{id:1730000000123456,topic:'t0pic',request:Object.assign({},window.__req),chainId:'eip155:1'}));
   const b=await page.evaluate(()=>{ const x=document.querySelector('#wsBtns button'); return {disabled:x.disabled,text:document.getElementById('wsp').textContent}; });
   await page.evaluate(()=>document.querySelector('#wsBtns button').click()); await E.until(async()=>jumps.length>0,3000);
   await page.evaluate(()=>window.__answer('0x'+'11'.repeat(32))); await sleep(300);
@@ -409,7 +425,15 @@ module.exports={ALLHITS,LIVE,boot,connect,sheetOpen,sheetButtons,setBrowser:b=>{
 /* Node exits 0 when the event loop drains with the run still awaiting something (seen when the browser process dies: Playwright's
    promise never settles). The run always ends through process.exit(); reaching beforeExit means it never finished: that is a failure. */
 let RUNNING='(none: before the first case)';
-if(require.main===module) process.on('beforeExit',()=>{ console.log('HARNESS FAIL the run stopped before it finished, in case '+RUNNING+' (a promise never settled: browser gone?)'); process.exit(1); });
+/* G1 (audit 4): the results JSON is written after every case and the RAN / NOT RUN lines come from one place, so a run that stops
+   early (browser crash, a promise that never settles) still leaves what ran, what passed and what never ran */
+let SEL=[], RES=[];
+function writeResults(){ try{ fs.mkdirSync(OUT,{recursive:true}); fs.writeFileSync(path.join(OUT,'results-'+LABEL+'.json'),JSON.stringify(RES,null,1)); }catch(e){ console.log('HARNESS FAIL cannot write results: '+e.message); } }
+function report(){ writeResults(); const failed=RES.filter(r=>!r.pass), notRun=SEL.filter(c=>!RES.some(r=>r.id===c.id)).map(c=>c.id);
+  console.log('RAN '+RES.length+': '+RES.map(r=>r.id).join(',')+(notRun.length?' · NOT RUN: '+notRun.join(','):''));
+  console.log(LABEL+': '+(RES.length-failed.length)+'/'+SEL.length+' passed'+(failed.length?' · FAILED: '+failed.map(r=>r.id).join(','):'')+(notRun.length?' · NOT RUN: '+notRun.length:''));
+  return failed.length||notRun.length||RES.length!==SEL.length?1:0; }
+if(require.main===module) process.on('beforeExit',()=>{ console.log('HARNESS FAIL the run stopped before it finished, in case '+RUNNING+' (a promise never settled: browser gone?)'); report(); process.exit(1); });
 if(require.main===module) (async()=>{
   const ORIG=CASES.map(c=>c.id);
   require('./audit2.test.js');
@@ -420,22 +444,31 @@ if(require.main===module) (async()=>{
   const AUDIT3B=CASES.map(c=>c.id).filter(id=>!ORIG.includes(id)&&!AUDIT.includes(id)&&!AUDIT3.includes(id));
   require('./harness.test.js');
   const HARN=CASES.map(c=>c.id).filter(id=>!ORIG.includes(id)&&!AUDIT.includes(id)&&!AUDIT3.includes(id)&&!AUDIT3B.includes(id));
-  const want=(process.env.CASES||'').split(',').map(x=>x.trim()).filter(Boolean).flatMap(x=>x==='@orig'?ORIG:x==='@audit2'?AUDIT:x==='@audit3'?AUDIT3:x==='@audit3b'?AUDIT3B:x==='@harness'?HARN:[x]);
+  /* audit 4: every audit4*.test.js file in this folder (sorted) is group @audit4 */
+  const before4=new Set(CASES.map(c=>c.id));
+  for(const f of fs.readdirSync(__dirname).filter(f=>/^audit4.*\.test\.js$/.test(f)).sort()) require('./'+f);
+  const AUDIT4=CASES.map(c=>c.id).filter(id=>!before4.has(id));
+  const want=(process.env.CASES||'').split(',').map(x=>x.trim()).filter(Boolean).flatMap(x=>x==='@orig'?ORIG:x==='@audit2'?AUDIT:x==='@audit3'?AUDIT3:x==='@audit3b'?AUDIT3B:x==='@harness'?HARN:x==='@audit4'?AUDIT4:[x]);
   if(process.env.CASES!=null&&process.env.CASES.trim()!==''&&!want.length){ console.log('HARNESS FAIL CASES='+JSON.stringify(process.env.CASES)+' selects no case'); process.exit(2); }
   const known=new Set(CASES.map(c=>c.id)), unknown=want.filter(x=>!known.has(x));
   if(unknown.length){ console.log('HARNESS FAIL unknown case ids in CASES: '+unknown.join(',')); process.exit(2); }
-  const sel=CASES.filter(c=>!want.length||want.includes(c.id));
+  const sel=SEL=CASES.filter(c=>!want.length||want.includes(c.id));
   if(!sel.length){ console.log('HARNESS FAIL no cases selected'); process.exit(2); }
   console.log('SELECTED '+sel.length+' of '+CASES.length+': '+sel.map(c=>c.id).join(',')+' · target '+TARGET+' sha256 '+require('crypto').createHash('sha256').update(PAGE).digest('hex').slice(0,16));
-  browser=await chromium.launch({args:['--no-sandbox','--disable-background-networking','--disable-component-update','--no-first-run'],executablePath:process.env.CHROMIUM||'/opt/pw-browsers/chromium'});
-  let browserGone=false; browser.on('disconnected',()=>{ browserGone=true; });
-  const res=[];
+  /* --webrtc-ip-handling-policy=disable_non_proxied_udp (G2, audit 4): WebRTC gathers no UDP candidates and sends no STUN packet (Playwright's
+     routing never sees UDP; a4h1 proves the block with a local STUN listener) */
+  browser=await chromium.launch({args:['--no-sandbox','--disable-background-networking','--disable-component-update','--no-first-run','--webrtc-ip-handling-policy=disable_non_proxied_udp'],executablePath:process.env.CHROMIUM||'/opt/pw-browsers/chromium'});
+  let browserGone=false; const goneP=new Promise(res=>browser.on('disconnected',()=>{ browserGone=true; res(); }));
+  /* a case races the browser's disconnect: when the browser dies mid-case the case fails here and the normal path reports the rest as NOT RUN */
+  const goneErr=goneP.then(()=>{ throw new Error('browser disconnected during the case'); }); goneErr.catch(()=>{});   /* one handled rejection, raced by every case */
+  const orGone=p=>Promise.race([p,goneErr]);
+  const res=RES;
   for(const c of sel){ let E=null, r; const t0=Date.now(); LIVE.length=0; let wallet=null; RUNNING=c.id;
-    try{ E=await boot(c.cfg,c.o||{}); r=await c.run(E); if(!r||typeof r!=='object') r={pass:false,ev:{bad:'case returned '+r}}; r.ev=r.ev||{}; }
+    try{ r=await orGone((async()=>{ E=await boot(c.cfg,c.o||{}); return await c.run(E); })()); if(!r||typeof r!=='object') r={pass:false,ev:{bad:'case returned '+r}}; r.ev=r.ev||{}; }
     catch(e){ r={pass:false,ev:{exception:String(e&&e.message||e).slice(0,300)}}; }
     finally{ /* what each page's wallets were asked (eth_sendTransaction requests) vs what the mock let through (sends), read before closing */
       wallet=[]; for(const X of LIVE){ try{ if(X.page&&!X.page.isClosed()) wallet.push(await Promise.race([X.page.evaluate(()=>window.__MW?{asked:__MW.log.filter(x=>x.method==='eth_sendTransaction').length,sent:__MW.sends.length}:null),sleep(3000).then(()=>'page did not answer')])); }catch(e){ wallet.push(null); } }
-      for(const X of LIVE) await X.ctx.close().catch(()=>{}); }
+      for(const X of LIVE) await Promise.race([X.ctx.close().catch(()=>{}),sleep(5000)]); }
     /* page errors and crashes from every context the case opened fail the case (o.allowPageErrors to opt out) */
     const errs=LIVE.flatMap(X=>X.errors), outside=LIVE.flatMap(X=>X.outside), sockets=LIVE.flatMap(X=>X.sockets);
     r.pageErrors=errs.slice(0,3);
@@ -443,11 +476,8 @@ if(require.main===module) (async()=>{
     if(browserGone){ r.pass=false; r.ev.browserGone=true; }
     const ms=Date.now()-t0; res.push({id:c.id,name:c.name,pass:r.pass===true,ms,ev:r.ev,pageErrors:r.pageErrors,contexts:LIVE.length,wallet,outsideRefused:[...new Set(outside)],socketsRefused:[...new Set(sockets)]});
     console.log((r.pass===true?'PASS ':'FAIL ')+c.id.padEnd(3)+' '+c.name+' ('+ms+' ms)\n     '+JSON.stringify(r.ev).slice(0,400)+(outside.length||sockets.length?'\n     refused outside: '+JSON.stringify([...new Set(outside.concat(sockets))]).slice(0,300):''));
-    if(browserGone) break; }
-  await browser.close().catch(()=>{});
-  fs.mkdirSync(OUT,{recursive:true}); fs.writeFileSync(path.join(OUT,'results-'+LABEL+'.json'),JSON.stringify(res,null,1));
-  const failed=res.filter(r=>!r.pass), notRun=sel.filter(c=>!res.some(r=>r.id===c.id)).map(c=>c.id);
-  console.log('RAN '+res.length+': '+res.map(r=>r.id).join(',')+(notRun.length?' · NOT RUN (browser gone): '+notRun.join(','):''));
-  console.log(LABEL+': '+(res.length-failed.length)+'/'+sel.length+' passed'+(failed.length?' · FAILED: '+failed.map(r=>r.id).join(','):''));
-  process.exit(failed.length||notRun.length||res.length!==sel.length?1:0);
+    writeResults();
+    if(browserGone){ console.log('HARNESS FAIL the browser is gone (after case '+c.id+')'); break; } }
+  await Promise.race([browser.close().catch(()=>{}),sleep(5000)]);
+  process.exit(report());
 })().catch(e=>{ console.log('HARNESS FAIL',e&&e.stack||e); process.exit(1); });
