@@ -222,9 +222,12 @@ T('z3','COLLECT\'s SWITCH TO ETHEREUM is answered after the dialog moved to anot
   await connect(E); await openOpt(E,3); await pressCollect(E); const wrong=await E.until(async()=>/ANOTHER NETWORK/.test(await popText(E.page)),8000);
   await E.P('A').set({gate:{wallet_switchEthereumChain:true}}); await E.page.click('#nx-switch'); const g=await E.waitGate('A','wallet_switchEthereumChain',5000);
   await closeX(E); await sleep(200); await openOpt(E,5); await sleep(200); const before=await viewOf(E);
-  await E.P('A').set({gate:{}}); await E.P('A').release('wallet_switchEthereumChain'); await sleep(3000);
+  await E.P('A').set({gate:{}}); await E.P('A').release('wallet_switchEthereumChain');
+  /* barrier (audit 5): the switch has been answered and the page has seen mainnet (chainChanged handled, no [!] in the header) with no
+     write in progress; then a settle window for anything the late answer could start */
+  const settled=await E.until(async()=>(await E.P('A').answered('wallet_switchEthereumChain'))>=1&&!/\[!\]/.test(await E.label())&&await E.page.evaluate(()=>OPLOCK===null),8000); await sleep(1500);
   const after=await viewOf(E), s=await E.sends(), est=await reqsOf(E,'A','eth_estimateGas'), rq=await reqsOf(E,'A','eth_sendTransaction');
-  return {pass:wrong&&g&&after.k===5&&after.tx===null&&after.acts===before.acts&&s.length===0&&rq===0&&est===0&&/COLLECT/.test(after.acts),
+  return {pass:wrong&&g&&settled&&after.k===5&&after.tx===null&&after.acts===before.acts&&s.length===0&&rq===0&&est===0&&/COLLECT/.test(after.acts),
     ev:{wrongView:wrong,gateHit:g,after:{k:after.k,tx:after.tx,acts:after.acts.slice(0,70)},sends:s.length,sendRequests:rq,estimateGas:est,toasts:(await E.toasts()).slice(-3)}}; });
 T('z4','COLLECT on the wrong chain, SWITCH TO ETHEREUM accepted in the same dialog: the COLLECT goes on there (one send, the chosen option, on chain 1)',
   {wallets:[one('A','0x2105')],ethereum:'A'},async E=>{

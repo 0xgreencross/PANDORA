@@ -394,9 +394,9 @@ T('a4r10','guard, the documented policy (one valid receipt from the reader asked
     return route.fallback(); });
   c.rc=h=>h===Ha||h===Hb?c.mkRc(h,{blockNumber:hex(B+1),status:'0x1'}):null;
   await startTrack(E,[{hash:Ha,block:B}]); await E.until(async()=>(await results(E))[Ha].state!=='pending',5000);
-  await startTrack(E,[{hash:Hb,block:B}]); await sleep(1500);
+  await startTrack(E,[{hash:Hb,block:B}]); const gate=await E.until(async()=>firstB>=3,15000);
   const R=await results(E);
-  return {pass:R[Ha].state==='reverted'&&R[Hb].state==='pending'&&firstB>=3, ev:{a:R[Ha].state,b:R[Hb].state,firstReaderAskedForB:firstB}}; });
+  return {pass:gate&&R[Ha].state==='reverted'&&R[Hb].state==='pending'&&firstB>=3, ev:{gate,a:R[Ha].state,b:R[Hb].state,firstReaderAskedForB:firstB}}; });
 
 T('a4r11','the page itself (WITNESS): the reviewer\'s receipt (another transaction\'s hash, no status) is never "reverted"; the payment stays pending, then a valid receipt confirms it',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await track(E,{poll:300}); const c=E.chain; let valid=false;

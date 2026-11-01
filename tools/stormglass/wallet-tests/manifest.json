@@ -1,0 +1,14 @@
+{"schema":1,
+"note":"Every case module and id a RELEASE=1 run must register. Adding a module or a case means adding it here in the same commit (node wallet.test.js --print-manifest prints the current registration).",
+"modules":{
+ "wallet.test.js":{"group":"@orig","ids":["a1","a2","b","c","d","e","f","g","h1","h2","h3","h4","h5","i1","i2","i3","i4","j1","j2","j3","k1","k2","l1","l2","l3","l4","m1","m9","m2","m3","w1","w3","n1","n2","n3","n4","n5","n6"]},
+ "audit2.test.js":{"group":"@audit2","ids":["q1","q2","q3","q4","q5","q6","r1","r2","r3","r4","r5","r6","r7","r8","r9","k3","k4","k5","k6","m4","m5","h6","h7","h8","h9","p1","p2","p3","p4","p5","v1","v2","v3","c1","c2"]},
+ "audit3.test.js":{"group":"@audit3","ids":["x1","x2","x3","x4","x5","x6","x7","y1","y2","y3","y4","y5","y6","y10","y7","y8","y9","z1","z2","z3","z4"]},
+ "audit3b.test.js":{"group":"@audit3b","ids":["u1","u2","u3","u4","u5","u6","u7","u8","u9","u10","u11","u12","u13","u14","u15","u16","u17"]},
+ "harness.test.js":{"group":"@harness","ids":["hz1","hz2"]},
+ "audit4.test.js":{"group":"@audit4","ids":["a4c1","a4c2","a4c3","a4c4","a4c5","a4c6","a4c7","a4w1","a4w2","a4w3","a4w4","a4w5","a4w6","a4w7","a4w8","a4w9","a4w10","a4r1","a4r2","a4r3","a4r4","a4r5","a4r6","a4r7","a4r8","a4r9","a4r10","a4r11","a4r12"]},
+ "audit4review.test.js":{"group":"@audit4","ids":["a4h1","a4v1","a4v2","a4v3","a4v4","a4v5","a4v6","a4v7","a4v8","a4v9","a4v10","a4v11"]},
+ "audit4scan.test.js":{"group":"@audit4","ids":["a4s1","a4s2","a4s3","a4s4","a4s5","a4s6","a4s7"]},
+ "audit5page.test.js":{"group":"@audit5","ids":["a5n1","a5n2","a5n3","a5n4","a5n5","a5n6","a5n7","a5n8","a5n9","a5n10","a5n11","a5n12","a5x1","a5x2","a5m1","a5m2","a5m3","a5m4","a5m7","a5m5","a5m6","a5w1","a5w2","a5w3","a5w4","a5w5","a5w6","a5w7","a5w8","a5x3"]},
+ "audit5review.test.js":{"group":"@audit5","ids":["a5r1","a5r2"]}
+}}

@@ -11,7 +11,7 @@
    so the page never loads /wc.js. enable() emits display_uri and waits for __MW.wc.approve(); disconnect() ends the session;
    __MW.wc.phoneEnds() is the wallet ending it; wallet_revokePermissions is a relay request the phone never answers. */
 function installMock(cfg){
-  const MW={ log:[], sends:[], P:{}, hashN:0 };
+  const MW={ log:[], sends:[], P:{}, hashN:0, done:[] };   /* done (audit 5): every request the mock has answered or refused, in order, for barriers */
   window.__MW=MW;
   const ICON='data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect width="20" height="20" fill="#c8ff3a"/></svg>');
   function make(w){
@@ -23,7 +23,7 @@ function installMock(cfg){
         const method=args&&args.method, params=args&&args.params;
         MW.log.push({pid:st.id,method,params:params===undefined?null:JSON.parse(JSON.stringify(params)),chain:st.chainId,t:performance.now()});
         if(st.throwSync[method]) throw new Error('sync throw from '+st.id+' '+method);
-        return (async()=>{
+        const pr=(async()=>{
           if(st.gate[method]){ await new Promise(r=>(gates[method]=gates[method]||[]).push(r)); }
           if(st.delay[method]) await new Promise(r=>setTimeout(r,st.delay[method]));
           if(st.never[method]) return new Promise(()=>{});
@@ -55,6 +55,8 @@ function installMock(cfg){
             default: { const e=new Error('method not found '+method); e.code=-32601; throw e; }
           }
         })();
+        pr.then(v=>{ MW.done.push({pid:st.id,method,ok:true}); },e=>{ MW.done.push({pid:st.id,method,ok:false}); });   /* observes only: the page gets pr itself */
+        return pr;
       },
       on(ev,f){ (L[ev]=L[ev]||[]).push(f); return p; },
       removeListener(ev,f){ L[ev]=(L[ev]||[]).filter(x=>x!==f); return p; },

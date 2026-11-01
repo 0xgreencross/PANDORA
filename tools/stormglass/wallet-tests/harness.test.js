@@ -35,18 +35,27 @@ T('hz1','probe: no real wallet, RPC write, relay or outside host is reachable fr
     &&hitsWrite.length===2&&r.ethereum==='undefined'&&r.announced.length===0&&ext.length===0;
   return {pass,ev:{probe:r,fakeChainWrites:hitsWrite,outsideRefused:E.outside,socketsRefused:E.sockets,extensions:ext,targets:targetInfos.length}}; });
 
+/* hz2 (gated, audit 5): the noisy context must be SEEN sending (at least 5 probe requests and 5 wallet requests counted while open,
+   bounded wait) before it is closed: on a loaded machine a fixed 600 ms could close it before its first probe, and "nothing after
+   the close" would then prove nothing. A late timer is armed just before the close. After the close: no probe for 3 s (past the late
+   timer), while the same probe sent by the next context IS counted (the counting path still works). */
 T('hz2','isolation: a closed context sends nothing more; the next context has empty storage and a fresh wallet log',{wallets:[one('A')],ethereum:'A'},async E=>{
-  /* E is the noisy one: storage written, a request every 100 ms, a wallet request every 100 ms, a 1.5 s timer */
+  /* E is the noisy one: storage written, a request every 100 ms, a wallet request every 100 ms */
   await E.page.evaluate(()=>{ localStorage.setItem('z2.leak','1'); sessionStorage.setItem('z2.leak','1'); document.cookie='z2leak=1';
-    setInterval(()=>{ fetch('https://eth.drpc.org',{method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:9,method:'z2_leak_probe',params:[]})}).catch(()=>{}); window.__MW.P.A.provider.request({method:'eth_chainId'}).catch(()=>{}); },100);
-    setTimeout(()=>{ fetch('https://eth.drpc.org',{method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:9,method:'z2_leak_probe',params:[]})}).catch(()=>{}); },1500); });
-  await sleep(600); const live=H.ALLHITS.z2_leak_probe||0;
-  await E.ctx.close(); await sleep(200); const atClose=H.ALLHITS.z2_leak_probe||0;
+    setInterval(()=>{ fetch('https://eth.drpc.org',{method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:9,method:'z2_leak_probe',params:[]})}).catch(()=>{}); window.__MW.P.A.provider.request({method:'eth_chainId'}).catch(()=>{}); },100); });
+  const seen=await E.until(async()=>(H.ALLHITS.z2_leak_probe||0)>=5&&(await E.page.evaluate(()=>__MW.log.filter(x=>x.method==='eth_chainId').length))>=5,15000);
+  const live=H.ALLHITS.z2_leak_probe||0;
+  await E.page.evaluate(()=>{ setTimeout(()=>{ fetch('https://eth.drpc.org',{method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:9,method:'z2_late_probe',params:[]})}).catch(()=>{}); },1500); });
+  await E.ctx.close(); const atClose=H.ALLHITS.z2_leak_probe||0, lateAtClose=H.ALLHITS.z2_late_probe||0;
   const X=await H.boot({wallets:[one('A')],ethereum:'A'});
-  await sleep(2500); const after=H.ALLHITS.z2_leak_probe||0;
+  await sleep(3000);   /* the silence window after the close (plus X's boot): well past the 1.5 s late timer */
+  const after=H.ALLHITS.z2_leak_probe||0, lateAfter=H.ALLHITS.z2_late_probe||0;
   const st=await X.page.evaluate(async()=>({ls:localStorage.getItem('z2.leak'),ss:sessionStorage.getItem('z2.leak'),cookie:document.cookie,
     log:__MW.log.length,chainIdCalls:__MW.log.filter(x=>x.method==='eth_chainId').length,sends:__MW.sends.length,
     sw:navigator.serviceWorker?(await navigator.serviceWorker.getRegistrations()).length:-1}));
   const xHits=X.chain.hits['eth.drpc.org z2_leak_probe']||0;
-  return {pass:live>0&&after===atClose&&xHits===0&&st.ls===null&&st.ss===null&&!/z2leak/.test(st.cookie)&&st.sends===0&&st.chainIdCalls<20,
-    ev:{probesWhileOpen:live,probesAtClose:atClose,probesAfterClose:after-atClose,probesSeenByNextContext:xHits,next:st}}; });
+  /* positive control: the next context's own probe is counted */
+  await X.page.evaluate(()=>fetch('https://eth.drpc.org',{method:'POST',body:JSON.stringify({jsonrpc:'2.0',id:9,method:'z2_leak_probe',params:[]})}).then(r=>r.text()).catch(()=>{}));
+  const control=await E.until(async()=>(X.chain.hits['eth.drpc.org z2_leak_probe']||0)===1,5000);
+  return {pass:seen&&live>=5&&after===atClose&&lateAtClose===0&&lateAfter===0&&xHits===0&&control&&st.ls===null&&st.ss===null&&!/z2leak/.test(st.cookie)&&st.sends===0&&st.chainIdCalls<20,
+    ev:{seenWhileOpen:seen,probesWhileOpen:live,probesAtClose:atClose,probesAfterClose:after-atClose,lateProbe:{atClose:lateAtClose,after:lateAfter},probesSeenByNextContextBeforeControl:xHits,controlCounted:control,next:st}}; });

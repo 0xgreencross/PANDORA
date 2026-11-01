@@ -3,7 +3,7 @@
    mined receipt unless the test holds receipts. Nothing here ever reaches a real network.
    Hooks a test can replace: S.tx(hash) and S.rc(hash) (the answers to eth_getTransactionByHash / eth_getTransactionReceipt),
    S.blockTxs(n) (full transactions in block n), S.nonceLatest (eth_getTransactionCount), S.hostMode(host,body) ('500', 'hang',
-   'rpcerror' or null, applied per request by the test's route), S.mkTx / S.mkRc / S.blockNo to build answers. S.hits counts requests.
+   'rpcerror' or null, applied per request by the test's route), S.mkTx / S.mkRc / S.blockNo / S.blockHash(n) to build answers. S.hits counts requests.
    S.log lists every JSON-RPC request {m,p,t} (each element of a batch). S.blockAns(n) ('null' | 'error' | undefined) answers block n with
    null or an RPC error instead of the block; S.topAns() (a value or undefined) answers eth_blockNumber instead of the chain's head:
    a reader that lags or has not got a block yet. Both default to undefined: the normal answers. */
@@ -31,12 +31,15 @@ function makeChain(){
     plate:id=>id===13?[396693683,open,close,0n,E('0.05'),ethers.ZeroAddress,0,false]:[(396693683*(id+3))>>>0,open-86400*(13-id),close-86400*(13-id),E('0.3'),0n,BUYER,id%32,true],
     cands:()=>Array.from({length:32},(_,k)=>((396693683*(k+7)+k*7919)>>>0)) };
   const blockNo=()=>S.block0+Math.floor((Date.now()/1000-t0)/2);
-  const block=n=>({number:ethers.toQuantity(n),hash:ethers.zeroPadValue(ethers.toBeHex(n),32),parentHash:ethers.zeroPadValue(ethers.toBeHex(n-1),32),timestamp:ethers.toQuantity(Math.floor(Date.now()/1000)),nonce:'0x0000000000000000',difficulty:'0x0',gasLimit:'0x1c9c380',gasUsed:'0x0',miner:ethers.ZeroAddress,extraData:'0x',baseFeePerGas:'0x3b9aca00',blobGasUsed:'0x0',excessBlobGas:'0x0',transactions:[],stateRoot:ethers.ZeroHash,receiptsRoot:ethers.ZeroHash,mixHash:ethers.ZeroHash,parentBeaconBlockRoot:ethers.ZeroHash});
-  const txOf=(h,o={})=>Object.assign({hash:h,blockHash:ethers.zeroPadValue('0x01',32),blockNumber:ethers.toQuantity(blockNo()-1),transactionIndex:'0x0',from:'0x00000000000000000000000000000000000000aa',to:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C',nonce:'0x0',gas:'0x3d090',gasPrice:'0x3b9aca00',maxFeePerGas:'0x3b9aca00',maxPriorityFeePerGas:'0x1',input:'0x',value:'0x0',type:'0x2',chainId:'0x1',accessList:[],v:'0x0',r:ethers.zeroPadValue('0x01',32),s:ethers.zeroPadValue('0x01',32),yParity:'0x0'},o);
+  /* audit 5 review: one block hash per block number. block(n).hash, and the default blockHash of a transaction or receipt that names block n
+     (it was 0x…01 for every tx and receipt, a block no reader can serve). A test that passes blockHash (null included) keeps its own. */
+  const bhash=n=>ethers.zeroPadValue(ethers.toBeHex(n),32), withBh=(x,o)=>{ if(!('blockHash' in o)) x.blockHash=x.blockNumber==null?null:bhash(Number(x.blockNumber)); return x; };
+  const block=n=>({number:ethers.toQuantity(n),hash:bhash(n),parentHash:ethers.zeroPadValue(ethers.toBeHex(n-1),32),timestamp:ethers.toQuantity(Math.floor(Date.now()/1000)),nonce:'0x0000000000000000',difficulty:'0x0',gasLimit:'0x1c9c380',gasUsed:'0x0',miner:ethers.ZeroAddress,extraData:'0x',baseFeePerGas:'0x3b9aca00',blobGasUsed:'0x0',excessBlobGas:'0x0',transactions:[],stateRoot:ethers.ZeroHash,receiptsRoot:ethers.ZeroHash,mixHash:ethers.ZeroHash,parentBeaconBlockRoot:ethers.ZeroHash});
+  const txOf=(h,o={})=>withBh(Object.assign({hash:h,blockHash:null,blockNumber:ethers.toQuantity(blockNo()-1),transactionIndex:'0x0',from:'0x00000000000000000000000000000000000000aa',to:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C',nonce:'0x0',gas:'0x3d090',gasPrice:'0x3b9aca00',maxFeePerGas:'0x3b9aca00',maxPriorityFeePerGas:'0x1',input:'0x',value:'0x0',type:'0x2',chainId:'0x1',accessList:[],v:'0x0',r:ethers.zeroPadValue('0x01',32),s:ethers.zeroPadValue('0x01',32),yParity:'0x0'},o),o);
   /* audit 4: a receipt is mined in the head block (it was blockNo()-1: before the head the page reads just before sending, a history no
      chain can have; the page now refuses a receipt below that block). Everything else in the default receipt is unchanged. */
-  const rcOf=(h,o={})=>Object.assign({transactionHash:h,blockHash:ethers.zeroPadValue('0x01',32),blockNumber:ethers.toQuantity(blockNo()),transactionIndex:'0x0',from:'0x00000000000000000000000000000000000000aa',to:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C',cumulativeGasUsed:'0x30d40',gasUsed:'0x30d40',effectiveGasPrice:'0x3b9aca00',contractAddress:null,logs:[],logsBloom:'0x'+'00'.repeat(256),status:'0x1',type:'0x2'},o);
-  S.blockNo=blockNo; S.mkTx=txOf; S.mkRc=rcOf;
+  const rcOf=(h,o={})=>withBh(Object.assign({transactionHash:h,blockHash:null,blockNumber:ethers.toQuantity(blockNo()),transactionIndex:'0x0',from:'0x00000000000000000000000000000000000000aa',to:'0xCf5EBA884EFA04940d31A663bEB6D37F907d064C',cumulativeGasUsed:'0x30d40',gasUsed:'0x30d40',effectiveGasPrice:'0x3b9aca00',contractAddress:null,logs:[],logsBloom:'0x'+'00'.repeat(256),status:'0x1',type:'0x2'},o),o);
+  S.blockNo=blockNo; S.mkTx=txOf; S.mkRc=rcOf; S.blockHash=bhash;
   /* the defaults: a hash is pending until its receipt is released (holdReceipts), then mined with status 1 */
   S.tx=h=>S.holdReceipts?txOf(h,{blockHash:null,blockNumber:null,transactionIndex:null}):txOf(h);
   S.rc=h=>S.holdReceipts?null:rcOf(h);

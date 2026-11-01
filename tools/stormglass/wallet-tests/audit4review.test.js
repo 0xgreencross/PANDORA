@@ -12,10 +12,13 @@ T('a4h1','harness: WebRTC sends no UDP from a case (a local STUN listener receiv
   await new Promise(r=>sock.bind(0,'127.0.0.1',r)); const port=sock.address().port;
   try{ const r=await E.page.evaluate(async port=>{ const c=[]; let err=null;
       try{ const pc=new RTCPeerConnection({iceServers:[{urls:'stun:127.0.0.1:'+port}]}); pc.onicecandidate=e=>{ if(e.candidate&&e.candidate.candidate) c.push(e.candidate.candidate.split(' ').slice(2,8).join(' ')); };
-        pc.createDataChannel('x'); await pc.setLocalDescription(await pc.createOffer()); await new Promise(r=>setTimeout(r,3000)); pc.close(); }catch(e){ err=String(e).slice(0,120); }
-      return {candidates:c,err,rtc:typeof RTCPeerConnection}; },port);
+        pc.createDataChannel('x'); await pc.setLocalDescription(await pc.createOffer());
+        /* barrier (audit 5): ICE gathering has finished (state "complete"; bounded 10 s), so every candidate and STUN packet it would send is out */
+        var complete=await new Promise(r=>{ if(pc.iceGatheringState==='complete') return r(true); pc.onicegatheringstatechange=()=>{ if(pc.iceGatheringState==='complete') r(true); }; setTimeout(()=>r(false),10000); });
+        pc.close(); }catch(e){ err=String(e).slice(0,120); }
+      return {candidates:c,err,rtc:typeof RTCPeerConnection,complete:typeof complete==='undefined'?null:complete}; },port);
     await sleep(300);
-    return {pass:r.rtc==='function'&&!r.err&&packets===0&&r.candidates.length===0,ev:{udpPacketsToLocalStun:packets,candidates:r.candidates,err:r.err}}; }
+    return {pass:r.rtc==='function'&&!r.err&&r.complete===true&&packets===0&&r.candidates.length===0,ev:{gatheringComplete:r.complete,udpPacketsToLocalStun:packets,candidates:r.candidates,err:r.err}}; }
   finally{ sock.close(); } });
 
 const {connect,openWit,closeWit,popText,A1,A2}=H;

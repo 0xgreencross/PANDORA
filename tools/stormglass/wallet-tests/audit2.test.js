@@ -31,12 +31,29 @@ const tickNow=E=>E.page.evaluate(()=>tick(true));
 const ALLWALLET={eth_getTransactionByHash:true,eth_getTransactionReceipt:true,eth_blockNumber:true,eth_chainId:true,eth_accounts:true,eth_getBlockByNumber:true,eth_call:true,eth_getTransactionCount:true};
 
 /* ═══ q: ONE WRITE AT A TIME ═══ */
-T('q1','five fast WITNESS presses while the wallet asks: one eth_sendTransaction, one payment',{wallets:[one('A',undefined,{delay:{eth_sendTransaction:1500}})],ethereum:'A'},async E=>{
-  await connect(E); await fillWit(E,'0.01');
-  for(let i=0;i<5;i++){ await pressWit(E); await sleep(60); }
-  await E.until(async()=>(await E.sends()).length>0,8000); await sleep(2500);
-  const rq=(await reqs(E,'A','eth_sendTransaction')).length, s=await E.sends(), t=await E.toasts();
-  return {pass:rq===1&&s.length===1&&s[0].params[0].value===ETH(0.01), ev:{eth_sendTransaction:rq,sends:s.length,toasts:t.slice(-3)}}; });
+/* q1 (gated, audit 5): the wallet HOLDS the first eth_sendTransaction (a gate, not a delay); while it is held four more presses each
+   reach the lock and are turned away (a busy toast per press is the barrier), exactly one request exists and the lock is the
+   witness's, handed to the wallet. After the answer: one payment of 0.01, "confirmed", the lock free; then a deliberate 0.02 goes out. */
+T('q1','five fast WITNESS presses while the wallet holds the first: one eth_sendTransaction, one payment; after it, a deliberate one goes out',{wallets:[one('A')],ethereum:'A'},async E=>{
+  await connect(E); await fillWit(E,'0.01'); await E.P('A').set({gate:{eth_sendTransaction:true}});
+  await pressWit(E); const g=await E.waitGate('A','eth_sendTransaction',8000);
+  const lock0=await E.page.evaluate(()=>OPLOCK&&{name:OPLOCK.name,handed:OPLOCK.handed,dead:OPLOCK.dead});
+  const n0=(await E.toasts()).length, BUSY=/in your wallet now|finish or cancel/i;
+  for(let i=0;i<4;i++) await pressWit(E);
+  const refused=await E.until(async()=>(await E.toasts()).slice(n0).filter(x=>BUSY.test(x)).length>=4,5000);
+  const held={requests:(await reqs(E,'A','eth_sendTransaction')).length,waiting:await E.P('A').waiting('eth_sendTransaction'),sends:(await E.sends()).length,
+    lock:await E.page.evaluate(()=>OPLOCK&&{name:OPLOCK.name,handed:OPLOCK.handed,dead:OPLOCK.dead})};
+  const n1=(await E.toasts()).length; await E.P('A').set({gate:{}}); await E.P('A').release('eth_sendTransaction');
+  const done1=await E.until(async()=>(await E.toasts()).slice(n1).some(x=>DONE.test(x))&&await E.page.evaluate(()=>OPLOCK===null),15000);
+  const s1=await E.sends(), rq1=(await reqs(E,'A','eth_sendTransaction')).length;
+  const n2=(await E.toasts()).length; await E.page.fill('#wAmt','0.02'); await pressWit(E);
+  const done2=await E.until(async()=>(await E.sends()).length===2&&(await E.toasts()).slice(n2).some(x=>DONE.test(x))&&await E.page.evaluate(()=>OPLOCK===null),15000);
+  const s=await E.sends(), rq=(await reqs(E,'A','eth_sendTransaction')).length;
+  const lockOk=!!lock0&&lock0.name==='witness'&&lock0.handed===true&&!lock0.dead&&!!held.lock&&held.lock.handed===true&&held.lock.name==='witness';
+  return {pass:g&&lockOk&&refused&&held.requests===1&&held.waiting===1&&held.sends===0&&done1&&s1.length===1&&s1[0].params[0].value===ETH(0.01)&&rq1===1
+      &&done2&&rq===2&&s.length===2&&s[1].params[0].value===ETH(0.02),
+    ev:{gateHit:g,lockAtGate:lock0,busyRefusals:refused,whileHeld:held,afterRelease:{confirmed:done1,sends:s1.map(x=>x.params[0].value),requests:rq1},
+      deliberate:{confirmed:done2,sends:s.map(x=>x.params[0].value),requests:rq},toasts:(await E.toasts()).slice(-4)}}; });
 T('q2','WITNESS twice and COLLECT while one CONNECT is pending: one connection, one eth_sendTransaction',{wallets:[one('A',undefined,{gate:{eth_requestAccounts:true}})],ethereum:'A'},async E=>{
   await fillWit(E,'0.01'); await pressWit(E); const g=await E.waitGate('A','eth_requestAccounts',5000);
   await pressWit(E); await sleep(100); await closeWit(E.page);
@@ -225,9 +242,11 @@ T('p3','account changes while the wallet is asked (before the hand-off): nothing
 T('p4','the day changes while CONNECT is pending: nothing is bought on the new day with the old day\'s option',{wallets:[one('A',undefined,{gate:{eth_requestAccounts:true}})],ethereum:'A'},async E=>{
   await openOpt(E,3); await pressCollect(E); const g=await E.waitGate('A','eth_requestAccounts',6000);
   toDay14(E.chain); await tickNow(E); await sleep(300); const day=await E.page.evaluate(()=>ST.day.id);
-  await E.P('A').set({gate:{}}); await E.P('A').release('eth_requestAccounts'); await E.until(async()=>/0x/.test(await E.label()),6000); await sleep(3000);
-  const s=await E.sends(), args=[]; for(const x of s) args.push(await decodeBuy(E,x.params[0].data)); const p=await popText(E.page);
-  return {pass:g&&day===14&&s.length===0&&/NO LONGER ON SALE/.test(p), ev:{gateHit:g,dayOnScreen:day,buys:args,popup:p.slice(0,80)}}; });
+  await E.P('A').set({gate:{}}); await E.P('A').release('eth_requestAccounts'); await E.until(async()=>/0x/.test(await E.label()),6000);
+  /* barrier (audit 5): the COLLECT press has ended (the dialog says NO LONGER ON SALE and the write lock is free) before "nothing bought" */
+  const ended=await E.until(async()=>/NO LONGER ON SALE/.test(await popText(E.page))&&await E.page.evaluate(()=>OPLOCK===null),8000); await sleep(300);
+  const s=await E.sends(), args=[]; for(const x of s) args.push(await decodeBuy(E,x.params[0].data)); const p=await popText(E.page), asked=(await reqs(E,'A','eth_sendTransaction')).length;
+  return {pass:g&&day===14&&ended&&s.length===0&&asked===0&&/NO LONGER ON SALE/.test(p), ev:{gateHit:g,dayOnScreen:day,ended,asked,buys:args,popup:p.slice(0,80)}}; });
 T('p5','the day changes while the wallet confirms: the day 13 buy is followed in its own dialog; the dialog no longer offers day 14\'s price as day 13',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await E.P('A').set({gate:{eth_sendTransaction:true}}); await openOpt(E,3); await pressCollect(E); const g=await E.waitGate('A','eth_sendTransaction',6000);
   toDay14(E.chain); await tickNow(E); await E.until(async()=>/DAY 13 IS NO LONGER ON SALE/.test(await E.page.evaluate(()=>document.getElementById('nx-pfPrice').textContent)),3000); const hdr=await E.page.evaluate(()=>document.getElementById('nx-pfPrice').textContent);
@@ -238,19 +257,22 @@ T('p5','the day changes while the wallet confirms: the day 13 buy is followed in
 /* ═══ v: THE LAST LOOK before eth_sendTransaction (no events: the wallet is asked directly) ═══ */
 T('v1','the wallet moves to Base without a chainChanged event right before the send: nothing sent',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await fillWit(E,'0.01'); await E.P('A').set({gate:{eth_estimateGas:true}}); await pressWit(E); const g=await E.waitGate('A','eth_estimateGas',6000);
-  await E.P('A').set({chainId:'0x2105',gate:{}}); await E.P('A').release('eth_estimateGas'); await sleep(3000);
+  await E.P('A').set({chainId:'0x2105',gate:{}}); await E.P('A').release('eth_estimateGas');
+  const ended=await E.until(async()=>(await E.toasts()).some(x=>/another network/i.test(x))&&await E.page.evaluate(()=>OPLOCK===null),8000); await sleep(300);   /* barrier (audit 5): the stop toast and the lock free */
   const s=await E.sends(), rq=(await reqs(E,'A','eth_sendTransaction')).length, t=await E.toasts();
-  return {pass:g&&s.length===0&&rq===0&&t.some(x=>/another network/i.test(x)), ev:{gateHit:g,sends:s.length,requests:rq,toasts:t.slice(-2)}}; });
+  return {pass:g&&ended&&s.length===0&&rq===0&&t.some(x=>/another network/i.test(x)), ev:{gateHit:g,ended,sends:s.length,requests:rq,toasts:t.slice(-2)}}; });
 T('v2','the wallet\'s first account changes without an accountsChanged event right before the send: nothing sent',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await fillWit(E,'0.01'); await E.P('A').set({gate:{eth_estimateGas:true}}); await pressWit(E); const g=await E.waitGate('A','eth_estimateGas',6000);
-  await E.P('A').set({accounts:[A2,A1],gate:{}}); await E.P('A').release('eth_estimateGas'); await sleep(3000);
+  await E.P('A').set({accounts:[A2,A1],gate:{}}); await E.P('A').release('eth_estimateGas');
+  const ended=await E.until(async()=>(await E.toasts()).some(x=>/changed/i.test(x))&&await E.page.evaluate(()=>OPLOCK===null),8000); await sleep(300);   /* barrier (audit 5): the stop toast and the lock free */
   const s=await E.sends(), rq=(await reqs(E,'A','eth_sendTransaction')).length, t=await E.toasts();
-  return {pass:g&&s.length===0&&rq===0&&t.some(x=>/changed/i.test(x)), ev:{gateHit:g,sends:s.length,requests:rq,toasts:t.slice(-2)}}; });
+  return {pass:g&&ended&&s.length===0&&rq===0&&t.some(x=>/changed/i.test(x)), ev:{gateHit:g,ended,sends:s.length,requests:rq,toasts:t.slice(-2)}}; });
 T('v3','the chain changes while the wallet confirmation is open: the request carries chainId 0x1 and the captured sender; a wallet that checks it refuses',{wallets:[one('A',undefined,{enforceChainId:true})],ethereum:'A'},async E=>{
   await connect(E); await fillWit(E,'0.01'); await E.P('A').set({gate:{eth_sendTransaction:true}}); await pressWit(E); const g=await E.waitGate('A','eth_sendTransaction',6000);
-  await E.P('A').set({chainId:'0x2105',gate:{}}); await E.P('A').emit('chainChanged','0x2105'); await E.P('A').release('eth_sendTransaction'); await sleep(2500);
+  await E.P('A').set({chainId:'0x2105',gate:{}}); await E.P('A').emit('chainChanged','0x2105'); await E.P('A').release('eth_sendTransaction');
+  const ended=await E.until(()=>E.page.evaluate(()=>OPLOCK===null),8000); await sleep(300);   /* barrier (audit 5): the wallet's refusal has come back (lock free) */
   const r=await reqs(E,'A','eth_sendTransaction'), s=await E.sends(), t=await E.toasts();
-  return {pass:g&&r.length===1&&r[0][0].chainId==='0x1'&&String(r[0][0].from).toLowerCase()===A1&&s.length===0&&!t.some(x=>DONE.test(x)), ev:{gateHit:g,request:r[0]&&{chainId:r[0][0].chainId,from:r[0][0].from},sends:s.length,toasts:t.slice(-2)}}; });
+  return {pass:g&&ended&&r.length===1&&r[0][0].chainId==='0x1'&&String(r[0][0].from).toLowerCase()===A1&&s.length===0&&!t.some(x=>DONE.test(x)), ev:{gateHit:g,request:r[0]&&{chainId:r[0][0].chainId,from:r[0][0].from},sends:s.length,toasts:t.slice(-2)}}; });
 
 /* ═══ c: IME COMPOSITION across redraws and day transitions ═══ */
 T('c1','composition in the witness box spans redraws and a day 13 -> day 14 change: same node, same text; WITNESS then pays for the day on screen',{wallets:[one('A')],ethereum:'A'},async E=>{

@@ -153,6 +153,8 @@ T('a4s7','COLLECT stopped by DISCONNECT before the hand-off: the dialog stops sa
   const g=await E.waitGate('A','eth_estimateGas',6000); const p0=await popText(E.page);
   await E.page.evaluate(()=>disconnect(true)); await sleep(1000);
   const p1=await popText(E.page), lock=await E.page.evaluate(()=>OPLOCK===null), lab=await E.label();
-  await E.P('A').set({gate:{}}); await E.P('A').release('eth_estimateGas'); await sleep(2000);
+  await E.P('A').set({gate:{}}); await E.P('A').release('eth_estimateGas');
+  /* barrier (audit 5): the late estimateGas answer has reached the page, the lock is free; then a settle window */
+  const answered=await E.until(async()=>(await E.P('A').answered('eth_estimateGas'))>=1&&await E.page.evaluate(()=>OPLOCK===null),8000); await sleep(1500);
   const asked=(await reqs(E,'A','eth_sendTransaction')).length, p2=await popText(E.page);
-  return {pass:g&&/confirm in your wallet/i.test(p0)&&lock&&/CONNECT/.test(lab)&&!/confirm in your wallet/i.test(p1)&&asked===0,ev:{gateHit:g,before:p0.slice(0,90),afterDisconnect:p1.slice(0,90),lockFreed:lock,label:lab,afterLateAnswer:p2.slice(0,120),sendRequests:asked}}; });
+  return {pass:g&&answered&&/confirm in your wallet/i.test(p0)&&lock&&/CONNECT/.test(lab)&&!/confirm in your wallet/i.test(p1)&&asked===0,ev:{gateHit:g,before:p0.slice(0,90),afterDisconnect:p1.slice(0,90),lockFreed:lock,label:lab,afterLateAnswer:p2.slice(0,120),sendRequests:asked}}; });
