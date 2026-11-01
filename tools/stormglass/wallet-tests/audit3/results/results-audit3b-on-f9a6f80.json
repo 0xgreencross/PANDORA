@@ -1,0 +1,502 @@
+[
+ {
+  "id": "u1",
+  "name": "a write's connection is left unanswered and replaced by a CONNECT to another wallet: a later deliberate payment goes out; the late answer neither restarts the old write nor changes the remembered wallet",
+  "pass": false,
+  "ms": 30241,
+  "ev": {
+   "gateHit": true,
+   "connectedB": true,
+   "savedAfterB": "test.b",
+   "laterPaymentSent": false,
+   "toastsOnLaterPress": [
+    "Your witness payment is still waiting for your wallet. Finish or cancel it there first."
+   ],
+   "released": 1,
+   "sends": [
+    "B 0x2386f26fc10000"
+   ],
+   "want": "B 0x470de4df820000",
+   "label": "0x0000…00cc",
+   "savedEnd": "test.a"
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 1,
+    "sent": 1
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u2",
+  "name": "WalletConnect: no session_request_sent within 8 s: OPEN is offered without a request id, and the text does not claim the request is in the wallet",
+  "pass": false,
+  "ms": 10900,
+  "ev": {
+   "before": {
+    "title": "CONFIRM IN ZERION",
+    "disabled": true,
+    "text": "Sending the request to your wallet, one moment…"
+   },
+   "after8s": {
+    "on": true,
+    "disabled": false,
+    "text": "The request is in ZERION now. Open it, check it, confirm or reject, then come back to this page."
+   },
+   "claimsInWallet": true,
+   "jump": "https://link.zerion.io/wc",
+   "answered": true
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u3",
+  "name": "a write stalled before the hand-off (switch never answered): the busy message says nothing was sent and offers DISCONNECT; DISCONNECT frees it; the late switch answer sends nothing; a handed-off write is reported as in the wallet",
+  "pass": false,
+  "ms": 7721,
+  "ev": {
+   "gateHit": true,
+   "busyBeforeHandoff": "Your witness payment is still waiting for your wallet. Finish or cancel it there first.",
+   "busyAfterHandoff": "Your witness payment is still waiting for your wallet. Finish or cancel it there first.",
+   "sendRequests": 1,
+   "sends": [
+    "0x1 0x470de4df820000"
+   ]
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 1,
+    "sent": 1
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u4",
+  "name": "wallet name and icon from EIP-6963 are shown as text; markup in a name is not run; only data:image icons are used; the connected sheet shows the name as text",
+  "pass": true,
+  "ms": 3422,
+  "ev": {
+   "picker": {
+    "imgs": [
+     "data:image/svg+xml;base6"
+    ],
+    "elements": [
+     "IMG"
+    ],
+    "texts": [
+     "<IMG SRC=X ONERROR=\"WINDOW.__XSS=1\">EVIL",
+     "<B>BOLD</B>",
+     "ZED"
+    ],
+    "xss": null
+   },
+   "connected": true,
+   "menu": {
+    "note": "Connected with <img src=x onerror=\"window.__xss=1\">EVIL.",
+    "els": 0,
+    "xss": null
+   }
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u5",
+  "name": "tampered stored WalletConnect app (javascript:, http:, via SG_WC_APP or the old library key) is ignored: no OPEN button, no jump; a stored name is shown as text",
+  "pass": true,
+  "ms": 2434,
+  "ev": {
+   "r": {
+    "js": null,
+    "http": null,
+    "space": null,
+    "migrated": null,
+    "libKey": null,
+    "sheet": {
+     "title": "CONFIRM IN YOUR WALLET",
+     "buttons": 0,
+     "text": "The request is in your wallet now. Open your wallet app, check it, confirm or reject, then come back to this page."
+    },
+    "named": {
+     "title": "CONFIRM IN <img src=x onerror=\"window.__x=3\">",
+     "imgs": 0,
+     "app": true
+    }
+   },
+   "after": {
+    "x": null,
+    "href": "http://127.0.0.1:8912/"
+   }
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u6",
+  "name": "switch falsely reported done (null, chain unchanged) and switch refused with 4902: WITNESS estimates and sends nothing; COLLECT's SWITCH stays on ANOTHER NETWORK",
+  "pass": true,
+  "ms": 9046,
+  "ev": {
+   "4902": {
+    "said": true,
+    "switchAsked": 1,
+    "est": 0,
+    "snd": 0,
+    "prompt": false
+   },
+   "falseOk": {
+    "said": true,
+    "switchAsked": 1,
+    "est": 0,
+    "snd": 0,
+    "prompt": false,
+    "wrong": true,
+    "stillWrong": true,
+    "snd2": 0,
+    "est2": 0
+   }
+  },
+  "pageErrors": [],
+  "contexts": 2,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u7",
+  "name": "remembered wallet, announcements in another order and window.ethereum on the other wallet: the remembered one is asked directly, no list, the other never asked",
+  "pass": true,
+  "ms": 1352,
+  "ev": {
+   "label": "0x0000…00cc",
+   "picker": false,
+   "rqA": 0,
+   "rqB": 1
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u8",
+  "name": "computer: the chosen wallet fails eth_requestAccounts with -32603: no other wallet is asked, the error is shown, the next CONNECT lists the wallets again",
+  "pass": true,
+  "ms": 3721,
+  "ev": {
+   "rqA": 1,
+   "rqB": 0,
+   "label": "CONNECT",
+   "toasts": [
+    "Internal error"
+   ],
+   "saved": null,
+   "listAgain": true
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u9",
+  "name": "an old write stopped by DISCONNECT, answering late, does not release a newer write's lock: a press while the newer one is in the wallet is still refused; one payment",
+  "pass": true,
+  "ms": 7028,
+  "ev": {
+   "gate1": true,
+   "gate2": true,
+   "requestsWhileNewerOpen": 1,
+   "toasts": [
+    "Your witness payment is still waiting for your wallet. Finish or cancel it there first."
+   ],
+   "sends": [
+    "0x470de4df820000"
+   ]
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 1,
+    "sent": 1
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u10",
+  "name": "WalletConnect: unrelated session_request_sent events do not wake OPEN; closing the sheet cancels nothing; a late event after the answer changes nothing",
+  "pass": true,
+  "ms": 1569,
+  "ev": {
+   "start": {
+    "on": true,
+    "disabled": true
+   },
+   "otherMethod": {
+    "on": true,
+    "disabled": true
+   },
+   "noTopic": {
+    "on": true,
+    "disabled": true
+   },
+   "noId": {
+    "on": true,
+    "disabled": true
+   },
+   "closed": {
+    "on": false,
+    "disabled": true
+   },
+   "answer": "0x2222222222222222222222222222222222222222222222222222222222222222",
+   "late": {
+    "on": false,
+    "disabled": true
+   },
+   "lateText": "Sending the request to your wallet, one moment…"
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u11",
+  "name": "an account change landing between the last look and the eth_sendTransaction call (0..14 microtasks later) never lets the old account's request go to the wallet",
+  "pass": false,
+  "ms": 17028,
+  "ev": {
+   "requestsAfterTheChange": [
+    2
+   ],
+   "rows": "0:stopped 1:stopped 2:sent 3:sent 4:sent 5:sent 6:sent 7:sent 8:sent 9:sent 10:sent 11:sent 12:sent 13:sent 14:sent"
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 13,
+    "sent": 13
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u12",
+  "name": "phone, WalletConnect cannot load: the sheet turns into \"WALLETCONNECT DID NOT ANSWER\" with OPEN IN METAMASK (this page, in MetaMask's browser) and COPY THE LINK; no wallet is asked",
+  "pass": true,
+  "ms": 21699,
+  "ev": {
+   "wcRequests": 1,
+   "first": "CONNECT YOUR WALLET",
+   "dead": true,
+   "buttons": [
+    "OPEN IN METAMASK",
+    "COPY THE LINK"
+   ],
+   "jump": "https://link.metamask.io/dapp/127.0.0.1:8912/"
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u13",
+  "name": "eth_sendTransaction throws synchronously: reported as uncertain (check the wallet), never \"Nothing was sent\", no automatic retry; a deliberate press asks again",
+  "pass": true,
+  "ms": 4965,
+  "ev": {
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your wallet did not say whether it sent this. Check your wallet’s activity before trying again."
+   ],
+   "requestsAfterThrow": 1,
+   "requestsAfterDeliberatePress": 2
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 2,
+    "sent": 1
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u14",
+  "name": "accountsChanged(garbage | null) keeps the session while eth_accounts still has the account; A->B->A while a write waits stops it (nothing sent); the next press pays from A",
+  "pass": true,
+  "ms": 7945,
+  "ev": {
+   "labels": [
+    "0x0000…00AA",
+    "0x0000…00AA",
+    "0x0000…00AA",
+    "0x0000…00AA"
+   ],
+   "gateHit": true,
+   "sendsAfterRoundTrip": 0,
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your wallet changed while this was waiting. Nothing was sent."
+   ],
+   "final": [
+    "0x00000000000000000000000000000000000000aa 0x470de4df820000"
+   ]
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 1,
+    "sent": 1
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u15",
+  "name": "late announcement (1.5 s after load) and a slow probe (0.9 s): both listed; choosing the late wallet asks only it",
+  "pass": true,
+  "ms": 4432,
+  "ev": {
+   "buttons": [
+    "WALLET A",
+    "WALLET B"
+   ],
+   "connected": true,
+   "label": "0x0000…00cc"
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u16",
+  "name": "phone in a wallet app: window.ethereum refuses (4001): no other provider is asked, nothing connects, says cancelled",
+  "pass": true,
+  "ms": 3835,
+  "ev": {
+   "rqA": 1,
+   "rqB": 0,
+   "label": "CONNECT",
+   "toasts": [
+    "Cancelled in your wallet. Nothing was sent."
+   ]
+  },
+  "pageErrors": [],
+  "contexts": 1,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "u17",
+  "name": "computer, no wallet: CONNECT and WITNESS show NO WALLET IN THIS BROWSER and free the button; only wallet dead: \"No wallet answered\", nothing asked",
+  "pass": true,
+  "ms": 6591,
+  "ev": {
+   "connectSheet": true,
+   "witnessSheet": true,
+   "secondPress": true,
+   "busy": false,
+   "dead": {
+    "toast": true,
+    "rq": 0,
+    "label": "CONNECT"
+   }
+  },
+  "pageErrors": [],
+  "contexts": 2,
+  "wallet": [
+   {
+    "asked": 0,
+    "sent": 0
+   }
+  ],
+  "outsideRefused": [],
+  "socketsRefused": []
+ }
+]

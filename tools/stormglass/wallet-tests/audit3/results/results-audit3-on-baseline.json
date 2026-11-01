@@ -1,0 +1,467 @@
+[
+ {
+  "id": "x1",
+  "name": "reverted COLLECT: its late \"who bought first\" lookup does not write into another option opened meanwhile; the reverted toast stands",
+  "pass": false,
+  "ms": 3145,
+  "ev": {
+   "held": true,
+   "released": true,
+   "revertedToast": true,
+   "closed": true,
+   "before": "COLLECT TODAY’S PLATE · 0.7062 ETHYOU PICK #5 FOR TOMORROW",
+   "after": {
+    "k": 5,
+    "tx": "failed",
+    "acts": "[!!] NOT COLLECTEDIt reached Ethereum but failed (reverted). Only the network fe"
+   },
+   "toasts": [
+    "Collecting the plate: confirm in your wallet",
+    "Collecting the plate: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Collecting the plate: sent, but it failed on Ethereum (reverted). Only the network fee was spent."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "x2",
+  "name": "COLLECT fails before the hand-off: its late reason lookup does not write into another option opened meanwhile; the error toast stands",
+  "pass": false,
+  "ms": 3331,
+  "ev": {
+   "held": true,
+   "released": true,
+   "closed": true,
+   "sends": 0,
+   "before": "COLLECT TODAY’S PLATE · 0.7062 ETHYOU PICK #5 FOR TOMORROW",
+   "after": {
+    "k": 5,
+    "tx": "failed",
+    "acts": "[!!] NOT COLLECTEDexecution revertedBACK"
+   },
+   "toasts": [
+    "Collecting the plate: confirm in your wallet",
+    "execution reverted"
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "x3",
+  "name": "reverted COLLECT on day 13: the late lookup does not write into a day 14 dialog opened after the day changed",
+  "pass": false,
+  "ms": 3565,
+  "ev": {
+   "held": true,
+   "released": true,
+   "dayOnScreen": 14,
+   "before": {
+    "day": 14,
+    "acts": "COLLECT TODAY’S PLATE · 1.6718 ETHYOU PICK #2 FOR TOMORROW"
+   },
+   "after": {
+    "day": 14,
+    "k": 2,
+    "tx": "failed",
+    "acts": "[!!] NOT COLLECTEDIt reached Ethereum but failed (reverted). Only the network fe"
+   },
+   "toasts": [
+    "Collecting the plate: confirm in your wallet",
+    "Collecting the plate: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Collecting the plate: sent, but it failed on Ethereum (reverted). Only the network fee was spent."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "x4",
+  "name": "same dialog, same option: BACK and COLLECT again while the first press's reason lookup is slow: the newer operation's view is not overwritten, and it completes in its own view",
+  "pass": false,
+  "ms": 3070,
+  "ev": {
+   "held": true,
+   "back": true,
+   "gateHit": true,
+   "sameDialog": true,
+   "released": true,
+   "before": {
+    "tx": "confirm",
+    "acts": "COLLECT DAY 13 · 0.7062 ETHCollecting the plate: confirm in your walle"
+   },
+   "after": {
+    "tx": "failed",
+    "acts": "[!!] NOT COLLECTEDexecution revertedBACK"
+   },
+   "done": true,
+   "final": "[OK] DAY 13 IS YOURSPLATE#13THE GLASSOPE",
+   "sends": 1,
+   "toasts": [
+    "execution reverted",
+    "Collecting the plate: confirm in your wallet",
+    "Collecting the plate: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Collecting the plate: confirmed"
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "x5",
+  "name": "the seats lookup of a finished COLLECT answers late: it does not overwrite the seats shown by a newer COLLECT's result",
+  "pass": false,
+  "ms": 2806,
+  "ev": {
+   "done1": true,
+   "held": true,
+   "closed": true,
+   "done2": true,
+   "released": true,
+   "before": "4.0000",
+   "after": "3.0000",
+   "sends": 2
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "x6",
+  "name": "two seat refreshes for the same account cross: the older answer arriving last does not overwrite the newer one",
+  "pass": false,
+  "ms": 3828,
+  "ev": {
+   "held": true,
+   "asked": true,
+   "released": true,
+   "before": "4.0000",
+   "after": "3.0000",
+   "lk": {
+    "stack": "at Proxy.eval (eval at evaluate (:370:30), <anonymous>:4:68) | at refreshSeats (http://127.0.0.1:8920/:1701:46) | at eval (eval at evaluate (:370:30), <anonymous>:1:7) | at UtilityScript.evaluate (<anonymous>:372:16)",
+    "got": "3000000000000000000"
+   }
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "x7",
+  "name": "the SMALL WEATHER welcome: the first account's gift image answers late, after the wallet moved to a second holder: the second account's image stays",
+  "pass": false,
+  "ms": 2207,
+  "ev": {
+   "held": true,
+   "asked": true,
+   "secondShown": true,
+   "released": true,
+   "changed": true
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y1",
+  "name": "nonce spent 60 blocks later, replaced in block +37: batches of at most TRACK.scan blocks, the original receipt asked between them, every block read in order; says replaced",
+  "pass": false,
+  "ms": 2978,
+  "ev": {
+   "kind": "replaced",
+   "gap": 60,
+   "at": 37,
+   "scan": 5,
+   "got": true,
+   "maxBlocksPerBatch": 38,
+   "batches": 1,
+   "order": {
+    "ok": true,
+    "first": 0,
+    "last": 37,
+    "n": 38
+   },
+   "readPastIt": 0,
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Your witness payment: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y2",
+  "name": "sped up (same sender, nonce, to, data, value) in block +7, past the first batch: counted as confirmed (sped up), batches bounded",
+  "pass": false,
+  "ms": 2676,
+  "ev": {
+   "kind": "repriced",
+   "gap": 20,
+   "at": 7,
+   "scan": 5,
+   "got": true,
+   "maxBlocksPerBatch": 8,
+   "batches": 1,
+   "order": {
+    "ok": true,
+    "first": 0,
+    "last": 7,
+    "n": 8
+   },
+   "readPastIt": 0,
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Your witness payment: confirmed (sped up in your wallet)"
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y3",
+  "name": "cancelled (0 ETH to self) in block +13, in the third batch: says cancelled, never confirmed, batches bounded",
+  "pass": false,
+  "ms": 2881,
+  "ev": {
+   "kind": "cancelled",
+   "gap": 20,
+   "at": 13,
+   "scan": 5,
+   "got": true,
+   "maxBlocksPerBatch": 14,
+   "batches": 1,
+   "order": {
+    "ok": true,
+    "first": 0,
+    "last": 13,
+    "n": 14
+   },
+   "readPastIt": 0,
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Your witness payment: cancelled in your wallet after it was sent. It did not go through; only network fees were spent."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y4",
+  "name": "block +8 (holding the replacement) is answered null three times: the cursor stays on it, reads it again, finds the replacement, never reads past it",
+  "pass": false,
+  "ms": 27447,
+  "ev": {
+   "what": "null",
+   "got": false,
+   "missesServed": 1,
+   "blockRRequests": 1,
+   "readPastIt": 12,
+   "order": {
+    "ok": true,
+    "first": 0,
+    "last": 20,
+    "n": 21
+   },
+   "maxBlocksPerBatch": 21,
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Your witness payment: sent (0x0000…0001), but this page cannot confirm it yet. Look it up on Etherscan before paying again."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y5",
+  "name": "block +8 fails on every reader (RPC error) twice: retried, not skipped; the replacement is found",
+  "pass": false,
+  "ms": 3499,
+  "ev": {
+   "what": "error",
+   "got": true,
+   "missesServed": 7,
+   "blockRRequests": 7,
+   "readPastIt": 0,
+   "order": {
+    "ok": true,
+    "first": 0,
+    "last": 8,
+    "n": 9
+   },
+   "maxBlocksPerBatch": 9,
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Your witness payment: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y6",
+  "name": "the replacement is in block +8 but its receipt lags (null three times): the block is read again until the receipt comes; says replaced",
+  "pass": false,
+  "ms": 27382,
+  "ev": {
+   "what": "receipt",
+   "got": false,
+   "missesServed": 1,
+   "blockRRequests": 1,
+   "readPastIt": 12,
+   "order": {
+    "ok": true,
+    "first": 0,
+    "last": 20,
+    "n": 21
+   },
+   "maxBlocksPerBatch": 21,
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Your witness payment: sent (0x0000…0001), but this page cannot confirm it yet. Look it up on Etherscan before paying again."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y10",
+  "name": "the first reader never has block +8 (answers null for it, forever); the other readers have it: the scan moves to them and finds the replacement, never reading past it",
+  "pass": false,
+  "ms": 22454,
+  "ev": {
+   "got": false,
+   "nullsFromFirstReader": 1,
+   "readPastIt": 12,
+   "order": {
+    "ok": false,
+    "first": 0,
+    "last": 20,
+    "n": 20
+   },
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Your witness payment: sent (0x0000…0001), but this page cannot confirm it yet. Look it up on Etherscan before paying again."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y7",
+  "name": "800 blocks to look through, 25 ms each: \"cannot confirm\" comes at TRACK.lost (within a batch), and the tracker stops at TRACK.stop, reading no block after",
+  "pass": false,
+  "ms": 27757,
+  "ev": {
+   "unknownAfterMs": 26423,
+   "limitMs": 5000,
+   "blocksReadAfterStop": 593,
+   "maxBlocksPerBatch": 801,
+   "blocksRead": 801
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y8",
+  "name": "the original's own receipt appears while 400 blocks remain to be read: confirmed within a batch, not after the whole scan",
+  "pass": false,
+  "ms": 15239,
+  "ev": {
+   "confirmed": true,
+   "msAfterReceipt": 12838,
+   "limitMs": 2500,
+   "blocksRead": 401,
+   "maxBlocksPerBatch": 401
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "y9",
+  "name": "a reader whose head is missing (null) or behind the send block: no premature \"cannot confirm\"; once the head is real the replacement is found",
+  "pass": false,
+  "ms": 5244,
+  "ev": {
+   "got": true,
+   "unknownWhileNull": true,
+   "unknownWhileBehind": true,
+   "order": {
+    "ok": true,
+    "first": 0,
+    "last": 3,
+    "n": 4
+   },
+   "toasts": [
+    "Your witness payment: confirm in your wallet",
+    "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Your witness payment: sent (0x0000…0001), but this page cannot confirm it yet. Look it up on Etherscan before paying again.",
+    "Your witness payment: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "z1",
+  "name": "wrong chain, switch refused, WITNESS: the operation stops at the chain check (no gas estimate, no last look, no send) and says the wallet is on another network",
+  "pass": true,
+  "ms": 2912,
+  "ev": {
+   "switchAsked": 1,
+   "estimateGas": 0,
+   "sendTransaction": 0,
+   "lastLookAccounts": 0,
+   "toasts": [
+    "Your wallet is on another network. Switch it to Ethereum mainnet. Nothing was sent."
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "z2",
+  "name": "wrong chain: the switch is refused in the wallet (4001) from COLLECT's SWITCH button and from the header bar: says it is still on another network, never \"Cancelled in your wallet\"",
+  "pass": false,
+  "ms": 3219,
+  "ev": {
+   "wrongView": true,
+   "fromCollect": [
+    "Cancelled in your wallet. Nothing was sent."
+   ],
+   "fromHeader": [
+    "Cancelled in your wallet. Nothing was sent."
+   ],
+   "view": "[!!] YOUR WALLET IS ON ANOTHER NETWORKYour wallet is on anot",
+   "sends": 0
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "z3",
+  "name": "COLLECT's SWITCH TO ETHEREUM is answered after the dialog moved to another option: the switch does not start a COLLECT there (nothing asked, nothing sent)",
+  "pass": false,
+  "ms": 4799,
+  "ev": {
+   "wrongView": true,
+   "gateHit": true,
+   "after": {
+    "k": 5,
+    "tx": "done",
+    "acts": "[OK] DAY 13 IS YOURSPLATE#13THE GLASSOPEN ↗YOUR SEATS NOW2.0000CLOSE"
+   },
+   "sends": 1,
+   "sendRequests": 1,
+   "estimateGas": 1,
+   "toasts": [
+    "Collecting the plate: confirm in your wallet",
+    "Collecting the plate: sent (0x0000…0001), waiting for Ethereum to confirm",
+    "Collecting the plate: confirmed"
+   ]
+  },
+  "pageErrors": []
+ },
+ {
+  "id": "z4",
+  "name": "COLLECT on the wrong chain, SWITCH TO ETHEREUM accepted in the same dialog: the COLLECT goes on there (one send, the chosen option, on chain 1)",
+  "pass": true,
+  "ms": 1509,
+  "ev": {
+   "wrongView": true,
+   "done": true,
+   "sends": [
+    "0x1"
+   ],
+   "option": "3",
+   "popup": "[OK] DAY 13 IS YOURSPLATE#13THE GLASSOPE"
+  },
+  "pageErrors": []
+ }
+]
