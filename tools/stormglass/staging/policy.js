@@ -27,6 +27,11 @@ const POLICY={
   SIGN:['eth_sign','personal_sign','eth_signTypedData','eth_signTypedData_v1','eth_signTypedData_v3','eth_signTypedData_v4'],
   READER:['eth_blobBaseFee','eth_getTransactionCount','eth_gasPrice','eth_maxPriorityFeePerGas','eth_feeHistory','eth_getCode','eth_getBalance','net_version'],
   KNOWN_UNUSED:['wallet_addEthereumChain'],
+  /* every STORMGLASS contract WRITE the page can send, each through send(name, …) as one eth_sendTransaction (audit 5 added withdrawTo). build.js stops when index.html
+     send()s a name not listed here, or when one of these is no longer in the page's ABI. In REAL mode each is intercepted like any write: the wrapper never forwards
+     eth_sendTransaction, whatever the call. The intercept panel decodes it with the page's own ABI (withdrawTo: the recipient is shown on its own row). */
+  CONTRACT_WRITES:{ bid:'bid()', settleCandle:'settle (send name settle)', pledge:'pledge()', sync:'sync()', buy:'buy(id, pick)', witness:'witness(id)', claim:'claim()', withdraw:'withdraw()', withdrawTo:'withdrawTo(address): what is owed to the SENDER, paid to the named address' },
+  SEND_NAMES:['bid','settle','pledge','sync','buy','witness','claim','withdraw','withdrawTo'],
   /* JSON-RPC methods that may never leave the page over HTTP (fetch guard, both modes) */
   HTTP_WRITE:/^(eth_send|eth_sign|personal_sign|wallet_|eth_signTypedData)/
 };

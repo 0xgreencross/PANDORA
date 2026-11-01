@@ -12,6 +12,7 @@
 const fs=require('fs'), path=require('path'), crypto=require('crypto'), vm=require('vm'), {execFileSync}=require('child_process');
 const HERE=__dirname, ROOT=path.resolve(HERE,'../../..');
 const arg=k=>{ const i=process.argv.indexOf(k); return i>0?process.argv[i+1]:null; };
+const RT_FILE=arg('--runtime')?path.resolve(arg('--runtime')):path.join(HERE,'stage.js'), POL_FILE=arg('--policy')?path.resolve(arg('--policy')):path.join(HERE,'policy.js');   /* --runtime / --policy: another stage.js / policy.js, for the mutation checks only (a normal build never passes them) */
 const SRC=path.resolve(arg('--src')||path.join(ROOT,'index.html')), OUT=path.resolve(arg('--out')||path.join(ROOT,'test-wallet.html')), CHECK=process.argv.includes('--check');
 const die=m=>{ console.error('STAGING BUILD FAIL '+m); process.exit(1); };
 /* the marks that exist only in the staging output (index.html must contain none of them; staging.test.js checks the same list) */
@@ -34,12 +35,19 @@ const PATCHES=[];
 function once(s,anchor,repl,label,list){ const n=s.split(anchor).length-1; if(n!==1) die('anchor "'+label+'" found '+n+' times (expected exactly 1): index.html changed shape here: '+JSON.stringify(anchor.slice(0,90)));
   if(list) PATCHES.push({label,count:1,anchor:anchor.slice(0,100),added:repl.length-anchor.length}); return s.replace(anchor,()=>repl); }
 function build(src,stamp){
-  const POLICY=require('./policy.js');
+  const POLICY=require(POL_FILE);
   for(const m of MARKS) if(src.includes(m)) die('index.html already contains the staging mark '+JSON.stringify(m)+' (staging code must never reach production)');
   /* 1. METHOD AUDIT: every wallet / JSON-RPC method literal in index.html must be classified by the staging policy */
   const known=new Set([...Object.keys(POLICY.FORWARD),...Object.keys(POLICY.LOCAL),...POLICY.TX,...POLICY.SIGN,...POLICY.READER,...POLICY.KNOWN_UNUSED]);
   const lits=[...new Set([...src.matchAll(/['"`]((?:eth|wallet|net|personal|web3)_[A-Za-z0-9_]+)['"`]/g)].map(m=>m[1]))].sort();
   const unk=lits.filter(m=>!known.has(m)); if(unk.length) die('index.html uses wallet/RPC methods the staging policy does not classify: '+unk.join(', ')+' (classify them in tools/stormglass/staging/policy.js)');
+  /* 1b. CONTRACT WRITE AUDIT (audit 5): every send('name', …) in index.html is a contract write the staging policy lists, and every write on the list is in the page's ABI.
+     No write is sent any other way: the page has no other eth_sendTransaction / sendCalls / signer call (checked below). */
+  const sendNames=[...new Set([...src.matchAll(/\bsend\('([A-Za-z]+)'/g)].map(m=>m[1]))].sort();
+  const badSend=sendNames.filter(n=>!POLICY.SEND_NAMES.includes(n)); if(badSend.length) die('index.html sends contract writes the staging policy does not list: '+badSend.join(', ')+' (list them in policy.js SEND_NAMES / CONTRACT_WRITES)');
+  const abiLine=(/const ABI=\[[\s\S]*?\];/.exec(src)||[''])[0]; const noAbi=Object.keys(POLICY.CONTRACT_WRITES).filter(n=>!abiLine.includes('function '+n+'('));
+  if(noAbi.length) die('the page ABI no longer has the listed writes: '+noAbi.join(', '));
+  const raw=[...src.matchAll(/\.(sendTransaction|sendCalls|signMessage|signTypedData|sendRawTransaction|signTransaction)\s*\(/g)].map(m=>m[1]); if(raw.length) die('index.html calls a signer / provider write directly: '+raw.join(', ')+' (every write must go through send())');
   /* 2. PROVIDER TAPS: the only places the page obtains a provider */
   let out=src;
   const nEth=out.split('window.ethereum').length-1; if(nEth<1) die('no window.ethereum read found: index.html changed shape (the wallet discovery moved?)');
@@ -57,8 +65,8 @@ function build(src,stamp){
   /* 3. THE STAGING RUNTIME, CSS, BANNER, TITLE, ROBOTS */
   const pdir=fs.existsSync(path.join(path.dirname(SRC),'plates'))?path.join(path.dirname(SRC),'plates'):path.join(ROOT,'plates');
   const seeds=fs.readdirSync(pdir).map(f=>/^(\d+)\.gif$/.exec(f)).filter(Boolean).map(m=>+m[1]).sort((a,b)=>a-b);
-  let rt=fs.readFileSync(path.join(HERE,'stage.js'),'utf8');
-  const pol=fs.readFileSync(path.join(HERE,'policy.js'),'utf8').replace(/\nif\(typeof module[^\n]*\n?$/,'\n');
+  let rt=fs.readFileSync(RT_FILE,'utf8');
+  const pol=fs.readFileSync(POL_FILE,'utf8').replace(/\nif\(typeof module[^\n]*\n?$/,'\n');
   rt=once(rt,"/*@@STAMP@@*/{rev:'dev',sha256:'dev',src:'dev',touched:'dev'}",JSON.stringify(stamp),'runtime stamp');
   rt=once(rt,'/*@@POLICY@@*/',pol,'runtime policy');
   rt=once(rt,'/*@@SEEDS@@*/[396693683]',JSON.stringify(seeds.length?seeds:[396693683]),'runtime seeds');
@@ -72,7 +80,7 @@ function build(src,stamp){
   out=once(out,'<body>','<body>\n<div id="sg-banner">TEST BUILD · not the live site · candidate '+stamp.rev+'</div>','body start: the TEST BUILD banner',1);
   /* 4. every inline script of the output still compiles */
   let k=0; for(const m of out.matchAll(/<script>([\s\S]*?)<\/script>/g)){ k++; try{ new vm.Script(m[1],{filename:'inline-'+k}); }catch(e){ die('inline script '+k+' does not compile after patching: '+e.message); } }
-  return {out,report:{taps:{windowEthereum:nEth,eip6963:1,walletconnect:1},methods:lits,seeds:seeds.length,scripts:k}}; }
+  return {out,report:{taps:{windowEthereum:nEth,eip6963:1,walletconnect:1},methods:lits,sends:sendNames,seeds:seeds.length,scripts:k}}; }
 
 const srcBytes=fs.readFileSync(SRC); const before=crypto.createHash('sha256').update(srcBytes).digest('hex');
 let cand=arg('--candidate');
@@ -85,4 +93,4 @@ if(CHECK){ let cur=null; try{ cur=fs.readFileSync(OUT,'utf8'); }catch(e){}
   if(cur!==out){ console.log('STAGING CHECK FAIL '+path.relative(ROOT,OUT)+' is not the build of '+path.relative(ROOT,SRC)+' (git '+stamp.rev+', sha256 '+stamp.sha256.slice(0,16)+'): rebuild'); process.exit(1); }
   console.log('STAGING CHECK OK '+path.relative(ROOT,OUT)+' = build(' +path.relative(ROOT,SRC)+') · git '+stamp.rev+' · sha256 '+stamp.sha256); process.exit(0); }
 const tmp=OUT+'.tmp'; fs.writeFileSync(tmp,out); fs.renameSync(tmp,OUT);
-console.log('STAGING BUILD OK '+path.relative(process.cwd(),OUT)+' from '+path.relative(process.cwd(),SRC)+' · git '+stamp.rev+' · sha256 '+stamp.sha256+' · '+out.length+' bytes · taps '+JSON.stringify(report.taps)+' · methods '+report.methods.join(',')+' · plate seeds '+report.seeds);
+console.log('STAGING BUILD OK '+path.relative(process.cwd(),OUT)+' from '+path.relative(process.cwd(),SRC)+' · git '+stamp.rev+' · sha256 '+stamp.sha256+' · '+out.length+' bytes · taps '+JSON.stringify(report.taps)+' · methods '+report.methods.join(',')+' · contract writes (send) '+report.sends.join(',')+' · plate seeds '+report.seeds);

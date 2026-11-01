@@ -240,7 +240,7 @@ T('st13','the build refuses a changed index.html: a moved EIP-6963 anchor, an un
   return {pass:r.moved6963.rc===1&&/EIP-6963/.test(r.moved6963.msg)&&r.method.rc===1&&/wallet_disconnect/.test(r.method.msg)&&r.untapped.rc===1&&/does not tap/.test(r.untapped.msg)&&r.doubled.rc===1&&r.f9a6f80.rc===0&&r.c553222a.rc===0,ev:r}; });
 
 /* ═══ AUDIT 4 SCENARIOS (st16+): driven from CONTROLS (the drawer's own buttons), answered by the page's production code */
-const fullLog=E=>ev(E,()=>__SG.log.map(x=>({who:x.who,method:x.method,route:x.route,result:x.result,params:x.params})));
+const fullLog=E=>ev(E,()=>__SG.log.map(x=>({who:x.who,method:x.method,route:x.route,result:x.result,params:x.params,call:x.call})));
 async function drawerOpen(E,on){ const is=await ev(E,()=>!!document.getElementById('sg-drawer')); if(is!==on){ await E.page.click('#sg-ctl'); await sleep(250); } }
 async function ctl(E,sel){ await drawerOpen(E,true); const n=await E.page.locator('#sg-drawer '+sel).count(); if(n!==1) throw new Error('control '+sel+' found '+n+' times'); await E.page.locator('#sg-drawer '+sel).scrollIntoViewIfNeeded(); await E.page.click('#sg-drawer '+sel); await sleep(200); }
 const PHONE={viewport:{width:390,height:844},mobile:true,ua:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'};
@@ -373,6 +373,232 @@ T('st22','test-wallet.html minus the documented patches (head insert, title, sty
   const okCounts=undo.every(x=>x.label==='window.ethereum taps'?x.n===nEth:x.n===1);
   const okRep=rep&&Array.isArray(rep.patches)&&rep.patches.length===7&&rep.patches.find(p=>/window\.ethereum/.test(p.label)).count===nEth&&rep.patches.every(p=>p.count>=1);
   return {pass:same&&!marks.length&&okCounts&&okRep,ev:{same,firstDiff:same?null:[...u].findIndex((c,i)=>c!==src[i]),marks,undo,patches:rep&&rep.patches}}; });
+
+/* ═══ AUDIT 5 (st23+): nonce identity, explicit wallet choice on a phone, WITHDRAW TO ANOTHER ADDRESS, payout outcomes, the write enumeration.
+   Every case is driven from CONTROLS (the drawer's own buttons) and answered by the page's production code. */
+const {ethers}=require('ethers');
+const IN_APP={ua:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MetaMaskMobile/7.40.0',viewport:{width:390,height:844},mobile:true};
+const ctlJS=async(E,sel)=>{ await drawerOpen(E,true); const ok=await ev(E,s=>{ const b=document.querySelector('#sg-drawer '+s); if(!b) return false; b.click(); return true; },sel); if(!ok) throw new Error('control '+sel+' not found'); await sleep(200); };
+const toastsOn=E=>ev(E,()=>{ window.__toasts=[]; const t=document.getElementById('toast'); new MutationObserver(()=>{ if(t.textContent) window.__toasts.push(t.textContent); }).observe(t,{childList:true,characterData:true,subtree:true}); });
+const afterReload=async E=>{ await E.page.waitForFunction(()=>window.__SG&&typeof ST!=='undefined'&&ST&&ST.now&&document.getElementById('panel')&&document.getElementById('panel').textContent.length>10,null,{timeout:30000}); await toastsOn(E); await sleep(600); };
+const wlog=(L,re)=>L.filter(x=>re.test(x.who));
+const R1L='0x52908400098527886e0f7030069857d2e4169ee7', R1=ethers.getAddress(R1L), R2L='0xde709f2102306220921060314715629080e2fb77', R2=ethers.getAddress(R2L);
+const SGI=new ethers.Interface(['function withdrawTo(address)']);
+const ALPHA1='0x'+'a11'.padStart(40,'0');
+
+/* ── st23: scenario 5, whose transaction is this? */
+const idToasts=(E,n0)=>E.toasts().then(t=>t.slice(n0));
+const FALSE_VERDICT=/replaced it|cancelled in your wallet after|: confirmed|failed on Ethereum|sped up|cannot confirm/i;
+async function idRow(E,mode,wallet,auto){
+  await ev(E,a=>__SG.configure({mine:300,readerMs:20,auto:a}),auto||'pending');
+  await ctl(E,'[data-txid="'+mode+'"]'); await ctl(E,'[data-txidwallet="'+(wallet?1:0)+'"]'); await ctl(E,'[data-setup=txid]'); await drawerOpen(E,false);
+  const set=await ev(E,()=>[__SG.set.txid,__SG.set.txidWallet]);
+  if(!/0x/.test(await label(E))) await simConnect(E,/SIM ALPHA · 1/); const n0=(await E.toasts()).length; const l0=(await fullLog(E)).length; await H.witness(E,'0.01');
+  const sent=await E.until(async()=>(await txs(E)).some(x=>x.action==='witness'&&!x.unrelated&&x.state==='pending'),10000);
+  const byHash=async()=>(await fullLog(E)).slice(l0).filter(x=>x.method==='eth_getTransactionByHash');
+  const firstMode=/^first-/.test(mode);
+  /* the gate: the trigger really happened (a reader or the wallet served the poisoned / malformed answer, and, for first-*, the fallback served the true one) */
+  const gate=await E.until(async()=>{ const L=await byHash(); const bad=L.filter(x=>/ANOTHER|NO HASH|DECIMAL/.test(x.route+x.result)); const good=L.filter(x=>/VALID/.test(x.route+x.result));
+    if(firstMode) return bad.length>=1&&good.length>=1&&(await hits(E)).eth_getTransactionCount>=1;
+    return new Set(L.filter(x=>/^reader/.test(x.who)&&/ANOTHER/.test(x.route)).map(x=>x.who)).size>=3&&wlog(L,/^SIM/).length>=(wallet?2:1); },25000);
+  const lg=await byHash(); const readers=[...new Set(lg.filter(x=>/^reader/.test(x.who)).map(x=>x.who.replace('reader ','')))];
+  if(!firstMode) await E.until(async()=>(await byHash()).filter(x=>/^SIM/.test(x.who)).length>=(wallet?2:1),12000);
+  const wAsks=(await byHash()).filter(x=>/^SIM/.test(x.who)); const rounds=wallet?true:await E.until(async()=>(await hits(E)).eth_getTransactionCount>=3,12000);   /* a nonce known: the page counts the sender's transactions every round and finds nothing spent */
+  const ts=await idToasts(E,n0); const pend=(await txs(E)).filter(x=>x.action==='witness'&&!x.unrelated).slice(-1)[0];
+  return {n0,mode,wallet:!!wallet,set,sent,gate,rounds,readers,readerAnswers:lg.filter(x=>/^reader/.test(x.who)).slice(0,4).map(x=>x.who.replace('reader ','')+': '+x.route.slice(0,70)),walletAsks:wAsks.map(x=>x.result.slice(0,50)),toasts:ts.map(x=>x.slice(0,60)),falseVerdict:ts.some(x=>FALSE_VERDICT.test(x)),waiting:ts.some(x=>/waiting for Ethereum/.test(x)),pend:pend&&pend.state}; }
+T('st23','SCENARIO 5 from CONTROLS: an unrelated transaction of the same sender (another hash; same, next or a lower, mined nonce) or an unusable answer from the first reader never makes the page say replaced, cancelled or confirmed: it stays pending, asks the next reader and then the wallet, and confirms from its own receipt; the log lists the readers asked',{wallets:[]},async E=>{
+  const rows=[]; for(const [m,w] of [['other-same',false],['other-next',false],['other-mined',false],['other-mined',true],['first-other',false],['first-mined',false],['first-nohash',false],['first-decimal',false]]){
+    rows.push(await idRow(E,m,w)); const p=(await txs(E)).find(x=>x.action==='witness'&&x.state==='pending'&&!x.unrelated);
+    if(p){ await ev(E,h=>__SG.txResolve(h,'confirmed'),p.hash); rows[rows.length-1].late=await E.until(async()=>(await idToasts(E,rows[rows.length-1].n0)).some(x=>/Your witness payment: confirmed$/.test(x)),15000); } await H.closeWit(E.page); await sleep(300); }
+  const unrel=(await txs(E)).filter(x=>x.unrelated).length;
+  const good=r=>r.sent&&r.gate&&r.rounds&&!r.falseVerdict&&r.waiting&&r.pend==='pending'&&r.late&&(r.mode.startsWith('first-')?r.readers.length>=2:r.readers.length===3);
+  return {pass:rows.every(good)&&unrel>=3,ev:{rows,unrelatedMined:unrel}}; },{query:q('sim')});
+
+/* the real outcomes still work: a SPED UP / CANCELLED / REPLACED transaction is recognised when a valid answer (the next reader, or the wallet) names the nonce */
+T('st24','SCENARIO 5 keeps the legitimate outcomes: with a bad first reader (or every reader unrelated and the wallet valid) a real SPED UP, CANCELLED or REPLACED is still reported; with every reader AND the wallet unrelated nothing is reported but pending',{wallets:[]},async E=>{
+  const WORDS={sped:/confirmed \(sped up in your wallet\)/,cancelled:/cancelled in your wallet after it was sent/,replaced:/replaced it with another transaction/}; const rows=[];
+  for(const [mode,wallet,out] of [['first-other',false,'sped'],['first-other',false,'cancelled'],['first-other',false,'replaced'],['other-same',false,'replaced'],['first-mined',false,'sped']]){
+    await ev(E,()=>__SG.configure({mine:300,readerMs:20})); await ctl(E,'[data-txid="'+mode+'"]'); await ctl(E,'[data-txidwallet="'+(wallet?1:0)+'"]'); await ctl(E,'[data-setup=txid]'); await drawerOpen(E,false);
+    if(!/0x/.test(await label(E))) await simConnect(E,/SIM ALPHA · 1/); await ev(E,o=>__SG.configure({auto:o}),out); const n0=(await E.toasts()).length; await H.witness(E,'0.01');
+    const ok=await E.until(async()=>(await idToasts(E,n0)).some(x=>WORDS[out].test(x)),30000); const ts=await idToasts(E,n0);
+    rows.push({mode,out,ok,wrongVerdict:ts.some(x=>out!=='sped'&&/: confirmed$/.test(x)),last:ts.slice(-1)[0]}); await H.closeWit(E.page); await sleep(300); }
+  /* every reader and the wallet unrelated, the original REPLACED for real: no verdict from an answer that is not about this transaction */
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20})); await ctl(E,'[data-txid="other-same"]'); await ctl(E,'[data-txidwallet="1"]'); await ctl(E,'[data-setup=txid]'); await drawerOpen(E,false);
+  await ev(E,()=>__SG.configure({auto:'replaced'})); const n1=(await E.toasts()).length; const l1=(await fullLog(E)).length; await H.witness(E,'0.01');
+  const gate=await E.until(async()=>(await fullLog(E)).slice(l1).filter(x=>/^SIM/.test(x.who)&&x.method==='eth_getTransactionByHash'&&/ANOTHER/.test(x.result)).length>=2,20000); const ts=await idToasts(E,n1);
+  return {pass:rows.every(r=>r.ok&&!r.wrongVerdict)&&gate&&!ts.some(x=>/replaced it|cancelled|: confirmed|sped/.test(x)),ev:{rows,allUnrelated:{gate,toasts:ts.map(x=>x.slice(0,70))}}}; },{query:q('sim')});
+
+/* ── st25: scenario 6, a phone wallet fails to connect: CHOOSE ANOTHER WALLET, and nobody else is asked until the visitor picks */
+const NOOFFER=new Set([4001,-32002]);
+async function phoneRow(code,how){
+  const E=await H.boot({wallets:[]},{query:q('sim')});
+  try{ await ev(E,()=>__SG.configure({mine:300,readerMs:20}));
+    await ctl(E,'[data-connfail="'+code+'"]'); await ctl(E,'[data-connhow='+how+']'); await ctl(E,'[data-setup=phone2]'); await afterReload(E);
+    const env=await ev(E,()=>({ua:/iPhone/.test(navigator.userAgent),phone:isPhone(),app:inWalletApp(),preset:__SG.preset_(),wallets:Object.keys(__SG.sim).filter(k=>k!=='PHONE'),authorized:['ALPHA','BETA'].map(k=>__SG.sim[k].st.authorized)}));
+    const nB0=wlog(await fullLog(E),/SIM BETA/).length, l0=(await fullLog(E)).length;
+    await E.page.click('#wallet'); const settled=await E.until(async()=>{ const t=await H.sheetOpen(E.page)?await ev(E,()=>document.getElementById('wsk').textContent):''; return /DID NOT CONNECT/.test(t)||(await E.toasts()).length>0; },8000); await sleep(1200);
+    const title=(await H.sheetOpen(E.page))?await ev(E,()=>document.getElementById('wsk').textContent):''; const sheetText=(await H.sheetOpen(E.page))?await ev(E,()=>document.getElementById('wsheet').textContent):''; const toasts=await E.toasts();
+    const L1=(await fullLog(E)).slice(l0); const A=wlog(L1,/SIM ALPHA/), Bpre=wlog(L1,/SIM BETA/);
+    const r={code,how,env,settled,offered:/DID NOT CONNECT/.test(title),sheet:sheetText.slice(0,160),toast:toasts.slice(-1)[0]||null,alphaAsk:A.filter(x=>x.method==='eth_requestAccounts').length,alphaResult:(A.find(x=>x.method==='eth_requestAccounts')||{}).result,betaBeforePick:Bpre.map(x=>x.method),
+      connected:/0x/.test(await label(E))};
+    if(r.offered){ await H.clickSheet(E.page,/CHOOSE ANOTHER WALLET/); r.list=await E.until(async()=>(await H.sheetOpen(E.page))&&(await ev(E,()=>document.getElementById('wsk').textContent))==='CONNECT WITH',4000); r.buttons=await H.sheetButtons(E.page); await sleep(300);
+      r.betaListed=(wlog((await fullLog(E)).slice(l0),/SIM BETA/)).map(x=>x.method);
+      await H.clickSheet(E.page,/SIM BETA/); r.picked=await E.until(async()=>/0b01/i.test(await label(E)),6000); const L2=(await fullLog(E)).slice(l0);
+      r.betaAsk=wlog(L2,/SIM BETA/).filter(x=>x.method==='eth_requestAccounts').length; r.alphaAskAfter=wlog(L2,/SIM ALPHA/).filter(x=>x.method==='eth_requestAccounts').length; }
+    r.sends=sends(await fullLog(E)).length; r.errors=E.errors.slice(); return r;
+  } finally{ await E.close().catch(()=>{}); } }
+T('st25','SCENARIO 6 from CONTROLS (a phone inside a wallet app, two authorised wallets): the first wallet fails eth_requestAccounts (4001, 4100, 4200, 4900, 4901, -32002, -32603; rejected promise or synchronous throw): the page offers CHOOSE ANOTHER WALLET (not for 4001 and -32002), the second wallet’s log shows no request before the pick except the liveness ping on the list, and the pick connects with exactly one request',{wallets:[]},async E=>{
+  const rows=[]; for(const code of [4001,4100,4200,4900,4901,-32002,-32603]) for(const how of ['async','sync']) rows.push(await phoneRow(code,how));
+  const ok=r=>r.env.ua&&r.env.phone&&r.env.app&&r.env.preset==='phone2'&&r.env.authorized.every(Boolean)&&r.settled&&r.alphaAsk===1&&new RegExp(r.how==='sync'?'SYNC THROW':'REJECTED PROMISE').test(r.alphaResult||'')&&r.betaBeforePick.length===0&&!r.connected&&r.sends===0&&r.errors.length===0
+    &&(NOOFFER.has(r.code)?(!r.offered&&!!r.toast):(r.offered&&r.list&&r.betaListed.every(m=>m==='eth_chainId')&&r.picked&&r.betaAsk===1&&r.alphaAskAfter===1));
+  return {pass:rows.every(ok),ev:{rows:rows.map(r=>({code:r.code,how:r.how,ok:ok(r),offered:r.offered,alpha:r.alphaResult,betaBefore:r.betaBeforePick,betaOnList:r.betaListed,betaAsk:r.betaAsk,picked:r.picked,toast:r.toast&&r.toast.slice(0,50)}))}}; },{query:q('sim')});
+
+/* ── st26: scenario 7, WITHDRAW TO ANOTHER ADDRESS: refusals, confirmed, recipient rejects, user rejects */
+const wShown=E=>ev(E,()=>{ const b=document.getElementById('withdrawTo'); return !!b&&b.style.display!=='none'&&b.offsetParent!==null; });
+const wsp=E=>ev(E,()=>document.getElementById('wsp').textContent);
+const wNote=E=>ev(E,()=>document.getElementById('wtoNote').textContent);
+async function wOpen(E){ await H.closeWit(E.page); await ev(E,()=>refreshSeats()).catch(()=>{}); if(!(await E.until(()=>wShown(E),15000))) throw new Error('no WITHDRAW TO ANOTHER ADDRESS button: '+JSON.stringify(await ev(E,()=>({label:document.getElementById('wallet').textContent,wt:document.getElementById('withdrawTo').style.display,note:document.getElementById('seatsNote').textContent.slice(0,120),owed:__SG.set.owed,rect:document.getElementById('withdrawTo').getBoundingClientRect().height,op:!!document.getElementById('withdrawTo').offsetParent})))); if(await ev(E,()=>document.getElementById('wtoBox').hidden)) await ev(E,()=>document.getElementById('withdrawTo').click()); }
+async function wReview(E,a){ await E.page.fill('#wtoAddr',a); await ev(E,()=>document.getElementById('wtoReview').click()); }
+const wSheet=E=>E.until(async()=>(await H.sheetTitle(E.page))==='WITHDRAW TO ANOTHER ADDRESS',6000);
+const pressSend=E=>H.clickSheet(E.page,/SEND TO THIS ADDRESS/);
+const decodeTo=t=>{ try{ return SGI.decodeFunctionData('withdrawTo',t.data)[0]; }catch(e){ return null; } };
+const setupOwed=async(E,owed,rec)=>{ await ctl(E,'[data-owed="'+owed+'"]'); await ctl(E,'[data-recipient='+rec+']'); await ctl(E,'[data-setup=owed]'); await drawerOpen(E,false); };
+T('st26','SCENARIO 7 from CONTROLS: with 0.05 ETH owed, the zero, malformed, contract and own addresses are refused with the page’s messages and nothing reaches the wallet; a valid recipient gives withdrawTo(recipient) from the connected account, value 0, to the contract; CONFIRMED refreshes owed to 0; a recipient that rejects ETH reverts and the flow stays usable; REJECTED IN WALLET leaves it as it was',{wallets:[]},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20})); await setupOwed(E,'0.05','accepts'); await simConnect(E,/SIM ALPHA · 1/); await wOpen(E); const C=(await ev(E,()=>CFG.contract)).toLowerCase();
+  const owed0=await ev(E,a=>__SG.owedOf(a),ALPHA1); const rows=[];
+  for(const [name,v] of [['zero','0x0000000000000000000000000000000000000000'],['short','0x1234'],['contract',C],['own',ALPHA1]]){ await ev(E,()=>{ document.getElementById('wtoNote').textContent=''; }); await wReview(E,v); await sleep(350); rows.push({name,note:(await wNote(E)).slice(0,70),sheet:await H.sheetOpen(E.page)}); }
+  const s0=sends(await fullLog(E)).length, est0=(await fullLog(E)).filter(x=>x.method==='eth_estimateGas').length;
+  /* a valid recipient, confirmed */
+  await wReview(E,'  '+R1L+' '); const sh=await wSheet(E); const sheetText=await wsp(E); await pressSend(E); await waitModal(E); const mt=await modalText(E); await shot(E,'a5_withdrawto_wallet_screen');
+  await clickModal(E,'[data-out=confirmed]'); const conf=await E.until(()=>toastHas(E,/Withdrawing to another address: confirmed/),15000); const gone=await E.until(async()=>!(await wShown(E)),15000);
+  const t1=(await txs(E)).filter(x=>x.action==='withdrawTo'); const L1=await fullLog(E); const sd=sends(L1).slice(-1)[0]||{};
+  const owedAfter=await ev(E,a=>__SG.owedOf(a),ALPHA1); const pays=await ev(E,()=>__SG.payouts());
+  /* the recipient rejects ETH */
+  await setupOwed(E,'0.05','rejects'); await wOpen(E); await wReview(E,R1L); await wSheet(E); await pressSend(E); await waitModal(E); await clickModal(E,'[data-out=confirmed]');
+  const rev=await E.until(async()=>/reverted/i.test(await wNote(E)),15000); const revText=await wNote(E); const boxOpen=await ev(E,()=>!document.getElementById('wtoBox').hidden); const stillShown=await wShown(E);
+  const t2=(await txs(E)).filter(x=>x.action==='withdrawTo').slice(-1)[0]; const owedKept=await ev(E,a=>__SG.owedOf(a),ALPHA1); const Lr=await fullLog(E);
+  await setupOwed(E,'0.05','accepts'); await wOpen(E); await wReview(E,R2L); await wSheet(E); await pressSend(E); await waitModal(E); await clickModal(E,'[data-out=confirmed]');
+  const conf2=await E.until(async()=>(await E.toasts()).filter(x=>/Withdrawing to another address: confirmed/.test(x)).length>=2,15000); const t3=(await txs(E)).filter(x=>x.action==='withdrawTo').slice(-1)[0];
+  /* the user rejects in the wallet */
+  await setupOwed(E,'0.05','accepts'); await wOpen(E); await wReview(E,R1L); await wSheet(E); const n0=(await E.toasts()).length; const nTx=(await txs(E)).length; await pressSend(E); await waitModal(E); await clickModal(E,'[data-out=rejected]');
+  const canc=await E.until(async()=>(await idToasts(E,n0)).some(x=>/Cancelled/.test(x)),8000); const keep=await ev(E,()=>document.getElementById('wtoAddr').value); const usable=await wShown(E);
+  const okRows=rows.every(r=>r.note&&!/Reading/.test(r.note)&&!r.sheet);
+  return {pass:owed0==='50000000000000000'&&okRows&&s0===0&&est0===0&&sh&&sheetText.includes(R1)&&sheetText.includes('0.05')&&/withdrawTo\(arg0: /.test(mt)&&mt.includes(R1)&&/PAYS TO \(recipient\)/.test(mt)&&conf&&gone&&t1.length===1&&decodeTo(t1[0])===R1&&t1[0].from===ALPHA1&&t1[0].to===C&&t1[0].value==='0'
+    &&/withdrawTo\(0x5290/i.test(sd.call||'')&&/from 0x0000000000000000000000000000000000000a11/.test(sd.call||'')&&/value 0\.0 ETH/.test(sd.call||'')&&owedAfter==='0'&&pays.some(p=>p.to===R1L&&p.v==='50000000000000000')
+    &&rev&&/did not accept the ETH/.test(revText)&&boxOpen&&stillShown&&t2.state==='reverted'&&/rejects ETH/.test(t2.why||'')&&owedKept==='50000000000000000'&&Lr.some(x=>x.method==='revert')&&conf2&&t3.state==='confirmed'
+    &&canc&&keep===R1L&&usable&&(await txs(E)).length===nTx&&E.errors.length===0,
+    ev:{owed0,rows,asked:[s0,est0],sheet:sheetText.slice(0,150),modal:mt.slice(0,260),conf,gone,tx:t1.map(t=>({to:decodeTo(t),from:t.from,target:t.to,value:t.value,state:t.state})),call:sd.call,owedAfter,pays,
+      reverted:{rev,revText:revText.slice(0,150),boxOpen,stillShown,state:t2&&t2.state,why:t2&&t2.why,owedKept},second:{conf2,state:t3&&t3.state},rejected:{canc,keep,usable}}}; },{query:q('sim')});
+
+/* ── st27: scenario 7, an account or network change before the handoff: nothing is sent */
+async function beforeHandoff(kind){
+  const E=await H.boot({wallets:[]},{query:q('sim')});
+  try{ await ev(E,()=>__SG.configure({mine:300,readerMs:20})); await setupOwed(E,'0.05','accepts');
+    if(kind==='lastchain'){ await ctl(E,'[data-lastchain=base-back]'); await ctl(E,'[data-setup=lastchain]'); await drawerOpen(E,false); }
+    await simConnect(E,/SIM ALPHA · 1/); await wOpen(E); await wReview(E,R1L); const sh=await wSheet(E); const n0=(await E.toasts()).length; const l0=(await fullLog(E)).length;
+    if(kind==='account') await ctlJS(E,'[data-act=account]'); if(kind==='network') await ctlJS(E,'[data-act=network]'); await drawerOpen(E,false);
+    const moved=kind==='account'?await E.until(async()=>/0a12/i.test(await label(E)),5000):kind==='network'?await E.until(async()=>/NOT MAINNET|\[!\]/.test(await label(E)),5000):true;
+    await pressSend(E); const stop=await E.until(async()=>(await idToasts(E,n0)).some(x=>/Nothing was sent/i.test(x)),12000); await sleep(600);
+    const L=(await fullLog(E)).slice(l0); const r={kind,sh,moved,stop,toasts:(await idToasts(E,n0)).map(x=>x.slice(0,90)),sends:sends(L).length,txs:(await txs(E)).length,modal:await modalOpen(E),fired:kind==='lastchain'?await ev(E,()=>__SG.wallet('ALPHA').fired):null,errors:E.errors.slice()}; return r;
+  } finally{ await E.close().catch(()=>{}); } }
+T('st27','SCENARIO 7 from CONTROLS: after REVIEW, an account change, the wallet going to Base (refusing to switch back) and the last-moment network change (scenario 1) each end SEND with “Nothing was sent”: the simulated wallet log has no eth_sendTransaction and no transaction exists',{wallets:[]},async E=>{
+  const rows=[]; for(const k of ['account','network','lastchain']) rows.push(await beforeHandoff(k));
+  return {pass:rows.every(r=>r.sh&&r.moved&&r.stop&&r.sends===0&&r.txs===0&&!r.modal&&r.errors.length===0)&&rows[2].fired>=1,ev:{rows}}; },{query:q('sim')});
+
+/* ── st28: scenario 8, payout outcomes */
+T('st28','SCENARIO 8 from CONTROLS: a COLLECT by a payer with seats whose wallet accepts ETH sends the earnings to it (simulated ETH, nothing owed, no WITHDRAW); a payer whose wallet rejects ETH leaves them owed, WITHDRAW and WITHDRAW TO ANOTHER ADDRESS appear, WITHDRAW reverts for that wallet and WITHDRAW TO another address pays',{wallets:[]},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20,auto:'confirmed'}));
+  await ctl(E,'[data-payer=accepts]'); await ctl(E,'[data-setup=payer]'); await drawerOpen(E,false); await simConnect(E,/SIM ALPHA · 1/);
+  const p0=await ev(E,a=>({owed:__SG.owedOf(a),rec:__SG.receivedOf(a)}),ALPHA1); await H.buy(E); const c1=await E.until(()=>toastHas(E,/Collecting the plate: confirmed/),15000); await sleep(1500);
+  const acc=await ev(E,a=>({owed:__SG.owedOf(a),rec:__SG.receivedOf(a),pays:__SG.payouts(),w:getComputedStyle(document.getElementById('withdraw')).display,wt:getComputedStyle(document.getElementById('withdrawTo')).display,note:document.getElementById('seatsNote').textContent.slice(0,200)}),ALPHA1);
+  const logAcc=(await fullLog(E)).filter(x=>x.method==='payout').map(x=>x.route.slice(0,170));
+  await H.closeWit(E.page); await ev(E,()=>{ const x=document.getElementById('ccX'); if(x) x.click(); }); await sleep(300);
+  await ctl(E,'[data-payer=rejects]'); await ctl(E,'[data-setup=payer]'); await drawerOpen(E,false); await H.witness(E,'0.02'); const c2=await E.until(()=>toastHas(E,/Your witness payment: confirmed$/),15000);
+  const shown=await E.until(()=>wShown(E),25000); await sleep(500);
+  const rej=await ev(E,a=>({owed:__SG.owedOf(a),rec:__SG.receivedOf(a),pays:__SG.payouts(),w:getComputedStyle(document.getElementById('withdraw')).display,wt:getComputedStyle(document.getElementById('withdrawTo')).display,note:document.getElementById('seatsNote').textContent.slice(0,260)}),ALPHA1);
+  await shot(E,'a5_payer_rejects_owed'); await H.closeWit(E.page);
+  /* WITHDRAW reverts for a wallet that rejects ETH; WITHDRAW TO ANOTHER ADDRESS pays an accepting address */
+  await ev(E,()=>__SG.configure({auto:'ask'})); await E.page.waitForSelector('#withdraw:not([disabled])',{timeout:8000}).catch(()=>{}); const n0=(await E.toasts()).length; await ev(E,()=>document.getElementById('withdraw').click()); await waitModal(E); await clickModal(E,'[data-out=confirmed]');
+  const wRev=await E.until(async()=>(await idToasts(E,n0)).some(x=>/failed on Ethereum \(reverted\)/i.test(x)),15000); const tw=(await txs(E)).filter(x=>x.action==='withdraw').slice(-1)[0];
+  await wOpen(E); await wReview(E,R1L); await wSheet(E); await pressSend(E); await waitModal(E); await clickModal(E,'[data-out=confirmed]'); const wtoOk=await E.until(()=>toastHas(E,/Withdrawing to another address: confirmed/),15000);
+  const fin=await ev(E,a=>({owed:__SG.owedOf(a),r1:__SG.receivedOf('0x52908400098527886e0f7030069857d2e4169ee7')}),ALPHA1);
+  return {pass:p0.owed==='0'&&p0.rec==='0'&&c1&&acc.owed==='0'&&acc.rec==='36400000000000000'&&acc.pays.length===1&&acc.pays[0].to===ALPHA1&&acc.w==='none'&&acc.wt==='none'&&logAcc.length===1&&/accepts ETH|wallet accepts/.test(logAcc[0])
+    &&c2&&shown&&rej.owed==='36400000000000000'&&rej.rec==='0'&&rej.w!=='none'&&rej.wt!=='none'&&/WITHDRAW/.test(rej.note)&&wRev&&tw.state==='reverted'&&/rejects ETH/.test(tw.why||'')&&wtoOk&&fin.owed==='0'&&fin.r1==='36400000000000000'&&E.errors.length===0,
+    ev:{before:p0,accepts:{...acc,log:logAcc},c1,rejects:rej,c2,withdraw:{wRev,state:tw&&tw.state,why:tw&&tw.why},withdrawTo:{wtoOk},final:fin}}; },{query:q('sim')});
+
+/* ── st29: REAL WALLET: withdrawTo is a write: intercepted like every write, never forwarded; the intercept panel decodes the recipient */
+T('st29','REAL WALLET: WITHDRAW TO ANOTHER ADDRESS stops at the wrapper: the intercept panel shows chain, sender, target, value 0 and withdrawTo with the recipient decoded; the external wallet receives no write and no signature (a forged withdrawTo, a raw eth_sendTransaction and wallet_sendCalls included)',{wallets:[mock('A')],ethereum:'A'},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20})); await setupOwed(E,'0.05','accepts'); await realConnect(E); await wOpen(E); await wReview(E,R1L); const sh=await wSheet(E); const mw0=(await mwLog(E)).length;
+  await pressSend(E); await waitModal(E); const mt=await modalText(E); await shot(E,'a5_real_withdrawto_intercept');
+  const rows=await ev(E,()=>Object.fromEntries([...document.querySelectorAll('#sg-modal dt')].map(d=>[d.textContent,d.nextSibling.textContent])));
+  await clickModal(E,'[data-out=confirmed]'); const conf=await E.until(()=>toastHas(E,/Withdrawing to another address: confirmed/),15000);
+  const forged=await ev(E,async([r,A,C])=>{ const out={}; const data=new ethers.Interface(['function withdrawTo(address)']).encodeFunctionData('withdrawTo',[r]);
+    for(const [k,m,p] of [['eth_sendTransaction','eth_sendTransaction',[{from:A,to:C,data,value:'0x0'}]],['wallet_sendCalls','wallet_sendCalls',[{calls:[{to:C,data}]}]],['eth_sendRawTransaction','eth_sendRawTransaction',['0x02']]]){
+      const pr=EP.request({method:m,params:p}).then(()=>'resolved',e=>'refused '+e.code); await new Promise(r=>setTimeout(r,300)); const b=document.querySelector('#sg-modal [data-out=rejected]')||document.querySelector('#sg-modal .sg-b'); if(b) b.click(); out[k]=await pr; } return out; },[R1,A1,await ev(E,()=>CFG.contract)]);
+  const L=await mwLog(E); const reached=L.filter(x=>WRITE.has(x.method)||!(x.method in POLICY.FORWARD)).map(x=>x.method); const mwSends=await ev(E,()=>__MW.sends.length);
+  const t=(await txs(E)).filter(x=>x.action==='withdrawTo');
+  return {pass:sh&&/SUBMISSION INTERCEPTED/.test(mt)&&/withdrawTo\(arg0: /.test(mt)&&rows['PAYS TO (recipient)']===R1&&rows['SENDER'].toLowerCase()===A1&&/1 · Ethereum mainnet/.test(rows['INTENDED CHAIN'])&&/^0\.0 ETH$/.test(rows['VALUE'])&&/STORMGLASS contract/.test(rows['TARGET'])
+    &&conf&&t.length===1&&t[0].mode==='intercepted'&&decodeTo(t[0])===R1&&Object.values(forged).every(v=>/^refused (4001|4200)$/.test(v))&&reached.length===0&&mwSends===0&&mw0>=0,
+    ev:{rows,confirmed:conf,forged,reached,walletReceived:[...new Set(L.map(x=>x.method))],mwSends,tx:t.map(x=>({mode:x.mode,to:decodeTo(x),state:x.state}))}}; },{query:q('real')});
+
+/* ── st30: REAL WALLET on a phone: the first wallet fails; CHOOSE ANOTHER WALLET; the second wallet is asked only after the visitor picks it AND confirms the staging gate. Also: nonce identity in REAL mode (the wallet fallback answers locally, never forwarded) */
+T('st30','REAL WALLET on a phone in a wallet app: window.ethereum fails (-32603); the second, authorised wallet gets nothing (but a liveness ping on the list) until the visitor picks it, and its eth_requestAccounts waits for the staging gate; with the readers and the wallet fallback unrelated, an intercepted payment stays pending and the real wallet is not asked about it',
+  {wallets:[mock('A',{announce:false,flags:{isMetaMask:true},reject:{eth_requestAccounts:{code:-32603,message:'Internal error'}}}),mock('B',{authorized:true})],ethereum:'A'},async E=>{
+  const cnt=(id,m)=>ev(E,([i,m])=>__MW.log.filter(x=>x.pid===i&&x.method===m).length,[id,m]);
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20}));
+  await E.page.click('#wallet'); const g1=await waitModal(E); const gt=await modalText(E); await clickModal(E,'[data-gate=go]');
+  const offer=await E.until(async()=>(await H.sheetOpen(E.page))&&/DID NOT CONNECT/.test(await ev(E,()=>document.getElementById('wsk').textContent)),8000); await sleep(1000);
+  const Bpre=(await mwLog(E)).filter(x=>x.pid==='B').map(x=>x.method); const gateOpenForB=await modalOpen(E);
+  await H.clickSheet(E.page,/CHOOSE ANOTHER WALLET/); const list=await E.until(async()=>(await ev(E,()=>document.getElementById('wsk').textContent))==='CONNECT WITH',4000); await sleep(300);
+  const Blist=(await mwLog(E)).filter(x=>x.pid==='B').map(x=>x.method); await H.clickSheet(E.page,/MOCK B/); const g2=await waitModal(E); const gt2=await modalText(E); await sleep(500);
+  const bAtGate=await cnt('B','eth_requestAccounts'); await clickModal(E,'[data-gate=go]'); const conn=await E.until(async()=>/0x/.test(await label(E)),8000);
+  const bAfter=await cnt('B','eth_requestAccounts'), aAsk=await cnt('A','eth_requestAccounts');
+  /* nonce identity, REAL mode: every reader and the staging-answered wallet fallback unrelated */
+  await ctlJS(E,'[data-txid="other-same"]'); await ctlJS(E,'[data-txidwallet="1"]'); await ctlJS(E,'[data-setup=txid]'); await drawerOpen(E,false);
+  await ev(E,()=>__SG.configure({auto:'pending'})); const n0=(await E.toasts()).length; const l0=(await fullLog(E)).length; const mw0=(await mwLog(E)).length;
+  await ev(E,()=>{ const b=document.getElementById('nx-witBtn'); if(b) b.click(); }); await E.page.waitForSelector('#nx-wit.on'); await E.page.fill('#wAmt','0.01'); await E.page.click('#bWit'); await clickModal(E,'[data-out=pending]');
+  const gate=await E.until(async()=>(await fullLog(E)).slice(l0).filter(x=>x.method==='eth_getTransactionByHash'&&/ANOTHER/.test(x.result+x.route)).length>=8,25000); const ts=await idToasts(E,n0);
+  const mwNew=(await mwLog(E)).slice(mw0).map(x=>x.method); const reached=(await mwLog(E)).filter(x=>WRITE.has(x.method)).map(x=>x.method);
+  return {pass:g1&&/will now ask to connect/.test(gt)&&offer&&!gateOpenForB&&Bpre.every(m=>m==='eth_chainId')&&list&&Blist.every(m=>m==='eth_chainId')&&g2&&/will now ask to connect/.test(gt2)&&bAtGate===0&&conn&&bAfter===1&&aAsk===1
+    &&gate&&!ts.some(x=>FALSE_VERDICT.test(x))&&ts.some(x=>/waiting for Ethereum/.test(x))&&!mwNew.includes('eth_getTransactionByHash')&&reached.length===0,
+    ev:{gate1:g1,offer,BbeforePick:Bpre,gateOpenForB,list,BonList:Blist,gate2:g2,bAtGate,conn,bAfter,aAsk,identity:{gate,toasts:ts.map(x=>x.slice(0,60)),mwNew,reached}}}; },Object.assign({query:q('real')},IN_APP));
+
+/* ── st31: the enumeration: every RPC method literal and every contract write index.html can send is classified; each write is intercepted in REAL mode */
+T('st31','the write enumeration: every method literal and every send(name) of index.html is classified by policy.js; the page ABI’s writes equal the listed CONTRACT_WRITES (withdrawTo included); in REAL mode each contract write, built from the page’s own ABI, stops at the wrapper (decoded in the panel) and the wallet receives none',{wallets:[mock('A')],ethereum:'A'},async E=>{
+  const src=fs.readFileSync(path.join(ROOT,'index.html'),'utf8'); const lits=[...new Set([...src.matchAll(/['"`]((?:eth|wallet|net|personal|web3)_[A-Za-z0-9_]+)['"`]/g)].map(m=>m[1]))].sort();
+  const known=new Set([...Object.keys(POLICY.FORWARD),...Object.keys(POLICY.LOCAL),...POLICY.TX,...POLICY.SIGN,...POLICY.READER,...POLICY.KNOWN_UNUSED]); const unclassified=lits.filter(m=>!known.has(m));
+  const sendNames=[...new Set([...src.matchAll(/\bsend\('([A-Za-z]+)'/g)].map(m=>m[1]))].sort(); const abi=(/const ABI=\[[\s\S]*?\];/.exec(src)||[''])[0];
+  const abiWrites=[...abi.matchAll(/'function ([A-Za-z0-9_]+)\(([^)]*)\)([^']*)'/g)].filter(m=>!/\b(view|pure)\b/.test(m[3])).map(m=>m[1]).sort(); const listed=Object.keys(POLICY.CONTRACT_WRITES).sort();
+  const direct=[...src.matchAll(/\.(sendTransaction|sendCalls|signMessage|signTypedData|sendRawTransaction|signTransaction)\s*\(/g)].map(m=>m[1]);
+  await ev(E,()=>__SG.configure({mine:200,readerMs:20})); await realConnect(E);
+  const r=await ev(E,async A=>{ const C=CFG.contract, I=new ethers.Interface(ABI), out={}; const args={buy:[13,3],witness:[13],withdrawTo:['0x52908400098527886e0f7030069857d2e4169ee7']};
+    for(const n of A){ const data=I.encodeFunctionData(n,args[n]||[]); const pr=EP.request({method:'eth_sendTransaction',params:[{from:'0x00000000000000000000000000000000000000aa',to:C,data,value:'0x0'}]}).then(()=>'resolved',e=>'refused '+e.code);
+        await new Promise(r=>setTimeout(r,350)); const t=__SG.modalText(); const b=document.querySelector('#sg-modal [data-out=rejected]'); if(b) b.click(); out[n]={result:await pr,panel:/SUBMISSION INTERCEPTED/.test(t),decoded:t.includes(n+'(')}; }
+    return out; },abiWrites);
+  const L=await mwLog(E); const reached=L.filter(x=>WRITE.has(x.method)).map(x=>x.method); const mwSends=await ev(E,()=>__MW.sends.length);
+  return {pass:!unclassified.length&&sendNames.every(n=>POLICY.SEND_NAMES.includes(n))&&POLICY.SEND_NAMES.every(n=>sendNames.includes(n))&&JSON.stringify(abiWrites)===JSON.stringify(listed)&&listed.includes('withdrawTo')&&!direct.length
+    &&Object.values(r).every(x=>x.result==='refused 4001'&&x.panel&&x.decoded)&&Object.keys(r).length===listed.length&&reached.length===0&&mwSends===0,
+    ev:{methods:lits,unclassified,sendNames,abiWrites,listed,direct,intercepted:r,reached}}; },{query:q('real')});
+
+/* ── st32: a mode switch leaves nothing of the audit-5 scenarios behind (phone user agent, controls, a pending withdrawTo, the txid / owed / payer settings) */
+T('st32','switching modes clears the audit-5 state: from the phone-in-a-wallet-app set with a pending withdrawTo and unrelated-transaction answers, REAL mode has the desktop user agent, no provider, session or pending operation, default controls and only the external wallet; back in SIMULATION the controls are defaults again',{wallets:[mock('A')],ethereum:'A'},async E=>{
+  await ev(E,()=>__SG.configure({mine:200,readerMs:20,auto:'pending'}));
+  await ctl(E,'[data-connfail="4100"]'); await ctl(E,'[data-setup=phone2]'); await afterReload(E);
+  await ev(E,()=>__SG.configure({auto:'pending',mine:200,readerMs:20})); await setupOwed(E,'0.05','rejects'); await ctl(E,'[data-txid="other-same"]'); await ctl(E,'[data-setup=txid]'); await ctl(E,'[data-payer=rejects]'); await ctl(E,'[data-setup=payer]'); await drawerOpen(E,false);
+  await ev(E,()=>__SG.configure({owed:0.05}));
+  /* connect through the offer: ALPHA fails 4100, pick BETA */
+  await E.page.click('#wallet'); await E.until(async()=>(await H.sheetOpen(E.page))&&/DID NOT CONNECT/.test(await ev(E,()=>document.getElementById('wsk').textContent)),8000); await H.clickSheet(E.page,/CHOOSE ANOTHER WALLET/); await E.until(()=>H.sheetOpen(E.page),4000); await sleep(300); await H.clickSheet(E.page,/SIM BETA/);
+  await E.until(async()=>/0b01/i.test(await label(E)),6000); await wOpen(E); await wReview(E,R1L); await wSheet(E); await pressSend(E); await E.until(async()=>(await txs(E)).some(x=>x.action==='withdrawTo'&&x.state==='pending'),8000);
+  const simBefore=await ev(E,()=>({ua:/iPhone/.test(navigator.userAgent),pending:__SG.txs().filter(x=>x.state==='pending').length,set:[__SG.set.txid,__SG.set.owed,__SG.set.payer,__SG.set.recipient,__SG.set.connFail],preset:__SG.preset_()}));
+  await ev(E,()=>__SG.switchMode('real')); await E.page.waitForFunction(()=>window.__SG&&__SG.mode==='real'&&typeof ST!=='undefined'&&ST.now,null,{timeout:20000}); await sleep(600);
+  const inReal=await ev(E,()=>({ua:/iPhone/.test(navigator.userAgent),EP:EP===null,me:me===null,OPLOCK:OPLOCK===null,txs:__SG.txs().length,rdns:WALLETS.map(w=>w.info.rdns),wrapped:WALLETS.every(w=>__SG.isWrapper(w.provider)),
+    set:[__SG.set.txid,__SG.set.owed,__SG.set.payer,__SG.set.recipient,__SG.set.connFail,__SG.set.connHow],preset:__SG.preset_(),label:document.getElementById('wallet').textContent,wto:document.getElementById('withdrawTo').style.display}));
+  const mw=(await mwLog(E)).map(x=>x.method);
+  await ev(E,()=>__SG.switchMode('sim')); await E.page.waitForFunction(()=>window.__SG&&__SG.mode==='sim'&&typeof ST!=='undefined'&&ST.now,null,{timeout:20000}); await sleep(600);
+  const inSim=await ev(E,()=>({ua:/iPhone/.test(navigator.userAgent),EP:EP===null,txs:__SG.txs().length,set:[__SG.set.txid,__SG.set.owed,__SG.set.payer,__SG.set.recipient,__SG.set.connFail,__SG.set.connHow],preset:__SG.preset_(),rdns:WALLETS.map(w=>w.info.rdns)}));
+  return {pass:simBefore.ua&&simBefore.pending===1&&simBefore.preset==='phone2'&&simBefore.set.join()==='other-same,0.05,rejects,rejects,4100'
+    &&!inReal.ua&&inReal.EP&&inReal.me&&inReal.OPLOCK&&inReal.txs===0&&inReal.rdns.join()==='test.a'&&inReal.wrapped&&inReal.set.join()==='valid,0,accepts,accepts,-32603,async'&&inReal.preset==='desk3'&&/CONNECT/.test(inReal.label)&&inReal.wto==='none'&&mw.every(m=>m==='eth_chainId')
+    &&!inSim.ua&&inSim.EP&&inSim.txs===0&&inSim.set.join()==='valid,0,accepts,accepts,-32603,async'&&inSim.preset==='desk3'&&inSim.rdns.every(x=>/^sim\.staging\./.test(x)),ev:{simBefore,inReal,mockAsked:mw,inSim}}; },{query:q('sim')});
 
 module.exports={CASES,T};
 /* THE RUN (same exit rules as wallet.test.js: 0 only when every selected case ran and passed; 1 on a failure; 2 on a bad selection) */

@@ -31,10 +31,15 @@ const PRESETS={
   legacy:'DESKTOP · OLD STYLE: window.ethereum + providers[] only',
   none:'DESKTOP · NO WALLET',
   inapp:'PHONE · INSIDE A WALLET APP (window.ethereum)',
-  wc:'PHONE · WALLETCONNECT (simulated phone wallet)'
+  wc:'PHONE · WALLETCONNECT (simulated phone wallet)',
+  phone2:'PHONE · IN A WALLET APP, TWO WALLETS (audit 5: the first fails to connect, the second is already authorised)'
 };
+/* the page decides "phone" from navigator.userAgent (isPhone) and "inside a wallet app" from window.ethereum's flags (inWalletApp). The phone2 preset makes a
+   desktop browser a wallet-app phone: before any page script runs, navigator.userAgent reads as an iPhone in the MetaMask app (staging only, runtime only) */
+const PHONE2_UA='Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MetaMaskMobile/7.40.0';
+if(CONF.preset==='phone2'&&!REAL&&!/iPhone|Android/i.test(navigator.userAgent)){ try{ Object.defineProperty(navigator,'userAgent',{configurable:true,get:()=>PHONE2_UA}); }catch(e){ console.warn('staging: userAgent override unavailable',e); } }
 if(!PRESETS[CONF.preset]) CONF.preset=isPhoneUA()?'wc':'desk3';
-const SET=Object.assign({auto:'ask',mine:2500,readerMs:120,firstReaderDown:false,receipts:'valid',clock:'normal',wcEvent:'exact'},CONF.set||{});
+const SET=Object.assign({auto:'ask',mine:2500,readerMs:120,firstReaderDown:false,receipts:'valid',clock:'normal',wcEvent:'exact',seatsPay:false,txid:'valid',txidWallet:false,connFail:'-32603',connHow:'async',owed:0,payer:'accepts',recipient:'accepts'},CONF.set||{});
 const saveConf=()=>ssSet(CONF_KEY,JSON.stringify({preset:CONF.preset,set:SET}));
 
 /* ── the log every wallet request goes through (shown under CONTROLS · LOG; read by the tests) */
@@ -77,7 +82,10 @@ const CH={ t0:now(), block0:23700000, bt:4, txs:new Map(), nonce:new Map(), spen
 CH.head=()=>CH.block0+Math.floor((Date.now()/1000-CH.t0)/CH.bt);
 CH.tsOf=n=>CH.t0+(n-CH.block0)*CH.bt;
 const S={ today:13, lastId:12, settled:true, dead:false, FOUNDING:eth(0.42), foundersEnd:now()-86400*13, start:eth(1.68), ref:eth(0.42), vault:eth(1.2), seatPool:eth(0.31), totalSeats:eth(17),
-  seats:new Map(), pending:new Map(), owed:new Map(), plates:new Map(), bids:[], sale:'open' };
+  seats:new Map(), pending:new Map(), owed:new Map(), received:new Map(), payouts:[], plates:new Map(), bids:[], sale:'open' };
+/* what the contract owes an account (owed()): the account's own entry, else the CONTROLS default (SET.owed, simulated ETH) */
+const owedOf=a=>S.owed.has(a)?S.owed.get(a):eth(+SET.owed||0);
+const pendOf=a=>S.pending.has(a)?S.pending.get(a):eth(0.0364);
 const seedOf=id=>SEEDS[id%SEEDS.length]>>>0;
 function plate(id){ let p=S.plates.get(id); if(!p){ const open=now()-3*3600-86400*(S.today-id); p={seed:seedOf(id),open,close:open+86400,price:id<S.today?eth(0.3+0.01*id):0n,witnessed:id===S.today?eth(0.05):0n,buyer:id<S.today?OTHER:'0x0000000000000000000000000000000000000000',pick:id%32,sold:id<S.today}; S.plates.set(id,p); } return p; }
 const priceOf=D=>{ const dt=Math.max(0,now()-D.open); return eth(1.68*Math.pow(2,-dt/8640)); };
@@ -105,7 +113,7 @@ function callSim(to,data){ const E=window.ethers; if(!CH.IF) CH.IF=new E.Interfa
     case 'startPrice': out=[S.start]; break; case 'priceAt': out=[priceOf(D)]; break; case 'referencePrice': case 'median7': out=[S.ref]; break;
     case 'candidates': { const p=plate(Number(a[0])); out=[Array.from({length:32},(_,k)=>seedFor(p.seed,k))]; break; }
     case 'picks': out=[plate(Number(a[0])).pick]; break; case 'vault': out=[S.vault]; break; case 'seatPool': out=[S.seatPool]; break; case 'totalSeats': out=[S.totalSeats]; break;
-    case 'seats': out=[S.seats.has(who(a[0]))?S.seats.get(who(a[0])):eth(2)]; break; case 'pending': out=[S.pending.has(who(a[0]))?S.pending.get(who(a[0])):eth(0.0364)]; break; case 'owed': out=[S.owed.get(who(a[0]))||0n]; break;
+    case 'seats': out=[S.seats.has(who(a[0]))?S.seats.get(who(a[0])):eth(2)]; break; case 'pending': out=[pendOf(who(a[0]))]; break; case 'owed': out=[owedOf(who(a[0]))]; break;
     case 'ownerOf': out=[lc(to)===lc(cfg('gift'))?OTHER:plate(Number(a[0])).buyer]; break; case 'tokenURI': out=['']; break; case 'witnessesOf': case 'handsOf': out=[[]]; break;
     case 'sky': out=[JSON.stringify(SKY)]; break; case 'balanceOf': case 'giftOf': out=[0n]; break; case 'isClaimed': out=[false]; break; case 'gifts': out=[79n]; break; case 'minted': out=[78n]; break; case 'gif': out=['0x']; break;
     default: return '0x'; }
@@ -114,11 +122,20 @@ const cfg=k=>{ try{ return CFG[k]; }catch(e){ return null; } };   /* the page's 
 /* a simulated transaction: submitted (pending), then mined / replaced / lost by the visitor's choice */
 function txSubmit(tx,who){ const from=lc(tx.from), n=CH.nonce.has(from)?CH.nonce.get(from):7; CH.nonce.set(from,n+1);
   const r={hash:rnd32(),from,to:lc(tx.to||''),data:lc(tx.data||tx.input||'0x'),value:BigInt(tx.value||0),gas:tx.gas||tx.gasLimit||'0x3d090',nonce:n,chainId:tx.chainId||'0x1',block:null,status:null,state:'pending',by:null,who,t:Date.now(),action:decode(tx).name};
-  CH.txs.set(r.hash,r); logTick(); return r; }
+  CH.txs.set(r.hash,r);
+  if(SET.txid==='other-mined'||SET.txid==='first-mined'){ const u={hash:rnd32(),from,to:OTHER,data:'0x',value:0n,gas:'0x5208',nonce:n-1,chainId:'0x1',block:null,status:null,state:'mined',by:null,who:'unrelated',t:Date.now(),action:'(plain ETH transfer)',unrelated:true};   /* AN UNRELATED TRANSACTION of the same sender, mined now, while r stays pending */
+    CH.txs.set(u.hash,u); mineInto(u,1); r.unrelatedHash=u.hash; logReq('staging','unrelated transaction mined',u.hash,'SIMULATED: another transaction of '+from+' (nonce '+u.nonce+') is mined in block '+u.block+'; '+r.hash.slice(0,10)+'… (nonce '+n+') stays pending'); }
+  logTick(); return r; }
 function mineInto(r,status){ const b=CH.head(); r.block=b; r.status=status; (CH.inBlock.get(b)||CH.inBlock.set(b,[]).get(b)).push(r); CH.spent.set(r.from,Math.max(CH.spent.get(r.from)||0,r.nonce+1)); }
 const OUTCOMES={confirmed:'CONFIRMED',reverted:'REVERTED',sped:'SPED UP (same call, higher fee)',cancelled:'CANCELLED (0 ETH to yourself)',replaced:'REPLACED (another call)',unknown:'UNKNOWN (nonce spent, tx not found)',pending:'PENDING (decide later)'};
+/* what the simulated contract does with a write that would be mined (STORMGLASS.sol: withdraw / withdrawTo require something owed and that the payee accept ETH):
+   it reverts, whatever the wallet screen's button said. A reason, or null. */
+function chainVerdict(r){ const a=r.action; if(a!=='withdraw'&&a!=='withdrawTo') return null; const v=owedOf(r.from); if(v===0n) return 'nothing owed (require "nothing owed")';
+  if(a==='withdraw'&&SET.payer==='rejects') return 'the payer’s wallet rejects ETH (call failed)';
+  if(a==='withdrawTo'){ const d=decode({data:r.data,value:r.value}); const to=lc(d.args[0]&&d.args[0].v||''); if(/^0x0{40}$/.test(to)) return 'zero address'; if(SET.recipient==='rejects') return 'the recipient rejects ETH (call failed)'; } return null; }
 function txResolve(hash,outcome){ const r=CH.txs.get(hash); if(!r||r.state!=='pending'&&!(r.state==='unknown'&&outcome==='confirmed')) return false;
   if(outcome==='pending') return true;
+  if(outcome==='confirmed'){ const why=chainVerdict(r); if(why){ r.why=why; outcome='reverted'; logReq('chain','revert',r.hash,'SIMULATED CONTRACT: '+r.action+' reverts: '+why); } }
   if(outcome==='confirmed'||outcome==='reverted'){ if(r.state==='unknown') r.late=true; mineInto(r,outcome==='confirmed'?1:0); r.state=outcome; if(outcome==='confirmed') effect(r); }
   else if(outcome==='unknown'){ r.state='unknown'; CH.spent.set(r.from,Math.max(CH.spent.get(r.from)||0,r.nonce+1)); }   /* spent by a transaction no reader can find */
   else { const x=Object.assign({},r,{hash:rnd32(),state:'mined',replaces:r.hash});
@@ -128,11 +145,18 @@ function txResolve(hash,outcome){ const r=CH.txs.get(hash); if(!r||r.state!=='pe
   logTick(); return true; }
 function txSchedule(hash,outcome){ if(outcome==='pending') return; setTimeout(()=>txResolve(hash,outcome),Math.max(0,+SET.mine||0)); }
 function decode(tx){ try{ const E=window.ethers, A=(typeof ABI!=='undefined')?ABI:SIM_ABI; const I=new E.Interface(A); const p=I.parseTransaction({data:tx.data||tx.input||'0x',value:BigInt(tx.value||0)}); return p?{name:p.name,args:p.fragment.inputs.map((x,i)=>({name:x.name||('arg'+i),type:x.type,v:String(p.args[i])})),sig:p.signature}:{name:'(no call data)',args:[]}; }catch(e){ return {name:(tx.data||'0x')==='0x'?'(plain ETH transfer)':'(not a STORMGLASS call: '+String(tx.data).slice(0,10)+')',args:[]}; } }
+/* SEAT EARNINGS paid to the payer when it pays (buy, witness) or claims: _settleSeats then _pay. A wallet that accepts ETH receives them; one that
+   rejects ETH leaves them in owed[] (WITHDRAW / WITHDRAW TO ANOTHER ADDRESS). Simulated amounts. */
+function payTo(who,v,why){ if(v<=0n) return; S.received.set(who,(S.received.get(who)||0n)+v); S.payouts.push({to:who,v,why}); if(S.payouts.length>20) S.payouts.shift(); logReq('chain','payout',who,'SIMULATED: '+fmtEth(v)+' ETH sent to '+who+' ('+why+')'); }
+function settleSeats(from){ const p=pendOf(from); S.pending.set(from,0n); if(p<=0n) return;
+  if(SET.payer==='rejects'){ S.owed.set(from,owedOf(from)+p); S.payouts.push({to:from,v:p,why:'REJECTED: left in owed'}); logReq('chain','payout',from,'SIMULATED: the contract tried to send '+fmtEth(p)+' ETH of seat earnings to '+from+', the wallet rejects ETH: the amount is now OWED to it (owed[] += '+fmtEth(p)+')'); }
+  else payTo(from,p,'seat earnings, the wallet accepts ETH'); }
 function effect(r){ const a=r.action, d=decode({data:r.data,value:r.value}), from=r.from;
+  if(a==='claim'||(SET.seatsPay&&(a==='buy'||a==='witness'))) settleSeats(from);   /* the payer's own earnings first (on the real contract buy and witness settle them too; here only after SCENARIOS 8 SET UP, so the earlier scenarios keep CLAIM available) */
   if(a==='buy'){ const id=Number(d.args[0]&&d.args[0].v), k=Number(d.args[1]&&d.args[1].v); const p=plate(id); p.sold=true; p.buyer=from; p.pick=k; p.price=r.value*10n/11n; if(id===S.today) S.lastId=S.today; }
   if(a==='witness'){ const p=plate(Number(d.args[0]&&d.args[0].v)); p.witnessed+=r.value; S.seats.set(from,(S.seats.has(from)?S.seats.get(from):eth(2))+r.value*E18/S.FOUNDING); }
-  if(a==='claim'){ S.owed.set(from,(S.owed.get(from)||0n)+(S.pending.has(from)?S.pending.get(from):eth(0.0364))); S.pending.set(from,0n); }
-  if(a==='withdraw') S.owed.set(from,0n);
+  if(a==='withdraw'){ const v=owedOf(from); S.owed.set(from,0n); payTo(from,v,'withdraw: what was owed'); }
+  if(a==='withdrawTo'){ const v=owedOf(from), to=lc(d.args[0]&&d.args[0].v||''); S.owed.set(from,0n); payTo(to,v,'withdrawTo: what was owed to '+from); }
   if(a==='bid') S.bids.push({bidder:from,amount:r.value}); }
 function txView(h){ const r=CH.txs.get(lc(h))||CH.txs.get(h); if(!r) return null;
   return {hash:r.hash,blockHash:r.block==null?null:hex32(r.block),blockNumber:r.block==null?null:hex(r.block),transactionIndex:r.block==null?null:'0x0',from:r.from,to:r.to||null,nonce:hex(r.nonce),gas:typeof r.gas==='string'?r.gas:hex(r.gas),gasPrice:'0x3b9aca00',maxFeePerGas:'0x3b9aca00',maxPriorityFeePerGas:'0x1',input:r.data,value:hex(r.value),type:'0x2',chainId:'0x1',accessList:[],v:'0x0',r:'0x'+'11'.repeat(32),s:'0x'+'22'.repeat(32),yParity:'0x0'}; }
@@ -143,6 +167,24 @@ function block(tag,full){ const n=tag==='latest'||tag==='pending'||tag==null?CH.
   const txs=(CH.inBlock.get(n)||[]).map(r=>txView(r.hash));
   return {number:hex(n),hash:hex32(n),parentHash:hex32(n-1),timestamp:hex(CH.tsOf(n)),nonce:'0x0000000000000000',difficulty:'0x0',gasLimit:'0x1c9c380',gasUsed:'0x0',miner:'0x0000000000000000000000000000000000000000',extraData:'0x',baseFeePerGas:'0x3b9aca00',blobGasUsed:'0x0',excessBlobGas:'0x0',stateRoot:hex32(0),receiptsRoot:hex32(0),mixHash:hex32(0),parentBeaconBlockRoot:hex32(0),transactions:full?txs:txs.map(t=>t.hash)}; }
 const READER_HITS={};
+/* TRANSACTION IDENTITY (CONTROLS · SCENARIOS 5): what the simulated readers (and, when chosen, the simulated wallet) answer to eth_getTransactionByHash about a simulated
+   transaction. The page's trackTx takes the sender's nonce from that answer; it must be THIS transaction's. "other-*": an unrelated transaction of the same sender (a
+   different hash; the same nonce and call, or the next nonce and a plain transfer, or a lower nonce already mined). "first-*": the reader the page asks first in a round
+   answers an unusable object, and the next reader answers truly. The log lists which reader was asked and what it answered. */
+const TXIDS={valid:'VALID (every reader)','other-same':'ALL READERS: ANOTHER TRANSACTION OF THE SENDER (different hash, same nonce, same call)','other-next':'ALL READERS: ANOTHER TRANSACTION OF THE SENDER (different hash, next nonce, plain transfer)','other-mined':'ALL READERS: AN UNRELATED TRANSACTION OF THE SENDER, MINED (lower nonce) while this one is pending','first-other':'FIRST READER: another transaction of the sender, then a valid fallback','first-mined':'FIRST READER: an unrelated MINED transaction of the sender, then a valid fallback','first-nohash':'FIRST READER: an answer with no hash, then a valid fallback','first-decimal':'FIRST READER: nonce as the decimal "7", then a valid fallback'};
+function txAnswer(h,who,e){ const r=CH.txs.get(lc(h))||CH.txs.get(h), v=txView(h); if(!r) return v; const m=SET.txid||'valid', isW=who==null;
+  const say=s=>{ if(e) e.result=s; else logReq('reader '+who,'eth_getTransactionByHash',h,s); };
+  let how=null;
+  if(isW){ if(SET.txidWallet&&/^(other-)/.test(m)) how=m==='other-next'?'next':m==='other-mined'?'mined':'same'; }
+  else if(m==='other-same'||m==='other-next'||m==='other-mined') how=m==='other-next'?'next':m==='other-mined'?'mined':'same';
+  else if(m.startsWith('first-')&&who===firstReader()) how=m==='first-other'?'same':m==='first-mined'?'mined':m==='first-nohash'?'nohash':'decimal';
+  if(!how){ if(m!=='valid'&&v) say('answered the VALID transaction (hash '+v.hash.slice(0,10)+'…, nonce '+parseInt(v.nonce,16)+')'); return v; }
+  let o=Object.assign({},v);
+  if(how==='nohash'){ delete o.hash; say('answered a transaction with NO HASH (nonce '+parseInt(v.nonce,16)+')'); return o; }
+  if(how==='decimal'){ o.nonce=String(parseInt(v.nonce,16)); say('answered with the nonce as the DECIMAL "'+o.nonce+'" (a JSON-RPC quantity must be hex)'); return o; }
+  if(how==='mined'){ const u=r.unrelatedHash&&CH.txs.get(r.unrelatedHash); if(u){ o=txView(u.hash); say('answered ANOTHER transaction of the sender, MINED (hash '+o.hash.slice(0,10)+'…, nonce '+parseInt(o.nonce,16)+', block '+parseInt(o.blockNumber,16)+'), not '+v.hash.slice(0,10)+'…'); return o; } }
+  o.hash=rnd32(); if(how==='next'){ o.nonce=hex(r.nonce+1); o.to=OTHER; o.input='0x'; o.value='0x0'; }
+  say('answered ANOTHER transaction of the sender (hash '+o.hash.slice(0,10)+'…, nonce '+parseInt(o.nonce,16)+'), not '+v.hash.slice(0,10)+'… (nonce '+parseInt(v.nonce,16)+')'); return o; }
 /* RECEIPT ANSWERS (CONTROLS · TRACKING): what the simulated readers say about a MINED simulated transaction. "first-*": the reader the
    page asks first in a round (its TRACK.rpcs[trackAt], read live; publicnode until a fallback has answered) answers a malformed receipt
    and the others answer the true one, so every round shows "malformed, then a valid fallback"; "all": every reader answers a
@@ -170,7 +212,7 @@ function rpcOne(q,host){ const ok=v=>({jsonrpc:'2.0',id:q&&q.id,result:v}), bad=
     case 'eth_feeHistory': return ok({oldestBlock:hex(CH.head()-1),baseFeePerGas:['0x3b9aca00','0x3b9aca00'],gasUsedRatio:[0.5],reward:[['0x1']]});
     case 'eth_getBalance': return ok('0x8ac7230489e80000');
     case 'eth_estimateGas': return ok('0x30d40');
-    case 'eth_getTransactionByHash': return ok(txView(p[0]));
+    case 'eth_getTransactionByHash': return ok(host==null?txView(p[0]):txAnswer(p[0],host));
     case 'eth_getTransactionReceipt': { const rc=rcView(p[0]); if(!rc||host==null) return ok(rc); const b=receiptFor(rc,host);
       if(b){ logReq('reader '+host,m,p[0],'answered a MALFORMED receipt ('+b.why+')'); return ok(b.rc); }
       if(SET.receipts&&SET.receipts!=='valid') logReq('reader '+host,m,p[0],'answered the VALID receipt (status '+rc.status+')'); return ok(rc); }
@@ -218,7 +260,7 @@ const fmtEth=v=>{ try{ return window.ethers.formatEther(BigInt(v||0)); }catch(e)
 const chainName=c=>{ const n=typeof c==='string'?parseInt(c,16):Number(c); return n===1?'1 · Ethereum mainnet':n===8453?n+' · Base':n===42161?n+' · Arbitrum':String(c); };
 function txRows(tx,walletChain){ const d=decode(tx), C=lc(cfg('contract')||'');
   return [['INTENDED CHAIN',tx.chainId!=null?chainName(tx.chainId):'(not set)'],['WALLET IS ON',walletChain==null?'—':chainName(walletChain)],['SENDER',tx.from||'—'],['TARGET',(tx.to||'—')+(lc(tx.to)===C?'  (the STORMGLASS contract)':'')],
-    ['VALUE',fmtEth(tx.value)+' ETH'],['ACTION',d.name+(d.args.length?'('+d.args.map(a=>a.name+': '+a.v).join(', ')+')':'()')],['GAS LIMIT',tx.gas?String(BigInt(tx.gas)):'—']]; }
+    ['VALUE',fmtEth(tx.value)+' ETH'],['ACTION',d.name+(d.args.length?'('+d.args.map(a=>a.name+': '+a.v).join(', ')+')':'()')]].concat(d.name==='withdrawTo'?[['PAYS TO (recipient)',d.args[0]?d.args[0].v:'—'],['PAID FROM','what the contract owes the SENDER above; the sender’s wallet only authorises it']]:[],[['GAS LIMIT',tx.gas?String(BigInt(tx.gas)):'—']]); }
 const kv=rows=>el('dl',{class:'sg-kv'},rows.map(([k,v])=>[el('dt',null,k),el('dd',null,v)]));
 /* the chooser: REAL mode = the intercept; SIMULATION = the simulated wallet's confirmation screen. Resolves an outcome key. */
 function chooser(tx,o){ if(SET.auto&&SET.auto!=='ask'&&!REAL) return Promise.resolve(SET.auto);
@@ -257,6 +299,9 @@ const addr=t=>'0x'+t.padStart(40,'0');
    ("base") or Base and then mainnet again ("base-back"). The page's own last opLive runs after both answers and before the provider
    is asked to send: it must stop there, and this wallet's log must show no eth_sendTransaction. */
 const LASTCHAIN={off:'OFF',base:'BASE',['base-back']:'BASE, THEN BACK TO MAINNET'};
+/* the errors a wallet can answer eth_requestAccounts with (CONTROLS · SCENARIOS 6) */
+const CONNERR={4001:'User rejected the request.',4100:'The requested account and/or method has not been authorized by the user.',4200:'The Provider does not support the requested method.',4900:'The Provider is disconnected from all chains.',4901:'The Provider is not connected to the requested chain.',[-32002]:'Request of type eth_requestAccounts already pending for origin. Please wait.',[-32603]:'Internal JSON-RPC error.'};
+const callText=tx=>{ const d=decode(tx); return d.name+(d.args.length?'('+d.args.map(a=>a.v).join(', ')+')':'()')+' · from '+(tx.from||'—')+' · to '+(tx.to||'—')+' · value '+fmtEth(tx.value)+' ETH'+(tx.chainId!=null?' · chainId '+tx.chainId:''); };
 function simWallet(c){ const L={}, st=Object.assign({chainId:'0x1',authorized:false,switch:'accept',connect:'approve',delay:0,asleep:false,ai:0,lastChain:'off',fired:0},c);
   const emit=(ev,...a)=>(L[ev]||[]).slice().forEach(f=>{ try{ f(...a); }catch(e){ console.error('listener',e); } });
   const acct=()=>st.accounts[st.ai%st.accounts.length], list=()=>st.authorized?[acct()].concat(st.accounts.filter(x=>x!==acct())):[];
@@ -266,17 +311,19 @@ function simWallet(c){ const L={}, st=Object.assign({chainId:'0x1',authorized:fa
     st.chainId='0x2105'; emit('chainChanged','0x2105'); if(how==='base-back'){ st.chainId='0x1'; emit('chainChanged','0x1'); }
     st.fired++; logReq(st.name,'chainChanged',how==='base-back'?['0x2105','0x1']:['0x2105'],'LAST-MOMENT NETWORK CHANGE (simulated): the final check was answered 0x1, then this was announced before the page could send'); logTick(); };
   const p={ request(args){ const method=args&&args.method, params=args&&args.params; const e=logReq(st.name,method,params,'simulated wallet');
+      if(method==='eth_requestAccounts'&&st.connect==='fail'&&SET.connHow==='sync'){ const c=+SET.connFail||-32603; e.result='SYNC THROW '+c; throw err(c,CONNERR[c]||'Simulated wallet error'); }   /* a wallet that throws before it returns a promise */
       return (async()=>{ if(st.asleep) return new Promise(()=>{}); if(st.delay) await new Promise(r=>setTimeout(r,st.delay));
         switch(method){
           case 'eth_chainId': if(st.waitChain) st.chainOut=true; return st.chainId; case 'net_version': return String(parseInt(st.chainId,16));
           case 'eth_accounts': if(st.armed) await lastMoment(); return list();
-          case 'eth_requestAccounts': { if(st.connect==='refuse'){ e.result='refused'; throw err(4001,'User rejected the request.'); } const was=st.authorized; st.authorized=true; if(!was) setTimeout(()=>emit('accountsChanged',list()),0); return list(); }
+          case 'eth_requestAccounts': { if(st.connect==='refuse'){ e.result='refused'; throw err(4001,'User rejected the request.'); }
+            if(st.connect==='fail'){ const c=+SET.connFail||-32603; e.result='REJECTED PROMISE '+c; throw err(c,CONNERR[c]||'Simulated wallet error'); } const was=st.authorized; st.authorized=true; if(!was) setTimeout(()=>emit('accountsChanged',list()),0); return list(); }
           case 'wallet_switchEthereumChain': { if(st.switch==='refuse'){ e.result='refused'; throw err(4001,'User rejected the request.'); } const c=params&&params[0]&&params[0].chainId; if(c&&c!==st.chainId){ st.chainId=c; setTimeout(()=>emit('chainChanged',c),0); } return null; }
           case 'wallet_revokePermissions': { st.authorized=false; setTimeout(()=>emit('accountsChanged',[]),0); return null; }
           case 'eth_estimateGas': if(st.lastChain==='base'||st.lastChain==='base-back'){ st.armed=true; st.chainOut=false; } return '0x30d40'; case 'eth_blockNumber': return hex(CH.head()); case 'eth_gasPrice': return '0x3b9aca00'; case 'eth_maxPriorityFeePerGas': return '0x1';
-          case 'eth_getTransactionByHash': return txView(params[0]); case 'eth_getTransactionReceipt': return rcView(params[0]);
+          case 'eth_getTransactionByHash': return txAnswer(params[0],null,e); case 'eth_getTransactionReceipt': return rcView(params[0]);
           case 'eth_call': return callSim((params[0]||{}).to,(params[0]||{}).data||'0x'); case 'eth_getBlockByNumber': return block(params[0],!!params[1]); case 'eth_getLogs': return [];
-          case 'eth_sendTransaction': { if(!st.authorized) throw err(4100,'Unauthorized'); const tx=Object.assign({},params[0]); if(!tx.from) tx.from=acct();
+          case 'eth_sendTransaction': { if(!st.authorized) throw err(4100,'Unauthorized'); const tx=Object.assign({},params[0]); if(!tx.from) tx.from=acct(); e.call=callText(tx);
             const h=await handleSend(tx,{who:st.name,walletChain:st.chainId,onChoice:o=>{ e.result=o; }}); e.result+=' '+h.slice(0,10); return h; }
           default: if(SIGNM.has(method)){ await signPanel(method,params,st.name); throw err(4001,'User rejected the request.'); }
             throw err(-32601,'method not found '+method); } })(); },
@@ -295,7 +342,10 @@ if(!REAL){
   if(pre==='desk1') ws=[mk(W('ALPHA','SIM ALPHA','sim.staging.alpha','#c8ff3a',{accounts:[addr('a11'),addr('a12')]}))];
   if(pre==='legacy') ws=[mk(W('ALPHA','SIM ALPHA','sim.staging.alpha','#c8ff3a',{announce:false,flags:{isMetaMask:true},accounts:[addr('a11'),addr('a12')]})),mk(W('BETA','SIM BETA (on Base)','sim.staging.beta','#ff9a1f',{announce:false,flags:{isRabby:true},chainId:'0x2105',accounts:[addr('b01'),addr('b02')]}))];
   if(pre==='inapp') ws=[mk(W('ALPHA','SIM ALPHA (in-app browser)','sim.staging.alpha','#c8ff3a',{flags:{isMetaMask:true},accounts:[addr('a11'),addr('a12')]}))];
-  if(pre==='desk3'||pre==='desk1'||pre==='inapp') SIM_ETH=ws[0].p;
+  /* audit 5, SCENARIOS 6: a phone inside a wallet app. window.ethereum (the app's own wallet, ALPHA) fails eth_requestAccounts the way CONTROLS says; the second wallet (BETA,
+     announced over EIP-6963) is ALREADY AUTHORISED, so any request that reaches it would answer without a prompt: the page must not send it one until the visitor picks it. */
+  if(pre==='phone2') ws=[mk(W('ALPHA','SIM ALPHA (the app’s own wallet)','sim.staging.alpha','#c8ff3a',{announce:false,flags:{isMetaMask:true},authorized:true,connect:'fail',accounts:[addr('a11'),addr('a12')]})),mk(W('BETA','SIM BETA (a second wallet, already authorised)','sim.staging.beta','#ff9a1f',{authorized:true,accounts:[addr('b01'),addr('b02')]}))];
+  if(pre==='desk3'||pre==='desk1'||pre==='inapp'||pre==='phone2') SIM_ETH=ws[0].p;
   if(pre==='legacy'){ SIM_ETH=ws[0].p; SIM_ETH.providers=ws.map(w=>w.p); }
   SIM_DETAILS=ws.filter(w=>w.c.announce!==false).map(w=>Object.freeze({info:Object.freeze({uuid:'5e5e5e5e-0000-4000-8000-'+String(w.c.id.length*1000+w.c.id.charCodeAt(0)).padStart(12,'0'),name:w.c.name,icon:w.c.icon,rdns:w.c.rdns}),provider:w.p}));
   const announce=()=>SIM_DETAILS.forEach(d=>window.dispatchEvent(new CustomEvent('eip6963:announceProvider',{detail:d})));
@@ -363,12 +413,12 @@ const WRAP=new WeakMap(), ISW=new WeakSet(), RAWNAME=new WeakMap();
 const FLAGS=['isMetaMask','isRabby','isCoinbaseWallet','isBraveWallet','isPhantom','isTrust','isTrustWallet','isZerion','isRainbow','isFrame','isOkxWallet','isTokenPocket','isWalletConnect'];
 async function guard(raw,who,args){ const method=args&&args.method, params=args&&args.params;
   if(FORWARD.has(method)){
-    if((method==='eth_getTransactionByHash'||method==='eth_getTransactionReceipt')&&params&&CH.txs.has(lc(params[0]))){ logReq(who,method,params,'answered by staging (a simulated hash)'); return method==='eth_getTransactionByHash'?txView(params[0]):rcView(params[0]); }
+    if((method==='eth_getTransactionByHash'||method==='eth_getTransactionReceipt')&&params&&CH.txs.has(lc(params[0]))){ const e0=logReq(who,method,params,'answered by staging (a simulated hash)'); return method==='eth_getTransactionByHash'?txAnswer(params[0],null,e0):rcView(params[0]); }
     if(GATED.has(method)&&!(await gate(raw,who,method))){ logReq(who,method,params,'cancelled at the staging gate (wallet not asked)'); throw err(4001,'Cancelled on the staging page: your wallet was not asked.'); }
     const e=logReq(who,method,params,'FORWARDED to your wallet');
     try{ const r=await raw.request(params===undefined?{method}:{method,params}); e.result=brief(r); return r; }catch(x){ e.result='error '+(x&&x.code); throw x; } }
   if(LOCAL.has(method)){ logReq(who,method,params,'answered by staging (not forwarded)'); return '0x30d40'; }
-  if(method==='eth_sendTransaction'){ const e=logReq(who,method,params,'INTERCEPTED (not forwarded)'); const tx=Object.assign({},params&&params[0]);
+  if(method==='eth_sendTransaction'){ const e=logReq(who,method,params,'INTERCEPTED (not forwarded)'); const tx=Object.assign({},params&&params[0]); try{ e.call=callText(tx); }catch(x){}
     let wc=null; try{ wc=await Promise.race([raw.request({method:'eth_chainId'}),new Promise(r=>setTimeout(()=>r(null),1500))]); logReq(who,'eth_chainId',null,'FORWARDED to your wallet (for the intercept panel)'); }catch(x){}
     const h=await handleSend(tx,{who,walletChain:wc,onChoice:o=>{ e.result=o; }}); e.result+=' '+h.slice(0,10); return h; }
   if(TXM.has(method)||SIGNM.has(method)){ logReq(who,method,params,'INTERCEPTED (not forwarded)'); await signPanel(method,params,who); throw err(4001,'Refused on the staging page: '+method+' is never sent to your wallet.'); }
@@ -416,8 +466,9 @@ const SG={
   /* controls (the CONTROLS drawer and the tests) */
   setSale, txResolve, choose(k){ const b=document.querySelector('#sg-modal [data-out="'+k+'"]'); if(!b) return false; b.click(); return true; },
   modalOpen:()=>!!modalOn, modalText:()=>{ const m=document.getElementById('sg-modal'); return m?m.textContent:''; },
-  txs:()=>[...CH.txs.values()].map(r=>({hash:r.hash,from:r.from,to:r.to,value:String(r.value),action:r.action,state:r.state,outcome:r.outcome||null,by:r.by,mode:r.mode||null,replaces:r.replaces||null})),
+  txs:()=>[...CH.txs.values()].map(r=>({hash:r.hash,from:r.from,to:r.to,value:String(r.value),data:r.data,action:r.action,state:r.state,outcome:r.outcome||null,by:r.by,mode:r.mode||null,replaces:r.replaces||null,why:r.why||null,unrelated:!!r.unrelated,nonce:r.nonce})),
   configure(o){ Object.assign(SET,o||{}); saveConf(); if(o&&'clock' in o) applyClock(); logTick(); },
+  txids:TXIDS, connErrors:CONNERR, owedOf:a=>String(owedOf(lc(a))), receivedOf:a=>String(S.received.get(lc(a))||0n), payouts:()=>S.payouts.map(p=>({to:p.to,v:String(p.v),why:p.why})),
   receipts:RECEIPTS, clocks:CLOCKS, lastChains:LASTCHAIN, track:trackNow, held:()=>HELD.slice(), navHold:()=>NAV_HOLD,
   wcEmit:k=>{ const w=SW.PHONE; return !!(w&&w.wcEmit&&w.wcEmit(k)); }, wcReqs:()=>SW.PHONE&&SW.PHONE.wch?SW.PHONE.wch.reqs.map(r=>({id:r.ev.id,topic:r.ev.topic,method:r.request.method})):[],
   /* CONTROLS · SCENARIOS: each SET UP puts the simulated wallets and the chain in the state the scenario needs (logged) */
@@ -426,6 +477,9 @@ const SG={
     else if(k==='switch'){ const id=CONF.preset==='wc'?'PHONE':SW.ALPHA?'ALPHA':Object.keys(SW)[0]; Object.values(SW).forEach(w=>{ w.st.lastChain='off'; w.st.armed=false; }); SG.wallet(id,{chainId:'0x2105',switch:'accept'}); SET.auto='ask'; saveConf(); r=id; }
     else if(k==='wc'){ SG.configure({wcEvent:['exact','earlier','oldtopic','foreign','none'].includes(v)?v:'earlier'}); r=SET.wcEvent; }
     else if(k==='receipts'){ const m=RECEIPTS[v]?v:'first-hash'; SG.configure(m==='all'?{receipts:m,clock:'fast'}:{receipts:m}); r=m; }
+    else if(k==='txid'){ const m=TXIDS[v]?v:'other-same'; SG.configure({txid:m}); r=m; }
+    else if(k==='owed'){ const x=+v; S.owed.clear(); S.received.clear(); S.payouts.length=0; SG.configure({owed:x>=0?x:0.05}); r=SET.owed; }
+    else if(k==='payer'){ const m=v==='rejects'?'rejects':'accepts'; S.owed.clear(); S.pending.clear(); S.received.clear(); S.payouts.length=0; SG.configure({payer:m,owed:0,seatsPay:true}); r=m; }
     else return false;
     logReq('staging','scenario '+k,r,'SET UP'); if(DR){ const y=DR.querySelector('.sg-db').scrollTop; drawer(); drawer(); DR.querySelector('.sg-db').scrollTop=y; } note('SET UP: scenario '+k+' ('+r+'). Steps: CONTROLS · SCENARIOS.'); return r; },
   preset(k){ if(!PRESETS[k]) return false; CONF.preset=k; saveConf(); return true; },
@@ -460,6 +514,9 @@ function modeSheet(){ modal((box,done)=>{ box.classList.add(REAL?'sg-real':'sg-s
       el('button',{class:'sg-b'+(REAL?' sg-prime':''),'data-mode':'real',onclick:()=>{ done(); if(!REAL) SG.switchMode('real'); }},REAL?'STAY IN REAL-WALLET MODE':'RELOAD IN REAL-WALLET MODE'),el('button',{class:'sg-b',onclick:()=>done()},'CLOSE'))); }); }
 const s1Status=()=>{ const armed=Object.values(SW).filter(w=>w.st.lastChain&&w.st.lastChain!=='off').length; let i=-1; for(let k=LOG.length-1;k>=0;k--) if(/LAST-MOMENT/.test(LOG[k].route)){ i=k; break; }
   return (armed?'ARMED ('+armed+' wallets, one shot)':'not armed')+(i<0?'':' · last change fired; eth_sendTransaction since: '+LOG.slice(i+1).filter(e=>e.method==='eth_sendTransaction').length); };
+const connAcct=()=>{ const w=Object.values(SW).find(x=>x.st.authorized); return w?w.acct():null; };
+const LIVE={ owed:()=>{ const a=connAcct(); return 'owed to '+(a?a.slice(0,8)+'…':'every account')+': '+fmtEth(a?owedOf(lc(a)):eth(+SET.owed||0))+' ETH (simulated) · recipient '+(SET.recipient||'accepts')+' ETH'; },
+  pay:()=>{ const a=connAcct(); const last=S.payouts.slice(-1).map(p=>'last payout '+fmtEth(p.v)+' ETH → '+p.to.slice(0,8)+'… ('+(/^REJECTED/.test(p.why)?'refused, left owed':'paid')+')').join(''); return 'payer '+(SET.payer||'accepts')+' ETH'+(a?' · owed '+fmtEth(owedOf(lc(a)))+' · received '+fmtEth(S.received.get(lc(a))||0n):'')+(last?' · '+last:''); } };
 let DR=null; const SHOWP=/^(open link|session_request_sent|chainChanged|scenario |eth_getTransactionReceipt)/;
 function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
   DR=el('aside',{id:'sg-drawer','aria-label':'Staging controls'}); document.body.appendChild(DR);
@@ -492,6 +549,27 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
     SCN.push(scn(REAL?1:4,'RECEIPTS: VALID, MALFORMED FIRST READER, ALL INVALID',el('div',null,rSeg,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'receipts',onclick:()=>SG.scenario('receipts',rV())},'SET UP'),el('span',{class:'sg-st'},'now: '+(SET.receipts||'valid')+' · clock '+(SET.clock||'normal')))),
       ['Choose the readers’ answer and SET UP (ALL READERS INVALID also turns the FAST CLOCK on, see TRACKING below).',REAL?'CONNECT your wallet (ASK MY WALLET), then COLLECT or WITNESS: the payment is intercepted.':'CONNECT (SIM ALPHA · 1), then COLLECT or WITNESS.','In the wallet screen choose CONFIRMED (or REVERTED).','Watch the dialog and the LOG: each reader’s receipt answer is listed.'],
       'VALID and FIRST READER …: the result you chose (the malformed first answer is skipped, the next reader’s valid one decides in the same round). ALL INVALID: pending, then “cannot confirm” at 20 s, then RESULT UNKNOWN at 45 s (FAST CLOCK); never confirmed or reverted.')); }
+  /* SCENARIOS (audit 5): nonce identity, explicit wallet choice on a phone, WITHDRAW TO ANOTHER ADDRESS, payout outcomes. SET UP, then the clicks on the page itself. */
+  const SCN5=[];
+  { const [tSeg,tV]=pickSet('txid',Object.entries(TXIDS),SET.txid||'valid'); const [wSeg,wV]=pickSet('txidwallet',[['0','THE WALLET’S OWN ANSWER IS VALID'],['1','THE WALLET ANSWERS THE SAME WAY']],SET.txidWallet?'1':'0');
+    SCN5.push(scn(5,'WHOSE TRANSACTION IS THIS? (nonce identity)',el('div',null,tSeg,wSeg,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'txid',onclick:()=>{ SG.configure({txidWallet:wV()==='1'}); SG.scenario('txid',tV()); }},'SET UP'),el('span',{class:'sg-st'},'now: '+(SET.txid||'valid')+(SET.txidWallet?' · wallet too':'')))),
+      ['Choose what the simulated readers answer to eth_getTransactionByHash (and whether the simulated wallet, the page’s last resort, answers the same way), then SET UP.',REAL?'CONNECT your wallet (ASK MY WALLET), COLLECT or WITNESS: the payment is intercepted.':'CONNECT (SIM ALPHA · 1), COLLECT or WITNESS.','In the wallet screen choose PENDING · DECIDE LATER (or SPED UP, CANCELLED, REPLACED, CONFIRMED).','Open CONTROLS · LOG: every reader the page asked, and what it answered.','With PENDING, resolve it later in TRANSACTIONS AND TRACKING (CONFIRMED).'],
+      'the page never says replaced, cancelled or confirmed on account of the sender’s other transaction: it stays pending (and “cannot confirm” much later), then confirms from its own receipt. A real SPED UP / CANCELLED / REPLACED is still recognised when a valid answer (a later reader, or the wallet) names the nonce.')); }
+  if(!REAL){ const [eSeg,eV]=pickSet('connfail',Object.keys(CONNERR).map(c=>[c,c==='4001'?'4001 (refused)':c]),String(SET.connFail)); const [hSeg,hV]=pickSet('connhow',[['async','REJECTED PROMISE'],['sync','SYNCHRONOUS THROW']],SET.connHow||'async');
+    SCN5.push(scn(6,'A PHONE WALLET FAILS TO CONNECT: CHOOSE ANOTHER WALLET',el('div',null,eSeg,hSeg,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'phone2',onclick:()=>{ SG.configure({connFail:eV(),connHow:hV()}); SG.preset('phone2'); SG.reloadSim(); }},CONF.preset==='phone2'?'SET UP (reloads)':'SET UP (reloads as a phone in a wallet app)'),el('span',{class:'sg-st'},'wallet set: '+(PRESETS[CONF.preset]||'').slice(0,34)+'… · error '+SET.connFail+' ('+SET.connHow+')'))),
+      ['SET UP: the page reloads as a phone inside a wallet app (navigator.userAgent reads iPhone + MetaMask, here only) with two simulated wallets, both already authorised: SIM ALPHA (window.ethereum) fails with the chosen error, SIM BETA is the second wallet.','Press CONNECT. SIM ALPHA fails.','The page shows YOUR WALLET DID NOT CONNECT with CHOOSE ANOTHER WALLET (not for 4001 and -32002: those are answers).','Open CONTROLS · LOG: SIM BETA shows no request. Press CHOOSE ANOTHER WALLET, then SIM BETA: only now does SIM BETA get eth_requestAccounts, and it connects.'],
+      'no request reaches SIM BETA (or any wallet but SIM ALPHA) before you pick it; after the pick exactly one eth_requestAccounts reaches SIM BETA. In REAL mode the same path stops at the staging gate (ASK MY WALLET) before any other wallet is asked.')); }
+  { const [oSeg,oV]=pickSet('owed',[['0','OWES NOTHING'],['0.05','OWES 0.05 ETH'],['0.5','OWES 0.5 ETH']],String(SET.owed||0)); const [rSeg2,rV2]=pickSet('recipient',[['accepts','RECIPIENT ACCEPTS ETH'],['rejects','RECIPIENT REJECTS ETH']],SET.recipient||'accepts');
+    const conn=()=>Object.values(SW).find(w=>w.st.authorized);
+    SCN5.push(scn(7,'WITHDRAW TO ANOTHER ADDRESS',el('div',null,oSeg,rSeg2,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'owed',onclick:()=>{ SG.configure({recipient:rV2()}); SG.scenario('owed',oV()); }},'SET UP'),el('span',{class:'sg-st','data-live':'owed'},'')),
+        el('div',{class:'sg-row'},'before the wallet is asked: ',...(REAL?[]:[el('button',{class:'sg-s','data-act':'account',onclick:()=>{ const w=conn(); if(!w) return note('Connect a simulated wallet first.'); SG.wallet(Object.keys(SW).find(k=>SW[k]===w),{ai:w.st.ai+1}); }},'ACCOUNT CHANGES'),el('button',{class:'sg-s','data-act':'network',onclick:()=>{ const w=conn(); if(!w) return note('Connect a simulated wallet first.'); SG.wallet(Object.keys(SW).find(k=>SW[k]===w),{chainId:'0x2105',switch:'refuse'}); }},'NETWORK GOES TO BASE (and refuses to switch back)')]))),
+      ['SET UP: the simulated contract owes every account that amount (and the recipient accepts or rejects ETH).',REAL?'CONNECT your wallet (ASK MY WALLET).':'CONNECT (SIM ALPHA · 1).','Under YOUR SEATS press WITHDRAW TO ANOTHER ADDRESS, type an address, press REVIEW. Try 0x000…0 (zero), a short string, the contract address, your own address: the page refuses each with its message.','With a valid address: REVIEW shows the sheet; for “before the wallet is asked” press ACCOUNT CHANGES or NETWORK GOES TO BASE now, then SEND TO THIS ADDRESS: nothing is sent.','Otherwise SEND TO THIS ADDRESS: the wallet screen (REAL: the intercept panel) shows withdrawTo and the recipient. CONFIRMED (REJECTS ETH turns it into a revert, as the contract would), REVERTED, REJECTED IN WALLET.'],
+      'one eth_sendTransaction: withdrawTo(recipient), from the connected account, to the contract, value 0. Confirmed: owed back to 0 and the button goes. Recipient rejects ETH: “Failed on Ethereum (reverted)”, the box stays for another address. Account or network change before the handoff: nothing sent.')); }
+  { const [pSeg,pV]=pickSet('payer',[['accepts','THE PAYER’S WALLET ACCEPTS ETH'],['rejects','THE PAYER’S WALLET REJECTS ETH']],SET.payer||'accepts');
+    SCN5.push(scn(8,'SEAT EARNINGS WHEN THE PAYER PAYS: ARRIVE, OR WAIT AS OWED',el('div',null,pSeg,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'payer',onclick:()=>SG.scenario('payer',pV())},'SET UP'),el('span',{class:'sg-st','data-live':'pay'},''))),
+      ['SET UP: every account has seats and 0.0364 ETH of earnings pending (simulated), owes nothing, and has received nothing.',REAL?'CONNECT your wallet (ASK MY WALLET).':'CONNECT (SIM ALPHA · 1).','COLLECT (or WITNESS, or CLAIM) and choose CONFIRMED in the wallet screen.','Read the line next to SET UP and the LOG: “payout”.'],
+      'ACCEPTS: the earnings arrive in the wallet (SIMULATED ETH, shown here and in the LOG) and the seats note shows nothing owed. REJECTS: the contract could not pay it; the amount is OWED, the seats note says so and WITHDRAW / WITHDRAW TO ANOTHER ADDRESS appear (WITHDRAW reverts for a wallet that rejects ETH, WITHDRAW TO ANOTHER ADDRESS to an accepting address confirms). All amounts are simulated.')); }
+  body.append(sec('SCENARIOS (audit 5)',...SCN5));
   body.append(sec('SCENARIOS (audit 4)',...SCN,REAL?el('p',{class:'sg-n'},'The last-moment network change, the intended switch and the WalletConnect event scenarios need the simulated wallets: use SIMULATION (MODE). Your real wallet can of course change network itself while a payment is prepared; the page then stops before your wallet, as in simulation.'):null));
   body.append(sec('SALE (simulated chain)',seg(Object.entries(SALES).map(([k,t])=>[k,t]),S.sale,k=>setSale(k),'data-sale'),
     num('hours since the day opened (OPEN / SOLD)',3,h=>setSale(S.sale==='sold'?'sold':'open',h),0.5)));
@@ -501,7 +579,7 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
       wl.append(el('div',{class:'sg-w','data-w':id},el('div',{class:'sg-wn'},s.name+' ['+id+'] · '+(s.authorized?'connected '+s.account.slice(0,8)+'…':'not connected')),
         seg([['0x1','MAINNET'],['0x2105','BASE']],s.chainId,k=>{ SG.wallet(id,{chainId:k}); draw(); },'data-chain'),
         seg([['accept','SWITCH: ACCEPT'],['refuse','SWITCH: REFUSE']],s.switch,k=>SG.wallet(id,{switch:k}),'data-switch'),
-        seg([['approve','CONNECT: APPROVE'],['refuse','CONNECT: REFUSE']],s.connect,k=>SG.wallet(id,{connect:k}),'data-connect'),
+        seg([['approve','CONNECT: APPROVE'],['refuse','CONNECT: REFUSE'],['fail','CONNECT: ERROR (SCENARIOS 6)']],s.connect,k=>SG.wallet(id,{connect:k}),'data-connect'),
         el('div',{class:'sg-row'},'last-moment network change: ',seg(Object.entries(LASTCHAIN),s.lastChain||'off',k=>SG.wallet(id,{lastChain:k,armed:false}),'data-lc')),
         el('div',{class:'sg-row'},el('button',{class:'sg-s',onclick:()=>{ SG.wallet(id,{ai:(w.st.ai+1)}); draw(); }},'NEXT ACCOUNT'),el('button',{class:'sg-s',onclick:()=>{ SG.walletDisconnects(id); setTimeout(draw,50); }},'WALLET DISCONNECTS'),
           num('answer delay ms',s.delay,v=>SG.wallet(id,{delay:v}))))); }); };
@@ -518,7 +596,8 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
     el('p',{class:'sg-n'},CLOCKS.normal+'. '+CLOCKS.fast+'. FAST changes only these three numbers of the page’s own TRACK object, on this page; the tracking code is the page’s.'),
     el('div',{id:'sg-txs'})));
   body.append(sec('LOG: WALLET REQUESTS, READER RECEIPTS, EVENTS, HELD LINKS (newest first)',el('ol',{id:'sg-log',class:'sg-log'})));
-  logTick=()=>{ if(!DR) return; const s1=document.getElementById('sg-s1st'); if(s1) s1.textContent=s1Status(); const L=document.getElementById('sg-log'); if(L){ L.innerHTML=''; LOG.slice(-60).reverse().forEach(e=>L.append(el('li',{class:/INTERCEPT|REFUSED/.test(e.route)?'x':/FORWARD/.test(e.route)?'f':''},el('b',null,e.method),' · '+e.who+' · '+e.route+(e.result?' · '+e.result:'')+(SHOWP.test(e.method)&&e.params&&e.params!=='null'?' · '+e.params:'')))); }
+  logTick=()=>{ if(!DR) return; const s1=document.getElementById('sg-s1st'); if(s1) s1.textContent=s1Status();
+    DR.querySelectorAll('[data-live]').forEach(n=>{ n.textContent=LIVE[n.dataset.live]?LIVE[n.dataset.live]():''; }); const L=document.getElementById('sg-log'); if(L){ L.innerHTML=''; LOG.slice(-60).reverse().forEach(e=>L.append(el('li',{class:/INTERCEPT|REFUSED/.test(e.route)?'x':/FORWARD/.test(e.route)?'f':''},el('b',null,e.method),' · '+e.who+' · '+e.route+(e.result?' · '+e.result:'')+(e.call?' · CALL '+e.call:'')+(SHOWP.test(e.method)&&e.params&&e.params!=='null'?' · '+e.params:'')))); }
     const T=document.getElementById('sg-txs'); if(T){ T.innerHTML=''; [...CH.txs.values()].filter(r=>!r.replaces).slice(-8).reverse().forEach(r=>T.append(el('div',{class:'sg-tx'},el('code',null,r.hash.slice(0,10)+'… '+r.action+' · '+r.state+(r.by?' → '+r.by.slice(0,10)+'…':'')),
       r.state==='pending'||r.state==='unknown'?el('div',{class:'sg-row'},(r.state==='unknown'?[['confirmed','LATE RECEIPT: CONFIRMED']]:Object.entries(OUTCOMES).filter(([k])=>k!=='pending')).map(([k,t])=>el('button',{class:'sg-s',onclick:()=>{ txResolve(r.hash,k); }},t.split(' (')[0]))):null))); } };
   logTick(); }
