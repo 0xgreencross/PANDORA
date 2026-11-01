@@ -1,0 +1,5065 @@
+{
+ "schema": "stormglass-wallet-results/2",
+ "runId": "20261101T202038Z-3487-383603",
+ "label": "race5x-1",
+ "mode": "subset",
+ "status": "passed",
+ "completed": true,
+ "exit": 0,
+ "startedAt": "2026-11-01T20:20:38.719Z",
+ "finishedAt": "2026-11-01T20:34:06.488Z",
+ "interruptedBy": null,
+ "target": {
+  "path": "/home/claude/wt-audit5/index.html",
+  "bytes": 245131,
+  "sha256": "99131cd72c8f782ea76045c2ff56e17e9897cea8e77285604f06ea119875ec56",
+  "source": {
+   "commit": "e66508991c32d3fa0734cf0efc9bebb37265eae2",
+   "repo": "/home/claude/wt-audit5",
+   "path": "index.html",
+   "blob": "254fe2a8f7e9a08f6367b51e73dcc3b81d1fcb48",
+   "headBlob": "254fe2a8f7e9a08f6367b51e73dcc3b81d1fcb48",
+   "matchesHead": true,
+   "reason": null
+  }
+ },
+ "harness": {
+  "dir": "tools/stormglass/wallet-tests",
+  "commit": "e66508991c32d3fa0734cf0efc9bebb37265eae2",
+  "tree": "8d1b095a38eb0bda29694c66f723e8cc20bedbbe",
+  "dirty": [],
+  "reason": null,
+  "files": {
+   "audit2.test.js": "e876c2b5376fe144397d96ae9a1d972a113543778e12f3ed09f56b7429cadef5",
+   "audit3.test.js": "010539e385a4a9363c54799ec536c0ff02d72b4d7a64253899e9ab303080403e",
+   "audit3b.test.js": "e8eb9ddc253da6e11fc9e07428f4a8cab685cb8cac41c2c6a4f7e5a357cdb81a",
+   "audit4.test.js": "349e1c041b94e535a035d75ea8eb88af43b2892c4bd3635064d279a6f7bea0c0",
+   "audit4review.test.js": "85b2665c70187fab872db416fe19217171288b16354eb93259a974f937165efd",
+   "audit4scan.test.js": "a83d1b5ee4bfa161428ffcb519206f98663bd05e16926d919b2b1eda73e94ff7",
+   "audit5page.test.js": "6656854009e0e5b1456b1ad207053016e2abbe0d9eb3cc39902638390b774b36",
+   "audit5review.test.js": "8dfa387eefdc6a1be0b5bd7d0d45e785fdff4956ac40b855391ff18c7896be7e",
+   "fakechain.js": "2740ff568068e328bb482300f8447d15e24e98b32c6341d2d3efaa44cf6b47cf",
+   "harness.test.js": "c9549a723a97769c19ea00ad47c402e62bcd143968793aa02852adcfad818783",
+   "mockwallet.js": "037a13e3a0e0738a5701b2dfcc18d997ba0829bdd1d9897f14e126162c5222df",
+   "wallet.test.js": "5272fbcfca049503c896c32065c905e4517c4ec9496cb7b985f542c0d2eefe0c"
+  },
+  "contentSha256": "c85a4c12a5aafd3a1dc8f9d930591a97e2d303a015542e42b97db04e52c2bb25"
+ },
+ "deps": {
+  "node": "v22.22.0",
+  "playwright": {
+   "version": "1.64.0",
+   "path": "/home/claude/node_modules/playwright"
+  },
+  "ethers": {
+   "version": "6.13.2",
+   "path": "/home/claude/node_modules/ethers"
+  },
+  "ethersUmd": {
+   "path": "/home/claude/node_modules/ethers/dist/ethers.umd.min.js",
+   "sha256": "74e00c3e2a9ccd312e6d5154f9ccb0911d1b34cb49bc8220244a292a0a773c21"
+  },
+  "chromium": "141.0.7390.37",
+  "chromiumPath": "/opt/pw-browsers/chromium"
+ },
+ "env": {
+  "CASES": "@audit2,@audit4,@audit5,a2,c,d,e,f,i4,l2,l3,hz2",
+  "RELEASE": null,
+  "CASE_TIMEOUT_MS": 240000,
+  "RUN_TIMEOUT_MS": 2900000,
+  "NODE_OPTIONS": "--use-openssl-ca",
+  "OUT": "/home/claude/audit5/ev/final",
+  "PORT": 8963,
+  "cwd": "/home/claude/wt-audit5"
+ },
+ "manifest": {
+  "file": "/home/claude/wt-audit5/tools/stormglass/wallet-tests/manifest.json",
+  "sha256": "da13029be120a21361d7fbb35cf77d7f0fd5fde801db26a330f5facf814aa3cb",
+  "missingModules": [],
+  "unlistedModules": [],
+  "modulesWithoutCases": [],
+  "missingIds": [],
+  "unlistedIds": [],
+  "wrongGroup": [],
+  "expected": 193,
+  "registered": 193,
+  "ok": true
+ },
+ "registered": 193,
+ "groups": {
+  "@orig": 38,
+  "@audit2": 35,
+  "@audit3": 21,
+  "@audit3b": 17,
+  "@harness": 2,
+  "@audit4": 48,
+  "@audit5": 32
+ },
+ "selected": [
+  "a2",
+  "c",
+  "d",
+  "e",
+  "f",
+  "i4",
+  "l2",
+  "l3",
+  "q1",
+  "q2",
+  "q3",
+  "q4",
+  "q5",
+  "q6",
+  "r1",
+  "r2",
+  "r3",
+  "r4",
+  "r5",
+  "r6",
+  "r7",
+  "r8",
+  "r9",
+  "k3",
+  "k4",
+  "k5",
+  "k6",
+  "m4",
+  "m5",
+  "h6",
+  "h7",
+  "h8",
+  "h9",
+  "p1",
+  "p2",
+  "p3",
+  "p4",
+  "p5",
+  "v1",
+  "v2",
+  "v3",
+  "c1",
+  "c2",
+  "hz2",
+  "a4c1",
+  "a4c2",
+  "a4c3",
+  "a4c4",
+  "a4c5",
+  "a4c6",
+  "a4c7",
+  "a4w1",
+  "a4w2",
+  "a4w3",
+  "a4w4",
+  "a4w5",
+  "a4w6",
+  "a4w7",
+  "a4w8",
+  "a4w9",
+  "a4w10",
+  "a4r1",
+  "a4r2",
+  "a4r3",
+  "a4r4",
+  "a4r5",
+  "a4r6",
+  "a4r7",
+  "a4r8",
+  "a4r9",
+  "a4r10",
+  "a4r11",
+  "a4r12",
+  "a4h1",
+  "a4v1",
+  "a4v2",
+  "a4v3",
+  "a4v4",
+  "a4v5",
+  "a4v6",
+  "a4v7",
+  "a4v8",
+  "a4v9",
+  "a4v10",
+  "a4v11",
+  "a4s1",
+  "a4s2",
+  "a4s3",
+  "a4s4",
+  "a4s5",
+  "a4s6",
+  "a4s7",
+  "a5n1",
+  "a5n2",
+  "a5n3",
+  "a5n4",
+  "a5n5",
+  "a5n6",
+  "a5n7",
+  "a5n8",
+  "a5n9",
+  "a5n10",
+  "a5n11",
+  "a5n12",
+  "a5x1",
+  "a5x2",
+  "a5m1",
+  "a5m2",
+  "a5m3",
+  "a5m4",
+  "a5m7",
+  "a5m5",
+  "a5m6",
+  "a5w1",
+  "a5w2",
+  "a5w3",
+  "a5w4",
+  "a5w5",
+  "a5w6",
+  "a5w7",
+  "a5w8",
+  "a5x3",
+  "a5r1",
+  "a5r2"
+ ],
+ "executed": [
+  "a2",
+  "c",
+  "d",
+  "e",
+  "f",
+  "i4",
+  "l2",
+  "l3",
+  "q1",
+  "q2",
+  "q3",
+  "q4",
+  "q5",
+  "q6",
+  "r1",
+  "r2",
+  "r3",
+  "r4",
+  "r5",
+  "r6",
+  "r7",
+  "r8",
+  "r9",
+  "k3",
+  "k4",
+  "k5",
+  "k6",
+  "m4",
+  "m5",
+  "h6",
+  "h7",
+  "h8",
+  "h9",
+  "p1",
+  "p2",
+  "p3",
+  "p4",
+  "p5",
+  "v1",
+  "v2",
+  "v3",
+  "c1",
+  "c2",
+  "hz2",
+  "a4c1",
+  "a4c2",
+  "a4c3",
+  "a4c4",
+  "a4c5",
+  "a4c6",
+  "a4c7",
+  "a4w1",
+  "a4w2",
+  "a4w3",
+  "a4w4",
+  "a4w5",
+  "a4w6",
+  "a4w7",
+  "a4w8",
+  "a4w9",
+  "a4w10",
+  "a4r1",
+  "a4r2",
+  "a4r3",
+  "a4r4",
+  "a4r5",
+  "a4r6",
+  "a4r7",
+  "a4r8",
+  "a4r9",
+  "a4r10",
+  "a4r11",
+  "a4r12",
+  "a4h1",
+  "a4v1",
+  "a4v2",
+  "a4v3",
+  "a4v4",
+  "a4v5",
+  "a4v6",
+  "a4v7",
+  "a4v8",
+  "a4v9",
+  "a4v10",
+  "a4v11",
+  "a4s1",
+  "a4s2",
+  "a4s3",
+  "a4s4",
+  "a4s5",
+  "a4s6",
+  "a4s7",
+  "a5n1",
+  "a5n2",
+  "a5n3",
+  "a5n4",
+  "a5n5",
+  "a5n6",
+  "a5n7",
+  "a5n8",
+  "a5n9",
+  "a5n10",
+  "a5n11",
+  "a5n12",
+  "a5x1",
+  "a5x2",
+  "a5m1",
+  "a5m2",
+  "a5m3",
+  "a5m4",
+  "a5m7",
+  "a5m5",
+  "a5m6",
+  "a5w1",
+  "a5w2",
+  "a5w3",
+  "a5w4",
+  "a5w5",
+  "a5w6",
+  "a5w7",
+  "a5w8",
+  "a5x3",
+  "a5r1",
+  "a5r2"
+ ],
+ "passed": [
+  "a2",
+  "c",
+  "d",
+  "e",
+  "f",
+  "i4",
+  "l2",
+  "l3",
+  "q1",
+  "q2",
+  "q3",
+  "q4",
+  "q5",
+  "q6",
+  "r1",
+  "r2",
+  "r3",
+  "r4",
+  "r5",
+  "r6",
+  "r7",
+  "r8",
+  "r9",
+  "k3",
+  "k4",
+  "k5",
+  "k6",
+  "m4",
+  "m5",
+  "h6",
+  "h7",
+  "h8",
+  "h9",
+  "p1",
+  "p2",
+  "p3",
+  "p4",
+  "p5",
+  "v1",
+  "v2",
+  "v3",
+  "c1",
+  "c2",
+  "hz2",
+  "a4c1",
+  "a4c2",
+  "a4c3",
+  "a4c4",
+  "a4c5",
+  "a4c6",
+  "a4c7",
+  "a4w1",
+  "a4w2",
+  "a4w3",
+  "a4w4",
+  "a4w5",
+  "a4w6",
+  "a4w7",
+  "a4w8",
+  "a4w9",
+  "a4w10",
+  "a4r1",
+  "a4r2",
+  "a4r3",
+  "a4r4",
+  "a4r5",
+  "a4r6",
+  "a4r7",
+  "a4r8",
+  "a4r9",
+  "a4r10",
+  "a4r11",
+  "a4r12",
+  "a4h1",
+  "a4v1",
+  "a4v2",
+  "a4v3",
+  "a4v4",
+  "a4v5",
+  "a4v6",
+  "a4v7",
+  "a4v8",
+  "a4v9",
+  "a4v10",
+  "a4v11",
+  "a4s1",
+  "a4s2",
+  "a4s3",
+  "a4s4",
+  "a4s5",
+  "a4s6",
+  "a4s7",
+  "a5n1",
+  "a5n2",
+  "a5n3",
+  "a5n4",
+  "a5n5",
+  "a5n6",
+  "a5n7",
+  "a5n8",
+  "a5n9",
+  "a5n10",
+  "a5n11",
+  "a5n12",
+  "a5x1",
+  "a5x2",
+  "a5m1",
+  "a5m2",
+  "a5m3",
+  "a5m4",
+  "a5m7",
+  "a5m5",
+  "a5m6",
+  "a5w1",
+  "a5w2",
+  "a5w3",
+  "a5w4",
+  "a5w5",
+  "a5w6",
+  "a5w7",
+  "a5w8",
+  "a5x3",
+  "a5r1",
+  "a5r2"
+ ],
+ "failed": [],
+ "timedOut": [],
+ "unexecuted": [],
+ "running": null,
+ "harnessFailures": [],
+ "persistence": {
+  "ok": true,
+  "snapshots": 127,
+  "failures": [],
+  "file": "/home/claude/audit5/ev/final/results-race5x-1.json",
+  "previous": null
+ },
+ "cases": [
+  {
+   "id": "a2",
+   "name": "wrong chain, switch refused: COLLECT sends nothing",
+   "file": "wallet.test.js",
+   "pass": true,
+   "ms": 2323,
+   "ev": {
+    "stoppedInWrongView": true,
+    "switchRefusedAndOver": true,
+    "sends": [],
+    "asked": 0,
+    "popup": "[!!] YOUR WALLET IS ON ANOTHER NETWORKYour wallet is on another network. Switch it to Ethe",
+    "toasts": [
+     "Your wallet is on another network. Switch it to Ethereum mainnet.",
+     "The switch was cancelled in your wallet: it is still on another network. Switch it to Ethereum mainnet."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "c",
+   "name": "provider swap mid-operation: A checks mainnet, B on 8453 takes over: nothing sent on B",
+   "file": "wallet.test.js",
+   "pass": true,
+   "ms": 5155,
+   "ev": {
+    "gateHit": true,
+    "ended": true,
+    "sends": [],
+    "askedB": 0,
+    "label": "0x0000…00cc · [!] NOT MAINNET",
+    "toasts": [
+     "Your wallet is on another network. Switch it to Ethereum mainnet.",
+     "Your wallet changed while this was waiting. Nothing was sent."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "d",
+   "name": "disconnect while the wallet answers slowly: no send, W not restored",
+   "file": "wallet.test.js",
+   "pass": true,
+   "ms": 2505,
+   "ev": {
+    "gateHit": true,
+    "ended": true,
+    "sends": 0,
+    "asked": 0,
+    "state": {
+     "me": null,
+     "W": false,
+     "EP": false
+    },
+    "label": "CONNECT"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "e",
+   "name": "accountsChanged to another account mid-operation: no send from the old account",
+   "file": "wallet.test.js",
+   "pass": true,
+   "ms": 2718,
+   "ev": {
+    "gateHit": true,
+    "ended": true,
+    "sends": [],
+    "askedOld": 0,
+    "label": "0x0000…00bb",
+    "requestAccountsAfter": 0
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "f",
+   "name": "chainChanged to 8453 right before submit: no send",
+   "file": "wallet.test.js",
+   "pass": true,
+   "ms": 2430,
+   "ev": {
+    "gateHit": true,
+    "ended": true,
+    "sends": [],
+    "asked": 0,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your wallet changed network while this was waiting. Nothing was sent."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "i4",
+   "name": "triple CONNECT while the wallet holds eth_requestAccounts: one request, one attempt; after it, a deliberate reconnect asks again",
+   "file": "wallet.test.js",
+   "pass": true,
+   "ms": 1857,
+   "ev": {
+    "gateHit": true,
+    "atGate": {
+     "attempt": true,
+     "ses": 1,
+     "me": null
+    },
+    "extraClicks": [
+     {
+      "same": true,
+      "ses": 1,
+      "me": null
+     },
+     {
+      "same": true,
+      "ses": 1,
+      "me": null
+     }
+    ],
+    "whileHeld": {
+     "requests": 1,
+     "waiting": 1
+    },
+    "connected": true,
+    "requestsAfterRelease": 1,
+    "disconnected": true,
+    "requestsAfterReconnect": 2,
+    "label": "0x0000…00AA"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "l2",
+   "name": "pledge box (founders day, redrawn every second): select all, wait, type: replaced; caret kept",
+   "file": "wallet.test.js",
+   "pass": true,
+   "ms": 3742,
+   "ev": {
+    "value": "9",
+    "caret": {
+     "s": 2,
+     "e": 2,
+     "focus": true
+    },
+    "redrawsWhileSelected": 1,
+    "redrawsWhileCaret": 2
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "l3",
+   "name": "bid box (the candle, redrawn every 5 s): selection direction kept, node kept",
+   "file": "wallet.test.js",
+   "pass": true,
+   "ms": 6422,
+   "ev": {
+    "v": "0.123",
+    "s": 1,
+    "e": 4,
+    "d": "backward",
+    "focus": true,
+    "same": true,
+    "redraws": 1
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "q1",
+   "name": "five fast WITNESS presses while the wallet holds the first: one eth_sendTransaction, one payment; after it, a deliberate one goes out",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2110,
+   "ev": {
+    "gateHit": true,
+    "lockAtGate": {
+     "name": "witness",
+     "handed": true,
+     "dead": false
+    },
+    "busyRefusals": true,
+    "whileHeld": {
+     "requests": 1,
+     "waiting": 1,
+     "sends": 0,
+     "lock": {
+      "name": "witness",
+      "handed": true,
+      "dead": false
+     }
+    },
+    "afterRelease": {
+     "confirmed": true,
+     "sends": [
+      "0x2386f26fc10000"
+     ],
+     "requests": 1
+    },
+    "deliberate": {
+     "confirmed": true,
+     "sends": [
+      "0x2386f26fc10000",
+      "0x470de4df820000"
+     ],
+     "requests": 2
+    },
+    "toasts": [
+     "Your witness payment: confirmed",
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0002), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 2,
+     "sent": 2
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "q2",
+   "name": "WITNESS twice and COLLECT while one CONNECT is pending: one connection, one eth_sendTransaction",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 4824,
+   "ev": {
+    "gateHit": true,
+    "eth_requestAccounts": 1,
+    "eth_sendTransaction": 1,
+    "sends": [
+     "0x2386f26fc10000"
+    ],
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "q3",
+   "name": "redraws and presses while the wallet confirmation is open: one request; after the answer a deliberate second payment goes out",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 3434,
+   "ev": {
+    "gateHit": true,
+    "requestsWhileOpen": 1,
+    "busyToast": true,
+    "confirmed": true,
+    "sends": [
+     "0x2386f26fc10000",
+     "0x470de4df820000"
+    ],
+    "toasts": [
+     "Your witness payment: confirmed",
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0002), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 2,
+     "sent": 2
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "q4",
+   "name": "a refusal in the wallet (4001) says nothing was sent and frees the button: the next press asks again",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 1659,
+   "ev": {
+    "cancelToast": true,
+    "eth_sendTransaction": 2,
+    "sends": 1
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 2,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "q5",
+   "name": "uncertain outcome (wallet error -32603 after the hand-off): no retry, never \"Nothing was sent\", says to check the wallet",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 5657,
+   "ev": {
+    "eth_sendTransaction": 1,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your wallet did not say whether it sent this. Check your wallet’s activity before trying again."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "q6",
+   "name": "uncertain outcome in COLLECT (-32603), and a malformed hash from the wallet: RESULT UNKNOWN, not NOT COLLECTED, no retry",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 9213,
+   "ev": {
+    "popup": "[??] RESULT UNKNOWNYour wallet did not say whether it sent this. Check your wallet’s activity before trying again.CLOSE",
+    "eth_sendTransaction": 1,
+    "malformed": {
+     "eth_sendTransaction": 1,
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your wallet did not say whether it sent this. Check your wallet’s activity before trying again."
+     ]
+    }
+   },
+   "pageErrors": [],
+   "contexts": 2,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "r1",
+   "name": "the wallet goes silent the moment it hands back the hash: confirmed through the HTTP readers",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 1627,
+   "ev": {
+    "gateHit": true,
+    "confirmed": true,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "r2",
+   "name": "the first reader (CFG.rpc) starts failing with HTTP 500 after submission: tracking moves to the next reader and confirms",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2921,
+   "ev": {
+    "sent": true,
+    "confirmed": true,
+    "fallbackReceiptRequests": 2,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "r3",
+   "name": "the first reader stops answering (hangs) after submission: bounded requests, the next reader confirms",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 3630,
+   "ev": {
+    "sent": true,
+    "confirmed": true,
+    "fallbackReceiptRequests": 1,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "r4",
+   "name": "a reverted receipt: \"failed on Ethereum (reverted)\", never \"Nothing was sent\"; COLLECT shows NOT COLLECTED with the reason",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 1739,
+   "ev": {
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: sent, but it failed on Ethereum (reverted). Only the network fee was spent."
+    ],
+    "popup": "[!!] NOT COLLECTEDIt reached Ethereum but failed (reverted). Only the network fee was spent.BACK"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 2,
+     "sent": 2
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "r5",
+   "name": "sped up in the wallet (same call, higher fee, same nonce): the replacement's receipt counts as confirmed",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 3714,
+   "ev": {
+    "kind": "repriced",
+    "got": true,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed (sped up in your wallet)"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "r6",
+   "name": "cancelled in the wallet after sending (same nonce, 0 ETH to self): says cancelled, never confirmed",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 3130,
+   "ev": {
+    "kind": "cancelled",
+    "got": true,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: cancelled in your wallet after it was sent. It did not go through; only network fees were spent."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "r7",
+   "name": "replaced by another transaction (same nonce, other call): says replaced, never confirmed",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 3166,
+   "ev": {
+    "kind": "replaced",
+    "got": true,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "r8",
+   "name": "dropped: never seen, never mined: \"cannot confirm\" with the hash, never \"Nothing was sent\"; a late receipt still confirms",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 5996,
+   "ev": {
+    "unknownShown": true,
+    "withHash": true,
+    "lateConfirm": true,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: sent (0x0000…0001), but this page cannot confirm it yet. Look it up on Etherscan before paying again.",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "r9",
+   "name": "COLLECT: the hash stays on screen while pending, through an account change and a DISCONNECT; then collected",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 4547,
+   "ev": {
+    "pending": true,
+    "link1": "https://etherscan.io/tx/0x0000000000000000000000000000000000000000000000000000000000000001",
+    "link2": "https://etherscan.io/tx/0x0000000000000000000000000000000000000000000000000000000000000001",
+    "done": true,
+    "popup": "[OK] DAY 13 IS YOURSPLATE#13THE GLASSOPEN ↗YOUR SEATS NOW…CLOSE"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "k3",
+   "name": "revoke answering after 5 s: CONNECT waits and says so (no eth_requestAccounts), then connects and the session survives",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 10440,
+   "ev": {
+    "gateHit": true,
+    "requestAccountsWhilePending": 0,
+    "sheet": "STILL DISCONNECTING",
+    "labelWhilePending": "CONNECT",
+    "labelAfter": "0x0000…00AA",
+    "walletAccounts": [
+     "0x00000000000000000000000000000000000000aa",
+     "0x00000000000000000000000000000000000000bb"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "k4",
+   "name": "revoke unsupported (-32601): DISCONNECT then an immediate CONNECT connects at once",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2473,
+   "ev": {
+    "connected": true,
+    "ms": 144,
+    "label": "0x0000…00AA"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "k5",
+   "name": "revoke never answers: CONNECT never claims a connection; CANCEL leaves the page disconnected; CONNECT asks again",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 11397,
+   "ev": {
+    "gateHit": true,
+    "requestAccounts": 0,
+    "sheet": "STILL DISCONNECTING",
+    "label": "CONNECT",
+    "cancelled": true,
+    "labelAfterCancel": "CONNECT",
+    "again": "STILL DISCONNECTING"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "k6",
+   "name": "independent providers: A's pending revoke does not hold up B, and B's DISCONNECT does not erase A's pending revoke",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 7653,
+   "ev": {
+    "gateHit": true,
+    "bConnected": true,
+    "bMs": 154,
+    "requestAccountsAWhilePending": 0,
+    "sheet": "STILL DISCONNECTING",
+    "aConnected": true,
+    "label": "0x0000…00AA",
+    "walletAAccounts": [
+     "0x00000000000000000000000000000000000000aa",
+     "0x00000000000000000000000000000000000000bb"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "m4",
+   "name": "WalletConnect lifecycle (mock): pair, one witness transaction on chain 1, DISCONNECT ends the session, CONNECT pairs again",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 4746,
+   "ev": {
+    "pair1": {
+     "sheet": true,
+     "title": "CONNECT YOUR WALLET",
+     "ready": true,
+     "woke": true,
+     "conn": true
+    },
+    "send": [
+     "WC@0x1"
+    ],
+    "confirmed": true,
+    "afterDisconnect": {
+     "enables": 1,
+     "uris": 1,
+     "disconnects": 1,
+     "session": false,
+     "approveReady": false,
+     "init": {
+      "chains": [
+       1
+      ],
+      "showQrModal": false
+     }
+    },
+    "label": "CONNECT",
+    "revokeOverRelay": 0,
+    "reconnect": {
+     "state": {
+      "enables": 2,
+      "uris": 2,
+      "disconnects": 1,
+      "session": false,
+      "approveReady": true,
+      "init": {
+       "chains": [
+        1
+       ],
+       "showQrModal": false
+      }
+     },
+     "sheet": "CONNECT YOUR WALLET",
+     "label": "CONNECT",
+     "paired": true
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "m5",
+   "name": "WalletConnect: the phone ends the session: the page disconnects, a submitted transaction is still followed",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 4165,
+   "ev": {
+    "paired": true,
+    "sent": true,
+    "doneBefore": false,
+    "doneAtEnd": false,
+    "labelAfterPhoneEnds": "CONNECT",
+    "confirmed": true
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "h6",
+   "name": "two distinct providers announce the same rdns and the first is dead: the working one is used",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2557,
+   "ev": {
+    "picker": [],
+    "label": "0x0000…00AA",
+    "toasts": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "h7",
+   "name": "two working providers share an rdns and a name: both listed, told apart; the saved rdns is ambiguous, so the list is shown again",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 3749,
+   "ev": {
+    "buttons": [
+     "METAMASK · 1",
+     "METAMASK · 2"
+    ],
+    "requestAccounts": {
+     "P": 0,
+     "Q": 1
+    },
+    "afterReload": {
+     "picker": true,
+     "buttons": [
+      "METAMASK · 1",
+      "METAMASK · 2"
+     ],
+     "silentConnect": false
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "h8",
+   "name": "one provider object announced twice with fresh info objects, and also window.ethereum and providers[]: one wallet, no list",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 1034,
+   "ev": {
+    "picker": false,
+    "label": "0x0000…00AA"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "h9",
+   "name": "legacy name collision: providers[] holds two MetaMask-flagged wallets; choosing the second is honoured, and after a reload the first is never asked silently",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 3965,
+   "ev": {
+    "buttons": [
+     "METAMASK · 1",
+     "METAMASK · 2"
+    ],
+    "requestAccountsM": 1,
+    "afterReload": {
+     "picker": true,
+     "requestAccountsL": 0,
+     "label": "CONNECT"
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "p1",
+   "name": "close and reopen on another option while the wallet confirms: the new dialog is not touched by the old buy",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2857,
+   "ev": {
+    "gateHit": true,
+    "closed": true,
+    "dialogOption": 5,
+    "popup": "COLLECT TODAY’S PLATE · 0.7063 ETHYOU PICK #5 FOR TOMORROW",
+    "buy": [
+     "13",
+     "3"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "p2",
+   "name": "BACK and NEXT to another option while the wallet confirms: the other option's dialog is not touched",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2895,
+   "ev": {
+    "gateHit": true,
+    "dialogOption": 4,
+    "popup": "COLLECT TODAY’S PLATE · 0.7062 ETHYOU PICK #4 FOR TOMORROW"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "p3",
+   "name": "account changes while the wallet is asked (before the hand-off): nothing sent, this dialog says so",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2228,
+   "ev": {
+    "gateHit": true,
+    "popup": "[!!] NOT COLLECTEDYour wallet changed while this was waiting. Nothing was sent.BACK",
+    "sends": 0
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "p4",
+   "name": "the day changes while CONNECT is pending: nothing is bought on the new day with the old day's option",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2315,
+   "ev": {
+    "gateHit": true,
+    "dayOnScreen": 14,
+    "ended": true,
+    "asked": 0,
+    "buys": [],
+    "popup": "DAY 13 IS NO LONGER ON SALECLOSE"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "p5",
+   "name": "the day changes while the wallet confirms: the day 13 buy is followed in its own dialog; the dialog no longer offers day 14's price as day 13",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2558,
+   "ev": {
+    "gateHit": true,
+    "header": "DAY 13 IS NO LONGER ON SALE",
+    "buy": [
+     "13",
+     "3"
+    ],
+    "popup": "[OK] DAY 13 IS YOURSPLATE#13THE GLASSOPEN ↗YOUR SEATS NOW2.0"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "v1",
+   "name": "the wallet moves to Base without a chainChanged event right before the send: nothing sent",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2105,
+   "ev": {
+    "gateHit": true,
+    "ended": true,
+    "sends": 0,
+    "requests": 0,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your wallet moved to another network. Nothing was sent."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "v2",
+   "name": "the wallet's first account changes without an accountsChanged event right before the send: nothing sent",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2518,
+   "ev": {
+    "gateHit": true,
+    "ended": true,
+    "sends": 0,
+    "requests": 0,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your wallet changed to another account. Nothing was sent."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "v3",
+   "name": "the chain changes while the wallet confirmation is open: the request carries chainId 0x1 and the captured sender; a wallet that checks it refuses",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2178,
+   "ev": {
+    "gateHit": true,
+    "request": {
+     "chainId": "0x1",
+     "from": "0x00000000000000000000000000000000000000aa"
+    },
+    "sends": 0,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "ChainId should be same as current chainId"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "c1",
+   "name": "composition in the witness box spans redraws and a day 13 -> day 14 change: same node, same text; WITNESS then pays for the day on screen",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 2628,
+   "ev": {
+    "mid": {
+     "same": true,
+     "v": "0.0",
+     "focus": true,
+     "sheet": true,
+     "day": 14
+    },
+    "sent": "0x6a94d74f430000",
+    "witnessDay": "14"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "c2",
+   "name": "composition in the pledge box when founders' day ends: the PLEDGE box and button go (no stale PLEDGE), no errors",
+   "file": "audit2.test.js",
+   "pass": true,
+   "ms": 7054,
+   "ev": {
+    "after": {
+     "pledgeBox": false,
+     "pledgeBtn": false,
+     "bar": "OPENS IN 0:56:36",
+     "label": "DAY ONE GOES ON SALE IN"
+    },
+    "pageErrors": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "hz2",
+   "name": "isolation: a closed context sends nothing more; the next context has empty storage and a fresh wallet log",
+   "file": "harness.test.js",
+   "pass": true,
+   "ms": 5136,
+   "ev": {
+    "seenWhileOpen": true,
+    "probesWhileOpen": 6,
+    "probesAtClose": 6,
+    "probesAfterClose": 0,
+    "lateProbe": {
+     "atClose": 0,
+     "after": 0
+    },
+    "probesSeenByNextContextBeforeControl": 0,
+    "controlCounted": true,
+    "next": {
+     "ls": null,
+     "ss": null,
+     "cookie": "",
+     "log": 0,
+     "chainIdCalls": 0,
+     "sends": 0,
+     "sw": 0
+    }
+   },
+   "pageErrors": [],
+   "contexts": 2,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4c1",
+   "name": "the wallet moves to Base k = 0..14 microtasks after the last look's chain answer: no eth_sendTransaction is requested after that event, every such row stops with \"Nothing was sent\"",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 14180,
+   "ev": {
+    "requestsAfterTheEvent": [],
+    "rows": "0:stop 1:stop 2:stop 3:req 4:req 5:req 6:req 7:req 8:req 9:req 10:req 11:req 12:req 13:req 14:req",
+    "stopMsgs": [
+     "Your wallet changed network while this was waiting. Nothing was sent."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 12,
+     "sent": 12
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4c2",
+   "name": "mainnet -> Base -> mainnet k = 0..14 microtasks after the last look's chain answer (eth_chainId still says mainnet): no eth_sendTransaction after the events",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 13968,
+   "ev": {
+    "requestsAfterTheEvent": [],
+    "rows": "0:stop 1:stop 2:stop 3:req 4:req 5:req 6:req 7:req 8:req 9:req 10:req 11:req 12:req 13:req 14:req",
+    "stopMsgs": [
+     "Your wallet changed network while this was waiting. Nothing was sent."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 12,
+     "sent": 12
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4c3",
+   "name": "mainnet -> Base -> mainnet while the wallet estimates gas: the payment stops before eth_sendTransaction, \"Nothing was sent\"",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 2568,
+   "ev": {
+    "gateHit": true,
+    "sendRequests": 0,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your wallet changed network while this was waiting. Nothing was sent."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4c4",
+   "name": "the wallet moves to Base while the last look's eth_accounts is still unanswered (its chain answer already said mainnet): nothing is requested",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 2959,
+   "ev": {
+    "gateHit": true,
+    "lastLookChainAnswered": true,
+    "sendRequests": [],
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your wallet changed network while this was waiting. Nothing was sent."
+    ],
+    "label": "0x0000…00AA · [!] NOT MAINNET",
+    "accountsAsked": 1
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4c5",
+   "name": "guard: chain events from the wallet used before (A, disconnected) while B's payment is being prepared do not stop B: one request, on mainnet, from B",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 3397,
+   "ev": {
+    "gateHit": true,
+    "requestsB": 1,
+    "requestsA": 0,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4c6",
+   "name": "guard: the payment's own switch (Base -> mainnet) still goes through when its mainnet chainChanged events come late (during gas estimation, and 0..10 microtasks after the last look)",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 14590,
+   "ev": {
+    "gateHit": true,
+    "part1Requests": 1,
+    "part1Toasts": [
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ],
+    "rows": "0:req 1:req 2:req 3:req 4:req 5:req 6:req 7:req 8:req 9:req 10:req",
+    "switchesAsked": 11,
+    "requests": 12
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 12,
+     "sent": 12
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4c7",
+   "name": "guard: a chain change AFTER the hand-off: the page does not claim it stopped or can cancel the request the wallet holds; it follows the transaction",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 2216,
+   "ev": {
+    "gateHit": true,
+    "requests": 1,
+    "busy": "Your witness payment is in your wallet now. Finish or cancel it there first.",
+    "sent": true,
+    "confirmed": true,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment is in your wallet now. Finish or cancel it there first.",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w1",
+   "name": "WalletConnect: an eth_sendTransaction event of another session (other topic) does not wake OPEN; the event of this request does, with its own id and topic",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 908,
+   "ev": {
+    "start": {
+     "on": true,
+     "disabled": true,
+     "text": "Sending the request to your wallet, one moment…"
+    },
+    "afterForeign": {
+     "on": true,
+     "disabled": true,
+     "text": "Sending the request to your wallet, one moment…"
+    },
+    "linkForeign": null,
+    "after": {
+     "on": true,
+     "disabled": false,
+     "text": "The request is in ZERION now. Open it, check it, confirm or reject, then come back to this page."
+    },
+    "link": "https://link.zerion.io/wc?requestId=42&sessionTopic=T1"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w2",
+   "name": "WalletConnect: after reconnecting, events of the old provider and of the old session (same method) do not touch the new prompt",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 1284,
+   "ev": {
+    "a": {
+     "p2start": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "afterOldProvider": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "afterOldTopic": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     }
+    },
+    "linkStale": null,
+    "linkA": "https://link.zerion.io/wc?requestId=53&sessionTopic=T2",
+    "b": {
+     "start": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "afterOld": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     }
+    },
+    "linkStale2": null,
+    "linkB": "https://link.zerion.io/wc?requestId=62&sessionTopic=S2",
+    "oldRequestCancelled": false
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w3",
+   "name": "WalletConnect: a delayed event for an earlier request (its sheet closed, still pending) while a newer eth_sendTransaction prompt is open does not wake it; the newer request's own event does",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 1149,
+   "ev": {
+    "r": {
+     "closed": {
+      "on": false,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "start": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "afterEarlier": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     }
+    },
+    "linkEarly": null,
+    "link": "https://link.zerion.io/wc?requestId=222&sessionTopic=T",
+    "firstRequest": {
+     "settled": false,
+     "done": false
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w4",
+   "name": "WalletConnect: duplicate events: the same event twice keeps the link; a conflicting second event for the same request never replaces the request id",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 1198,
+   "ev": {
+    "afterDuplicate": "https://link.zerion.io/wc?requestId=5&sessionTopic=T",
+    "afterConflicting": "https://link.zerion.io/wc",
+    "text": "No word yet that the request reached ZERION. Open ZERION and look: if it is waiting there, check it, confirm or reject, then come back to this page."
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w5",
+   "name": "WalletConnect: unrelated methods and malformed events never wake OPEN; after 8 s OPEN only opens the wallet (no request id) and the text does not claim the request is there",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 9441,
+   "ev": {
+    "woke": [],
+    "after8s": {
+     "on": true,
+     "disabled": false,
+     "text": "No word yet that the request reached ZERION. Open ZERION and look: if it is waiting there, check it, confirm or reject, then come back to this page."
+    },
+    "link": "https://link.zerion.io/wc"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w6",
+   "name": "guard: the correct current event wakes OPEN with this request's id and session topic; closing the sheet cancels nothing (the request answers later)",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 941,
+   "ev": {
+    "r": {
+     "start": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "after": {
+      "on": true,
+      "disabled": false,
+      "text": "The request is in ZERION now. Open it, check it, confirm or reject, then come back to this page."
+     }
+    },
+    "link": "https://link.zerion.io/wc?requestId=1730000000123456&sessionTopic=t0pic",
+    "c": {
+     "closed": {
+      "on": false,
+      "disabled": false,
+      "text": "The request is in ZERION now. Open it, check it, confirm or reject, then come back to this page."
+     },
+     "before": {
+      "settled": false,
+      "done": false
+     },
+     "val": "0x1111111111111111111111111111111111111111111111111111111111111111"
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w7",
+   "name": "WalletConnect: close and reopen: an event that arrives after its sheet was closed opens nothing; re-delivered while the next request's sheet is open it does not wake that one",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 946,
+   "ev": {
+    "r": {
+     "afterClosedEvent": {
+      "on": false,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "reopened": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "afterRedelivered": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     }
+    },
+    "linkOld": null,
+    "link": "https://link.zerion.io/wc?requestId=72&sessionTopic=T"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w8",
+   "name": "WalletConnect: an event that arrives after its request was answered changes nothing, also not the next same-method prompt",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 931,
+   "ev": {
+    "r": {
+     "answered": {
+      "on": false,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "val": "0x2222222222222222222222222222222222222222222222222222222222222222",
+     "afterLate": {
+      "on": false,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "next": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "nextAfterLate": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     }
+    },
+    "linkOld": null,
+    "link": "https://link.zerion.io/wc?requestId=82&sessionTopic=T"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w9",
+   "name": "WalletConnect: two network-switch requests one after the other, the first one's event delayed: it does not wake the second; a switch cannot be matched to its event, so OPEN after 8 s only opens the wallet",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 9248,
+   "ev": {
+    "r": {
+     "firstDone": true,
+     "start": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "afterFirst": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "afterOwn": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     }
+    },
+    "linkEarly": null,
+    "after8s": {
+     "on": true,
+     "disabled": false,
+     "text": "No word yet that the request reached ZERION. Open ZERION and look: if it is waiting there, check it, confirm or reject, then come back to this page."
+    },
+    "link": "https://link.zerion.io/wc"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4w10",
+   "name": "WalletConnect: no session topic to check against (exact correlation cannot be established): a plausible event gives no request-specific link; after 8 s OPEN only opens the wallet, with the honest text",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 9193,
+   "ev": {
+    "r": {
+     "start": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     },
+     "after": {
+      "on": true,
+      "disabled": true,
+      "text": "Sending the request to your wallet, one moment…"
+     }
+    },
+    "linkEarly": null,
+    "after8s": {
+     "on": true,
+     "disabled": false,
+     "text": "No word yet that the request reached ZERION. Open ZERION and look: if it is waiting there, check it, confirm or reject, then come back to this page."
+    },
+    "link": "https://link.zerion.io/wc"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r1",
+   "name": "receipt status: missing, 0x2, \"ok\", 2, 1, 0 (numbers), 0x01 or no receipt keep it pending (then a valid one confirms); exactly 0x1 confirms and 0x0 reverts",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 3584,
+   "ev": {
+    "wrong": [],
+    "rows": [
+     "null=pending>confirmed(12)",
+     "missing=pending>confirmed(33)",
+     "0x2=pending>confirmed(33)",
+     "ok=pending>confirmed(33)",
+     "num2=pending>confirmed(30)",
+     "num1=pending>confirmed(30)",
+     "num0=pending>confirmed(30)",
+     "0x01=pending>confirmed(30)",
+     "0x1=confirmed",
+     "0x0=reverted"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r2",
+   "name": "receipt transactionHash: missing, another transaction's (with status 0x1, with 0x0, and with no status: the reviewer's case), malformed or null keep it pending; the same hash in capitals counts",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 3767,
+   "ev": {
+    "wrong": [],
+    "rows": [
+     "missing=pending>confirmed(30)",
+     "other+0x1=pending>confirmed(30)",
+     "other+0x0=pending>confirmed(27)",
+     "other+nostatus=pending>confirmed(27)",
+     "short=pending>confirmed(27)",
+     "null=pending>confirmed(27)",
+     "capitals=confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r3",
+   "name": "receipt blockNumber: missing, null, \"0x\", \"abc\", a number, 0x0, or below the block the payment was sent at keep it pending; the send block itself and later count",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 3912,
+   "ev": {
+    "wrong": [],
+    "rows": [
+     "missing=pending>confirmed(27)",
+     "null=pending>confirmed(24)",
+     "0x=pending>confirmed(24)",
+     "abc=pending>confirmed(24)",
+     "number=pending>confirmed(24)",
+     "0x0=pending>confirmed(24)",
+     "below=pending>confirmed(24)",
+     "sendBlock=confirmed",
+     "later=confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r4",
+   "name": "receipt blockHash: missing, null, short, not hex, or without 0x keep it pending; a 32-byte hash counts",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 3741,
+   "ev": {
+    "wrong": [],
+    "rows": [
+     "missing=pending>confirmed(30)",
+     "null=pending>confirmed(30)",
+     "short=pending>confirmed(30)",
+     "nothex=pending>confirmed(27)",
+     "no0x=pending>confirmed(27)",
+     "valid=confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r5",
+   "name": "receipt identity: a from or to that contradicts the payment, or a missing from/to, keeps it pending; the same addresses in another case count",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 3766,
+   "ev": {
+    "wrong": [],
+    "rows": [
+     "fromOther=pending>confirmed(33)",
+     "toOther=pending>confirmed(30)",
+     "fromMissing=pending>confirmed(30)",
+     "toMissing=pending>confirmed(30)",
+     "checksummed=confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r6",
+   "name": "invalid receipts first (3 with no status / a bad block number, then 3 with another hash), each claiming the OPPOSITE status, then a valid one: only the valid one decides (confirmed for 0x1, reverted for 0x0)",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 1589,
+   "ev": {
+    "a": "confirmed",
+    "b": "reverted",
+    "servedA": 7,
+    "servedB": 7
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r7",
+   "name": "the first reader answers a malformed receipt (another hash, status 0x0), the next reader a valid one (0x1): confirmed, in the same round, from the next reader",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 1174,
+   "ev": {
+    "badFromFirstReader": 1,
+    "state": "confirmed",
+    "ms": 29,
+    "nextReaderReceiptRequests": 1
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r8",
+   "name": "every reader answers a malformed receipt (another hash, no status) for good: never confirmed or reverted; \"cannot confirm\" at TRACK.lost, unknown at TRACK.stop, receipts asked until then",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 6052,
+   "ev": {
+    "mid": "pending",
+    "state": "unknown",
+    "tells": [
+     "unknown"
+    ],
+    "ms": 5078,
+    "receiptReads": 69,
+    "perReader": [
+     23,
+     23,
+     23
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r9",
+   "name": "replacement: the receipt for the transaction that spent the nonce belongs to the original, to another tx, has no status, or another sender: no verdict; once valid: \"replaced\"",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 9053,
+   "ev": {
+    "rows": [
+     {
+      "name": "belongsToOriginal",
+      "mid": "pending",
+      "replacementReceiptReads": 24,
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "anotherTx",
+      "mid": "pending",
+      "replacementReceiptReads": 24,
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "noStatus",
+      "mid": "pending",
+      "replacementReceiptReads": 21,
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "otherSender",
+      "mid": "pending",
+      "replacementReceiptReads": 18,
+      "final": "replaced",
+      "by": true
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r10",
+   "name": "guard, the documented policy (one valid receipt from the reader asked, no cross-check, no reorg re-check): the first reader's valid 0x0 decides even if another reader says 0x1; a first reader that has no receipt yet keeps it pending",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 1629,
+   "ev": {
+    "gate": true,
+    "a": "reverted",
+    "b": "pending",
+    "firstReaderAskedForB": 3
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r11",
+   "name": "the page itself (WITNESS): the reviewer's receipt (another transaction's hash, no status) is never \"reverted\"; the payment stays pending, then a valid receipt confirms it",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 2500,
+   "ev": {
+    "sent": true,
+    "readsWhileMalformed": 9,
+    "toastsWhileMalformed": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm"
+    ],
+    "confirmed": true,
+    "toasts": [
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r12",
+   "name": "COLLECT: the reviewer's receipt keeps the dialog on PENDING (never NOT COLLECTED); a valid receipt then shows IS YOURS",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 2740,
+   "ev": {
+    "pending": true,
+    "readsWhileMalformed": 9,
+    "popupWhileMalformed": "PENDINGSent. Waiting for Ethereum to confirm.0x0000…0001 ↗",
+    "collected": true
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4h1",
+   "name": "harness: WebRTC sends no UDP from a case (a local STUN listener receives nothing, no ICE candidate is gathered)",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 1510,
+   "ev": {
+    "gatheringComplete": true,
+    "udpPacketsToLocalStun": 0,
+    "candidates": [],
+    "err": null
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v1",
+   "name": "guard (S5): phone, paired through the ZERION button: the confirmation sheet says CONFIRM IN ZERION and offers OPEN ZERION",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 1758,
+   "ev": {
+    "jump": "https://link.zerion.io/wc?uri=wc%3A0000000000000000000000000",
+    "paired": true,
+    "gateHit": true,
+    "sheet": {
+     "title": "CONFIRM IN ZERION",
+     "text": "Sending the request to your wallet, one moment…",
+     "buttons": [
+      {
+       "t": "OPEN ZERION",
+       "on": false
+      }
+     ],
+     "stored": "{\"name\":\"ZERION\",\"href\":\"https://link.zerion.io\"}"
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v2",
+   "name": "all public readers down, the wallet answers eth_chainId but never a read: the page still says CANNOT REACH ETHEREUM and recovers when the readers come back",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 39581,
+   "ev": {
+    "said": true,
+    "ms": 8156,
+    "walletEthCalls": 16,
+    "recoveredWithin40sOfReadersBack": true
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v3",
+   "name": "guard: all public readers down, a slow but answering wallet (eth_chainId in 1 s) is still used as the reader: the day is shown",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 10136,
+   "ev": {
+    "dayShown": true,
+    "ms": 9157,
+    "readsThroughWallet": 25
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v4",
+   "name": "send(): an observer that rejects (async) is contained like one that throws: no unhandled rejection",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 2078,
+   "ev": {
+    "observerPhases": [
+     "confirm",
+     "error"
+    ],
+    "lockFree": true,
+    "pageErrors": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v5",
+   "name": "guard (S3): a malformed eth_accounts at the last look stops the write without changing the session; the next press pays from the same account",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 2029,
+   "ev": {
+    "rows": [
+     {
+      "bad": "\"0x000000000000000000000000000",
+      "stopped": true,
+      "toast": "Your wallet changed while this was waiting. Nothing was sent.",
+      "label": "0x0000…00AA"
+     },
+     {
+      "bad": "[\"nope\",\"0x0000000000000000000",
+      "stopped": true,
+      "toast": "Your wallet changed while this was waiting. Nothing was sent.",
+      "label": "0x0000…00AA"
+     },
+     {
+      "bad": "[null]",
+      "stopped": true,
+      "toast": "Your wallet changed while this was waiting. Nothing was sent.",
+      "label": "0x0000…00AA"
+     }
+    ],
+    "askedWhileMalformed": 0,
+    "sentAfter": true,
+    "from": "0x00000000000000000000000000000000000000aa"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v6",
+   "name": "guard (S6): DISCONNECT after COLLECT was handed to the wallet: no \"NOT COLLECTED\", the lock is kept, the late answer is followed to DAY IS YOURS",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 2816,
+   "ev": {
+    "gateHit": true,
+    "afterDisconnect": "COLLECT DAY 13 · 0.7062 ETHCollecting the plate: confirm in your walletBACK",
+    "lockKeptHanded": true,
+    "done": true,
+    "sends": 1
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v7",
+   "name": "guard (S4): link after the 20 s sheet: RAINBOW in the restored sheet opens Rainbow with this link and is remembered",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 22864,
+   "ev": {
+    "deadSheet": true,
+    "linkArrived": true,
+    "links": 1,
+    "jump": "https://rnbwapp.com/wc?uri=wc%3A0000000000000000000000000000",
+    "paired": true,
+    "stored": "{\"name\":\"RAINBOW\",\"href\":\"https://rnbwapp.com\"}"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v8",
+   "name": "phone, an older app (ZERION) stored, the pairing completes with no app button tapped: the confirmation sheet neither names nor opens ZERION",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 1257,
+   "ev": {
+    "paired": true,
+    "sheet": {
+     "title": "CONFIRM IN YOUR WALLET",
+     "text": "Sending the request to your wallet, one moment…",
+     "buttons": [],
+     "stored": null,
+     "gateHit": true
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v9",
+   "name": "phone, ZERION tapped first, then COPY CONNECTION LINK (or OTHER WALLET) and the pairing completes: the sheet neither names nor opens ZERION",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 3652,
+   "ev": {
+    "COPY CONNECTION LINK": {
+     "ready": true,
+     "jumpedToZerionFirst": true,
+     "paired": true,
+     "good": true,
+     "sheet": {
+      "title": "CONFIRM IN YOUR WALLET",
+      "text": "Sending the request to your wallet, one moment…",
+      "buttons": [],
+      "stored": null,
+      "gateHit": true
+     }
+    },
+    "OTHER WALLET": {
+     "ready": true,
+     "jumpedToZerionFirst": true,
+     "paired": true,
+     "good": true,
+     "sheet": {
+      "title": "CONFIRM IN YOUR WALLET",
+      "text": "Sending the request to your wallet, one moment…",
+      "buttons": [],
+      "stored": null,
+      "gateHit": true
+     }
+    }
+   },
+   "pageErrors": [],
+   "contexts": 2,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v10",
+   "name": "WalletConnect: an event from ANOTHER provider's client that carries this request's params and topic does not wake OPEN; this provider's own event then gives the exact link",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 1008,
+   "ev": {
+    "start": {
+     "disabled": true,
+     "ev": null,
+     "text": "Sending the request to your wallet, one "
+    },
+    "afterForeignClient": {
+     "disabled": true,
+     "ev": null,
+     "text": "Sending the request to your wallet, one "
+    },
+    "afterOwn": {
+     "disabled": false,
+     "ev": {
+      "id": 62,
+      "topic": "T2"
+     },
+     "text": "The request is in ZERION now. Open it, c"
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4v11",
+   "name": "WalletConnect: this request's params from its own client but another session topic does not wake OPEN (no request-specific link)",
+   "file": "audit4review.test.js",
+   "pass": true,
+   "ms": 1156,
+   "ev": {
+    "start": {
+     "disabled": true,
+     "ev": null,
+     "text": "Sending the request to your wallet, one "
+    },
+    "afterOtherTopic": {
+     "disabled": true,
+     "ev": null,
+     "text": "Sending the request to your wallet, one "
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4s1",
+   "name": "every write entry point (witness, buy, bid, settle, pledge, sync, claim, withdraw): one request to the contract, from the connected account, chain 1, the pressed value, calldata decoding (page ABI) to the pressed function and arguments; the gas estimate is for the same call",
+   "file": "audit4scan.test.js",
+   "pass": true,
+   "ms": 20153,
+   "ev": {
+    "witness": {
+     "good": true,
+     "n": 1,
+     "to": true,
+     "from": "0x00000000000000000000000000000000000000aa",
+     "chainId": "0x1",
+     "chainAtSend": "0x1",
+     "value": "0x2bb2c8eabcc000",
+     "valueOk": true,
+     "decoded": {
+      "name": "witness",
+      "args": [
+       "13"
+      ]
+     },
+     "gas": "0x57e40",
+     "estimateSameCall": true
+    },
+    "buy": {
+     "good": true,
+     "n": 1,
+     "to": true,
+     "from": "0x00000000000000000000000000000000000000aa",
+     "chainId": "0x1",
+     "chainAtSend": "0x1",
+     "value": "0xac156e4ff4bfaeb",
+     "valueOk": true,
+     "decoded": {
+      "name": "buy",
+      "args": [
+       "13",
+       "3"
+      ]
+     },
+     "gas": "0x57e40",
+     "estimateSameCall": true
+    },
+    "bid": {
+     "good": true,
+     "n": 1,
+     "to": true,
+     "from": "0x00000000000000000000000000000000000000aa",
+     "chainId": "0x1",
+     "chainAtSend": "0x1",
+     "value": "0xd529ae9e860000",
+     "valueOk": true,
+     "decoded": {
+      "name": "bid",
+      "args": []
+     },
+     "gas": "0x57e40",
+     "estimateSameCall": true
+    },
+    "settle": {
+     "good": true,
+     "n": 1,
+     "to": true,
+     "from": "0x00000000000000000000000000000000000000aa",
+     "chainId": "0x1",
+     "chainAtSend": "0x1",
+     "valueOk": true,
+     "decoded": {
+      "name": "settleCandle",
+      "args": []
+     },
+     "gas": "0x57e40",
+     "estimateSameCall": true
+    },
+    "pledge": {
+     "good": true,
+     "n": 1,
+     "to": true,
+     "from": "0x00000000000000000000000000000000000000aa",
+     "chainId": "0x1",
+     "chainAtSend": "0x1",
+     "value": "0x3782dace9d90000",
+     "valueOk": true,
+     "decoded": {
+      "name": "pledge",
+      "args": []
+     },
+     "gas": "0x57e40",
+     "estimateSameCall": true
+    },
+    "sync": {
+     "good": true,
+     "n": 1,
+     "to": true,
+     "from": "0x00000000000000000000000000000000000000aa",
+     "chainId": "0x1",
+     "chainAtSend": "0x1",
+     "valueOk": true,
+     "decoded": {
+      "name": "sync",
+      "args": []
+     },
+     "gas": "0x57e40",
+     "estimateSameCall": true
+    },
+    "claim": {
+     "good": true,
+     "n": 1,
+     "to": true,
+     "from": "0x00000000000000000000000000000000000000aa",
+     "chainId": "0x1",
+     "chainAtSend": "0x1",
+     "valueOk": true,
+     "decoded": {
+      "name": "claim",
+      "args": []
+     },
+     "gas": "0x57e40",
+     "estimateSameCall": true
+    },
+    "withdraw": {
+     "good": true,
+     "n": 1,
+     "to": true,
+     "from": "0x00000000000000000000000000000000000000aa",
+     "chainId": "0x1",
+     "chainAtSend": "0x1",
+     "valueOk": true,
+     "decoded": {
+      "name": "withdraw",
+      "args": []
+     },
+     "gas": "0x57e40",
+     "estimateSameCall": true
+    }
+   },
+   "pageErrors": [],
+   "contexts": 8,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4s2",
+   "name": "account change: while the new account's seats are being read, the panel does not show the old account's seats and earnings, and CLAIM is not offered on them",
+   "file": "audit4scan.test.js",
+   "pass": true,
+   "ms": 4047,
+   "ev": {
+    "before": {
+     "seats": "2.0000",
+     "note": "You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM",
+     "claim": true
+    },
+    "label": "0x0000…00bb",
+    "heldReads": true,
+    "during": {
+     "seats": "2.0000",
+     "mineShown": false,
+     "note": "Reading your seats…",
+     "claim": false
+    },
+    "claimPressedDuringHold": false,
+    "walletAsked": [],
+    "after": {
+     "seats": "0.0000",
+     "claim": false
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4s3",
+   "name": "all public readers down and a wallet that never answers eth_chainId: the page still says CANNOT REACH ETHEREUM and keeps retrying (as it does with no wallet)",
+   "file": "audit4scan.test.js",
+   "pass": true,
+   "ms": 33237,
+   "ev": {
+    "deadWallet": {
+     "said": true,
+     "ms": 1716,
+     "chip": "CANNOT REACH ETHEREUM"
+    },
+    "noWallet": {
+     "said": true,
+     "ms": 129,
+     "chip": "CANNOT REACH ETHEREUM"
+    },
+    "walletChainIdAsks": 1,
+    "recoveredWithin36sOfReadersBack": true
+   },
+   "pageErrors": [],
+   "contexts": 2,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4s4",
+   "name": "account changed (or permission dropped) without an event: the stopped write leaves the page on the wallet's real account (or disconnected), and a later deliberate press is not stopped again for the same reason",
+   "file": "audit4scan.test.js",
+   "pass": true,
+   "ms": 4940,
+   "ev": {
+    "firstPress": {
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your wallet changed to another account. Nothing was sent."
+     ],
+     "label": "0x0000…00bb"
+    },
+    "secondPress": {
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm"
+     ],
+     "label": "0x0000…00bb"
+    },
+    "askedFrom": [
+     "0x00000000000000000000000000000000000000bb"
+    ],
+    "permissionGone": {
+     "label": "CONNECT",
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your wallet gives this page no account now (locked or disconnected). Nothing was sent."
+     ],
+     "asked": 0
+    }
+   },
+   "pageErrors": [],
+   "contexts": 2,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4s5",
+   "name": "phone, WalletConnect link arrives after the 20 s \"DID NOT ANSWER\" sheet: the sheet never says \"Tap the app\" without app buttons to tap",
+   "file": "audit4scan.test.js",
+   "pass": true,
+   "ms": 22952,
+   "ev": {
+    "sheetFirst": true,
+    "deadSheet": true,
+    "linkArrived": true,
+    "after": {
+     "title": "CONNECT YOUR WALLET",
+     "text": "Tap the app that holds your wallet.",
+     "buttons": [
+      {
+       "t": "METAMASK",
+       "on": true
+      },
+      {
+       "t": "RAINBOW",
+       "on": true
+      },
+      {
+       "t": "ZERION",
+       "on": true
+      },
+      {
+       "t": "OTHER WALLET",
+       "on": true
+      },
+      {
+       "t": "COPY CONNECTION LINK",
+       "on": true
+      }
+     ]
+    },
+    "liveAppButtons": 3
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4s6",
+   "name": "phone, WalletConnect paired through COPY CONNECTION LINK while an older app choice (ZERION) is stored: the confirmation sheet neither names nor opens ZERION",
+   "file": "audit4scan.test.js",
+   "pass": true,
+   "ms": 1676,
+   "ev": {
+    "paired": true,
+    "gateHit": true,
+    "sheet": {
+     "title": "CONFIRM IN YOUR WALLET",
+     "buttons": [],
+     "stored": null
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4s7",
+   "name": "COLLECT stopped by DISCONNECT before the hand-off: the dialog stops saying \"confirm in your wallet\"; nothing is sent when the wallet answers late",
+   "file": "audit4scan.test.js",
+   "pass": true,
+   "ms": 3791,
+   "ev": {
+    "gateHit": true,
+    "before": "COLLECT DAY 13 · 0.7063 ETHCollecting the plate: confirm in your walletBACK",
+    "afterDisconnect": "[!!] NOT COLLECTEDDisconnected before the payment reached your wallet. Nothing was sent.BA",
+    "lockFreed": true,
+    "label": "CONNECT",
+    "afterLateAnswer": "[!!] NOT COLLECTEDDisconnected before the payment reached your wallet. Nothing was sent.BACK",
+    "sendRequests": 0
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n1",
+   "name": "a reader answers the original hash with ANOTHER transaction of the same sender (the one that spent nonce 7): not trusted, the next reader is asked; stays pending (never \"replaced\"), then its own receipt confirms",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 3837,
+   "ev": {
+    "mid": "pending",
+    "served": 1,
+    "byHashReaders": [
+     "pn",
+     "mev"
+    ],
+    "walletAsked": 0,
+    "scanned": 0,
+    "final": "confirmed"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n2",
+   "name": "a reader answers the right hash but another sender: unusable, the next reader is asked (not the wallet first); the real nonce decides",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 3494,
+   "ev": {
+    "mid": "pending",
+    "served": 1,
+    "byHashReaders": [
+     "pn",
+     "mev"
+    ],
+    "walletAsked": 0,
+    "scanned": 0,
+    "final": "confirmed"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n3",
+   "name": "the reader's answer has a missing or malformed hash (and nonce 7, pointing at the sender's other transaction): never used, the next reader is asked; pending, then confirmed",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 18018,
+   "ev": {
+    "rows": [
+     {
+      "name": "missing",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "null",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "short",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "number",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "nothex",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "33bytes",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 7,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n4",
+   "name": "the reader's nonce is missing, negative or not a hex quantity: never used (no \"replaced\", no early \"unknown\"), the next reader is asked; a valid nonce 0x0 is used (cancelled at nonce 0)",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 24246,
+   "ev": {
+    "rows": [
+     {
+      "name": "missing",
+      "tells": "",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "null",
+      "tells": "",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "neg-hex",
+      "tells": "",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "neg-dec",
+      "tells": "",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "decimal",
+      "tells": "",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "number",
+      "tells": "",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "empty",
+      "tells": "",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "nothex",
+      "tells": "",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     }
+    ],
+    "zero": {
+     "state": "cancelled",
+     "by": true,
+     "walletAsked": 0
+    }
+   },
+   "pageErrors": [],
+   "contexts": 10,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n5",
+   "name": "the first reader is invalid, the second valid: the second reader's nonce decides (a real cancellation at nonce 7 is \"cancelled\"); the wallet is never asked",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 5026,
+   "ev": {
+    "mid": "cancelled",
+    "by": "0xb700000000000000000000000000000000000000000000000000000000000000",
+    "served": 2,
+    "byHashReaders": [
+     "pn",
+     "mev"
+    ],
+    "walletAsked": 0,
+    "scanned": 3
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n6",
+   "name": "every public reader answers the original hash with another transaction: none trusted; the wallet is asked and its valid answer (nonce 8) keeps it pending; then confirmed",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 3615,
+   "ev": {
+    "mid": "pending",
+    "served": 3,
+    "byHashReaders": [
+     "pn",
+     "mev",
+     "drpc"
+    ],
+    "walletAsked": 1,
+    "scanned": 0,
+    "final": "confirmed"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n7",
+   "name": "the readers have not seen it and the WALLET answers with another transaction (or another sender, a malformed nonce, another call, recipient, value or chain): not trusted, stays pending; asked at most 5 times; then confirmed",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 40038,
+   "ev": {
+    "rows": [
+     {
+      "name": "otherTx",
+      "mid": "pending",
+      "served": 13,
+      "byHashReaders": [
+       "pn"
+      ],
+      "walletAsked": 5,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "otherSender",
+      "mid": "pending",
+      "served": 14,
+      "byHashReaders": [
+       "pn"
+      ],
+      "walletAsked": 5,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "badNonce",
+      "mid": "pending",
+      "served": 14,
+      "byHashReaders": [
+       "pn"
+      ],
+      "walletAsked": 5,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "otherCall",
+      "mid": "pending",
+      "served": 14,
+      "byHashReaders": [
+       "pn"
+      ],
+      "walletAsked": 5,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "otherTo",
+      "mid": "pending",
+      "served": 14,
+      "byHashReaders": [
+       "pn"
+      ],
+      "walletAsked": 5,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "otherValue",
+      "mid": "pending",
+      "served": 14,
+      "byHashReaders": [
+       "pn"
+      ],
+      "walletAsked": 5,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "otherChain",
+      "mid": "pending",
+      "served": 14,
+      "byHashReaders": [
+       "pn"
+      ],
+      "walletAsked": 5,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "name": "dataNotInput",
+      "mid": "pending",
+      "served": 14,
+      "byHashReaders": [
+       "pn"
+      ],
+      "walletAsked": 5,
+      "scanned": 0,
+      "final": "confirmed"
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 9,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n8",
+   "name": "a poisoned nonce (another hash, nonce 7) where nonce 7 was spent by the same call / a cancellation / another call: never confirmed, cancelled or replaced; pending until its own receipt",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 11680,
+   "ev": {
+    "rows": [
+     {
+      "kind": "same",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "kind": "cancel",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     },
+     {
+      "kind": "other",
+      "mid": "pending",
+      "served": 1,
+      "byHashReaders": [
+       "pn",
+       "mev"
+      ],
+      "walletAsked": 0,
+      "scanned": 0,
+      "final": "confirmed"
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 4,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n9",
+   "name": "legitimate speed-up, cancellation and replacement are still classified right, from the public readers alone, for every legitimate representation of the original (data/input, checksum, upper-case hash, no chainId, leading zero)",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 49831,
+   "ev": {
+    "rows": [
+     "same/input=confirmed",
+     "same/data=confirmed",
+     "cancel/input=cancelled",
+     "cancel/data=cancelled",
+     "other/input=replaced",
+     "other/data=replaced",
+     "other/checksum=replaced",
+     "other/upperhash=replaced",
+     "other/noChainId=replaced",
+     "other/noOptional=replaced",
+     "other/lead0=replaced"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 12,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n10",
+   "name": "late original receipt after \"unknown\" (no reader and no wallet gives a usable transaction): unknown at TRACK.lost, then its own receipt still confirms",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 3597,
+   "ev": {
+    "tells": [
+     "unknown"
+    ],
+    "mid": "pending",
+    "served": 30,
+    "byHashReaders": [
+     "pn",
+     "mev",
+     "drpc"
+    ],
+    "walletAsked": 5,
+    "scanned": 0,
+    "final": "confirmed"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n11",
+   "name": "a replacement whose block, transaction and receipt contradict each other (block number, blockHash, tx hash) is no proof: pending while it lasts; replaced once consistent",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 21366,
+   "ev": {
+    "rows": [
+     {
+      "name": "txBlockNumber",
+      "hit": 8,
+      "mid": "pending",
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "txBlockHashBad",
+      "hit": 8,
+      "mid": "pending",
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "txHashBad",
+      "hit": 8,
+      "mid": "pending",
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "rcBlockNumber",
+      "hit": 24,
+      "mid": "pending",
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "rcBlockHash",
+      "hit": 23,
+      "mid": "pending",
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "blockNumber",
+      "hit": 8,
+      "mid": "pending",
+      "final": "replaced",
+      "by": true
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 7,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5n12",
+   "name": "end to end: WITNESS sent, the first reader answers its hash with the sender's other mined transaction (nonce 7): never \"replaced\"/\"cancelled\", then \"confirmed\" from its own receipt",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 5456,
+   "ev": {
+    "gateHit": true,
+    "served": 1,
+    "confirmed": true,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5x1",
+   "name": "every reader fails the past plates' reads (HTTP 500): the ledger cards stay labels, no unhandled rejection, the day still shows; the next card is still tried",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 5030,
+   "ev": {
+    "failedPlateRequests": 13,
+    "ledger": {
+     "cards": 13,
+     "day": true
+    },
+    "pageErrors": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5x2",
+   "name": "one failed median7() read while the ledger is first drawn: the ledger is still drawn (13 plates) once the read works, not left empty",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 1357,
+   "ev": {
+    "medianFailedOnce": 1,
+    "ledger": {
+     "cards": 13,
+     "note": "13 plates so far, newest first. Tap one to see it, who holds it and its record. "
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5m1",
+   "name": "phone in a wallet app, window.ethereum fails eth_requestAccounts (4001, 4100, 4200, 4900, 4901, -32002, -32603 as REJECTED PROMISES): the authorised second wallet gets nothing; an offer except for 4001/-32002; picked by hand, it connects",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 20671,
+   "ev": {
+    "rows": [
+     {
+      "code": 4001,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": false,
+      "toast": "Cancelled in your wallet. Nothing was sent.",
+      "errors": []
+     },
+     {
+      "code": 4100,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     },
+     {
+      "code": 4200,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     },
+     {
+      "code": 4900,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     },
+     {
+      "code": 4901,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     },
+     {
+      "code": -32002,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": false,
+      "toast": "Your wallet already has a request waiting. Open it from the browser to",
+      "errors": []
+     },
+     {
+      "code": -32603,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 8,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5m2",
+   "name": "the same seven errors as SYNCHRONOUS THROWS from window.ethereum.request: the authorised second wallet gets nothing; an offer except for 4001/-32002; picked by hand, it connects",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 21677,
+   "ev": {
+    "rows": [
+     {
+      "code": 4001,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": false,
+      "toast": "Cancelled in your wallet. Nothing was sent.",
+      "errors": []
+     },
+     {
+      "code": 4100,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     },
+     {
+      "code": 4200,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     },
+     {
+      "code": 4900,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     },
+     {
+      "code": 4901,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     },
+     {
+      "code": -32002,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": false,
+      "toast": "Your wallet already has a request waiting. Open it from the browser to",
+      "errors": []
+     },
+     {
+      "code": -32603,
+      "ok": true,
+      "rqA": 1,
+      "B": {
+       "rq": 0,
+       "acc": 0,
+       "tx": 0
+      },
+      "offer": true,
+      "picked": true,
+      "Bafter": {
+       "rq": 1,
+       "acc": 2,
+       "tx": 0
+      },
+      "toast": "",
+      "errors": []
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 8,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5m3",
+   "name": "phone in a wallet app, the second wallet only in window.ethereum.providers[] (legacy): -32603 from window.ethereum asks nobody else; CHOOSE ANOTHER WALLET lists it and it connects",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 4139,
+   "ev": {
+    "code": -32603,
+    "how": "async",
+    "rqA": 1,
+    "before": {
+     "rq": 0,
+     "acc": 0,
+     "tx": 0
+    },
+    "label": "CONNECT",
+    "offer": true,
+    "btns": [
+     "CHOOSE ANOTHER WALLET"
+    ],
+    "toast": "",
+    "text": "MetaMask did not connect: wallet error -32603",
+    "ok": true,
+    "picked": true,
+    "list": [
+     "METAMASK",
+     "BROWSER WALLET"
+    ],
+    "after": {
+     "rq": 1,
+     "acc": 2,
+     "tx": 0
+    },
+    "rqAafter": 1,
+    "errors": []
+   },
+   "pageErrors": [],
+   "contexts": 2,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5m4",
+   "name": "iPhone Safari, USE THIS BROWSER’S WALLET: window.ethereum fails (-32603, then 4100 as a sync throw): the authorised EIP-6963 wallet is not asked; CHOOSE ANOTHER WALLET, picked, connects",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 6726,
+   "ev": {
+    "async": {
+     "code": -32603,
+     "how": "async",
+     "rqA": 1,
+     "before": {
+      "rq": 0,
+      "acc": 0,
+      "tx": 0
+     },
+     "label": "CONNECT",
+     "offer": true,
+     "btns": [
+      "CHOOSE ANOTHER WALLET"
+     ],
+     "toast": "",
+     "text": "Browser wallet did not connect: wallet error -32603",
+     "ok": true,
+     "picked": true,
+     "list": [
+      "WALLET B",
+      "BROWSER WALLET"
+     ],
+     "after": {
+      "rq": 1,
+      "acc": 2,
+      "tx": 0
+     },
+     "rqAafter": 1,
+     "errors": []
+    },
+    "sync": {
+     "code": 4100,
+     "how": "sync",
+     "rqA": 1,
+     "before": {
+      "rq": 0,
+      "acc": 0,
+      "tx": 0
+     },
+     "label": "CONNECT",
+     "offer": true,
+     "btns": [
+      "CHOOSE ANOTHER WALLET"
+     ],
+     "toast": "",
+     "text": "Browser wallet did not connect: sync 4100",
+     "ok": true,
+     "picked": true,
+     "list": [
+      "WALLET B",
+      "BROWSER WALLET"
+     ],
+     "after": {
+      "rq": 1,
+      "acc": 2,
+      "tx": 0
+     },
+     "rqAafter": 1,
+     "errors": []
+    }
+   },
+   "pageErrors": [],
+   "contexts": 3,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5m7",
+   "name": "phone in a wallet app whose failing wallet is also the REMEMBERED choice: CHOOSE ANOTHER WALLET still shows the list (the saved choice is not used to pick for the visitor), the failed wallet is not asked again, the one picked connects",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 4908,
+   "ev": {
+    "code": -32603,
+    "how": "async",
+    "rqA": 1,
+    "before": {
+     "rq": 0,
+     "acc": 0,
+     "tx": 0
+    },
+    "label": "CONNECT",
+    "offer": true,
+    "btns": [
+     "CHOOSE ANOTHER WALLET"
+    ],
+    "toast": "",
+    "text": "MetaMask did not connect: wallet error -32603",
+    "ok": true,
+    "picked": true,
+    "list": [
+     "WALLET B",
+     "METAMASK"
+    ],
+    "after": {
+     "rq": 1,
+     "acc": 2,
+     "tx": 0
+    },
+    "rqAafter": 1,
+    "errors": []
+   },
+   "pageErrors": [],
+   "contexts": 2,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5m5",
+   "name": "iPhone Safari, a WalletConnect session that fails eth_requestAccounts (-32603): no injected wallet is asked to connect; nothing connects",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 2567,
+   "ev": {
+    "paired": true,
+    "wcAsked": true,
+    "B": {
+     "rq": 0,
+     "acc": 0,
+     "tx": 0
+    },
+    "label": "CONNECT",
+    "sheet": "YOUR WALLET DID NOT CONNECT"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5m6",
+   "name": "computer, remembered wallet B fails (-32603) while A is authorised: A is not asked; the next CONNECT lists both; A picked by hand connects",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 2847,
+   "ev": {
+    "asked": true,
+    "A": {
+     "rq": 0,
+     "acc": 0
+    },
+    "label": "CONNECT",
+    "list": true,
+    "btns": [
+     "WALLET A",
+     "WALLET B"
+    ],
+    "connectedA": true
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5w1",
+   "name": "valid recipient: the sheet shows the full checksummed address and 0.05 ETH before the wallet is asked; one eth_sendTransaction: withdrawTo(recipient) to the contract, from the connected account, value 0, chain 1; after confirmation owed is read again and the button goes",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 4952,
+   "ev": {
+    "sheet": true,
+    "text": "The contract pays 0.05000 ETH, what it owes your connected wallet 0x0000…00AA, to this address: 0x52908400098527886E0F7030069857D2E4169EE7",
+    "askedBeforeSend": 0,
+    "sent": true,
+    "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+    "from": "0x00000000000000000000000000000000000000aa",
+    "contract": "0xcf5eba884efa04940d31a663beb6d37f907d064c",
+    "value": null,
+    "chainId": "0x1",
+    "sends": 1,
+    "confirmed": true,
+    "owedReadAgain": true,
+    "buttonGone": true
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5w2",
+   "name": "empty, malformed, ENS, zero, a bad checksum, no 0x, the STORMGLASS contract and the connected wallet itself are refused with a reason: no sheet, nothing asked of the wallet",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 4458,
+   "ev": {
+    "rows": [
+     {
+      "name": "empty",
+      "note": "Type the address to pay: 0x followed by 40 characters.",
+      "sheet": false
+     },
+     {
+      "name": "short",
+      "note": "That is not a full Ethereum address (0x followed by 40 chara",
+      "sheet": false
+     },
+     {
+      "name": "ens",
+      "note": "That is not a full Ethereum address (0x followed by 40 chara",
+      "sheet": false
+     },
+     {
+      "name": "zero",
+      "note": "Not the zero address: the contract refuses it.",
+      "sheet": false
+     },
+     {
+      "name": "badChecksum",
+      "note": "That is not a full Ethereum address (0x followed by 40 chara",
+      "sheet": false
+     },
+     {
+      "name": "noPrefix",
+      "note": "That is not a full Ethereum address (0x followed by 40 chara",
+      "sheet": false
+     },
+     {
+      "name": "contract",
+      "note": "That is the STORMGLASS contract: the ETH would stay in the v",
+      "sheet": false
+     },
+     {
+      "name": "self",
+      "note": "That is your connected wallet. To pay it there, press WITHDR",
+      "sheet": false
+     }
+    ],
+    "asked": {
+     "est": 0,
+     "send": 0
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5w3",
+   "name": "the recipient is the one shown at confirmation: edits to the box after REVIEW, and after SEND, do not change the address sent",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 1642,
+   "ev": {
+    "sheet": true,
+    "gateHit": true,
+    "sent": [
+     "0x52908400098527886E0F7030069857D2E4169EE7"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5w4",
+   "name": "repeated clicks: SEND pressed twice at once, then REVIEW + SEND again while the wallet holds the first: one request; the second says it is waiting",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 4258,
+   "ev": {
+    "gateHit": true,
+    "secondSheet": true,
+    "busy": true,
+    "requests": 1,
+    "toasts": [
+     "Withdrawing to another address is in your wallet now. Finish or cancel it there first.",
+     "Withdrawing to another address: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Withdrawing to another address: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5w5",
+   "name": "account change between REVIEW and SEND, a network change before the hand-off, and DISCONNECT before the hand-off: nothing is sent",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 6538,
+   "ev": {
+    "account": {
+     "moved": true,
+     "toasts": [
+      "Your wallet changed. Nothing was sent. Press REVIEW again."
+     ],
+     "est": 0,
+     "send": 0
+    },
+    "network": {
+     "gateHit": true,
+     "ended": true,
+     "send": 0,
+     "toasts": [
+      "Withdrawing to another address: confirm in your wallet",
+      "Your wallet changed network while this was waiting. Nothing was sent."
+     ]
+    },
+    "disconnect": {
+     "gateHit": true,
+     "ended": true,
+     "send": 0,
+     "boxHidden": true
+    }
+   },
+   "pageErrors": [],
+   "contexts": 3,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5w6",
+   "name": "refused in the wallet (4001): \"Cancelled\", nothing sent, the box keeps the address; REVIEW + SEND again sends once",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 2230,
+   "ev": {
+    "cancelled": true,
+    "boxKept": "0x52908400098527886e0f7030069857d2e4169ee7",
+    "sends": [
+     "0x52908400098527886E0F7030069857D2E4169EE7"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 2,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5w7",
+   "name": "the recipient refuses ETH (withdrawTo reverts): shown as failed (reverted), never \"Nothing was sent\" or confirmed; the button and box stay; another address then goes through",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 2310,
+   "ev": {
+    "revertedNote": true,
+    "toasts": [
+     "Withdrawing to another address: confirm in your wallet",
+     "Withdrawing to another address: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Withdrawing to another address: sent, but it failed on Ethereum (reverted). Only the network fee was spent."
+    ],
+    "still": {
+     "button": true,
+     "box": true
+    },
+    "secondConfirmed": true,
+    "sends": [
+     "0x52908400098527886E0F7030069857D2E4169EE7",
+     "0xde709f2102306220921060314715629080e2fb77"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 2,
+     "sent": 2
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5w8",
+   "name": "the button appears only while owed > 0: hidden at owed 0; shown once owed is read > 0; hidden again on DISCONNECT and on another account until read for it",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 3190,
+   "ev": {
+    "atZero": false,
+    "atOwed": true,
+    "otherAccount": {
+     "button": false,
+     "box": {
+      "hidden": true,
+      "value": ""
+     }
+    },
+    "back": true,
+    "afterDisconnect": false
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5x3",
+   "name": "the earnings copy (manual rule, FAQ, seats note): \"tries to send\", recoverable by WITHDRAW or WITHDRAW TO ANOTHER ADDRESS; no unconditional \"sent automatically\"",
+   "file": "audit5page.test.js",
+   "pass": true,
+   "ms": 1603,
+   "ev": {
+    "note": "You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or the contract tries to send it to you in the same transaction the next time this wallet collects a plate or witnesses). The contract also holds 0.01000 ETH it could not send to your wallet: press WITHDRAW, or WITHDRAW TO ANOTHER ADDRESS if this wallet cannot accept ETH.",
+    "faq": "ct. On Etherscan, open the transaction and look under Internal Txns. Anything you send above the price comes back in that transaction as well. If your wallet cannot accept ETH, the amount stays in the contract for you: WITHDRAW, or WITHDRAW TO ANOTHER ADDRESS.",
+    "faqOk": true,
+    "rule": true,
+    "old": false
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5r1",
+   "name": "a replacement whose receipt or transaction names another block than the block it was read from (or a block with no valid hash) is no proof: pending while it lasts, replaced once consistent; consistent answers (any case, no tx blockHash) replaced at once",
+   "file": "audit5review.test.js",
+   "pass": true,
+   "ms": 25901,
+   "ev": {
+    "rows": [
+     {
+      "name": "rcVsBlock",
+      "mid": "pending",
+      "hit": {
+       "blk": 8,
+       "rc": 24
+      },
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "txVsBlock",
+      "mid": "pending",
+      "hit": {
+       "blk": 8,
+       "rc": 0
+      },
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "blockHashBad",
+      "mid": "pending",
+      "hit": {
+       "blk": 8,
+       "rc": 0
+      },
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "blockHashNone",
+      "mid": "pending",
+      "hit": {
+       "blk": 8,
+       "rc": 0
+      },
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "txOnlyVsBlock",
+      "mid": "pending",
+      "hit": {
+       "blk": 8,
+       "rc": 0
+      },
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "noHashAnywhere",
+      "mid": "pending",
+      "hit": {
+       "blk": 8,
+       "rc": 0
+      },
+      "final": "replaced",
+      "by": true
+     }
+    ],
+    "guards": [
+     {
+      "name": "consistent",
+      "mid": "replaced",
+      "by": true,
+      "hit": {
+       "blk": 0,
+       "rc": 0
+      },
+      "final": "replaced"
+     },
+     {
+      "name": "upperInRc",
+      "mid": "replaced",
+      "by": true,
+      "hit": {
+       "blk": 0,
+       "rc": 1
+      },
+      "final": "replaced"
+     },
+     {
+      "name": "txNoBlockHash",
+      "mid": "replaced",
+      "by": true,
+      "hit": {
+       "blk": 1,
+       "rc": 0
+      },
+      "final": "replaced"
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 10,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5r2",
+   "name": "SWITCH TO ETHEREUM after DISCONNECT asks no wallet (never window.ethereum, a wallet the visitor did not choose); while connected it asks only the connected wallet",
+   "file": "audit5review.test.js",
+   "pass": true,
+   "ms": 4780,
+   "ev": {
+    "connectedAs": "0x0000…00AA · [!] NOT MAINNET",
+    "wrongView": true,
+    "guardAskedA": true,
+    "bWhileConnected": 0,
+    "disconnected": true,
+    "buttonStillThere": true,
+    "askedAfterDisconnect": {
+     "A": [],
+     "B": []
+    },
+    "sends": 0,
+    "label": "CONNECT",
+    "toasts": [
+     "The switch was cancelled in your wallet: it is still on another network. Switch it to Ethereum mainnet.",
+     "Disconnected.",
+     "Your wallet is on another network. Switch it to Ethereum mainnet."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  }
+ ],
+ "exitCode": 0
+}

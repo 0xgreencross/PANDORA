@@ -1,0 +1,203 @@
+[
+ {
+  "id": "st8",
+  "name": "REAL WALLET: COLLECT / WITNESS / CLAIM / personal_sign / eth_signTypedData_v4 / wallet_sendCalls never reach the wallet; the intercept panel shows chain, sender, target, value, decoded call; the chosen result is tracked by the page",
+  "pass": false,
+  "ms": 19027,
+  "ev": {
+   "exception": "no staging panel for [data-out=confirmed]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st9",
+  "name": "REAL WALLET: a late-announced provider, window.ethereum, providers[] and a WalletConnect provider are all wrapped; writes through each stop at the wrapper; WalletConnect’s own request paths refuse writes too",
+  "pass": false,
+  "ms": 3332,
+  "ev": {
+   "wrapped": {
+    "wallets": [
+     true
+    ],
+    "list": [
+     true,
+     true
+    ],
+    "choices": [
+     true,
+     true,
+     true
+    ],
+    "eth": true,
+    "providers": [
+     true,
+     true
+    ],
+    "wc": true,
+    "wcNSwrapped": true,
+    "lateListed": true,
+    "sameObject": true,
+    "rawLeak": false
+   },
+   "tries": {
+    "late": "refused 4100",
+    "eth": "refused 4100",
+    "providersB": "refused 4100",
+    "wc": "refused 4001",
+    "wcRawRequest": "refused 4001",
+    "wcRawSign": "refused 4001"
+   },
+   "reached": [
+    "L eth_sendTransaction",
+    "A eth_sendTransaction",
+    "B eth_sendTransaction"
+   ]
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st21",
+  "name": "REAL WALLET: every method literal in index.html is classified (no overlap between forwarded and write/sign); a malformed first reader then a valid one confirms an intercepted COLLECT; the external wallet receives only allowlisted methods (no write, no signature); session is a frozen copy on the WalletConnect wrapper",
+  "pass": false,
+  "ms": 19917,
+  "ev": {
+   "exception": "no staging panel for [data-out=confirmed]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st29",
+  "name": "REAL WALLET: WITHDRAW TO ANOTHER ADDRESS stops at the wrapper: the intercept panel shows chain, sender, target, value 0 and withdrawTo with the recipient decoded; the external wallet receives no write and no signature (a forged withdrawTo, a raw eth_sendTransaction and wallet_sendCalls included)",
+  "pass": false,
+  "ms": 20163,
+  "ev": {
+   "exception": "no staging panel for [data-out=confirmed]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st31",
+  "name": "the write enumeration: every method literal and every send(name) of index.html is classified by policy.js; the page ABI’s writes equal the listed CONTRACT_WRITES (withdrawTo included); in REAL mode each contract write, built from the page’s own ABI, stops at the wrapper (decoded in the panel) and the wallet receives none",
+  "pass": false,
+  "ms": 5959,
+  "ev": {
+   "methods": [
+    "eth_accounts",
+    "eth_blobBaseFee",
+    "eth_blockNumber",
+    "eth_call",
+    "eth_chainId",
+    "eth_getBlockByNumber",
+    "eth_getTransactionByHash",
+    "eth_getTransactionCount",
+    "eth_getTransactionReceipt",
+    "eth_requestAccounts",
+    "eth_sendTransaction",
+    "eth_signTypedData_v4",
+    "personal_sign",
+    "wallet_addEthereumChain",
+    "wallet_revokePermissions",
+    "wallet_switchEthereumChain"
+   ],
+   "unclassified": [],
+   "sendNames": [
+    "bid",
+    "buy",
+    "claim",
+    "pledge",
+    "settle",
+    "sync",
+    "withdraw",
+    "withdrawTo",
+    "witness"
+   ],
+   "abiWrites": [
+    "bid",
+    "buy",
+    "claim",
+    "pledge",
+    "settleCandle",
+    "sync",
+    "withdraw",
+    "withdrawTo",
+    "witness"
+   ],
+   "listed": [
+    "bid",
+    "buy",
+    "claim",
+    "pledge",
+    "settleCandle",
+    "sync",
+    "withdraw",
+    "withdrawTo",
+    "witness"
+   ],
+   "direct": [],
+   "intercepted": {
+    "bid": {
+     "result": "resolved",
+     "panel": false,
+     "decoded": false
+    },
+    "buy": {
+     "result": "resolved",
+     "panel": false,
+     "decoded": false
+    },
+    "claim": {
+     "result": "resolved",
+     "panel": false,
+     "decoded": false
+    },
+    "pledge": {
+     "result": "resolved",
+     "panel": false,
+     "decoded": false
+    },
+    "settleCandle": {
+     "result": "resolved",
+     "panel": false,
+     "decoded": false
+    },
+    "sync": {
+     "result": "resolved",
+     "panel": false,
+     "decoded": false
+    },
+    "withdraw": {
+     "result": "resolved",
+     "panel": false,
+     "decoded": false
+    },
+    "withdrawTo": {
+     "result": "resolved",
+     "panel": false,
+     "decoded": false
+    },
+    "witness": {
+     "result": "resolved",
+     "panel": false,
+     "decoded": false
+    }
+   },
+   "reached": [
+    "eth_sendTransaction",
+    "eth_sendTransaction",
+    "eth_sendTransaction",
+    "eth_sendTransaction",
+    "eth_sendTransaction",
+    "eth_sendTransaction",
+    "eth_sendTransaction",
+    "eth_sendTransaction",
+    "eth_sendTransaction"
+   ]
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ }
+]

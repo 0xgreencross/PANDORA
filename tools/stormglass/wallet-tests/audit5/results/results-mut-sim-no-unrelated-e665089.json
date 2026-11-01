@@ -1,0 +1,231 @@
+[
+ {
+  "id": "st23",
+  "name": "SCENARIO 5 from CONTROLS: an unrelated transaction of the same sender (another hash; same, next or a lower, mined nonce) or an unusable answer from the first reader never makes the page say replaced, cancelled or confirmed: it stays pending, asks the next reader and then the wallet, and confirms from its own receipt; the log lists the readers asked",
+  "pass": false,
+  "ms": 287721,
+  "ev": {
+   "rows": [
+    {
+     "n0": 0,
+     "mode": "other-same",
+     "wallet": false,
+     "set": [
+      "other-same",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered the VALID transaction (hash 0x1c361545…, nonce 7)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x1c36…fab4), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 3,
+     "mode": "other-next",
+     "wallet": false,
+     "set": [
+      "other-next",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered the VALID transaction (hash 0xab679d98…, nonce 8)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0xab67…2e5c), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 6,
+     "mode": "other-mined",
+     "wallet": false,
+     "set": [
+      "other-mined",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered the VALID transaction (hash 0xef1de6e1…, nonce 9)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0xef1d…fb34), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 9,
+     "mode": "other-mined",
+     "wallet": true,
+     "set": [
+      "other-mined",
+      true
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered the VALID transaction (hash 0x36471bf0…, nonce 10)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x3647…a09c), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 12,
+     "mode": "first-other",
+     "wallet": false,
+     "set": [
+      "first-other",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered the VALID transaction (hash 0xdb1a682f…, nonce 11)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0xdb1a…8e2d), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 15,
+     "mode": "first-mined",
+     "wallet": false,
+     "set": [
+      "first-mined",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered the VALID transaction (hash 0x2abc936e…, nonce 12)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x2abc…b16e), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 18,
+     "mode": "first-nohash",
+     "wallet": false,
+     "set": [
+      "first-nohash",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered the VALID transaction (hash 0x3d3bbdac…, nonce 13)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x3d3b…2ded), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 21,
+     "mode": "first-decimal",
+     "wallet": false,
+     "set": [
+      "first-decimal",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered the VALID transaction (hash 0x6967d2bc…, nonce 14)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x6967…191b), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    }
+   ],
+   "unrelatedMined": 3
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ }
+]

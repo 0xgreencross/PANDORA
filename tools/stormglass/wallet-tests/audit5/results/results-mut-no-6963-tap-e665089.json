@@ -1,0 +1,192 @@
+[
+ {
+  "id": "st1",
+  "name": "boots in SIMULATION by default: TEST banner, revision = build stamp of index.html, noindex, TEST title, mock (real) wallets invisible, no request leaves the page",
+  "pass": false,
+  "ms": 2426,
+  "ev": {
+   "want": {
+    "rev": "e665089",
+    "revHasThisIndex": true,
+    "sha": "99131cd72c8f782e"
+   },
+   "got": {
+    "mode": "sim",
+    "stamp": {
+     "rev": "e665089",
+     "sha256": "99131cd72c8f782ea76045c2ff56e17e9897cea8e77285604f06ea119875ec56",
+     "src": "index.html",
+     "touched": "791034b"
+    },
+    "banner": "TEST BUILDSIMULATIONSIMULATIONFAST CLOCKcandidate e665089 · sha256 99131cd72c8fCONTROLSMODE",
+    "bannerVisible": true,
+    "title": "TEST BUILD · STORMGLASS staging (not the live site)",
+    "robots": [
+     "noindex,nofollow"
+    ],
+    "rev": "e665089",
+    "shaShown": "99131cd72c8f",
+    "wallets": [
+     "test.a",
+     "sim.staging.alpha",
+     "sim.staging.alpha-twin",
+     "sim.staging.beta",
+     "sim.staging.asleep"
+    ],
+    "ethIsSim": true,
+    "panel": "DAY 13 · ON SALE · CLOSES IN 20:59:580.7062 ETH · FALLINGTHE",
+    "hits": 3
+   },
+   "leaks": {
+    "outside": [],
+    "chain": {},
+    "sockets": []
+   }
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st8",
+  "name": "REAL WALLET: COLLECT / WITNESS / CLAIM / personal_sign / eth_signTypedData_v4 / wallet_sendCalls never reach the wallet; the intercept panel shows chain, sender, target, value, decoded call; the chosen result is tracked by the page",
+  "pass": false,
+  "ms": 10145,
+  "ev": {
+   "exception": "no staging panel for [data-gate=go]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st9",
+  "name": "REAL WALLET: a late-announced provider, window.ethereum, providers[] and a WalletConnect provider are all wrapped; writes through each stop at the wrapper; WalletConnect’s own request paths refuse writes too",
+  "pass": false,
+  "ms": 3443,
+  "ev": {
+   "wrapped": {
+    "wallets": [
+     false
+    ],
+    "list": [
+     true,
+     false
+    ],
+    "choices": [
+     false,
+     true,
+     true
+    ],
+    "eth": true,
+    "providers": [
+     true,
+     true
+    ],
+    "wc": true,
+    "wcNSwrapped": true,
+    "lateListed": true,
+    "sameObject": true,
+    "rawLeak": true
+   },
+   "tries": {
+    "late": "refused 4100",
+    "eth": "refused 4001",
+    "providersB": "refused 4001",
+    "wc": "refused 4001",
+    "wcRawRequest": "refused 4001",
+    "wcRawSign": "refused 4001"
+   },
+   "reached": [
+    "L eth_sendTransaction"
+   ]
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st10",
+  "name": "switching modes reloads clean: no provider, account or pending operation crosses; the simulated storage is cleared; real wallets never reach SIMULATION",
+  "pass": false,
+  "ms": 8097,
+  "ev": {
+   "simBefore": {
+    "txs": 1,
+    "simKeys": 1
+   },
+   "inReal": {
+    "EP": true,
+    "me": true,
+    "OPLOCK": true,
+    "txs": 0,
+    "simKeys": 0,
+    "wallets": [
+     false
+    ],
+    "rdns": [
+     "test.a"
+    ],
+    "url": "?sgmode=real",
+    "label": "CONNECT"
+   },
+   "mockAskedInReal": [],
+   "inSim": {
+    "EP": true,
+    "txs": 0,
+    "rdns": [
+     "test.a",
+     "sim.staging.alpha",
+     "sim.staging.alpha-twin",
+     "sim.staging.beta",
+     "sim.staging.asleep"
+    ],
+    "eth": false,
+    "label": "CONNECT"
+   }
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st21",
+  "name": "REAL WALLET: every method literal in index.html is classified (no overlap between forwarded and write/sign); a malformed first reader then a valid one confirms an intercepted COLLECT; the external wallet receives only allowlisted methods (no write, no signature); session is a frozen copy on the WalletConnect wrapper",
+  "pass": false,
+  "ms": 11341,
+  "ev": {
+   "exception": "no staging panel for [data-gate=go]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st29",
+  "name": "REAL WALLET: WITHDRAW TO ANOTHER ADDRESS stops at the wrapper: the intercept panel shows chain, sender, target, value 0 and withdrawTo with the recipient decoded; the external wallet receives no write and no signature (a forged withdrawTo, a raw eth_sendTransaction and wallet_sendCalls included)",
+  "pass": false,
+  "ms": 11482,
+  "ev": {
+   "exception": "no staging panel for [data-gate=go]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st30",
+  "name": "REAL WALLET on a phone in a wallet app: window.ethereum fails (-32603); the second, authorised wallet gets nothing (but a liveness ping on the list) until the visitor picks it, and its eth_requestAccounts waits for the staging gate; with the readers and the wallet fallback unrelated, an intercepted payment stays pending and the real wallet is not asked about it",
+  "pass": false,
+  "ms": 25323,
+  "ev": {
+   "exception": "no staging panel for [data-gate=go]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st31",
+  "name": "the write enumeration: every method literal and every send(name) of index.html is classified by policy.js; the page ABI’s writes equal the listed CONTRACT_WRITES (withdrawTo included); in REAL mode each contract write, built from the page’s own ABI, stops at the wrapper (decoded in the panel) and the wallet receives none",
+  "pass": false,
+  "ms": 10046,
+  "ev": {
+   "exception": "no staging panel for [data-gate=go]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ }
+]

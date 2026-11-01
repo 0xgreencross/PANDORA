@@ -1,0 +1,232 @@
+{
+ "schema": "stormglass-wallet-results/2",
+ "runId": "20261101T194455Z-13005-d26116",
+ "label": "a4r10-gate",
+ "mode": "subset",
+ "status": "passed",
+ "completed": true,
+ "exit": 0,
+ "startedAt": "2026-11-01T19:44:55.078Z",
+ "finishedAt": "2026-11-01T19:45:11.081Z",
+ "interruptedBy": null,
+ "target": {
+  "path": "/home/claude/wt-audit5/index.html",
+  "bytes": 245131,
+  "sha256": "99131cd72c8f782ea76045c2ff56e17e9897cea8e77285604f06ea119875ec56",
+  "source": {
+   "commit": "791034bace1d2960df2f0a15c3eeae30f84507e5",
+   "repo": "/home/claude/wt-audit5",
+   "path": "index.html",
+   "blob": "254fe2a8f7e9a08f6367b51e73dcc3b81d1fcb48",
+   "headBlob": "254fe2a8f7e9a08f6367b51e73dcc3b81d1fcb48",
+   "matchesHead": true,
+   "reason": null
+  }
+ },
+ "harness": {
+  "dir": "tools/stormglass/wallet-tests",
+  "commit": "791034bace1d2960df2f0a15c3eeae30f84507e5",
+  "tree": "c3670e44df6e8c996193b4372b5c50aab1c17e56",
+  "dirty": [
+   "M tools/stormglass/wallet-tests/audit4.test.js"
+  ],
+  "reason": null,
+  "files": {
+   "audit2.test.js": "e876c2b5376fe144397d96ae9a1d972a113543778e12f3ed09f56b7429cadef5",
+   "audit3.test.js": "010539e385a4a9363c54799ec536c0ff02d72b4d7a64253899e9ab303080403e",
+   "audit3b.test.js": "e8eb9ddc253da6e11fc9e07428f4a8cab685cb8cac41c2c6a4f7e5a357cdb81a",
+   "audit4.test.js": "349e1c041b94e535a035d75ea8eb88af43b2892c4bd3635064d279a6f7bea0c0",
+   "audit4review.test.js": "85b2665c70187fab872db416fe19217171288b16354eb93259a974f937165efd",
+   "audit4scan.test.js": "a83d1b5ee4bfa161428ffcb519206f98663bd05e16926d919b2b1eda73e94ff7",
+   "audit5page.test.js": "6656854009e0e5b1456b1ad207053016e2abbe0d9eb3cc39902638390b774b36",
+   "audit5review.test.js": "8dfa387eefdc6a1be0b5bd7d0d45e785fdff4956ac40b855391ff18c7896be7e",
+   "fakechain.js": "2740ff568068e328bb482300f8447d15e24e98b32c6341d2d3efaa44cf6b47cf",
+   "harness.test.js": "c9549a723a97769c19ea00ad47c402e62bcd143968793aa02852adcfad818783",
+   "mockwallet.js": "037a13e3a0e0738a5701b2dfcc18d997ba0829bdd1d9897f14e126162c5222df",
+   "wallet.test.js": "5272fbcfca049503c896c32065c905e4517c4ec9496cb7b985f542c0d2eefe0c"
+  },
+  "contentSha256": "c85a4c12a5aafd3a1dc8f9d930591a97e2d303a015542e42b97db04e52c2bb25"
+ },
+ "deps": {
+  "node": "v22.22.0",
+  "playwright": {
+   "version": "1.64.0",
+   "path": "/home/claude/node_modules/playwright"
+  },
+  "ethers": {
+   "version": "6.13.2",
+   "path": "/home/claude/node_modules/ethers"
+  },
+  "ethersUmd": {
+   "path": "/home/claude/node_modules/ethers/dist/ethers.umd.min.js",
+   "sha256": "74e00c3e2a9ccd312e6d5154f9ccb0911d1b34cb49bc8220244a292a0a773c21"
+  },
+  "chromium": "141.0.7390.37",
+  "chromiumPath": "/opt/pw-browsers/chromium"
+ },
+ "env": {
+  "CASES": "a4r10,a4r9,a4r11",
+  "RELEASE": null,
+  "CASE_TIMEOUT_MS": 120000,
+  "RUN_TIMEOUT_MS": 2700000,
+  "NODE_OPTIONS": "--use-openssl-ca",
+  "OUT": "/home/claude/audit5/ev/final",
+  "PORT": 8962,
+  "cwd": "/home/claude/wt-audit5"
+ },
+ "manifest": {
+  "file": "/home/claude/wt-audit5/tools/stormglass/wallet-tests/manifest.json",
+  "sha256": "da13029be120a21361d7fbb35cf77d7f0fd5fde801db26a330f5facf814aa3cb",
+  "missingModules": [],
+  "unlistedModules": [],
+  "modulesWithoutCases": [],
+  "missingIds": [],
+  "unlistedIds": [],
+  "wrongGroup": [],
+  "expected": 193,
+  "registered": 193,
+  "ok": true
+ },
+ "registered": 193,
+ "groups": {
+  "@orig": 38,
+  "@audit2": 35,
+  "@audit3": 21,
+  "@audit3b": 17,
+  "@harness": 2,
+  "@audit4": 48,
+  "@audit5": 32
+ },
+ "selected": [
+  "a4r9",
+  "a4r10",
+  "a4r11"
+ ],
+ "executed": [
+  "a4r9",
+  "a4r10",
+  "a4r11"
+ ],
+ "passed": [
+  "a4r9",
+  "a4r10",
+  "a4r11"
+ ],
+ "failed": [],
+ "timedOut": [],
+ "unexecuted": [],
+ "running": null,
+ "harnessFailures": [],
+ "persistence": {
+  "ok": true,
+  "snapshots": 6,
+  "failures": [],
+  "file": "/home/claude/audit5/ev/final/results-a4r10-gate.json",
+  "previous": null
+ },
+ "cases": [
+  {
+   "id": "a4r9",
+   "name": "replacement: the receipt for the transaction that spent the nonce belongs to the original, to another tx, has no status, or another sender: no verdict; once valid: \"replaced\"",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 9385,
+   "ev": {
+    "rows": [
+     {
+      "name": "belongsToOriginal",
+      "mid": "pending",
+      "replacementReceiptReads": 21,
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "anotherTx",
+      "mid": "pending",
+      "replacementReceiptReads": 18,
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "noStatus",
+      "mid": "pending",
+      "replacementReceiptReads": 21,
+      "final": "replaced",
+      "by": true
+     },
+     {
+      "name": "otherSender",
+      "mid": "pending",
+      "replacementReceiptReads": 21,
+      "final": "replaced",
+      "by": true
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r10",
+   "name": "guard, the documented policy (one valid receipt from the reader asked, no cross-check, no reorg re-check): the first reader's valid 0x0 decides even if another reader says 0x1; a first reader that has no receipt yet keeps it pending",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 2132,
+   "ev": {
+    "gate": true,
+    "a": "reverted",
+    "b": "pending",
+    "firstReaderAskedForB": 3
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a4r11",
+   "name": "the page itself (WITNESS): the reviewer's receipt (another transaction's hash, no status) is never \"reverted\"; the payment stays pending, then a valid receipt confirms it",
+   "file": "audit4.test.js",
+   "pass": true,
+   "ms": 4066,
+   "ev": {
+    "sent": true,
+    "readsWhileMalformed": 9,
+    "toastsWhileMalformed": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm"
+    ],
+    "confirmed": true,
+    "toasts": [
+     "Your witness payment: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Your witness payment: confirmed"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  }
+ ],
+ "exitCode": 0
+}

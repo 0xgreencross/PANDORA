@@ -1,0 +1,663 @@
+[
+ {
+  "id": "st23",
+  "name": "SCENARIO 5 from CONTROLS: an unrelated transaction of the same sender (another hash; same, next or a lower, mined nonce) or an unusable answer from the first reader never makes the page say replaced, cancelled or confirmed: it stays pending, asks the next reader and then the wallet, and confirms from its own receipt; the log lists the readers asked",
+  "pass": false,
+  "ms": 326059,
+  "ev": {
+   "rows": [
+    {
+     "n0": 0,
+     "mode": "other-same",
+     "wallet": false,
+     "set": [
+      "other-same",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender (hash 0x549d7a79…, nonce 7)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x3a49…f677), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 3,
+     "mode": "other-next",
+     "wallet": false,
+     "set": [
+      "other-next",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender (hash 0x513b61c6…, nonce 9)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x5c7b…a0fb), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 6,
+     "mode": "other-mined",
+     "wallet": false,
+     "set": [
+      "other-mined",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender, MINED (hash 0x407f60d4…, n"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x63e0…3b1e), waiting for Ethere",
+      "Your witness payment: your wallet replaced it with another t"
+     ],
+     "falseVerdict": true,
+     "waiting": true,
+     "pend": "pending",
+     "late": false
+    },
+    {
+     "n0": 9,
+     "mode": "other-mined",
+     "wallet": true,
+     "set": [
+      "other-mined",
+      true
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender, MINED (hash 0x83e73aeb…, n"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0xcaab…b021), waiting for Ethere",
+      "Your witness payment: your wallet replaced it with another t"
+     ],
+     "falseVerdict": true,
+     "waiting": true,
+     "pend": "pending",
+     "late": false
+    },
+    {
+     "n0": 12,
+     "mode": "first-other",
+     "wallet": false,
+     "set": [
+      "first-other",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender (hash 0x075722fa…, nonce 11"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x2884…f6c7), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 15,
+     "mode": "first-mined",
+     "wallet": false,
+     "set": [
+      "first-mined",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender, MINED (hash 0x5497fd75…, n"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x9d3d…faaa), waiting for Ethere",
+      "Your witness payment: your wallet replaced it with another t"
+     ],
+     "falseVerdict": true,
+     "waiting": true,
+     "pend": "pending",
+     "late": false
+    },
+    {
+     "n0": 18,
+     "mode": "first-nohash",
+     "wallet": false,
+     "set": [
+      "first-nohash",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered a transaction with NO HASH (nonce 13)"
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x1d78…94e2), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    },
+    {
+     "n0": 21,
+     "mode": "first-decimal",
+     "wallet": false,
+     "set": [
+      "first-decimal",
+      false
+     ],
+     "sent": true,
+     "gate": false,
+     "rounds": true,
+     "readers": [
+      "ethereum-rpc.publicnode.com"
+     ],
+     "readerAnswers": [
+      "ethereum-rpc.publicnode.com: answered with the nonce as the DECIMAL \"14\" (a JSON-RPC quantity must "
+     ],
+     "walletAsks": [],
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x54ce…56bf), waiting for Ethere"
+     ],
+     "falseVerdict": false,
+     "waiting": true,
+     "pend": "pending",
+     "late": true
+    }
+   ],
+   "unrelatedMined": 3
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st24",
+  "name": "SCENARIO 5 keeps the legitimate outcomes: with a bad first reader (or every reader unrelated and the wallet valid) a real SPED UP, CANCELLED or REPLACED is still reported; with every reader AND the wallet unrelated nothing is reported but pending",
+  "pass": false,
+  "ms": 78754,
+  "ev": {
+   "rows": [
+    {
+     "mode": "first-other",
+     "out": "sped",
+     "ok": true,
+     "wrongVerdict": false,
+     "last": "Your witness payment: confirmed (sped up in your wallet)"
+    },
+    {
+     "mode": "first-other",
+     "out": "cancelled",
+     "ok": true,
+     "wrongVerdict": false,
+     "last": "Your witness payment: cancelled in your wallet after it was sent. It did not go through; only network fees were spent."
+    },
+    {
+     "mode": "first-other",
+     "out": "replaced",
+     "ok": true,
+     "wrongVerdict": false,
+     "last": "Your witness payment: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+    },
+    {
+     "mode": "other-same",
+     "out": "replaced",
+     "ok": true,
+     "wrongVerdict": false,
+     "last": "Your witness payment: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+    },
+    {
+     "mode": "first-mined",
+     "out": "sped",
+     "ok": false,
+     "wrongVerdict": false,
+     "last": "Your witness payment: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+    }
+   ],
+   "allUnrelated": {
+    "gate": false,
+    "toasts": [
+     "Your witness payment: confirm in your wallet",
+     "Your witness payment: sent (0x7dfb…8107), waiting for Ethereum to conf",
+     "Your witness payment: your wallet replaced it with another transaction"
+    ]
+   }
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st25",
+  "name": "SCENARIO 6 from CONTROLS (a phone inside a wallet app, two authorised wallets): the first wallet fails eth_requestAccounts (4001, 4100, 4200, 4900, 4901, -32002, -32603; rejected promise or synchronous throw): the page offers CHOOSE ANOTHER WALLET (not for 4001 and -32002), the second wallet’s log shows no request before the pick except the liveness ping on the list, and the pick connects with exactly one request",
+  "pass": false,
+  "ms": 171479,
+  "ev": {
+   "rows": [
+    {
+     "code": 4001,
+     "how": "async",
+     "ok": true,
+     "offered": false,
+     "alpha": "REJECTED PROMISE 4001",
+     "betaBefore": [],
+     "toast": "Cancelled in your wallet. Nothing was sent."
+    },
+    {
+     "code": 4001,
+     "how": "sync",
+     "ok": true,
+     "offered": false,
+     "alpha": "SYNC THROW 4001",
+     "betaBefore": [],
+     "toast": "Cancelled in your wallet. Nothing was sent."
+    },
+    {
+     "code": 4100,
+     "how": "async",
+     "ok": false,
+     "offered": false,
+     "alpha": "REJECTED PROMISE 4100",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    },
+    {
+     "code": 4100,
+     "how": "sync",
+     "ok": false,
+     "offered": false,
+     "alpha": "SYNC THROW 4100",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    },
+    {
+     "code": 4200,
+     "how": "async",
+     "ok": false,
+     "offered": false,
+     "alpha": "REJECTED PROMISE 4200",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    },
+    {
+     "code": 4200,
+     "how": "sync",
+     "ok": false,
+     "offered": false,
+     "alpha": "SYNC THROW 4200",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    },
+    {
+     "code": 4900,
+     "how": "async",
+     "ok": false,
+     "offered": false,
+     "alpha": "REJECTED PROMISE 4900",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    },
+    {
+     "code": 4900,
+     "how": "sync",
+     "ok": false,
+     "offered": false,
+     "alpha": "SYNC THROW 4900",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    },
+    {
+     "code": 4901,
+     "how": "async",
+     "ok": false,
+     "offered": false,
+     "alpha": "REJECTED PROMISE 4901",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    },
+    {
+     "code": 4901,
+     "how": "sync",
+     "ok": false,
+     "offered": false,
+     "alpha": "SYNC THROW 4901",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    },
+    {
+     "code": -32002,
+     "how": "async",
+     "ok": true,
+     "offered": false,
+     "alpha": "REJECTED PROMISE -32002",
+     "betaBefore": [],
+     "toast": "Your wallet already has a request waiting. Open it"
+    },
+    {
+     "code": -32002,
+     "how": "sync",
+     "ok": true,
+     "offered": false,
+     "alpha": "SYNC THROW -32002",
+     "betaBefore": [],
+     "toast": "Your wallet already has a request waiting. Open it"
+    },
+    {
+     "code": -32603,
+     "how": "async",
+     "ok": false,
+     "offered": false,
+     "alpha": "REJECTED PROMISE -32603",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    },
+    {
+     "code": -32603,
+     "how": "sync",
+     "ok": false,
+     "offered": false,
+     "alpha": "SYNC THROW -32603",
+     "betaBefore": [
+      "eth_requestAccounts",
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_accounts",
+      "eth_chainId"
+     ],
+     "toast": null
+    }
+   ]
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st26",
+  "name": "SCENARIO 7 from CONTROLS: with 0.05 ETH owed, the zero, malformed, contract and own addresses are refused with the page’s messages and nothing reaches the wallet; a valid recipient gives withdrawTo(recipient) from the connected account, value 0, to the contract; CONFIRMED refreshes owed to 0; a recipient that rejects ETH reverts and the flow stays usable; REJECTED IN WALLET leaves it as it was",
+  "pass": false,
+  "ms": 21174,
+  "ev": {
+   "exception": "page.evaluate: TypeError: Cannot read properties of null (reading 'style')\n    at eval (eval at evaluate (:370:30), <anonymous>:1:99)\n    at UtilityScript.evaluate (<anonymous>:372:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st27",
+  "name": "SCENARIO 7 from CONTROLS: after REVIEW, an account change, the wallet going to Base (refusing to switch back) and the last-moment network change (scenario 1) each end SEND with “Nothing was sent”: the simulated wallet log has no eth_sendTransaction and no transaction exists",
+  "pass": false,
+  "ms": 23844,
+  "ev": {
+   "exception": "page.evaluate: TypeError: Cannot read properties of null (reading 'style')\n    at eval (eval at evaluate (:370:30), <anonymous>:1:99)\n    at UtilityScript.evaluate (<anonymous>:372:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st28",
+  "name": "SCENARIO 8 from CONTROLS: a COLLECT by a payer with seats whose wallet accepts ETH sends the earnings to it (simulated ETH, nothing owed, no WITHDRAW); a payer whose wallet rejects ETH leaves them owed, WITHDRAW and WITHDRAW TO ANOTHER ADDRESS appear, WITHDRAW reverts for that wallet and WITHDRAW TO another address pays",
+  "pass": false,
+  "ms": 10608,
+  "ev": {
+   "exception": "page.evaluate: TypeError: Failed to execute 'getComputedStyle' on 'Window': parameter 1 is not of type 'Element'.\n    at eval (eval at evaluate (:370:30), <anonymous>:1:136)\n    at UtilityScript.evaluate (<anonymous>:372:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st29",
+  "name": "REAL WALLET: WITHDRAW TO ANOTHER ADDRESS stops at the wrapper: the intercept panel shows chain, sender, target, value 0 and withdrawTo with the recipient decoded; the external wallet receives no write and no signature (a forged withdrawTo, a raw eth_sendTransaction and wallet_sendCalls included)",
+  "pass": false,
+  "ms": 19679,
+  "ev": {
+   "exception": "page.evaluate: TypeError: Cannot read properties of null (reading 'style')\n    at eval (eval at evaluate (:370:30), <anonymous>:1:99)\n    at UtilityScript.evaluate (<anonymous>:372:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st30",
+  "name": "REAL WALLET on a phone in a wallet app: window.ethereum fails (-32603); the second, authorised wallet gets nothing (but a liveness ping on the list) until the visitor picks it, and its eth_requestAccounts waits for the staging gate; with the readers and the wallet fallback unrelated, an intercepted payment stays pending and the real wallet is not asked about it",
+  "pass": false,
+  "ms": 16383,
+  "ev": {
+   "exception": "no sheet button /CHOOSE ANOTHER WALLET/"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st31",
+  "name": "the write enumeration: every method literal and every send(name) of index.html is classified by policy.js; the page ABI’s writes equal the listed CONTRACT_WRITES (withdrawTo included); in REAL mode each contract write, built from the page’s own ABI, stops at the wrapper (decoded in the panel) and the wallet receives none",
+  "pass": true,
+  "ms": 5866,
+  "ev": {
+   "methods": [
+    "eth_accounts",
+    "eth_blobBaseFee",
+    "eth_blockNumber",
+    "eth_call",
+    "eth_chainId",
+    "eth_getBlockByNumber",
+    "eth_getTransactionByHash",
+    "eth_getTransactionCount",
+    "eth_getTransactionReceipt",
+    "eth_requestAccounts",
+    "eth_sendTransaction",
+    "eth_signTypedData_v4",
+    "personal_sign",
+    "wallet_addEthereumChain",
+    "wallet_revokePermissions",
+    "wallet_switchEthereumChain"
+   ],
+   "unclassified": [],
+   "sendNames": [
+    "bid",
+    "buy",
+    "claim",
+    "pledge",
+    "settle",
+    "sync",
+    "withdraw",
+    "withdrawTo",
+    "witness"
+   ],
+   "abiWrites": [
+    "bid",
+    "buy",
+    "claim",
+    "pledge",
+    "settleCandle",
+    "sync",
+    "withdraw",
+    "withdrawTo",
+    "witness"
+   ],
+   "listed": [
+    "bid",
+    "buy",
+    "claim",
+    "pledge",
+    "settleCandle",
+    "sync",
+    "withdraw",
+    "withdrawTo",
+    "witness"
+   ],
+   "direct": [],
+   "intercepted": {
+    "bid": {
+     "result": "refused 4001",
+     "panel": true,
+     "decoded": true
+    },
+    "buy": {
+     "result": "refused 4001",
+     "panel": true,
+     "decoded": true
+    },
+    "claim": {
+     "result": "refused 4001",
+     "panel": true,
+     "decoded": true
+    },
+    "pledge": {
+     "result": "refused 4001",
+     "panel": true,
+     "decoded": true
+    },
+    "settleCandle": {
+     "result": "refused 4001",
+     "panel": true,
+     "decoded": true
+    },
+    "sync": {
+     "result": "refused 4001",
+     "panel": true,
+     "decoded": true
+    },
+    "withdraw": {
+     "result": "refused 4001",
+     "panel": true,
+     "decoded": true
+    },
+    "withdrawTo": {
+     "result": "refused 4001",
+     "panel": true,
+     "decoded": true
+    },
+    "witness": {
+     "result": "refused 4001",
+     "panel": true,
+     "decoded": true
+    }
+   },
+   "reached": []
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ }
+]

@@ -1,0 +1,90 @@
+Warning: This contract has a payable fallback function, but no receive ether function. Consider adding a receive ether function.
+  --> contracts/test/MockPool.sol:21:1:
+   |
+21 | contract Bomber {
+   | ^ (Relevant source part starts here and spans across multiple lines).
+Note: The payable fallback function is defined here.
+  --> contracts/test/MockPool.sol:25:5:
+   |
+25 |     fallback() external payable { assembly { return(0, 120000) } }
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Compiled 6 Solidity files successfully (evm target: cancun).
+
+
+  THE COATS
+      batch 0 gas 10488253
+      batch 0.5 gas 10488253
+      batch 1 gas 10488253
+      batch 1.5 gas 10488253
+      batch 2 gas 10488253
+      batch 2.5 gas 10488253
+      batch 3 gas 8148243
+    ✔ lays the chunks four at a time and THE GLASS reads them back whole (1282ms)
+
+  HARDENING
+    ✔ bid spam before the window cannot make the settle unaffordable (only the window's bids are walked) (440ms)
+    ✔ inside the window each bid must climb 5%, so the bids the settle refunds stay few; 60 window bids settle well inside a block (223ms)
+    ✔ the close is not known while bidding (revealBlock cannot be mined before the window ends) and a late settle cannot choose it (162ms)
+    ✔ past 256 blocks the draw is read from the chain's history (EIP-2935), not the fixed rule (181ms)
+    ✔ a seat holder who pays again keeps its share of its own payment; nothing is stranded in the pool (130ms)
+    ✔ the last claimer can always claim (rounding never runs ahead of the pool) (140ms)
+    ✔ two hundred silent days are caught up in steps of thirty; the sale works again (396ms)
+    ✔ a buy or witness for a day that has closed is refused instead of landing on the next one (154ms)
+    ✔ the price never rises: across every halving seam it only falls (1109ms)
+    ✔ a bidder that answers refunds with a mountain of returned data cannot make the settle unaffordable (164ms)
+    ✔ a plate's lineage stops at the 400 ancestors the page draws, so its tokenURI stops growing (1741ms)
+    ✔ a long catch-up takes one sample of the pool, not a week of them in one block (364ms)
+    ✔ the dead take no gifts (140ms)
+    ✔ a pool that turns bad after deploy cannot stop a plate from being read (486ms)
+    ✔ a wallet that cannot take ether names where its refund goes (134ms)
+    ✔ royalties go to the payee, who takes any payment; no plate can be sent to the contract (115ms)
+
+  AUDIT 5 · PAYOUTS (shadow ledger, exact to the wei)
+    ✔ 1+2. a buy pays the buyer's EXISTING seats what they earned, including their share of the buyer's own price, before the new seat is granted; a witness does the same (530ms)
+    ✔ 2. the payer's share of its own payment, worked by hand: the only seat holder pays 1 ETH and gets back exactly 0.2 ETH of it (285ms)
+    ✔ 3. a new seat does not earn what was distributed before it: pending is zero at the grant, the first claim pays nothing, later earnings are its share only (721ms)
+    ✔ 4. a payee that refuses ether (reverting receive, gas-burning receive, a receive that needs more than 60000 gas, or the PAYEE itself) is credited in owed[], never lost (615ms)
+    ✔ 4b. the stipend is 60000 gas (+ the 2300 the EVM adds to a value call); withdraw/withdrawTo forward all gas (268ms)
+    ✔ 5. claim, refunds and earnings over a whole run: no loss, no double count; out == sum of payouts at every step, held == vault + seatPool + owed (1062ms)
+    ✔ 6-9. withdrawTo pays an accepting recipient once; a refusing recipient reverts the whole call and owed survives; a second withdrawal finds nothing owed; nobody can take another's balance (1828ms)
+    ✔ 10. re-entry from a payee is refused: claim, withdraw, withdrawTo, buy and witness all answer 'reentrant' from inside _pay (60000 gas) and from inside a withdrawal (all gas); each balance is paid once (1995ms)
+
+  SMART ACCOUNT BIDDERS (EIP-7702)
+      estimate 175057 used 152431
+      bare estimate 175057 succeeded
+    ✔ a padded bid refunds an outbid leader whose account runs code on receive; the bare estimate never loses ether (125ms)
+
+  THE CLOCK
+    ✔ 4:20pm in Miami, daylight saving followed, agrees with Intl for a year and a half of afternoons (2776ms)
+    ✔ the transition days themselves
+
+  THE CANDLE
+    ✔ refuses under the reserve and under the leader; refunds the outbid at once; rerolls the plate
+    ✔ cannot be settled while it burns; the window holds every bid; the leader at the drawn moment wins; the rest are refunded; FOUNDING is set; 70/30 (56ms)
+    ✔ nobody bids: the artist takes Plate Zero at the reserve
+    ✔ a bidder that refuses ether is owed, and can withdraw
+
+  FOUNDERS' DAY
+    ✔ a pledge buys seats at the founding rate, uncapped, and notches Plate Zero; the day ends (91ms)
+
+  THE DAYS
+    ✔ day one opens at the 4:20 after founders' day; the price starts at FOUNDING and halves every 2.4 hours (125ms)
+    ✔ the first buy wins, refunds the excess, splits 70/20/10, seats the buyer, records the pick; tomorrow's seed follows (227ms)
+    ✔ a witness raises the price by what was paid, cuts a notch, and takes at most one seat a day (107ms)
+    ✔ an unsold day is bought by the vault at the reference and held forever; when the vault cannot pay, the Tombstone, and death (129ms)
+    ✔ days nobody visits are settled in one sync, in order (125ms)
+
+  THE SEATS AND THE LEDGER
+    ✔ seat earnings accrue pro rata, claim pays, a later payment auto-claims (122ms)
+    ✔ every transfer cuts a hand on the plate; approvals work; the receiver check holds; royalties are 6.9% to the payee (158ms)
+
+  THE GLASS
+    ✔ tokenURI carries the plate's seed, the sky, and the whole page: byte for byte the page on the site (278ms)
+    ✔ a day's plate and the Tombstone say what they are; the flood and the peg read the pools (679ms)
+
+
+  42 passing (20s)
+
+rc 0

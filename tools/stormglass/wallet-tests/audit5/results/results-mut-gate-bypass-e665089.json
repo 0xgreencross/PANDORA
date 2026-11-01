@@ -1,0 +1,35 @@
+[
+ {
+  "id": "st7",
+  "name": "REAL WALLET: connect asks first (gate), then reaches the wallet; account change and DISCONNECT (revocation) work; only allowlisted methods reach the wallet",
+  "pass": false,
+  "ms": 17940,
+  "ev": {
+   "exception": "no staging panel for [data-gate=go]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st14",
+  "name": "REAL WALLET on Base: a WITNESS asks before the network switch; CANCEL on the staging gate asks the wallet nothing and sends nothing; ASK MY WALLET forwards the switch, then the payment is intercepted",
+  "pass": false,
+  "ms": 9985,
+  "ev": {
+   "exception": "no staging panel for [data-gate=go]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ },
+ {
+  "id": "st30",
+  "name": "REAL WALLET on a phone in a wallet app: window.ethereum fails (-32603); the second, authorised wallet gets nothing (but a liveness ping on the list) until the visitor picks it, and its eth_requestAccounts waits for the staging gate; with the readers and the wallet fallback unrelated, an intercepted payment stays pending and the real wallet is not asked about it",
+  "pass": false,
+  "ms": 23217,
+  "ev": {
+   "exception": "no staging panel for [data-gate=go]"
+  },
+  "outsideRefused": [],
+  "socketsRefused": []
+ }
+]
