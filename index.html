@@ -554,7 +554,7 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
     <section class="nx-ch" id="seats" hidden>
         <p class="note">A seat is a share of future payments, kept as a number next to your wallet address in the contract. It is not a token: it cannot be sold, sent or moved to another wallet, and it never expires. 20% of every purchase, witness payment and vault purchase is shared among all seats existing at that moment, in proportion to how many each wallet holds. A payment does not pay the seats it creates. Seats get nothing from Plate Zero’s sale, from resale royalties or from ETH sent to the vault. While no seats exist, that 20% goes to the vault instead. Seats are not an investment and nothing is promised: they only earn while people keep paying for plates.</p>
       <details class="nx-l2"><summary>FULL RULE ▸</summary><div>
-        <p class="note">Your earnings wait in the contract until you collect them. CLAIM sends them to your wallet. They are also sent automatically whenever your wallet buys or witnesses. WITHDRAW appears only if the contract once tried to send you ETH and your wallet could not accept it.</p>
+        <p class="note">Your earnings wait in the contract until they are sent to you, in one of two ways. CLAIM sends everything your seats have earned to your wallet. Or you do nothing: every time your wallet collects a plate or witnesses one, the contract first sends you everything the seats you already hold have earned, including their share of the payment you are making right then, in that same transaction. You never need to claim before you buy, and nothing is lost if you never press CLAIM. Most wallets do not show this as a separate payment: the contract sends it as an internal transfer inside your purchase, so your balance simply goes down by less than the price. To see it, open your purchase on Etherscan and look under Internal Txns (and the SeatsClaimed entry under Logs). If you send more than the price, the difference comes back in the same transaction too. WITHDRAW appears only if the contract once tried to send you ETH and your wallet could not accept it: that amount then waits in the contract until you withdraw it.</p>
       <p class="note">Your seats, what they have earned and the board of every holder are above, under SEATS BOARD.</p>
       </div></details>
     </section>
@@ -587,12 +587,13 @@ if(q.has('dna')||q.has('ui')||q.has('mint')){location.replace('/pandora/'+locati
       </div>
       </div></details>
     </section>
-    <button class="nx-row" aria-expanded="false" aria-controls="faq"><span class="no">08</span><span><span class="ttl">FAQ</span><span class="l0">Eight short answers about collecting, wallets, ownership, seats and this site.</span></span><span class="ar">▸</span></button>
+    <button class="nx-row" aria-expanded="false" aria-controls="faq"><span class="no">08</span><span><span class="ttl">FAQ</span><span class="l0">Nine short answers about collecting, wallets, ownership, seats and this site.</span></span><span class="ar">▸</span></button>
     <section class="nx-ch" id="faq" hidden>
       <details class="nx-faq" name="faq"><summary>HOW DO I COLLECT A PLATE?</summary>    <div class="box"><h3>HOW DO I COLLECT A PLATE?</h3>1. Get a wallet app and some ETH on Ethereum mainnet. 2. Open this page between 4:20pm Miami time and the next 4:20pm. 3. Below the plate, choose tomorrow’s plate from the 32 options. 4. Press COLLECT, check the amount in your wallet and confirm. Your wallet asks for about 10% more than the price shown; what is not needed comes straight back in the same transaction. If someone else bought first, your transaction fails and costs only the network fee.</div></details>
       <details class="nx-faq" name="faq"><summary>WHAT WALLET DO I NEED?</summary>    <div class="box"><h3>WHAT WALLET DO I NEED?</h3>Any Ethereum wallet that works in your browser, such as MetaMask, Rabby or Coinbase Wallet. On a phone, open dithervoid.art inside your wallet app’s own browser. Press CONNECT at the top of the page.</div></details>
       <details class="nx-faq" name="faq"><summary>WHY DOES MY WALLET WARN ME?</summary>    <div class="box"><h3>WHY DOES MY WALLET WARN ME?</h3>Some wallets flag every payment to a new contract that passes money straight on, and STORMGLASS sends 70% of each payment to the artist in the same transaction. The contracts are verified on Etherscan and the warning has been reported as a mistake. Before you confirm, check that the address your wallet shows is 0xCf5E…064C.</div></details>
       <details class="nx-faq" name="faq"><summary>WHAT DO I ACTUALLY OWN?</summary>    <div class="box"><h3>WHAT DO I ACTUALLY OWN?</h3>A plate is a token on Ethereum that records your wallet as its owner. You can keep it, sell it or send it like any NFT. The artwork is CC0, so owning the token does not give you exclusive rights to the image.</div></details>
+      <details class="nx-faq" name="faq"><summary>DO I HAVE TO CLAIM MY SEAT EARNINGS BEFORE I BUY?</summary>    <div class="box"><h3>DO I HAVE TO CLAIM MY SEAT EARNINGS BEFORE I BUY?</h3>No. When your wallet collects a plate or witnesses one, the contract sends you everything your seats have earned so far in the same transaction, before it adds the new seat. That includes your seats’ share of the payment you are making. Example: the plate costs 0.0157 ETH and your seats have earned 0.0012 ETH; you pay 0.0157 ETH and 0.0012 ETH comes straight back, so the plate costs you 0.0145 ETH plus the network fee. Your wallet may show only the payment: the earnings arrive as an internal transfer from the contract. On Etherscan, open the transaction and look under Internal Txns. Anything you send above the price comes back in that transaction as well.</div></details>
       <details class="nx-faq" name="faq"><summary>CAN I LOSE MONEY ON A SEAT?</summary>    <div class="box"><h3>CAN I LOSE MONEY ON A SEAT?</h3>A seat is not an investment and pays only if people keep paying for plates. It cannot be sold or moved, and if the series ends it stops earning. You may never get back what you paid. Pay only what you are happy to spend on the art.</div></details>
       <details class="nx-faq" name="faq"><summary>WHAT HAPPENS IF I’M OUTBID?</summary>    <div class="box"><h3>WHAT HAPPENS IF I’M OUTBID?</h3>The daily sale has no bids: the first person to pay gets the plate. If two people try at the same time, the one recorded first on Ethereum wins and the other transaction fails, costing only the network fee. Plate Zero’s auction is over.</div></details>
       <details class="nx-faq" name="faq"><summary>WHAT IS CC0?</summary>    <div class="box"><h3>WHAT IS CC0?</h3>A public licence by which the artist gives up copyright. Anyone may copy, change, sell or build on the images, with no permission needed.</div></details>
@@ -776,7 +777,7 @@ async function welcome(addr){
   if(!mode){ el.hidden=true; return; }
   if(mode==='waiting'){ el.innerHTML='<span><b>A SMALL WEATHER WAS MADE FOR YOU</b> · <a href="/gift/">CLAIM IT ↗</a></span>'; el.hidden=false; return; }
   el.innerHTML=(id?'<img alt="SMALL WEATHER #'+id+'" id="swImg">':'')+'<span><b>SMALL WEATHER'+(id?' #'+id:'')+'</b> · welcome back</span>'; el.hidden=false;
-  if(id){ try{ const b=ethers.getBytes(await giftRead().gif(id)); $('swImg').src=URL.createObjectURL(new Blob([b],{type:'image/gif'})); }catch(e){ const i=$('swImg'); if(i) i.remove(); } }
+  if(id){ const img=$('swImg'); try{ const b=ethers.getBytes(await giftRead().gif(id)); if(img.isConnected&&sameAddr(addr,me)) img.src=URL.createObjectURL(new Blob([b],{type:'image/gif'})); }catch(e){ img.remove(); } }   /* only into this welcome's own image: a newer one (another account) has its own */
 }
 async function swCount(){
   const el=$('swCount'); if(!CFG.gift) return;
@@ -860,7 +861,8 @@ function wcNudge(method){ const app=wcApp(), n={method,app,ev:null,btn:null,time
   n.timer=setTimeout(()=>{ if(NUDGE===n&&!n.ev) wcNudgeSent(null); },8000);   /* no event after 8 s: the jump is offered anyway (the wallet lists what is waiting) */
   return n; }
 function wcNudgeSent(ev){ const n=NUDGE; if(!n) return; if(ev) n.ev=ev; clearTimeout(n.timer); if(n.btn){ n.btn.disabled=false; n.btn.style.opacity=''; }
-  $('wsp').textContent=n.app?'The request is in '+n.app.name+' now. Open it, check it, confirm or reject, then come back to this page.':'The request is in your wallet now. Open your wallet app, check it, confirm or reject, then come back to this page.'; }
+  $('wsp').textContent=n.ev?(n.app?'The request is in '+n.app.name+' now. Open it, check it, confirm or reject, then come back to this page.':'The request is in your wallet now. Open your wallet app, check it, confirm or reject, then come back to this page.')
+    :'No word yet that the request reached '+(n.app?n.app.name:'your wallet')+'. Open '+(n.app?n.app.name:'your wallet app')+' and look: if it is waiting there, check it, confirm or reject, then come back to this page.'; }   /* no session_request_sent after 8 s: the page has not seen it leave */
 function wcNudgeOff(n){ if(!n||NUDGE!==n) return; NUDGE=null; clearTimeout(n.timer); if(SHEET_CLOSE===n.close){ SHEET_CLOSE=null; sheetOff(); } }
 function wcHook(p){ try{ const c=p&&p.signer&&p.signer.client; if(!c||c.__sg) return; c.__sg=1;
     c.on('session_request_sent',ev=>{ const n=NUDGE; if(n&&ev&&ev.request&&ev.request.method===n.method&&ev.id!=null&&ev.topic) wcNudgeSent(ev); }); }catch(e){ console.warn('walletconnect hook',e); } }
@@ -978,9 +980,14 @@ async function onAccounts(P,a){ if(P!==EP) return; const gen=SES;
 /* one connection attempt at a time: a second CONNECT (or a write that needs a wallet) joins the one in flight. An attempt the
    wallet has left unanswered for 15 s can be replaced by a new one; the old one's late answer is then ignored. */
 let CONNECTING=null;
+/* Resolves true only when this attempt set the session. A write that waited on an attempt which was replaced (left unanswered for
+   15 s, then a new CONNECT) is let go at that moment (false: it stops, nothing was asked of it); the old attempt's late answer then
+   changes nothing (stale), so it can neither restart that write with the wallet connected meanwhile nor rewrite the saved choice. */
 function connectWallet(){
   if(CONNECTING&&Date.now()-CONNECTING.t<15000) return CONNECTING.p;
-  const c={t:Date.now()}; c.p=connectOnce().finally(()=>{ if(CONNECTING===c) CONNECTING=null; }); CONNECTING=c; return c.p; }
+  if(CONNECTING) CONNECTING.drop();
+  const c={t:Date.now()}; let drop; const gone=new Promise(r=>{ drop=()=>r(false); }); c.drop=drop;
+  c.p=Promise.race([connectOnce().then(v=>v===true),gone]).finally(()=>{ if(CONNECTING===c) CONNECTING=null; }); CONNECTING=c; return c.p; }
 async function connectOnce(){
   try{ window.dispatchEvent(new Event('eip6963:requestProvider')); }catch(e){}
   const gen=++SES, stale=()=>gen!==SES;   /* a disconnect, or a newer attempt, while this one waits: it stops and changes nothing */
@@ -991,21 +998,22 @@ async function connectOnce(){
     const L=P?[P]:walletList(); if(!L.length){ noWalletDesk(); return; }
     let err=null, got=null;
     for(const Q of L){ try{ if(!(await revoked(Q))||stale()) return; await Q.request({method:'eth_requestAccounts'}); got=Q; break; }
-      catch(e){ const c=e&&e.code; if(c===4001||c===-32002) throw e; err=e; console.warn('wallet refused, trying the next one',e); } }
+      catch(e){ if(stale()) return; const c=e&&e.code; if(c===4001||c===-32002) throw e; err=e; console.warn('wallet refused, trying the next one',e); } }
     if(!got){ if(L.length>1) throw new Error(errMsg(err)+' (more than one wallet extension is installed: turn off the others and reload the page)'); throw err; }
     P=got;
   } else {
     const w=await chooseWallet(); if(stale()||!w) return; P=w.provider;
     if(!(await revoked(P))||stale()) return;
     try{ await ask(P,'eth_requestAccounts'); }
-    catch(e){ remember(null); throw e; }   /* a no forgets the choice: the next CONNECT shows the list again */
-    remember(w.key);
+    catch(e){ if(stale()) return; remember(null); throw e; }   /* a no forgets the choice: the next CONNECT shows the list again (a replaced attempt decides nothing) */
+    if(stale()) return; remember(w.key);
   }
   if(stale()) return;
   const c=await chainOf(P); if(stale()) return; if(CFG.chainId&&c!==CFG.chainId){ toast('Your wallet is on another network. Switch it to Ethereum mainnet.'); }
   const s=await new ethers.BrowserProvider(P).getSigner(); if(stale()) return;
   setSession(P,s.address); follow(P);
   welcome(me).catch(()=>{}); refreshSeats().catch(e=>console.error(e));
+  return true;
 }
 /* the one place the session is set: a new number, so anything still running for the old one stops */
 function setSession(P,acct){ SES++; EP=P; me=ethers.getAddress(acct); signer=new ethers.JsonRpcSigner(new ethers.BrowserProvider(P),me); W=new ethers.Contract(CFG.contract,ABI,signer); welcomed=''; walletLabel(); }
@@ -1042,7 +1050,10 @@ function syncCap(){ const n=$('panel').querySelector('.note'); const c=$('nx-pca
 function barFromPanel(){ syncCap(); placeSky(); const P=$('panel'); const wOn=!!P.querySelector('#bWitCta'); $('nx-barWc').hidden=!wOn; document.body.classList.toggle('nx-hasw',wOn); const num=P.querySelector('.nx-num'); const subEl=P.querySelector('.nx-sub'); const btn=P.querySelector('.nx-cta'); let numHtml=num?num.innerHTML:'––––', sub=subEl?subEl.textContent:''; const sm=num&&num.querySelector('small'); if(sm&&sm.textContent.length>14){ numHtml=num.innerHTML.replace(sm.outerHTML,''); if(!sub) sub=sm.textContent; } setBar({num:numHtml,numCls:num?(num.classList.contains('acc')?'acc':'')+(num.classList.contains('cur')?' cur':'')+(num.classList.contains('dim')?' dim':''):'dim',sub,btn:btn?btn.textContent:'',disabled:!btn||btn.disabled,onclick:btn&&!btn.disabled?()=>btn.click():null}); }
 /* the wallet's chain, read only; the label in the header; the one new wallet call (Q3): wallet_switchEthereumChain */
 async function nxWrong(){ if(NX_WRONG) return true; const gen=SES; try{ const P=EP||anyWallet(); if(!P||!me) return false; const c=await chainOf(P); if(gen!==SES) return NX.wrong; NX.wrong=c!==CFG.chainId; }catch(e){ if(gen!==SES) return NX.wrong; NX.wrong=false; } walletLabel(); return NX.wrong; }
-async function switchChain(){ const P=EP||anyWallet(); if(!P){ toast('Your wallet is on another network. Switch it to Ethereum mainnet.'); return false; } try{ await ask(P,'wallet_switchEthereumChain',[{chainId:'0x1'}]); }catch(e){ console.warn('switch',e); toast(errMsg(e)); } const w=await nxWrong(); return !w; }
+async function switchChain(){ const P=EP||anyWallet(); if(!P){ toast('Your wallet is on another network. Switch it to Ethereum mainnet.'); return false; } let err=null; try{ await ask(P,'wallet_switchEthereumChain',[{chainId:'0x1'}]); }catch(e){ console.warn('switch',e); err=e; }
+  const w=await nxWrong();   /* a refused switch is a wrong-network stop, not a cancelled payment: say where the wallet still is */
+  if(err&&w){ const c=codeOf(err); toast(c===4001||c==='ACTION_REJECTED'?'The switch was cancelled in your wallet: it is still on another network. Switch it to Ethereum mainnet.':errMsg(err)); }
+  return !w; }
 function walletLabel(){ const b=$('wallet'); const a=me||(NX_WRONG&&DEMO_GIFT!=null?NX_DEMO_ME:null); const wrong=!!a&&(NX_WRONG||NX.wrong); $('nx-chainBar').hidden=!wrong; if(!a){ b.textContent='CONNECT'; b.classList.remove('bad'); return; } b.textContent=short(a)+(swMark(a)?' ≈':'')+(wrong?(innerWidth<900?' [!]':' · [!] NOT MAINNET'):''); b.classList.toggle('bad',!!wrong); }
 $('nx-chainBar').addEventListener('click',()=>switchChain());
 const NX_HOOKED=new WeakSet();
@@ -1052,7 +1063,8 @@ setInterval(()=>{ if(me!==NX.lastMe){ NX.lastMe=me; walletLabel(); nxWrong(); } 
    the wallet answers eth_sendTransaction (a hash, or a refusal) or when the write stops before the wallet was asked; a press after
    that is a new, deliberate payment. While the wallet holds an unanswered request the lock stays: the wallet may still send it. */
 let OPLOCK=null;
-function opLock(name){ if(OPLOCK){ toast((LABEL[OPLOCK.name]||OPLOCK.name)+' is still waiting for your wallet. Finish or cancel it there first.'); return null; }
+function opLock(name){ if(OPLOCK){ const L=LABEL[OPLOCK.name]||OPLOCK.name;   /* handed: only the wallet can stop it now; before that, nothing is sent and DISCONNECT stops it here */
+    toast(OPLOCK.handed?L+' is in your wallet now. Finish or cancel it there first.':me?L+' is still waiting for your wallet; nothing has been sent. Answer it there, or press your address and DISCONNECT to stop it.':L+' is still waiting for your wallet to connect; nothing has been sent. Answer it there first.'); return null; }
   return OPLOCK={name,handed:false,dead:false}; }
 const opFree=L=>{ if(L&&OPLOCK===L) OPLOCK=null; };
 /* once eth_sendTransaction is in the wallet's hands, an error means "nothing was sent" only when the wallet says so plainly: refused
@@ -1092,7 +1104,7 @@ class OpSigner extends ethers.JsonRpcSigner{
     if(tx.to!=null) tx.to=await ethers.resolveAddress(tx.to,this.provider);
     tx.chainId=op.chain;
     const rpc=this.provider.getRpcTransaction(tx);
-    await opCheck(op);
+    await opCheck(op); opLive(op);   /* checked again with nothing awaited before the request: an event during the await above stops it */
     op.handed=true; if(op.lock) op.lock.handed=true;   /* from here the wallet holds it */
     let h; try{ h=await ask(op.P,'eth_sendTransaction',[rpc]); }catch(e){ if(NOT_SENT.has(codeOf(e))) throw e; throw UNSURE(e); }
     if(typeof h!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(h)) throw UNSURE(h);
@@ -1130,18 +1142,27 @@ async function trackTx(op,hash,tell){ const nap=ms=>new Promise(r=>setTimeout(r,
       const used=big(await trackRpc('eth_getTransactionCount',[op.acct,'latest'])); ok=true;
       if(used!=null&&used>nonce){   /* the nonce is spent: by this transaction (its receipt a block behind) or by another one */
         const top=Number(big(await trackRpc('eth_blockNumber',[])));
-        if(scanAt==null) scanAt=Math.max(0,top-TRACK.scan);
-        for(let b=scanAt;b<=Math.min(top,scanAt+TRACK.scan-1);b++){ const blk=await trackRpc('eth_getBlockByNumber',['0x'+b.toString(16),true]);
-          for(const x of (blk&&Array.isArray(blk.transactions)?blk.transactions:[])){
-            if(!x||typeof x!=='object'||lc(x.from)!==from||big(x.nonce)!==nonce) continue;
-            const rc=await trackRpc('eth_getTransactionReceipt',[x.hash]); if(!mined(rc)) continue;
-            if(lc(x.hash)===lc(hash)) return {state:result(rc),rc};
-            const data=lc(x.input||x.data||'0x');
-            if(lc(x.to)===lc(want.to)&&data===lc(want.data||'0x')&&big(x.value)===big(want.value||'0x0')) return {state:result(rc),rc,repriced:true,by:x.hash};
-            if(data==='0x'&&lc(x.to)===from&&big(x.value)===0n) return {state:'cancelled',rc,by:x.hash};
-            return {state:'replaced',rc,by:x.hash}; }
-          scanAt=b+1; }
-        if(scanAt>top&&!unknown){ unknown=true; tell('unknown'); } }   /* spent by a transaction this page cannot find */
+        if(Number.isSafeInteger(top)&&top>0){   /* a reader with no head (null, garbage) gave no answer: next round */
+          if(scanAt==null) scanAt=Math.max(0,top-TRACK.scan);
+          /* ONE BATCH: its last block is fixed before it starts, so it reads at most TRACK.scan blocks; then the original receipt is
+             asked again (the top of this loop). The cursor moves past a block only once that block is read in full: a block a reader
+             has not got (null, hashes only, an error) or a matching transaction whose receipt has not come is read again next round,
+             from the next reader first (one reader that never gets it cannot hold the scan). */
+          const end=Math.min(top,scanAt+TRACK.scan-1); let read=0;
+          batch: for(let b=scanAt;b<=end;b++){
+            if(read&&((!unknown&&Date.now()-t0>=TRACK.lost)||Date.now()-t0>=TRACK.stop)) break;   /* a deadline came up mid-batch: it is decided below */
+            const blk=await trackRpc('eth_getBlockByNumber',['0x'+b.toString(16),true]);
+            if(!blk||typeof blk!=='object'||!Array.isArray(blk.transactions)||blk.transactions.some(x=>!x||typeof x!=='object')){ trackAt=(trackAt+1)%TRACK.rpcs.length; break; }   /* and next round the next reader is asked first */
+            for(const x of blk.transactions){
+              if(lc(x.from)!==from||big(x.nonce)!==nonce) continue;
+              const rc=await trackRpc('eth_getTransactionReceipt',[x.hash]); if(!mined(rc)){ trackAt=(trackAt+1)%TRACK.rpcs.length; break batch; }
+              if(lc(x.hash)===lc(hash)) return {state:result(rc),rc};
+              const data=lc(x.input||x.data||'0x');
+              if(lc(x.to)===lc(want.to)&&data===lc(want.data||'0x')&&big(x.value)===big(want.value||'0x0')) return {state:result(rc),rc,repriced:true,by:x.hash};
+              if(data==='0x'&&lc(x.to)===from&&big(x.value)===0n) return {state:'cancelled',rc,by:x.hash};
+              return {state:'replaced',rc,by:x.hash}; }
+            scanAt=b+1; read++; }
+          if(read&&scanAt>top&&!unknown){ unknown=true; tell('unknown'); } } }   /* read up to the head and spent by a transaction this page cannot find */
     }catch(e){} }
     if(ok) lastOk=Date.now();
     if(!unknown&&(Date.now()-t0>=TRACK.lost||Date.now()-lastOk>=TRACK.lost)){ unknown=true; tell('unknown'); }
@@ -1150,7 +1171,7 @@ async function trackTx(op,hash,tell){ const nap=ms=>new Promise(r=>setTimeout(r,
 /* send(): the live page's, with one optional observer so the pick popup can show CONFIRM / PENDING / COLLECTED / FAILED (and WRONG NETWORK) */
 async function send(name,fn,on,lock){ const ob=(...a)=>{ try{ if(on) on(...a); }catch(x){ console.warn('observer',x); } };
   const K=lock||opLock(name); if(!K){ ob('busy'); return; }   /* taken before the first await */
-  try{ if(!W){ await connectWallet(); if(K.dead||!W){ ob('nowallet'); return; } }
+  try{ if(!W){ const ok=await connectWallet(); if(K.dead||!W||ok!==true){ ob('nowallet'); return; } }
     const op=await opBegin(K); if(!op){ toast('Your wallet is on another network. Switch it to Ethereum mainnet. Nothing was sent.'); ob('wrong'); return; }
     const L=LABEL[name]||name; ob('confirm'); toast(L+': confirm in your wallet');
     const tx=await fn(op.C); opFree(K); const h=tx.hash; ob('sent',tx); toast(L+': sent ('+short(h)+'), waiting for Ethereum to confirm');
@@ -1463,35 +1484,38 @@ function txView(v,x){ if(!CC) return; NX.tx=v; const D=CC; let h=''; $('nx-ccMor
   $('ccActs').innerHTML=h;
   const bk=$('nx-txBack'); if(bk) bk.onclick=()=>candActs();
   const cl=$('nx-txClose'); if(cl) cl.onclick=ccOff;
-  const sw=$('nx-switch'); if(sw) sw.onclick=async()=>{ sw.disabled=true; const ok=await switchChain(); sw.disabled=false; if(ok) nxCollect(); };
-  if(v==='done'){ const who=x&&isAddr(x.from)?x.from:me; (async()=>{ let s=CFG.demo?'2.0000':'––'; try{ if(storm&&who) s=fmtS(await storm.seats(who)); }catch(e){} const e=$('nx-txSeats'); if(e) e.textContent=s; })(); }   /* the seats of the account that paid */
+  const sw=$('nx-switch'); if(sw) sw.onclick=async()=>{ const cc=CC, k=CC.k; sw.disabled=true; const ok=await switchChain(); sw.disabled=false; if(ok&&NX.pop&&CC===cc&&CC.k===k&&NX.tx==='wrong') nxCollect(); };   /* collects only in the dialog that asked, still waiting on the switch */
+  if(v==='done'){ const who=x&&isAddr(x.from)?x.from:me, el=$('nx-txSeats'); (async()=>{ let s=CFG.demo?'2.0000':'––'; try{ if(storm&&who) s=fmtS(await storm.seats(who)); }catch(e){} if(el&&el.isConnected) el.textContent=s; })(); }   /* the seats of the account that paid, written only into this view (a later view has its own) */
   fitExp(); }
-async function failReason(e){ const inner=(e&&(e.error||(e.info&&e.info.error)))||{}; const code=inner.code??(e&&e.code); const msg=String(inner.message||(e&&(e.reason||e.shortMessage||e.message))||'').toLowerCase();
+async function failReason(e,day){ const inner=(e&&(e.error||(e.info&&e.info.error)))||{}; const code=inner.code??(e&&e.code); const msg=String(inner.message||(e&&(e.reason||e.shortMessage||e.message))||'').toLowerCase();
   if(code===4001||code==='ACTION_REJECTED'||code===-32002) return errMsg(e);
   if(code==='INSUFFICIENT_FUNDS'||/insufficient funds/.test(msg)) return 'Not enough ETH in this wallet for the price plus the network fee.';
   if(/nothing on sale|that day is gone/.test(msg)) return 'Someone bought first.';
   if(/the price is higher/.test(msg)) return 'The price went up while you were confirming: a witness paid toward this plate. Try again.';
   if(await nxWrong()) return 'Your wallet is on another network. Switch it to Ethereum mainnet.';
-  try{ if(storm){ const o=await storm.onSale(); if(o[3]===false||Number(o[0])!==(CC?CC.day:-1)) return 'Someone bought first.'; } }catch(x){}
+  try{ if(storm){ const o=await storm.onSale(); if(o[3]===false||Number(o[0])!==day) return 'Someone bought first.'; } }catch(x){}
   return errMsg(e); }
 const soldTo=async day=>{ try{ if(storm){ const o=await storm.onSale(); if(o[3]===false||Number(o[0])!==day) return 'Someone bought first. '; } }catch(x){} return ''; };
 async function nxCollect(){ if(!CC) return; const cc=CC, k=CC.k, day=CC.day; if(!saleOpen(day)){ txView('closed'); return; }
   const L=opLock('buy'); if(!L) return; let handed=false;   /* one write at a time: taken before anything waits */
+  const tok=NX.op=(NX.op||0)+1;   /* this press: a newer COLLECT, even in the same dialog on the same option, takes the dialog over */
   /* the dialog this press belongs to: this dialog instance, this option, this day. Anything that answers later (the connection, the
      wallet, the chain) updates it only if it is still that one: closed and reopened, moved to another option or overtaken by a new
-     day, it is left alone (the toasts still report, and a submitted transaction is followed regardless). A new day while the wallet
-     connects means nothing is bought: the option was one of the old day's. */
-  const mine=()=>NX.pop&&CC===cc&&CC.k===k&&CC.day===day;
+     day, or taken over by a newer press, it is left alone (the toasts still report, and a submitted transaction is followed
+     regardless). A late explanation (who bought first, why it failed) is looked up first and the dialog is checked again right
+     before it is written, with nothing awaited in between. A new day while the wallet connects means nothing is bought: the
+     option was one of the old day's. */
+  const mine=()=>NX.pop&&CC===cc&&CC.k===k&&CC.day===day&&NX.op===tok;
   try{ if(pick!==k){ NX.ctx.choose(k); }
   txView('confirm');
   if(NX_WRONG){ txView('wrong'); return; }
-  if(!W){ try{ await connectWallet(); }catch(e){ if(mine()) txView('failed',errMsg(e)); return; } if(L.dead||!W){ if(mine()) candActs(); return; } }
+  if(!W){ let ok=false; try{ ok=await connectWallet(); }catch(e){ if(mine()) txView('failed',errMsg(e)); return; } if(L.dead||!W||ok!==true){ if(mine()) candActs(); return; } }
   if(await nxWrong()){ if(mine()) txView('wrong'); return; }
   if(!mine()) return; if(!saleOpen(day)){ txView('closed'); return; }
   const run=NX.ctx.buy(async(ph,x)=>{ if(!mine()) return; if(ph==='sent') txView('pending',x); else if(ph==='confirmed') txView('done',x); else if(ph==='unsure') txView('unknown',null); else if(ph==='unknown') txView('unknown',x);
-    else if(ph==='reverted') txView('failed','It reached Ethereum but failed (reverted). '+(await soldTo(day))+'Only the network fee was spent.');
+    else if(ph==='reverted'){ const why=await soldTo(day); if(mine()) txView('failed','It reached Ethereum but failed (reverted). '+why+'Only the network fee was spent.'); }
     else if(ph==='cancelled') txView('failed','You cancelled it in your wallet after it was sent, so it did not go through. Only network fees were spent.');
-    else if(ph==='replaced') txView('failed','Your wallet replaced it with another transaction, so it did not go through. Check your wallet.'); else if(ph==='error') txView('failed',await failReason(x)); else if(ph==='wrong') txView('wrong'); else if(ph==='nowallet') candActs(); },k,L);
+    else if(ph==='replaced') txView('failed','Your wallet replaced it with another transaction, so it did not go through. Check your wallet.'); else if(ph==='error'){ const why=await failReason(x,day); if(mine()) txView('failed',why); } else if(ph==='wrong') txView('wrong'); else if(ph==='nowallet') candActs(); },k,L);
   handed=true; await run;   /* send() owns the lock from here and lets it go */
   } finally{ if(!handed) opFree(L); }
 }
@@ -1696,10 +1720,10 @@ async function renderBoard(st){ if(!st.settled) return; const key=st.lastId+':'+
   list.forEach(r=>whoIsOnce(r.addr).then(w=>{ const s=tb.querySelector('tr[data-a="'+r.addr.toLowerCase()+'"] .who'); if(!s) return; if(w.handle) s.innerHTML='<a href="https://x.com/'+esc(w.handle)+'" target="_blank" rel="noopener">@'+esc(w.handle)+' ↗</a>'; else if(w.ens) s.textContent=w.ens; }).catch(()=>{}));
   markMe(); }
 function markMe(){ const tb=$('nx-seatRows'); tb.querySelectorAll('tr').forEach(tr=>tr.classList.toggle('me',!!me&&tr.dataset.a===me.toLowerCase())); }
-async function refreshSeats(){ const gen=SES, a=me;
-  if(!me||CFG.demo){ if(CFG.demo&&me){ $('seatsNote').textContent='You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.0364 ETH.'; $('claim').disabled=false; $('nx-mine').hidden=false; $('nx-mySeats').textContent='2.0000'; $('nx-myPend').innerHTML='0.0364 <small>ETH</small>'; $('nx-myOwed').innerHTML='0 <small>ETH</small>'; markMe(); } return; }
-  const [s,p,tot,o]=await Promise.all([storm.seats(a),storm.pending(a),storm.totalSeats(),storm.owed(a)]); if(gen!==SES||a!==me) return;
-  $('seatsNote').textContent='You hold '+(+ethers.formatEther(s)).toFixed(4)+' seats out of '+(+ethers.formatEther(tot)).toFixed(4)+'. Earned and waiting for you: '+fmt(p)+' ETH'+(p>0n?' (press CLAIM)':'')+'.'+(o>0n?' The contract also holds '+fmt(o)+' ETH it could not send to your wallet: press WITHDRAW.':'');
+async function refreshSeats(){ const gen=SES, a=me, n=refreshSeats.n=(refreshSeats.n||0)+1;   /* n: an older answer arriving after a newer one is shown is dropped */
+  if(!me||CFG.demo){ if(CFG.demo&&me){ $('seatsNote').textContent='You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.0364 ETH (press CLAIM, or it is sent to you automatically, in the same transaction, the next time this wallet collects a plate or witnesses).'; $('claim').disabled=false; $('nx-mine').hidden=false; $('nx-mySeats').textContent='2.0000'; $('nx-myPend').innerHTML='0.0364 <small>ETH</small>'; $('nx-myOwed').innerHTML='0 <small>ETH</small>'; markMe(); } return; }
+  const [s,p,tot,o]=await Promise.all([storm.seats(a),storm.pending(a),storm.totalSeats(),storm.owed(a)]); if(gen!==SES||a!==me||n<(refreshSeats.shown||0)) return; refreshSeats.shown=n;
+  $('seatsNote').textContent='You hold '+(+ethers.formatEther(s)).toFixed(4)+' seats out of '+(+ethers.formatEther(tot)).toFixed(4)+'. Earned and waiting for you: '+fmt(p)+' ETH'+(p>0n?' (press CLAIM, or it is sent to you automatically, in the same transaction, the next time this wallet collects a plate or witnesses)':'')+'.'+(o>0n?' The contract also holds '+fmt(o)+' ETH it could not send to your wallet: press WITHDRAW.':'');
   $('nx-mine').hidden=false; $('nx-mySeats').textContent=fmtS(s); $('nx-myPend').innerHTML=fmt(p)+' <small>ETH</small>'; $('nx-myOwed').innerHTML=fmt(o)+' <small>ETH</small>';
   $('claim').disabled=p===0n; $('claim').onclick=()=>send('claim',W=>pad(W.claim,[]));
   $('withdraw').style.display=o>0n?'':'none'; $('withdraw').disabled=o===0n; $('withdraw').onclick=()=>send('withdraw',W=>pad(W.withdraw,[]));
