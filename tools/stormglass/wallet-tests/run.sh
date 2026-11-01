@@ -14,6 +14,8 @@ with S(("127.0.0.1",int(sys.argv[2])),H) as s: s.serve_forever()
 PY
 SRV=$!
 sleep 1
+# the server must be ours and alive (a port already taken makes python exit; the tests would then talk to someone else's server)
+if ! kill -0 $SRV 2>/dev/null; then echo "HARNESS FAIL the HTTP server on 127.0.0.1:$PORT did not start (port taken?)"; echo "XDONE rc=1"; exit 1; fi
 NODE_PATH=${NODE_PATH:-/home/claude/node_modules} PORT=$PORT node "$DIR/${SCRIPT:-wallet.test.js}"
 RC=$?
 kill $SRV 2>/dev/null

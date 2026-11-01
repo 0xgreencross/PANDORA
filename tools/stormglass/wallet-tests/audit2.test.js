@@ -171,9 +171,10 @@ T('m4','WalletConnect lifecycle (mock): pair, one witness transaction on chain 1
   return {pass:ok, ev:{pair1:p1,send:s.map(x=>x.pid+'@'+x.params[0].chainId),confirmed:conf,afterDisconnect:afterDisc,label:labD,revokeOverRelay:revokes,reconnect:{state:again,sheet:title2,label:lab2,paired:p2.conn}}}; },IPHONE);
 T('m5','WalletConnect: the phone ends the session: the page disconnects, a submitted transaction is still followed',WCFG,async E=>{
   const p1=await wcPair(E); E.chain.holdReceipts=true; await fillWit(E,'0.01'); await pressWit(E); const sent=await E.until(async()=>(await E.sends()).length>0,8000); await sleep(500);
-  await E.page.evaluate(()=>__MW.wc.phoneEnds()); await sleep(1000); const lab=await E.label(); E.chain.holdReceipts=false;
+  const doneBefore=(await E.toasts()).some(x=>DONE.test(x));   /* the barrier: still unconfirmed when the phone ends the session */
+  await E.page.evaluate(()=>__MW.wc.phoneEnds()); await sleep(1000); const lab=await E.label(); const doneAtEnd=(await E.toasts()).some(x=>DONE.test(x)); E.chain.holdReceipts=false;
   const conf=await E.until(async()=>(await E.toasts()).some(x=>DONE.test(x)),15000);
-  return {pass:p1.conn&&sent&&/CONNECT/.test(lab)&&conf, ev:{paired:p1.conn,sent,labelAfterPhoneEnds:lab,confirmed:conf}}; },IPHONE);
+  return {pass:p1.conn&&sent&&!doneBefore&&!doneAtEnd&&/CONNECT/.test(lab)&&conf, ev:{paired:p1.conn,sent,doneBefore,doneAtEnd,labelAfterPhoneEnds:lab,confirmed:conf}}; },IPHONE);
 
 /* ═══ h: WALLET IDENTITY ═══ */
 const MM={rdns:'io.metamask',name:'MetaMask'};
@@ -229,7 +230,7 @@ T('p4','the day changes while CONNECT is pending: nothing is bought on the new d
   return {pass:g&&day===14&&s.length===0&&/NO LONGER ON SALE/.test(p), ev:{gateHit:g,dayOnScreen:day,buys:args,popup:p.slice(0,80)}}; });
 T('p5','the day changes while the wallet confirms: the day 13 buy is followed in its own dialog; the dialog no longer offers day 14\'s price as day 13',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await E.P('A').set({gate:{eth_sendTransaction:true}}); await openOpt(E,3); await pressCollect(E); const g=await E.waitGate('A','eth_sendTransaction',6000);
-  toDay14(E.chain); await tickNow(E); await sleep(600); const hdr=await E.page.evaluate(()=>document.getElementById('nx-pfPrice').textContent);
+  toDay14(E.chain); await tickNow(E); await E.until(async()=>/DAY 13 IS NO LONGER ON SALE/.test(await E.page.evaluate(()=>document.getElementById('nx-pfPrice').textContent)),3000); const hdr=await E.page.evaluate(()=>document.getElementById('nx-pfPrice').textContent);
   await E.P('A').set({gate:{}}); await E.P('A').release('eth_sendTransaction');
   const done=await E.until(async()=>/IS YOURS|NOT COLLECTED/.test(await popText(E.page)),12000); const s=await E.sends(), arg=s[0]&&await decodeBuy(E,s[0].params[0].data);
   return {pass:g&&done&&arg&&arg[0]==='13'&&arg[1]==='3'&&/DAY 13 IS NO LONGER ON SALE/.test(hdr), ev:{gateHit:g,header:hdr,buy:arg,popup:(await popText(E.page)).slice(0,60)}}; });

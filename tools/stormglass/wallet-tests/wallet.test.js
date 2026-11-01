@@ -15,11 +15,18 @@ const PAGE=fs.readFileSync(TARGET,'utf8'), ETHERS=fs.readFileSync(UMD,'utf8');
 const A1='0x00000000000000000000000000000000000000aa', A2='0x00000000000000000000000000000000000000bb', B1='0x00000000000000000000000000000000000000cc';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let browser;
+/* every context a case opens (its own and any extra boot() inside the case): the runner closes them all and counts their page errors */
+const LIVE=[];
+/* every fake-RPC request of the whole run by method, across all contexts (harness.test.js uses it to show a closed context sends nothing) */
+const ALLHITS={};
 
 async function boot(cfg,o={}){
-  const ctx=await browser.newContext({viewport:o.viewport||{width:1440,height:900},userAgent:o.ua,deviceScaleFactor:1,isMobile:!!o.mobile,hasTouch:!!o.mobile});
+  /* a fresh context per boot: its own localStorage, cookies, cache; service workers blocked so every request goes through ctx.route */
+  const ctx=await browser.newContext({viewport:o.viewport||{width:1440,height:900},userAgent:o.ua,deviceScaleFactor:1,isMobile:!!o.mobile,hasTouch:!!o.mobile,serviceWorkers:'block'});
   const chain=makeChain(); if(o.chain) o.chain(chain);
-  const outside=[];
+  const outside=[], sockets=[];
+  /* WebSockets do not go through ctx.route: refuse every one (WalletConnect's relay is wss://relay.walletconnect.org) and record it */
+  await ctx.routeWebSocket(/.*/,ws=>{ sockets.push(ws.url()); ws.close({code:1008,reason:'wallet tests: no outside sockets'}); });
   await ctx.route('**/*',async route=>{ const req=route.request(); const u=new URL(req.url());
     if(u.hostname==='127.0.0.1'){
       if(u.pathname==='/'||u.pathname==='/index.html') return route.fulfill({status:200,contentType:'text/html; charset=utf-8',body:PAGE});
@@ -28,23 +35,23 @@ async function boot(cfg,o={}){
       return route.continue(); }
     if(u.hostname==='cdnjs.cloudflare.com'&&/ethers\/6\.13\.2\/ethers\.umd\.min\.js$/.test(u.pathname)) return route.fulfill({status:200,contentType:'application/javascript',body:ETHERS});
     if(HOST.test(u.hostname)){ const body=req.postData(); let m0='?'; try{ const q=JSON.parse(body||'{}'); m0=Array.isArray(q)?q.map(x=>x.method).join('+'):q.method; }catch(e){}
-      const hk=u.hostname+' '+m0; chain.hits[hk]=(chain.hits[hk]||0)+1;
+      const hk=u.hostname+' '+m0; chain.hits[hk]=(chain.hits[hk]||0)+1; ALLHITS[m0]=(ALLHITS[m0]||0)+1;
       const mode=chain.hostMode(u.hostname,body);
       if(mode==='500') return route.fulfill({status:500,contentType:'text/plain',body:'upstream error'});
       if(mode==='rpcerror') return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:1,error:{code:-32000,message:'header not found'}})});
       if(mode==='hang') return new Promise(r=>setTimeout(()=>route.abort().catch(()=>{}).then(r),20000));
       return route.fulfill({status:200,contentType:'application/json',body:chain.handle(body)}); }
-    outside.push(u.hostname); return route.fulfill({status:404,body:''}); });
+    outside.push(u.hostname+u.pathname.slice(0,40)); return route.fulfill({status:404,body:''}); });
   await ctx.addInitScript(installMock,cfg);
   if(o.store) await ctx.addInitScript(s=>{ try{ for(const k in s) localStorage.setItem(k,s[k]); }catch(e){} },o.store);
-  const page=await ctx.newPage(); const errors=[], consoleErr=[];
+  const errors=[], consoleErr=[]; const E={ctx,chain,errors,consoleErr,outside,sockets}; LIVE.push(E);
+  const page=await ctx.newPage(); E.page=page;
   page.on('pageerror',e=>errors.push(String(e).slice(0,200))); page.on('crash',()=>errors.push('page crashed'));
   page.on('console',m=>{ if(m.type()==='error') consoleErr.push(m.text().slice(0,200)); });
   await page.goto(BASE+(o.query||''));
   await page.waitForFunction(()=>typeof ST!=='undefined'&&ST&&ST.now&&document.getElementById('panel')&&document.getElementById('panel').textContent.length>10,null,{timeout:30000});
   await page.evaluate(()=>{ window.__toasts=[]; const t=document.getElementById('toast'); new MutationObserver(()=>{ if(t.textContent) window.__toasts.push(t.textContent); }).observe(t,{childList:true,characterData:true,subtree:true}); });
   await sleep(300);
-  const E={ctx,page,chain,errors,consoleErr,outside};
   E.P=id=>({ set:o=>page.evaluate(([i,o])=>__MW.P[i].set(o),[id,o]), emit:(ev,...a)=>page.evaluate(([i,ev,a])=>__MW.P[i].emit(ev,...a),[id,ev,a]),
     release:m=>page.evaluate(([i,m])=>__MW.P[i].release(m),[id,m]), waiting:m=>page.evaluate(([i,m])=>__MW.P[i].waiting(m),[id,m]),
     count:m=>page.evaluate(([i,m])=>__MW.P[i].count(m),[id,m]) });
@@ -81,14 +88,21 @@ const DONE=/confirmed|\bdone$/i;   /* the redesign says "confirmed", the PR's ol
 const ETH=v=>'0x'+(BigInt(Math.round(v*1e6))*10n**12n).toString(16);
 
 const CASES=[];
-const T=(id,name,cfg,run,o)=>CASES.push({id,name,cfg,run,o});
+/* registration refuses a second case with the same id (exit 2): two cases under one id would make CASES=id ambiguous and a result
+   row impossible to attribute. Checked here, at registration, so every runner that loads the cases (wallet.test.js, shots) sees it. */
+const T=(id,name,cfg,run,o)=>{ if(typeof id!=='string'||!/^[A-Za-z0-9_-]+$/.test(id)){ console.log('HARNESS FAIL bad case id '+JSON.stringify(id)); process.exit(2); }
+  if(CASES.some(c=>c.id===id)){ console.log('HARNESS FAIL duplicate case id '+id+' ('+JSON.stringify(name).slice(0,80)+')'); process.exit(2); }
+  CASES.push({id,name,cfg,run,o}); };
 const one=(id,ch='0x1',x={})=>Object.assign({id,name:'Wallet '+id,rdns:'test.'+id.toLowerCase(),chainId:ch,accounts:[id==='B'?B1:A1,A2]},x);
 
 T('a1','wrong chain, switch refused: witness and claim send nothing',{wallets:[one('A','0x2105',{switchReject:{code:4001}})],ethereum:'A'},async E=>{
   await connect(E); await witness(E,'0.01'); await sleep(2500);
   await E.page.waitForSelector('#claim:not([disabled])',{timeout:8000}).catch(()=>{}); await E.page.click('#claim',{force:true}).catch(()=>{}); await sleep(2500);
   const s=await E.sends(), t=await E.toasts();
-  return {pass:s.length===0&&t.some(x=>/another network|switch your wallet/i.test(x)), ev:{sends:s.map(x=>x.chain+' '+x.params[0].value),toasts:t.slice(-3)}}; });
+  /* the write stops at the refused switch (opBegin returns null): the wallet is never asked to estimate or send, and the visitor is
+     never told to confirm in the wallet (a later look, opCheck, would also stop the send, but only after prompting) */
+  const asked={eth_estimateGas:await E.P('A').count('eth_estimateGas'),eth_sendTransaction:await E.P('A').count('eth_sendTransaction')}, prompt=t.some(x=>/confirm in your wallet/i.test(x));
+  return {pass:s.length===0&&t.some(x=>/another network|switch your wallet/i.test(x))&&asked.eth_estimateGas===0&&asked.eth_sendTransaction===0&&!prompt, ev:{sends:s.map(x=>x.chain+' '+x.params[0].value),asked,confirmPrompt:prompt,toasts:t.slice(-3)}}; });
 T('a2','wrong chain, switch refused: COLLECT sends nothing',{wallets:[one('A','0x2105',{switchReject:{code:4001}})],ethereum:'A'},async E=>{
   await connect(E); await buy(E); await sleep(2500);
   const sw=await E.page.$('#nx-switch'); if(sw){ await sw.click(); await sleep(2000); }
@@ -131,11 +145,13 @@ T('f','chainChanged to 8453 right before submit: no send',{wallets:[one('A')],et
 T('g','a submitted tx is followed after DISCONNECT; the UI stays disconnected',{wallets:[one('A',undefined,{gate:{}})],ethereum:'A'},async E=>{
   await connect(E); E.chain.holdReceipts=true; await E.P('A').set({gate:{eth_getTransactionReceipt:true}}); const rq0=await E.P('A').count('eth_requestAccounts');
   await witness(E,'0.01'); const sent=await E.until(async()=>(await E.sends()).length>0,8000); await sleep(800);
+  const doneBefore=(await E.toasts()).some(x=>DONE.test(x));   /* the barrier: still unconfirmed when DISCONNECT is pressed */
   await disconnectUI(E); await sleep(500);
+  const doneAtDisconnect=(await E.toasts()).some(x=>DONE.test(x));
   E.chain.holdReceipts=false; await E.P('A').set({gate:{}}); await E.P('A').release('eth_getTransactionReceipt');
   const conf=await E.until(async()=>(await E.toasts()).some(x=>DONE.test(x)),15000); await sleep(500);
   const st=await E.state(), lab=await E.label();
-  return {pass:sent&&conf&&!st.me&&!st.W&&/CONNECT/.test(lab)&&(await E.P('A').count('eth_requestAccounts'))===rq0, ev:{sent,confirmed:conf,state:st,label:lab,toasts:(await E.toasts()).slice(-3)}}; });
+  return {pass:sent&&!doneBefore&&!doneAtDisconnect&&conf&&!st.me&&!st.W&&/CONNECT/.test(lab)&&(await E.P('A').count('eth_requestAccounts'))===rq0, ev:{sent,doneBefore,doneAtDisconnect,confirmed:conf,state:st,label:lab,toasts:(await E.toasts()).slice(-3)}}; });
 T('h1','picker: two announced wallets listed; only the chosen one is asked',{wallets:[one('A'),one('B')]},async E=>{
   await E.page.click('#wallet'); const open=await E.until(()=>sheetOpen(E.page),4000); const btns=await sheetButtons(E.page);
   await clickSheet(E.page,/WALLET B/); await E.until(async()=>/0x/.test(await E.label()),6000);
@@ -385,33 +401,53 @@ T('n6','parseAmount table (in the page): wei exact, 18 decimals ok, 19 rejected,
   const bad=rows.filter(r=>r.got!==r.want);
   return {pass:bad.length===0,ev:{n:rows.length,bad}}; });
 
-module.exports={boot,connect,sheetOpen,sheetButtons,setBrowser:b=>{ browser=b; },sleep,one:(...a)=>one(...a),witGeo,witPass,witClick,witSheet,witOk,closeWit,ETH,
+module.exports={ALLHITS,LIVE,boot,connect,sheetOpen,sheetButtons,setBrowser:b=>{ browser=b; },sleep,one:(...a)=>one(...a),witGeo,witPass,witClick,witSheet,witOk,closeWit,ETH,
   T,CASES,clickSheet,sheetTitle,cancelSheet,disconnectUI,witness,buy,popText,openWit,typeAndPress,sendName,DONE,A1,A2,B1,FOUNDERS,CANDLE};
 /* THE RUN. Exit status: 0 only when every selected case passed. A case fails on its own assertion, on an exception, or on any
-   uncaught page error or page crash (o.allowPageErrors to opt out). CASES must name known cases (or the groups @orig, @audit2);
+   uncaught page error or page crash (o.allowPageErrors to opt out). CASES must name known cases (or the groups @orig, @audit2, @audit3, @audit3b, @harness);
    an unknown id, or a selection of zero cases, is a harness failure (exit 2). */
+/* Node exits 0 when the event loop drains with the run still awaiting something (seen when the browser process dies: Playwright's
+   promise never settles). The run always ends through process.exit(); reaching beforeExit means it never finished: that is a failure. */
+let RUNNING='(none: before the first case)';
+if(require.main===module) process.on('beforeExit',()=>{ console.log('HARNESS FAIL the run stopped before it finished, in case '+RUNNING+' (a promise never settled: browser gone?)'); process.exit(1); });
 if(require.main===module) (async()=>{
   const ORIG=CASES.map(c=>c.id);
   require('./audit2.test.js');
   const AUDIT=CASES.map(c=>c.id).filter(id=>!ORIG.includes(id));
-  const want=(process.env.CASES||'').split(',').map(x=>x.trim()).filter(Boolean).flatMap(x=>x==='@orig'?ORIG:x==='@audit2'?AUDIT:[x]);
+  if(fs.existsSync(path.join(__dirname,'audit3.test.js'))) require('./audit3.test.js');
+  const AUDIT3=CASES.map(c=>c.id).filter(id=>!ORIG.includes(id)&&!AUDIT.includes(id));
+  if(fs.existsSync(path.join(__dirname,'audit3b.test.js'))) require('./audit3b.test.js');
+  const AUDIT3B=CASES.map(c=>c.id).filter(id=>!ORIG.includes(id)&&!AUDIT.includes(id)&&!AUDIT3.includes(id));
+  require('./harness.test.js');
+  const HARN=CASES.map(c=>c.id).filter(id=>!ORIG.includes(id)&&!AUDIT.includes(id)&&!AUDIT3.includes(id)&&!AUDIT3B.includes(id));
+  const want=(process.env.CASES||'').split(',').map(x=>x.trim()).filter(Boolean).flatMap(x=>x==='@orig'?ORIG:x==='@audit2'?AUDIT:x==='@audit3'?AUDIT3:x==='@audit3b'?AUDIT3B:x==='@harness'?HARN:[x]);
   if(process.env.CASES!=null&&process.env.CASES.trim()!==''&&!want.length){ console.log('HARNESS FAIL CASES='+JSON.stringify(process.env.CASES)+' selects no case'); process.exit(2); }
   const known=new Set(CASES.map(c=>c.id)), unknown=want.filter(x=>!known.has(x));
   if(unknown.length){ console.log('HARNESS FAIL unknown case ids in CASES: '+unknown.join(',')); process.exit(2); }
   const sel=CASES.filter(c=>!want.length||want.includes(c.id));
   if(!sel.length){ console.log('HARNESS FAIL no cases selected'); process.exit(2); }
+  console.log('SELECTED '+sel.length+' of '+CASES.length+': '+sel.map(c=>c.id).join(',')+' · target '+TARGET+' sha256 '+require('crypto').createHash('sha256').update(PAGE).digest('hex').slice(0,16));
   browser=await chromium.launch({args:['--no-sandbox','--disable-background-networking','--disable-component-update','--no-first-run'],executablePath:process.env.CHROMIUM||'/opt/pw-browsers/chromium'});
+  let browserGone=false; browser.on('disconnected',()=>{ browserGone=true; });
   const res=[];
-  for(const c of sel){ let E=null, r;
-    try{ E=await boot(c.cfg,c.o||{}); r=await c.run(E); if(!r||typeof r!=='object') r={pass:false,ev:{bad:'case returned '+r}}; r.ev=r.ev||{}; r.pageErrors=E.errors.slice(0,3);
-      if(E.errors.length&&!(c.o&&c.o.allowPageErrors)){ r.pass=false; r.ev.failedOnPageErrors=E.errors.slice(0,3); } }
+  for(const c of sel){ let E=null, r; const t0=Date.now(); LIVE.length=0; let wallet=null; RUNNING=c.id;
+    try{ E=await boot(c.cfg,c.o||{}); r=await c.run(E); if(!r||typeof r!=='object') r={pass:false,ev:{bad:'case returned '+r}}; r.ev=r.ev||{}; }
     catch(e){ r={pass:false,ev:{exception:String(e&&e.message||e).slice(0,300)}}; }
-    finally{ if(E) await E.close().catch(()=>{}); }
-    res.push({id:c.id,name:c.name,pass:r.pass===true,ev:r.ev,pageErrors:r.pageErrors});
-    console.log((r.pass===true?'PASS ':'FAIL ')+c.id.padEnd(3)+' '+c.name+'\n     '+JSON.stringify(r.ev).slice(0,400)); }
-  await browser.close();
+    finally{ /* what each page's wallets were asked (eth_sendTransaction requests) vs what the mock let through (sends), read before closing */
+      wallet=[]; for(const X of LIVE){ try{ if(X.page&&!X.page.isClosed()) wallet.push(await Promise.race([X.page.evaluate(()=>window.__MW?{asked:__MW.log.filter(x=>x.method==='eth_sendTransaction').length,sent:__MW.sends.length}:null),sleep(3000).then(()=>'page did not answer')])); }catch(e){ wallet.push(null); } }
+      for(const X of LIVE) await X.ctx.close().catch(()=>{}); }
+    /* page errors and crashes from every context the case opened fail the case (o.allowPageErrors to opt out) */
+    const errs=LIVE.flatMap(X=>X.errors), outside=LIVE.flatMap(X=>X.outside), sockets=LIVE.flatMap(X=>X.sockets);
+    r.pageErrors=errs.slice(0,3);
+    if(errs.length&&!(c.o&&c.o.allowPageErrors)){ r.pass=false; r.ev.failedOnPageErrors=errs.slice(0,3); }
+    if(browserGone){ r.pass=false; r.ev.browserGone=true; }
+    const ms=Date.now()-t0; res.push({id:c.id,name:c.name,pass:r.pass===true,ms,ev:r.ev,pageErrors:r.pageErrors,contexts:LIVE.length,wallet,outsideRefused:[...new Set(outside)],socketsRefused:[...new Set(sockets)]});
+    console.log((r.pass===true?'PASS ':'FAIL ')+c.id.padEnd(3)+' '+c.name+' ('+ms+' ms)\n     '+JSON.stringify(r.ev).slice(0,400)+(outside.length||sockets.length?'\n     refused outside: '+JSON.stringify([...new Set(outside.concat(sockets))]).slice(0,300):''));
+    if(browserGone) break; }
+  await browser.close().catch(()=>{});
   fs.mkdirSync(OUT,{recursive:true}); fs.writeFileSync(path.join(OUT,'results-'+LABEL+'.json'),JSON.stringify(res,null,1));
-  const failed=res.filter(r=>!r.pass);
-  console.log(LABEL+': '+(res.length-failed.length)+'/'+res.length+' passed'+(failed.length?' · FAILED: '+failed.map(r=>r.id).join(','):''));
-  process.exit(failed.length?1:0);
+  const failed=res.filter(r=>!r.pass), notRun=sel.filter(c=>!res.some(r=>r.id===c.id)).map(c=>c.id);
+  console.log('RAN '+res.length+': '+res.map(r=>r.id).join(',')+(notRun.length?' · NOT RUN (browser gone): '+notRun.join(','):''));
+  console.log(LABEL+': '+(res.length-failed.length)+'/'+sel.length+' passed'+(failed.length?' · FAILED: '+failed.map(r=>r.id).join(','):''));
+  process.exit(failed.length||notRun.length||res.length!==sel.length?1:0);
 })().catch(e=>{ console.log('HARNESS FAIL',e&&e.stack||e); process.exit(1); });

@@ -5,7 +5,7 @@
            announceTwice:'A'|null }
    rules (also settable later with __MW.P[id].set({...})): delay:{method:ms}, reject:{method:{code,message}}, throwSync:{method:true},
    never:{method:true}, malformed:{method:value}, switchReject:{code}|null, revokeUnsupported:bool, emitOnRevoke:bool, gate:{method:true},
-   enforceChainId:bool (as MetaMask: eth_sendTransaction with a chainId other than the wallet's is refused, -32602), txNonce:'0x..'
+   announceAfter:ms (a late wallet: silent before then, then announces itself once and answers later requests), enforceChainId:bool (as MetaMask: eth_sendTransaction with a chainId other than the wallet's is refused, -32602), txNonce:'0x..'
    (the nonce the wallet reports for its own transactions).
    cfg.wc = {accounts,chainId,...rules}: a deterministic WalletConnect EthereumProvider (window['@walletconnect/ethereum-provider']),
    so the page never loads /wc.js. enable() emits display_uri and waits for __MW.wc.approve(); disconnect() ends the session;
@@ -71,9 +71,11 @@ function installMock(cfg){
   }
   const W=(cfg.wallets||[]).map(w=>({w,p:make(w)}));
   const info=w=>Object.freeze({uuid:'00000000-0000-4000-8000-'+String(w.id.charCodeAt(0)).padStart(12,'0'),name:w.name||w.id,icon:w.icon||ICON,rdns:w.rdns||('test.'+w.id.toLowerCase())});
-  const announce=()=>W.forEach(({w,p})=>{ if(w.announce===false) return; const d=Object.freeze({info:info(w),provider:p});
+  const t0=performance.now();   /* w.announceAfter (ms): the wallet is not there before then (a late extension); it announces itself then, and answers requests after */
+  const announce=()=>W.forEach(({w,p})=>{ if(w.announce===false) return; if(w.announceAfter&&performance.now()-t0<w.announceAfter) return; const d=Object.freeze({info:info(w),provider:p});
     window.dispatchEvent(new CustomEvent('eip6963:announceProvider',{detail:d})); if(cfg.announceTwice===w.id) window.dispatchEvent(new CustomEvent('eip6963:announceProvider',{detail:Object.freeze({info:info(w),provider:p})})); });
   window.addEventListener('eip6963:requestProvider',announce);
+  W.forEach(({w,p})=>{ if(w.announce!==false&&w.announceAfter) setTimeout(()=>window.dispatchEvent(new CustomEvent('eip6963:announceProvider',{detail:Object.freeze({info:info(w),provider:p})})),w.announceAfter); });
   const byId=id=>{ const x=W.find(x=>x.w.id===id); return x&&x.p; };
   if(cfg.ethereum){ const e=byId(cfg.ethereum); if(cfg.providers) e.providers=cfg.providers.map(byId); window.ethereum=e; }
   if(cfg.wc){

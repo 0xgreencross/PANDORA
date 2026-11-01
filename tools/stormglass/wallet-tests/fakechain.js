@@ -3,7 +3,10 @@
    mined receipt unless the test holds receipts. Nothing here ever reaches a real network.
    Hooks a test can replace: S.tx(hash) and S.rc(hash) (the answers to eth_getTransactionByHash / eth_getTransactionReceipt),
    S.blockTxs(n) (full transactions in block n), S.nonceLatest (eth_getTransactionCount), S.hostMode(host,body) ('500', 'hang',
-   'rpcerror' or null, applied per request by the test's route), S.mkTx / S.mkRc / S.blockNo to build answers. S.hits counts requests. */
+   'rpcerror' or null, applied per request by the test's route), S.mkTx / S.mkRc / S.blockNo to build answers. S.hits counts requests.
+   S.log lists every JSON-RPC request {m,p,t} (each element of a batch). S.blockAns(n) ('null' | 'error' | undefined) answers block n with
+   null or an RPC error instead of the block; S.topAns() (a value or undefined) answers eth_blockNumber instead of the chain's head:
+   a reader that lags or has not got a block yet. Both default to undefined: the normal answers. */
 const {ethers}=require('ethers');
 const ABI=[
   'function candleOpen() view returns (uint256)','function candleClose() view returns (uint256)','function candleSettled() view returns (bool)','function revealBlock() view returns (uint256)',
@@ -21,7 +24,7 @@ const E=v=>ethers.parseEther(String(v));
 const HOST=/(publicnode\.com|mevblocker\.io|drpc\.org|blastapi\.io)/;
 function makeChain(){
   const t0=Math.floor(Date.now()/1000), open=t0-3*3600, close=open+86400, BUYER='0x19A84bF7b5DA2C290CB0Ca42bf691dd6C2308359';
-  const S={ calls:[], holdReceipts:false, receiptsAsked:0, block0:21000000, t0, nonceLatest:0, hits:{}, hostMode:()=>null, blockTxs:()=>[],
+  const S={ calls:[], log:[], blockAns:()=>undefined, topAns:()=>undefined, holdReceipts:false, receiptsAsked:0, block0:21000000, t0, nonceLatest:0, hits:{}, hostMode:()=>null, blockTxs:()=>[],
     values:{ candleOpen:t0-86400*14, candleClose:t0-86400*13, candleSettled:true, revealBlock:0, zeroSeed:313454022, bidsCount:0, FOUNDING:E('0.42'), foundersEnd:t0-86400*13, today:13, lastId:12, dead:false, tombId:0,
       onSale:[13n,E('0.70'),BigInt(close),true], startPrice:E('1.68'), priceAt:E('0.7'), referencePrice:E('0.42'), median7:E('0.42'), picks:0, vault:E('1.2'), seatPool:E('0.31'), totalSeats:E('17'),
       seats:E('2'), pending:E('0.0364'), owed:0n, ownerOf:BUYER, tokenURI:'', witnessesOf:[], handsOf:[], sky:'{}', balanceOf:0n, giftOf:0n, isClaimed:false, gifts:79n, minted:78n, gif:'0x' },
@@ -47,10 +50,13 @@ function makeChain(){
   }
   function one(q){
     const r=v=>({jsonrpc:'2.0',id:q.id,result:v});
+    S.log.push({m:q.method,p:q.params,t:Date.now()});
     switch(q.method){
       case 'eth_chainId': return r('0x1'); case 'net_version': return r('1');
-      case 'eth_blockNumber': return r(ethers.toQuantity(blockNo()));
-      case 'eth_getBlockByNumber': { const n=q.params&&q.params[0]==='latest'?blockNo():Number(q.params[0]); const b=block(n); const txs=S.blockTxs(n)||[]; b.transactions=q.params&&q.params[1]?txs:txs.map(t=>t.hash); return r(b); }
+      case 'eth_blockNumber': { const a=S.topAns(); return r(a===undefined?ethers.toQuantity(blockNo()):a); }
+      case 'eth_getBlockByNumber': { const n=q.params&&q.params[0]==='latest'?blockNo():Number(q.params[0]); const a=q.params&&q.params[0]==='latest'?undefined:S.blockAns(n);
+        if(a==='null') return r(null); if(a==='error') return {jsonrpc:'2.0',id:q.id,error:{code:-32000,message:'header not found'}};
+        const b=block(n); const txs=S.blockTxs(n)||[]; b.transactions=q.params&&q.params[1]?txs:txs.map(t=>t.hash); return r(b); }
       case 'eth_call': return r(call(q.params[0].data||q.params[0].input||'0x'));
       case 'eth_getLogs': return r([]);
       case 'eth_getCode': return r('0x6080');
