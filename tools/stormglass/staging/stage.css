@@ -1,0 +1,59 @@
+/* STORMGLASS STAGING (test-wallet.html only). The banner sits in the flow above the page's sticky header; --head grows by the
+   banner's height so every "100vh - var(--head)" rule of the page keeps the hero inside one viewport. */
+body.sg-stage{--sgb:30px;--head:calc(48px + var(--sgb))}
+body.sg-stage header.top{top:var(--sgb)}
+body.sg-stage header.top .bar{height:48px}
+@media (max-width:700px){ body.sg-stage{--sgb:44px} }
+#sg-banner{position:sticky;top:0;z-index:2147482000;box-sizing:border-box;height:var(--sgb,30px);display:flex;align-items:center;gap:10px;padding:0 10px;
+  font:600 11px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em;color:#140a00;
+  background:repeating-linear-gradient(135deg,#ffb21f 0 14px,#ffa000 14px 28px);border-bottom:2px solid #140a00;overflow:hidden}
+body.sg-mode-real #sg-banner{background:repeating-linear-gradient(135deg,#ff4d6d 0 14px,#ff2e55 14px 28px);color:#fff;border-bottom-color:#fff}
+#sg-banner .sg-tb{background:#140a00;color:#ffb21f;padding:3px 7px;white-space:nowrap}
+body.sg-mode-real #sg-banner .sg-tb{background:#fff;color:#d0002b}
+#sg-banner .sg-mode{white-space:nowrap;border:1.5px solid currentColor;padding:2px 6px}
+#sg-banner .sg-rev{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-weight:500}
+#sg-banner code{font:inherit;font-weight:700}
+#sg-banner .sg-sp{flex:1}
+#sg-banner .sg-short{display:none}
+.sg-bb{font:700 11px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;background:#140a00;color:#ffb21f;border:0;padding:6px 9px;cursor:pointer;min-height:24px;white-space:nowrap}
+body.sg-mode-real .sg-bb{background:#fff;color:#d0002b}
+@media (max-width:700px){ #sg-banner{flex-wrap:wrap;align-content:center;gap:2px 8px;padding:3px 8px;font-size:10px}
+  #sg-banner .sg-long{display:none} #sg-banner .sg-short{display:inline}
+  #sg-banner .sg-rev{order:5;flex-basis:100%;font-size:9.5px} #sg-banner .sg-sp{display:none} .sg-bb{padding:4px 7px;min-height:20px;font-size:10px} }
+#sg-note{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sgb,30px) + 6px);z-index:2147482500;width:min(560px,calc(100vw - 24px));box-sizing:border-box;
+  background:#140a00;color:#ffd27a;border:1px solid #ffb21f;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;padding:8px 10px;display:none}
+#sg-note.on{display:block}
+#sg-modal{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box}
+#sg-modal .sg-box{background:#0b0b0d;color:#eee;border:2px solid #ffb21f;max-width:620px;width:100%;max-height:calc(100dvh - 24px);overflow:auto;box-sizing:border-box;padding:16px 16px 14px;
+  font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#sg-modal .sg-box.sg-real{border-color:#ff2e55}
+.sg-h{font-weight:800;letter-spacing:.05em;color:#ffb21f;font-size:14px;margin-bottom:8px}
+.sg-real .sg-h{color:#ff5c7a}
+.sg-h2{font-weight:700;letter-spacing:.06em;margin:12px 0 6px;color:#ccc;font-size:12px}
+.sg-p{margin:0 0 8px;color:#d6d6d6} .sg-n{margin:8px 0 0;color:#9a9a9a;font-size:11.5px;line-height:1.45}
+.sg-kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:3px 12px;margin:8px 0;padding:8px;border:1px solid #333;background:#000}
+.sg-kv dt{color:#8a8a8a;font-size:11px;letter-spacing:.05em} .sg-kv dd{margin:0;word-break:break-all;color:#fff}
+.sg-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.sg-b{font:700 12px/1.1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;background:#1a1a1d;color:#eee;border:1px solid #555;padding:9px 11px;cursor:pointer;min-height:40px}
+.sg-b:hover{border-color:#ffb21f} .sg-b.sg-prime{background:#ffb21f;color:#140a00;border-color:#ffb21f} .sg-real .sg-b.sg-prime{background:#ff2e55;border-color:#ff2e55;color:#fff}
+.sg-mo{border:1px solid #333;padding:8px 10px;margin:8px 0} .sg-mo.on{border-color:#ffb21f} .sg-mo p{margin:4px 0 0;color:#bbb;font-size:12px}
+#sg-drawer{position:fixed;right:0;top:var(--sgb,30px);bottom:0;width:min(440px,100vw);z-index:2147482800;background:#0b0b0d;color:#ddd;border-left:2px solid #ffb21f;
+  display:flex;flex-direction:column;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;box-sizing:border-box}
+body.sg-mode-real #sg-drawer{border-left-color:#ff2e55}
+.sg-dh{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #333;color:#ffb21f}
+.sg-db{overflow:auto;padding:0 10px 16px;flex:1}
+.sg-sec{border-bottom:1px solid #222;padding:10px 0} .sg-sec h4{margin:0 0 6px;font-size:11px;letter-spacing:.08em;color:#ffb21f}
+.sg-seg{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
+.sg-s{font:600 11px/1.1 ui-monospace,Menlo,Consolas,monospace;background:#151517;color:#ccc;border:1px solid #444;padding:6px 8px;cursor:pointer;min-height:30px}
+.sg-s.on{background:#ffb21f;color:#140a00;border-color:#ffb21f}
+.sg-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0}
+.sg-num{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0;color:#aaa}
+.sg-num input,.sg-num select{font:inherit;background:#000;color:#fff;border:1px solid #444;padding:4px 6px;max-width:100%}
+.sg-num input{width:90px;height:28px;box-sizing:border-box}
+.sg-w{border:1px solid #2a2a2a;padding:6px;margin:6px 0} .sg-wn{color:#fff;font-weight:700;margin-bottom:2px}
+.sg-tx{border-top:1px solid #222;padding:6px 0} .sg-tx code{color:#fff;word-break:break-all}
+.sg-log{list-style:none;margin:0;padding:0;max-height:none} .sg-log li{border-top:1px solid #1d1d1d;padding:3px 0;word-break:break-all;color:#aaa}
+.sg-log li b{color:#fff} .sg-log li.x b{color:#ff5c7a} .sg-log li.f b{color:#c8ff3a}
+#sg-modal.sg-float{inset:auto 12px 12px auto;background:none;padding:0;width:min(560px,calc(100vw - 24px));display:block;pointer-events:none}
+#sg-modal.sg-float .sg-box{pointer-events:auto;max-height:calc(100dvh - var(--sgb,30px) - 36px);box-shadow:0 8px 40px rgba(0,0,0,.8)}
+@media (max-width:700px){ #sg-modal.sg-float{inset:auto 0 0 0;width:100%} #sg-modal.sg-float .sg-box{max-height:62dvh;border-width:2px 0 0;padding:12px} #sg-modal .sg-b{min-height:36px;padding:7px 9px;font-size:11px} .sg-kv{font-size:11.5px} }
