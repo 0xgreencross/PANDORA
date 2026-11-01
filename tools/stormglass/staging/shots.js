@@ -28,7 +28,7 @@ async function open(w,h,mode,o={}){ const phone=w<700;
   return {ctx,page,errors}; }
 const probe=page=>page.evaluate(()=>{ const b=document.getElementById('sg-banner').getBoundingClientRect(), m=document.querySelector('#sg-modal .sg-box'), d=document.getElementById('sg-drawer'), r=x=>x?(z=>[Math.round(z.left),Math.round(z.top),Math.round(z.width),Math.round(z.height)])(x.getBoundingClientRect()):null;
   const inside=x=>{ if(!x) return null; const z=x.getBoundingClientRect(); return z.left>=0&&z.top>=0&&z.right<=innerWidth+0.5&&z.bottom<=innerHeight+0.5; };
-  return {vw:innerWidth,vh:innerHeight,hscroll:document.documentElement.scrollWidth>innerWidth,banner:[Math.round(b.height),Math.round(b.width)],bannerText:document.getElementById('sg-banner').textContent,panel:r(m),panelInside:inside(m),panelScrolls:m?m.scrollHeight>m.clientHeight:null,drawer:r(d),drawerInside:inside(d)}; });
+  return {vw:innerWidth,vh:innerHeight,hscroll:document.documentElement.scrollWidth>innerWidth,banner:[Math.round(b.height),Math.round(b.width)],bannerText:document.getElementById('sg-banner').textContent,panel:r(m),panelInside:inside(m),panelScrolls:m?m.scrollHeight>m.clientHeight:null,drawer:r(d),drawerInside:inside(d),drawerHScroll:d?(x=>x.scrollWidth>x.clientWidth+1)(d.querySelector('.sg-db')):null,bannerClipped:(x=>x.scrollHeight>x.clientHeight+1||[...x.children].some(c=>{ const z=c.getBoundingClientRect(); return z.width>0&&(z.bottom>b.bottom+0.5||z.right>b.right+0.5); }))(document.getElementById('sg-banner'))}; });
 async function snap(S,name){ const p=await probe(S.page); await S.page.screenshot({path:path.join(OUT,name+'.png')}); rows.push({name,...p,errors:S.errors.slice()}); console.log(name,JSON.stringify({banner:p.banner,hscroll:p.hscroll,panel:p.panel,inside:p.panelInside,scrolls:p.panelScrolls,drawer:p.drawer,errors:S.errors.length})); }
 const buy=async page=>{ await page.evaluate(()=>{ const w=document.getElementById('nx-wit'); if(w&&w.classList.contains('on')) document.getElementById('nx-witX').click(); document.getElementById('bPick').click(); }); await page.waitForSelector('#ccard.on');
   await page.evaluate(()=>document.querySelectorAll('#candGrid .card')[3].click()); await page.waitForSelector('#ccBuy'); await sleep(1500); await page.evaluate(()=>document.getElementById('ccBuy').click()); };
@@ -58,6 +58,44 @@ async function simConnect(page){ await page.click('#wallet'); await sleep(1800);
     await S.page.evaluate(()=>{ const x=document.getElementById('ccX'); if(x) x.click(); }); await sleep(400);
     await S.page.click('#sg-ctl'); await sleep(300); await snap(S,'controls_real_'+sz); await S.ctx.close();
     if(w<700){ S=await open(w,h,'sim',{ua:IPHONE}); await S.page.click('#wallet'); await until(S.page,()=>__SG.modalOpen(),8000); await sleep(400); await snap(S,'sim_phone_walletconnect_pair_'+sz); await S.ctx.close(); } }
+  /* ═══ AUDIT 4: the scenario controls and their outcomes, at 1440x900 and 390x844 (WalletConnect: an iPad UA at 1440, the CONFIRM sheet exists only on phones/tablets) */
+  const IPAD='Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
+  const dOpen=async(page,on)=>{ const is=await page.evaluate(()=>!!document.getElementById('sg-drawer')); if(is!==on){ await page.click('#sg-ctl'); await sleep(300); } };
+  const dClick=async(page,sel)=>{ await dOpen(page,true); await page.locator('#sg-drawer '+sel).scrollIntoViewIfNeeded(); await page.click('#sg-drawer '+sel); await sleep(250); };
+  const dTo=async(page,sel)=>{ await dOpen(page,true); await page.evaluate(s=>{ const e=document.querySelector('#sg-drawer '+s), b=document.querySelector('#sg-drawer .sg-db'); if(e&&b) b.scrollTop=e.offsetTop-b.offsetTop-4; },sel); await sleep(250); };
+  const witness=async page=>{ await page.evaluate(()=>{ const b=document.getElementById('nx-witBtn'); if(b) b.click(); }); await page.waitForSelector('#nx-wit.on'); await page.fill('#wAmt','0.01'); await page.click('#bWit'); };
+  for(const [w,h] of [[1440,900],[390,844]]){ const sz=w+'x'+h, ua=w<700?IPHONE:undefined;
+    /* the SCENARIOS section */
+    let S=await open(w,h,'sim',{ua}); await dOpen(S.page,true); await dTo(S.page,'.sg-scn[data-scn="1"]'); await snap(S,'a4_controls_scenarios_'+sz);
+    await dTo(S.page,'.sg-scn[data-scn="4"]'); await snap(S,'a4_controls_scenarios_receipts_'+sz); await dOpen(S.page,false); await S.ctx.close();
+    /* 1. last-moment network change (to Base and back) */
+    S=await open(w,h,'sim',{ua:undefined}); await dClick(S.page,'[data-lastchain=base-back]'); await dClick(S.page,'[data-setup=lastchain]'); await dOpen(S.page,false);
+    await simConnect(S.page); await buy(S.page); await until(S.page,()=>/changed network/i.test((document.getElementById('ccActs')||{}).textContent||''),15000); await sleep(700); await snap(S,'a4_s1_collect_stopped_'+sz);
+    await dTo(S.page,'#sg-log'); await snap(S,'a4_s1_log_no_send_'+sz); await S.ctx.close();
+    /* 2. on Base, the intended switch, the purchase goes on */
+    S=await open(w,h,'sim',{ua:undefined}); await dClick(S.page,'[data-setup=switch]'); await dOpen(S.page,false); await simConnect(S.page); await buy(S.page);
+    await until(S.page,()=>/ANOTHER NETWORK/.test((document.getElementById('ccActs')||{}).textContent||''),10000); await sleep(500); await snap(S,'a4_s2_wrong_network_'+sz);
+    await S.page.click('#nx-switch'); await until(S.page,()=>__SG.modalOpen(),10000); await sleep(400); await snap(S,'a4_s2_wallet_screen_after_switch_'+sz);
+    await S.page.click('#sg-modal [data-out=confirmed]'); await until(S.page,()=>/IS YOURS/.test((document.getElementById('ccActs')||{}).textContent||''),15000); await sleep(700); await snap(S,'a4_s2_confirmed_'+sz); await S.ctx.close();
+    /* 3. WalletConnect: an earlier request's event, then the old-topic event (phone / tablet) */
+    S=await open(w,h,'sim',{ua:w<700?IPHONE:IPAD}); await dClick(S.page,'[data-wcevent=oldtopic]'); await dClick(S.page,'[data-setup=wc]'); await dOpen(S.page,false);
+    await S.page.click('#wallet'); await until(S.page,()=>[...document.querySelectorAll('#wsheet button')].some(b=>/ZERION/.test(b.textContent)&&!b.disabled),8000);
+    await S.page.evaluate(()=>[...document.querySelectorAll('#wsheet button')].find(b=>/ZERION/.test(b.textContent)).click()); await until(S.page,()=>__SG.modalOpen(),8000); await sleep(300); await snap(S,'a4_s3_pairing_'+sz);
+    await S.page.click('#sg-modal [data-pair=yes]'); await until(S.page,()=>/0x/.test(document.getElementById('wallet').textContent),8000); await sleep(600);
+    await witness(S.page); await until(S.page,()=>{ const s=document.getElementById('wsheet'); return s&&s.classList.contains('on')&&/CONFIRM IN/.test(s.textContent); },8000); await sleep(1200); await snap(S,'a4_s3_confirm_sheet_old_topic_event_'+sz);
+    await until(S.page,()=>{ const b=[...document.querySelectorAll('#wsheet.on button')].find(b=>/^OPEN /.test(b.textContent)); return b&&!b.disabled; },12000); await sleep(300); await snap(S,'a4_s3_after_8s_generic_'+sz);
+    await S.page.evaluate(()=>[...document.querySelectorAll('#wsheet.on button')].find(b=>/^OPEN /.test(b.textContent)).click()); await sleep(600); await dTo(S.page,'#sg-log'); await snap(S,'a4_s3_log_held_link_'+sz); await S.ctx.close();
+    /* 4. receipts: first reader malformed then a valid fallback; all readers invalid with the fast clock */
+    S=await open(w,h,'sim',{ua:undefined}); await dClick(S.page,'[data-receipts=first-hash]'); await dClick(S.page,'[data-setup=receipts]'); await dOpen(S.page,false);
+    await simConnect(S.page); await buy(S.page); await until(S.page,()=>__SG.modalOpen(),8000); await S.page.click('#sg-modal [data-out=confirmed]');
+    await until(S.page,()=>/IS YOURS/.test((document.getElementById('ccActs')||{}).textContent||''),15000); await sleep(500); await dTo(S.page,'#sg-log'); await snap(S,'a4_s4_first_malformed_then_valid_log_'+sz); await S.ctx.close();
+    S=await open(w,h,'sim',{ua:undefined}); await dClick(S.page,'[data-receipts=all]'); await dClick(S.page,'[data-setup=receipts]'); await dOpen(S.page,false);
+    await simConnect(S.page); await buy(S.page); await until(S.page,()=>__SG.modalOpen(),8000); await S.page.click('#sg-modal [data-out=confirmed]'); const t0=Date.now();
+    await until(S.page,()=>/PENDING/.test((document.getElementById('ccActs')||{}).textContent||''),10000); await sleep(1500); await snap(S,'a4_s4_all_invalid_pending_'+sz);
+    await until(S.page,()=>/UNKNOWN/.test((document.getElementById('ccActs')||{}).textContent||''),30000); await sleep(500); await snap(S,'a4_s4_all_invalid_cannot_confirm_'+sz); console.log('  unknown after',Date.now()-t0,'ms');
+    while(Date.now()-t0<48000) await sleep(1000); await snap(S,'a4_s4_all_invalid_final_'+sz); await dTo(S.page,'#sg-log'); await snap(S,'a4_s4_all_invalid_log_'+sz); await S.ctx.close();
+    /* REAL WALLET: the scenarios section there (receipts only) */
+    S=await open(w,h,'real',{wallet:REALW,ua}); await dTo(S.page,'.sg-scn[data-scn="1"]'); await snap(S,'a4_controls_real_scenarios_'+sz); await S.ctx.close(); }
   fs.writeFileSync(path.join(OUT,'probe.json'),JSON.stringify({rows,refused:[...new Set(refused)]},null,1)); await br.close();
   console.log('refused outside:',JSON.stringify([...new Set(refused)])); console.log('SHOTS DONE '+rows.length);
 })().catch(async e=>{ console.log('SHOTS FAIL',e&&e.stack||e); try{ await br.close(); }catch(x){} process.exit(1); });

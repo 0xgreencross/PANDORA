@@ -29,8 +29,10 @@ function stampOf(file,bytes,cand){ const sha256=crypto.createHash('sha256').upda
     try{ c=execFileSync('git',['-C',dir,'rev-parse','--short',cand+'^{commit}'],{encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim(); blob=execFileSync('git',['-C',dir,'show',c+':./'+base],{stdio:['ignore','pipe','ignore'],maxBuffer:1<<26}); }catch(e){ die('candidate '+cand+' is not a commit with '+base); }
     if(!blob.equals(bytes)) die('candidate '+cand+'’s '+base+' is not byte-identical to the source: rebuild from that commit'); rev=c; }
   return {rev,sha256,src:path.basename(file),touched}; }
-function once(s,anchor,repl,label){ const n=s.split(anchor).length-1; if(n!==1) die('anchor "'+label+'" found '+n+' times (expected exactly 1): index.html changed shape here: '+JSON.stringify(anchor.slice(0,90)));
-  return s.replace(anchor,()=>repl); }
+/* THE PATCH LIST (--patches prints it as JSON): every change the build makes to index.html, with how often its anchor matched */
+const PATCHES=[];
+function once(s,anchor,repl,label,list){ const n=s.split(anchor).length-1; if(n!==1) die('anchor "'+label+'" found '+n+' times (expected exactly 1): index.html changed shape here: '+JSON.stringify(anchor.slice(0,90)));
+  if(list) PATCHES.push({label,count:1,anchor:anchor.slice(0,100),added:repl.length-anchor.length}); return s.replace(anchor,()=>repl); }
 function build(src,stamp){
   const POLICY=require('./policy.js');
   for(const m of MARKS) if(src.includes(m)) die('index.html already contains the staging mark '+JSON.stringify(m)+' (staging code must never reach production)');
@@ -41,13 +43,17 @@ function build(src,stamp){
   /* 2. PROVIDER TAPS: the only places the page obtains a provider */
   let out=src;
   const nEth=out.split('window.ethereum').length-1; if(nEth<1) die('no window.ethereum read found: index.html changed shape (the wallet discovery moved?)');
-  out=out.split('window.ethereum').join('__SG.eth()');
+  out=out.split('window.ethereum').join('__SG.eth()'); PATCHES.push({label:'every window.ethereum read becomes __SG.eth() (provider tap)',count:nEth,anchor:'window.ethereum',added:nEth*('__SG.eth()'.length-'window.ethereum'.length)});
   const left=[...out.matchAll(/(?:\bwindow|\bglobalThis|\bself|\btop|\bparent)\s*(?:\.\s*ethereum\b|\[\s*['"`]ethereum['"`]\s*\])|(?<![\w.@\/'"-])ethereum\s*\./g)].map(m=>m[0]);
   if(left.length) die('an ethereum provider is read in a way the build does not tap: '+left.join(' | '));
   const n6963=out.split('eip6963:announceProvider').length-1; if(n6963!==1) die('eip6963:announceProvider appears '+n6963+' times (expected 1 listener): discovery changed shape');
-  out=once(out,"window.addEventListener('eip6963:announceProvider',e=>{ const d=e&&e.detail;","window.addEventListener('eip6963:announceProvider',e=>{ const d=__SG.detail(e&&e.detail);",'EIP-6963 announcement listener');
+  out=once(out,"window.addEventListener('eip6963:announceProvider',e=>{ const d=e&&e.detail;","window.addEventListener('eip6963:announceProvider',e=>{ const d=__SG.detail(e&&e.detail);",'EIP-6963 announcement listener: the detail goes through __SG.detail() (provider tap)',1);
   const nWC=out.split('@walletconnect/ethereum-provider').length-1; if(nWC!==1) die('@walletconnect/ethereum-provider appears '+nWC+' times (expected 1: _wcGlobal)');
-  out=once(out,"const _wcGlobal=()=>globalThis['@walletconnect/ethereum-provider'];","const _wcGlobal=()=>__SG.wcNS(globalThis['@walletconnect/ethereum-provider']);",'WalletConnect namespace (_wcGlobal)');
+  out=once(out,"const _wcGlobal=()=>globalThis['@walletconnect/ethereum-provider'];","const _wcGlobal=()=>__SG.wcNS(globalThis['@walletconnect/ethereum-provider']);",'WalletConnect namespace (_wcGlobal) goes through __SG.wcNS() (provider tap)',1);
+  /* 2b. RUNTIME READS: the staging runtime reads (never writes, except the three TRACK deadlines under FAST CLOCK) these page globals at
+     run time: CFG (contract, rpc), ABI, TRACK (rpcs, poll, lost, stop), trackAt, tick. Each must still exist in this shape. */
+  for(const [label,re] of [['const CFG',/\bconst CFG=\{/],['const ABI',/\bconst ABI=/],['const TRACK with rpcs/poll/lost/stop',/\bconst TRACK=\{rpcs:\[[^\]]*\],[^}]*\bpoll:\d+,lost:\d+,stop:\d+/],['let trackAt',/\blet trackAt=0;/],['TRACK.rpcs[(trackAt+i)%n] order',/const k=\(trackAt\+i\)%n/],['tick()',/\b(async\s+)?function tick\(/]])
+    if(!re.test(src)) die('the staging runtime reads '+label+' of the page, which is no longer there in that shape (update stage.js)');
   /* 3. THE STAGING RUNTIME, CSS, BANNER, TITLE, ROBOTS */
   const pdir=fs.existsSync(path.join(path.dirname(SRC),'plates'))?path.join(path.dirname(SRC),'plates'):path.join(ROOT,'plates');
   const seeds=fs.readdirSync(pdir).map(f=>/^(\d+)\.gif$/.exec(f)).filter(Boolean).map(m=>+m[1]).sort((a,b)=>a-b);
@@ -60,10 +66,10 @@ function build(src,stamp){
   for(const [t,s] of [['runtime',rt],['css',css]]) if(/<\/script|<\/style|<!--/i.test(s)) die(t+' contains a closing tag or comment opener');
   try{ new vm.Script(rt,{filename:'stage.js'}); }catch(e){ die('runtime does not compile: '+e.message); }
   const gen='<!-- TEST BUILD of the STORMGLASS page. GENERATED by tools/stormglass/staging/build.js from '+stamp.src+' (git '+stamp.rev+', sha256 '+stamp.sha256+'). Do not edit: rebuild. Not linked from the live site. -->';
-  out=once(out,'<head><meta charset="utf-8">','<head><meta charset="utf-8">\n'+gen+'\n<meta name="robots" content="noindex,nofollow">\n<script>\n'+rt+'\n</script>','head start');
-  out=once(out,'<title>DITHERVOID // STORMGLASS</title>','<title>TEST BUILD · STORMGLASS staging (not the live site)</title>','title');
-  out=once(out,'</head>','<style>\n'+css+'</style>\n</head>','head end');
-  out=once(out,'<body>','<body>\n<div id="sg-banner">TEST BUILD · not the live site · candidate '+stamp.rev+'</div>','body start');
+  out=once(out,'<head><meta charset="utf-8">','<head><meta charset="utf-8">\n'+gen+'\n<meta name="robots" content="noindex,nofollow">\n<script>\n'+rt+'\n</script>','head start: generated-file comment, robots noindex,nofollow, the inline staging runtime (stage.js + policy.js)',1);
+  out=once(out,'<title>DITHERVOID // STORMGLASS</title>','<title>TEST BUILD · STORMGLASS staging (not the live site)</title>','title',1);
+  out=once(out,'</head>','<style>\n'+css+'</style>\n</head>','head end: the staging stylesheet (stage.css)',1);
+  out=once(out,'<body>','<body>\n<div id="sg-banner">TEST BUILD · not the live site · candidate '+stamp.rev+'</div>','body start: the TEST BUILD banner',1);
   /* 4. every inline script of the output still compiles */
   let k=0; for(const m of out.matchAll(/<script>([\s\S]*?)<\/script>/g)){ k++; try{ new vm.Script(m[1],{filename:'inline-'+k}); }catch(e){ die('inline script '+k+' does not compile after patching: '+e.message); } }
   return {out,report:{taps:{windowEthereum:nEth,eip6963:1,walletconnect:1},methods:lits,seeds:seeds.length,scripts:k}}; }
@@ -74,6 +80,7 @@ if(CHECK&&!cand){ try{ const m=/const STAMP=\{"rev":"([0-9a-f]{4,40})"/.exec(fs.
 const stamp=stampOf(SRC,srcBytes,cand);
 const {out,report}=build(srcBytes.toString('utf8'),stamp);
 if(crypto.createHash('sha256').update(fs.readFileSync(SRC)).digest('hex')!==before) die('the source changed during the build');
+if(process.argv.includes('--patches')) console.log(JSON.stringify({src:path.relative(ROOT,SRC),rev:stamp.rev,sha256:stamp.sha256,patches:PATCHES.map(p=>({label:p.label,count:p.count,added:p.added,anchor:p.anchor}))}));
 if(CHECK){ let cur=null; try{ cur=fs.readFileSync(OUT,'utf8'); }catch(e){}
   if(cur!==out){ console.log('STAGING CHECK FAIL '+path.relative(ROOT,OUT)+' is not the build of '+path.relative(ROOT,SRC)+' (git '+stamp.rev+', sha256 '+stamp.sha256.slice(0,16)+'): rebuild'); process.exit(1); }
   console.log('STAGING CHECK OK '+path.relative(ROOT,OUT)+' = build(' +path.relative(ROOT,SRC)+') · git '+stamp.rev+' · sha256 '+stamp.sha256); process.exit(0); }

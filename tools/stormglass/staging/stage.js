@@ -34,7 +34,7 @@ const PRESETS={
   wc:'PHONE · WALLETCONNECT (simulated phone wallet)'
 };
 if(!PRESETS[CONF.preset]) CONF.preset=isPhoneUA()?'wc':'desk3';
-const SET=Object.assign({auto:'ask',mine:2500,readerMs:120,firstReaderDown:false},CONF.set||{});
+const SET=Object.assign({auto:'ask',mine:2500,readerMs:120,firstReaderDown:false,receipts:'valid',clock:'normal',wcEvent:'exact'},CONF.set||{});
 const saveConf=()=>ssSet(CONF_KEY,JSON.stringify({preset:CONF.preset,set:SET}));
 
 /* ── the log every wallet request goes through (shown under CONTROLS · LOG; read by the tests) */
@@ -143,7 +143,22 @@ function block(tag,full){ const n=tag==='latest'||tag==='pending'||tag==null?CH.
   const txs=(CH.inBlock.get(n)||[]).map(r=>txView(r.hash));
   return {number:hex(n),hash:hex32(n),parentHash:hex32(n-1),timestamp:hex(CH.tsOf(n)),nonce:'0x0000000000000000',difficulty:'0x0',gasLimit:'0x1c9c380',gasUsed:'0x0',miner:'0x0000000000000000000000000000000000000000',extraData:'0x',baseFeePerGas:'0x3b9aca00',blobGasUsed:'0x0',excessBlobGas:'0x0',stateRoot:hex32(0),receiptsRoot:hex32(0),mixHash:hex32(0),parentBeaconBlockRoot:hex32(0),transactions:full?txs:txs.map(t=>t.hash)}; }
 const READER_HITS={};
-function rpcOne(q){ const ok=v=>({jsonrpc:'2.0',id:q&&q.id,result:v}), bad=(c,m)=>({jsonrpc:'2.0',id:q&&q.id,error:{code:c,message:m}}); const m=q&&q.method, p=(q&&q.params)||[];
+/* RECEIPT ANSWERS (CONTROLS · TRACKING): what the simulated readers say about a MINED simulated transaction. "first-*": the reader the
+   page asks first in a round (its TRACK.rpcs[trackAt], read live; publicnode until a fallback has answered) answers a malformed receipt
+   and the others answer the true one, so every round shows "malformed, then a valid fallback"; "all": every reader answers a
+   malformed one (publicnode the wrong hash, mevblocker no status, drpc a block before the send). A transaction not mined yet is null
+   on every reader (an honest "not yet"). The malformed receipts keep the status the simulated outcome gave (they claim a result). */
+const RECEIPTS={valid:'VALID (every reader)','first-hash':'FIRST READER: WRONG HASH, then a valid fallback','first-status':'FIRST READER: NO STATUS, then a valid fallback','first-block':'FIRST READER: BAD BLOCK, then a valid fallback',all:'ALL READERS INVALID (wrong hash / no status / bad block)'};
+const READERS=()=>{ let f=''; try{ f=new URL(cfg('rpc')).hostname; }catch(e){} return [f,'rpc.mevblocker.io','eth.drpc.org']; };
+const firstReader=()=>{ try{ return new URL(TRACK.rpcs[trackAt]).hostname; }catch(e){ return READERS()[0]; } };   /* the page's own rotation (globals read at call time) */
+function malform(rc,how){ const x=Object.assign({},rc);
+  if(how==='hash'){ x.transactionHash=rnd32(); return {rc:x,why:'transactionHash is another transaction’s'}; }
+  if(how==='status'){ delete x.status; return {rc:x,why:'no status field'}; }
+  x.blockNumber='0x1'; return {rc:x,why:'blockNumber 0x1, before the transaction was sent'}; }
+function receiptFor(rc,host){ const mode=SET.receipts||'valid'; if(mode==='valid') return null; const R=READERS(), i=R.indexOf(host);
+  if(mode==='all') return malform(rc,i===1?'status':i===2?'block':'hash');
+  if(host===firstReader()) return malform(rc,mode.slice(6)); return null; }
+function rpcOne(q,host){ const ok=v=>({jsonrpc:'2.0',id:q&&q.id,result:v}), bad=(c,m)=>({jsonrpc:'2.0',id:q&&q.id,error:{code:c,message:m}}); const m=q&&q.method, p=(q&&q.params)||[];
   READER_HITS[m]=(READER_HITS[m]||0)+1;
   switch(m){
     case 'eth_chainId': return ok('0x1'); case 'net_version': return ok('1');
@@ -156,7 +171,9 @@ function rpcOne(q){ const ok=v=>({jsonrpc:'2.0',id:q&&q.id,result:v}), bad=(c,m)
     case 'eth_getBalance': return ok('0x8ac7230489e80000');
     case 'eth_estimateGas': return ok('0x30d40');
     case 'eth_getTransactionByHash': return ok(txView(p[0]));
-    case 'eth_getTransactionReceipt': return ok(rcView(p[0]));
+    case 'eth_getTransactionReceipt': { const rc=rcView(p[0]); if(!rc||host==null) return ok(rc); const b=receiptFor(rc,host);
+      if(b){ logReq('reader '+host,m,p[0],'answered a MALFORMED receipt ('+b.why+')'); return ok(b.rc); }
+      if(SET.receipts&&SET.receipts!=='valid') logReq('reader '+host,m,p[0],'answered the VALID receipt (status '+rc.status+')'); return ok(rc); }
     case 'eth_getTransactionCount': return ok(hex(CH.spent.get(lc(p[0]))||7));
     default: return bad(-32601,'staging simulated chain: method not available: '+m); } }
 /* every JSON-RPC POST the page makes over HTTP is answered here (no request leaves the page for an Ethereum node); a JSON-RPC
@@ -176,9 +193,17 @@ window.fetch=async function(input,init){
         await new Promise((res,rej)=>{ const t=setTimeout(res,Math.max(0,+SET.readerMs||0)); if(sig){ if(sig.aborted){ clearTimeout(t); return rej(new DOMException('aborted','AbortError')); } sig.addEventListener('abort',()=>{ clearTimeout(t); rej(new DOMException('aborted','AbortError')); },{once:true}); } });
         let first=''; try{ first=new URL(cfg('rpc')).hostname; }catch(e){}
         if(SET.firstReaderDown&&url.hostname===first) return new Response('simulated reader outage',{status:503,headers:{'content-type':'text/plain'}});
-        const out=Array.isArray(j)?list.map(rpcOne):rpcOne(j);
+        const out=Array.isArray(j)?list.map(x=>rpcOne(x,url.hostname)):rpcOne(j,url.hostname);
         return new Response(JSON.stringify(out),{status:200,headers:{'content-type':'application/json'}}); } } }
   return realFetch(input,init); };
+/* THE FAST TRACKING CLOCK (staging only, CONTROLS · TRACKING): the page's own trackTx reads its deadlines from the page's TRACK object
+   on every round; FAST sets them shorter on this page at run time so "cannot confirm" (TRACK.lost) and the final unknown (TRACK.stop)
+   come within a minute. The code path is the page's, only the three numbers change; NORMAL puts the page's own values back. */
+const CLOCKS={normal:'NORMAL (the page’s own: poll 3 s, cannot confirm at 10 min, gives up at 60 min)',fast:'FAST (staging only: poll 1.5 s, cannot confirm at 20 s, gives up at 45 s)'};
+const FAST={poll:1500,lost:20000,stop:45000}; let TRACK0=null;
+function applyClock(){ try{ if(typeof TRACK==='undefined'||!TRACK||typeof TRACK!=='object') return false; if(!TRACK0) TRACK0={poll:TRACK.poll,lost:TRACK.lost,stop:TRACK.stop};
+  Object.assign(TRACK,SET.clock==='fast'?FAST:TRACK0); const b=document.getElementById('sg-fast'); if(b) b.hidden=SET.clock!=='fast'; return true; }catch(e){ return false; } }
+const trackNow=()=>{ try{ return typeof TRACK!=='undefined'&&TRACK?{poll:TRACK.poll,lost:TRACK.lost,stop:TRACK.stop}:null; }catch(e){ return null; } };
 
 /* ═══ THE PANELS: the wallet-confirmation / intercept chooser, the connect gate, a staging note. One modal at a time (queued). */
 const Q=[]; let modalOn=null;
@@ -199,7 +224,7 @@ const kv=rows=>el('dl',{class:'sg-kv'},rows.map(([k,v])=>[el('dt',null,k),el('dd
 function chooser(tx,o){ if(SET.auto&&SET.auto!=='ask'&&!REAL) return Promise.resolve(SET.auto);
   return modal((box,done)=>{ box.classList.add(REAL?'sg-real':'sg-sim');
     box.append(el('div',{class:'sg-h'},REAL?'SUBMISSION INTERCEPTED: nothing was sent to your wallet':'SIMULATED WALLET · CONFIRMATION SCREEN'),
-      el('p',{class:'sg-p'},REAL?'The page prepared this transaction and handed it to your wallet. The staging wrapper stopped it before your wallet: your wallet never saw it, nothing can be paid. This checks how the page prepares a transaction and what it shows next, not your wallet’s own payment screen.':'This stands in for the wallet’s own confirmation screen ('+(o.who||'simulated wallet')+'). Choose what the wallet and the chain do.'),
+      el('p',{class:'sg-p'},REAL?'The page prepared this transaction and handed it to your wallet. The staging wrapper stopped it before your wallet: your wallet never saw it, nothing can be paid. This checks how the page prepares a transaction and what it shows next. It does not test your wallet’s own payment screen, and on a phone it does not test delivery of a payment through the WalletConnect relay.':'This stands in for the wallet’s own confirmation screen ('+(o.who||'simulated wallet')+'). Choose what the wallet and the chain do.'),
       kv(txRows(tx,o.walletChain)),
       el('div',{class:'sg-h2'},'CHOOSE THE SIMULATED RESULT'),
       el('div',{class:'sg-btns'},[['confirmed','CONFIRMED'],['reverted','REVERTED'],['rejected','REJECTED IN WALLET'],['sped','SPED UP'],['cancelled','CANCELLED'],['replaced','REPLACED BY ANOTHER CALL'],['unknown','UNKNOWN'],['pending','PENDING · DECIDE LATER'],['error','WALLET ERROR (no answer)']]
@@ -226,18 +251,29 @@ function gate(raw,who,method){ const t=ARMED.get(raw); if(method==='eth_requestA
 const SIMP=new Set(), SW={};
 const ICON=c=>'data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><rect width="20" height="20" fill="#111"/><path d="M4 4h12v12H4z" fill="none" stroke="'+c+'" stroke-width="2"/><text x="10" y="14" font-size="9" text-anchor="middle" fill="'+c+'" font-family="monospace">S</text></svg>');
 const addr=t=>'0x'+t.padStart(40,'0');
-function simWallet(c){ const L={}, st=Object.assign({chainId:'0x1',authorized:false,switch:'accept',connect:'approve',delay:0,asleep:false,ai:0},c);
+/* LAST-MOMENT NETWORK CHANGE (CONTROLS · SCENARIOS 1), one shot per arming: once the wallet has been asked for a gas estimate (the
+   write is being prepared), the next eth_accounts is the page's final check (opCheck asks eth_accounts and eth_chainId together). The
+   wallet answers that eth_chainId "0x1"; once that answer is out, and before it answers eth_accounts, it announces chainChanged Base
+   ("base") or Base and then mainnet again ("base-back"). The page's own last opLive runs after both answers and before the provider
+   is asked to send: it must stop there, and this wallet's log must show no eth_sendTransaction. */
+const LASTCHAIN={off:'OFF',base:'BASE',['base-back']:'BASE, THEN BACK TO MAINNET'};
+function simWallet(c){ const L={}, st=Object.assign({chainId:'0x1',authorized:false,switch:'accept',connect:'approve',delay:0,asleep:false,ai:0,lastChain:'off',fired:0},c);
   const emit=(ev,...a)=>(L[ev]||[]).slice().forEach(f=>{ try{ f(...a); }catch(e){ console.error('listener',e); } });
   const acct=()=>st.accounts[st.ai%st.accounts.length], list=()=>st.authorized?[acct()].concat(st.accounts.filter(x=>x!==acct())):[];
+  const lastMoment=async()=>{ const how=st.lastChain; st.armed=false; st.lastChain='off'; st.waitChain=true; st.chainOut=false;
+    for(let i=0;i<200&&!st.chainOut;i++) await new Promise(r=>setTimeout(r,10));   /* the final check's eth_chainId has answered "0x1"… */
+    await new Promise(r=>setTimeout(r,0)); st.waitChain=false;                      /* …and the page has read that answer */
+    st.chainId='0x2105'; emit('chainChanged','0x2105'); if(how==='base-back'){ st.chainId='0x1'; emit('chainChanged','0x1'); }
+    st.fired++; logReq(st.name,'chainChanged',how==='base-back'?['0x2105','0x1']:['0x2105'],'LAST-MOMENT NETWORK CHANGE (simulated): the final check was answered 0x1, then this was announced before the page could send'); logTick(); };
   const p={ request(args){ const method=args&&args.method, params=args&&args.params; const e=logReq(st.name,method,params,'simulated wallet');
       return (async()=>{ if(st.asleep) return new Promise(()=>{}); if(st.delay) await new Promise(r=>setTimeout(r,st.delay));
         switch(method){
-          case 'eth_chainId': return st.chainId; case 'net_version': return String(parseInt(st.chainId,16));
-          case 'eth_accounts': return list();
+          case 'eth_chainId': if(st.waitChain) st.chainOut=true; return st.chainId; case 'net_version': return String(parseInt(st.chainId,16));
+          case 'eth_accounts': if(st.armed) await lastMoment(); return list();
           case 'eth_requestAccounts': { if(st.connect==='refuse'){ e.result='refused'; throw err(4001,'User rejected the request.'); } const was=st.authorized; st.authorized=true; if(!was) setTimeout(()=>emit('accountsChanged',list()),0); return list(); }
           case 'wallet_switchEthereumChain': { if(st.switch==='refuse'){ e.result='refused'; throw err(4001,'User rejected the request.'); } const c=params&&params[0]&&params[0].chainId; if(c&&c!==st.chainId){ st.chainId=c; setTimeout(()=>emit('chainChanged',c),0); } return null; }
           case 'wallet_revokePermissions': { st.authorized=false; setTimeout(()=>emit('accountsChanged',[]),0); return null; }
-          case 'eth_estimateGas': return '0x30d40'; case 'eth_blockNumber': return hex(CH.head()); case 'eth_gasPrice': return '0x3b9aca00'; case 'eth_maxPriorityFeePerGas': return '0x1';
+          case 'eth_estimateGas': if(st.lastChain==='base'||st.lastChain==='base-back'){ st.armed=true; st.chainOut=false; } return '0x30d40'; case 'eth_blockNumber': return hex(CH.head()); case 'eth_gasPrice': return '0x3b9aca00'; case 'eth_maxPriorityFeePerGas': return '0x1';
           case 'eth_getTransactionByHash': return txView(params[0]); case 'eth_getTransactionReceipt': return rcView(params[0]);
           case 'eth_call': return callSim((params[0]||{}).to,(params[0]||{}).data||'0x'); case 'eth_getBlockByNumber': return block(params[0],!!params[1]); case 'eth_getLogs': return [];
           case 'eth_sendTransaction': { if(!st.authorized) throw err(4100,'Unauthorized'); const tx=Object.assign({},params[0]); if(!tx.from) tx.from=acct();
@@ -248,7 +284,7 @@ function simWallet(c){ const L={}, st=Object.assign({chainId:'0x1',authorized:fa
   if(st.flags) Object.assign(p,st.flags);
   SIMP.add(p); SW[st.id]={p,st,emit,acct,list,listeners:ev=>(L[ev]||[]).length};
   return p; }
-let SIM_ETH=null, SIM_DETAILS=[], SIM_WC_NS=null;
+let SIM_ETH=null, SIM_DETAILS=[], SIM_WC_NS=null; const HELD=[]; let NAV_HOLD=!REAL;
 if(!REAL){
   const W=(id,name,rdns,color,x)=>({id,name,rdns,icon:ICON(color),accounts:[addr('a11'+id.length),addr('a12'+id.length)],...x});
   const mk=c=>({c,p:simWallet(c)});
@@ -266,27 +302,58 @@ if(!REAL){
   window.addEventListener('eip6963:requestProvider',announce); setTimeout(announce,0);
   /* the simulated WalletConnect provider (phone preset): pairing shows the phone wallet's approval as a panel */
   const base=simWallet({id:'PHONE',name:'SIM PHONE WALLET (WalletConnect)',accounts:[addr('c01'),addr('c02')]}); const PS=SW.PHONE;
-  const hooks={}; let session=null, uris=0;
+  /* session_request_sent, modelled on the shipped /wc.js: one event per request that goes to the phone wallet, {id (a safe integer made
+     inside the engine), topic (the session's), request:{...args} (a shallow copy: request.params IS the array the page passed),
+     chainId}; a chain switch is rebuilt inside wc.js (new params), so its event never carries the page's array. CONTROLS · SCENARIOS 3
+     chooses what the phone's WalletConnect emits while the page's CONFIRM sheet is open (SET.wcEvent), and can emit an old or a foreign
+     event on demand (__SG.wcEmit). */
+  const hooks={}; let session=null, uris=0; const WCH={reqs:[],old:[],seq:0};
+  const wcId=()=>Date.now()*1000+(++WCH.seq%1000);
+  const wcFire=(ev,what)=>{ logReq(PS.st.name,'session_request_sent',{id:ev.id,topic:ev.topic,method:ev.request&&ev.request.method},'simulated WalletConnect event: '+what); (hooks.session_request_sent||[]).forEach(f=>{ try{ f(ev); }catch(e){} }); };
+  const oldTopic=()=>WCH.old.length?WCH.old[WCH.old.length-1]:'simtopic-earlier-session';
+  /* the kinds of event: this request's own (exact); an earlier request's (its own params array, id and topic); this request's params
+     under an old session's topic; a foreign session's request of the same method */
+  const wcEvent=(kind,rec)=>{ if(!rec) return null; const m=rec.request.method;
+    if(kind==='exact') return [rec.ev,'this request’s own event'];
+    if(kind==='earlier'){ const e=WCH.reqs.filter(r=>r!==rec&&r.request.method===m).pop(); return e?[e.ev,'an EARLIER request’s event (id '+e.ev.id+')']:[{id:rec.ev.id-7000,topic:rec.ev.topic,request:{method:m,params:JSON.parse(JSON.stringify(rec.args.params||[]))},chainId:rec.ev.chainId},'an earlier request’s event (same contents, another params array)']; }
+    if(kind==='oldtopic') return [{id:wcId(),topic:oldTopic(),request:{...rec.args},chainId:rec.ev.chainId},'this request under an OLD session topic'];
+    if(kind==='foreign') return [{id:wcId(),topic:'foreign0'+'f'.repeat(56),request:{method:m,params:JSON.parse(JSON.stringify(rec.args.params||[]))},chainId:rec.ev.chainId},'a FOREIGN session’s request'];
+    return null; };
+  const wcEmit=kind=>{ const rec=WCH.reqs[WCH.reqs.length-1]; const x=wcEvent(kind,rec); if(!x) return false; wcFire(x[0],x[1]); return true; };
+  const WC_ASK=new Set(['eth_sendTransaction','personal_sign','eth_signTypedData_v4','wallet_switchEthereumChain']);
   const wc={ isWalletConnect:true, get accounts(){ return session?PS.list():[]; }, get session(){ return session; },
     request(args){ const m=args&&args.method; if(!session&&m!=='eth_chainId'){ logReq(PS.st.name,m,args&&args.params,'simulated wallet (no session)'); return Promise.reject(err(4100,'Please call connect() before request()')); }
       if(m==='eth_chainId'){ logReq(PS.st.name,m,null,'simulated wallet'); return Promise.resolve(parseInt(PS.st.chainId,16)); }
-      if(['eth_sendTransaction','personal_sign','eth_signTypedData_v4','wallet_switchEthereumChain'].includes(m)) setTimeout(()=>(hooks.session_request_sent||[]).forEach(f=>{ try{ f({id:Date.now(),topic:session&&session.topic,request:{method:m}}); }catch(e){} }),400);
+      if(WC_ASK.has(m)){ const req=m==='wallet_switchEthereumChain'?{method:m,params:[{chainId:(args.params&&args.params[0]&&args.params[0].chainId)||'0x1'}]}:{...args};
+        const rec={args,request:req,ev:{id:wcId(),topic:session.topic,request:req,chainId:'eip155:'+parseInt(PS.st.chainId,16)}}; WCH.reqs.push(rec); if(WCH.reqs.length>40) WCH.reqs.shift();
+        const k=SET.wcEvent||'exact';
+        if(k==='exact') setTimeout(()=>wcFire(rec.ev,'this request’s own event'),400);
+        else if(k==='earlier'||k==='foreign'){ setTimeout(()=>wcEmit(k),300); setTimeout(()=>wcFire(rec.ev,'this request’s own event (after the other one)'),1500); }
+        else if(k==='oldtopic') setTimeout(()=>{ const x=wcEvent('oldtopic',rec); wcFire(x[0],x[1]); },400); }   /* 'none': no event: the page's 8 s fallback */
+      /* the phone wallet shows a payment when its app is opened: with an app remembered (an OPEN button on the page's sheet) and
+         results chosen by hand, the simulated wallet screen waits for the held OPEN jump, or 12 s */
+      if(m==='eth_sendTransaction'&&SET.auto==='ask'&&isPhoneUA()&&(()=>{ try{ return !!localStorage.getItem('SG_WC_APP'); }catch(e){ return false; } })()){
+        const h0=HELD.length; return (async()=>{ for(let i=0;i<120&&HELD.length===h0;i++) await new Promise(r=>setTimeout(r,100)); return base.request(args); })(); }
       return base.request(args); },
     on(ev,f){ base.on(ev,f); return wc; }, removeListener(ev,f){ base.removeListener(ev,f); return wc; },
     signer:{client:{on(ev,f){ (hooks[ev]=hooks[ev]||[]).push(f); }}},
     async enable(){ if(session) return wc.accounts; uris++; await new Promise(r=>setTimeout(r,Math.max(300,PS.st.delay||0)));
       PS.emit('display_uri','wc:'+('0'.repeat(63)+uris).slice(-64)+'@2?relay-protocol=irn&symKey='+'5e'.repeat(32));
+      { const h0=HELD.length; for(let i=0;i<40&&HELD.length===h0;i++) await new Promise(r=>setTimeout(r,100)); }   /* the phone wallet "opens" when an app is tapped (the held jump), or after 4 s */
       const ok=await modal((box,done)=>{ box.classList.add('sg-sim'); box.append(el('div',{class:'sg-h'},'SIMULATED PHONE WALLET · CONNECTION REQUEST'),
         el('p',{class:'sg-p'},'On a real phone the wallet app opens here and asks to connect DITHERVOID // STORMGLASS. Nothing leaves this page: the pairing link above is simulated.'),
         el('div',{class:'sg-btns'},el('button',{class:'sg-b sg-prime','data-pair':'yes',onclick:()=>done(true)},'APPROVE PAIRING'),el('button',{class:'sg-b','data-pair':'no',onclick:()=>done(false)},'REJECT'))); });
       if(!ok) throw err(4001,'User rejected the pairing.');
-      session={topic:'simtopic'+uris}; PS.st.authorized=true; PS.emit('connect',{chainId:PS.st.chainId}); PS.emit('accountsChanged',wc.accounts); return wc.accounts; },
-    async disconnect(){ if(!session) return; session=null; PS.st.authorized=false; PS.emit('disconnect',{code:6000,message:'User disconnected.'}); } };
-  PS.phoneEnds=()=>{ if(!session) return; session=null; PS.st.authorized=false; PS.emit('disconnect',{code:6000,message:'Session deleted.'}); };
+      session={topic:('simtopic'+uris+'x'+rnd32().slice(2)).slice(0,64),peer:{metadata:{name:'SIM PHONE WALLET',description:'simulated',url:'https://sim.staging.invalid',icons:[],redirect:{}}}};
+      PS.st.authorized=true; PS.emit('connect',{chainId:PS.st.chainId}); PS.emit('accountsChanged',wc.accounts); return wc.accounts; },
+    async disconnect(){ if(!session) return; WCH.old.push(session.topic); session=null; PS.st.authorized=false; PS.emit('disconnect',{code:6000,message:'User disconnected.'}); } };
+  PS.phoneEnds=()=>{ if(!session) return; WCH.old.push(session.topic); session=null; PS.st.authorized=false; PS.emit('disconnect',{code:6000,message:'Session deleted.'}); };
+  PS.wcEmit=wcEmit; PS.wch=WCH;
   SIMP.add(wc); SW.PHONE.wc=wc;
   SIM_WC_NS=Object.freeze({EthereumProvider:Object.freeze({init:async()=>wc})});
   /* a tap that would leave for a wallet app (deep links) is held in SIMULATION, where the Navigation API allows it */
-  try{ if(window.navigation&&navigation.addEventListener) navigation.addEventListener('navigate',e=>{ try{ const u=new URL(e.destination.url); if(u.origin!==location.origin&&e.cancelable){ e.preventDefault(); note('SIMULATION: leaving for '+u.hostname+' was held. On a phone this opens the wallet app; here the simulated wallet answers on this page.'); } }catch(x){} }); }catch(e){}
+  /* each held link is written to the LOG (and __SG.held()) in full: the owner sees exactly which deep link OPEN would have opened */
+  try{ if(window.navigation&&navigation.addEventListener) navigation.addEventListener('navigate',e=>{ try{ const u=new URL(e.destination.url); if(u.origin!==location.origin&&e.cancelable){ e.preventDefault(); HELD.push(u.href); logReq('page','open link',null,'HELD: deep link not opened (simulation)').params=u.href; logTick(); note('SIMULATION: the jump to '+u.href+' was held (it is in CONTROLS · LOG). On a phone this opens the wallet app; here the simulated wallet answers on this page.'); } }catch(x){} }); else NAV_HOLD=false; }catch(e){ NAV_HOLD=false; }
 }
 
 /* ═══ REAL WALLET: every provider object the page can reach is a wrapper made here (memoised per raw provider: the page's
@@ -320,6 +387,11 @@ function wrap(raw,who){ if(!raw||(typeof raw!=='object'&&typeof raw!=='function'
     Object.defineProperty(w,'accounts',{enumerable:true,get:()=>{ try{ return Array.isArray(raw.accounts)?raw.accounts.slice():[]; }catch(e){ return []; } }});
     def('enable',async()=>{ if(!(await gate(raw,name(),'enable'))){ logReq(name(),'enable',null,'cancelled at the staging gate'); throw err(4001,'Cancelled on the staging page.'); } logReq(name(),'enable (pairing)',null,'FORWARDED to WalletConnect'); return raw.enable(); });
     def('disconnect',()=>{ logReq(name(),'disconnect',null,'FORWARDED to WalletConnect'); return raw.disconnect(); });
+    /* the session as data (the page reads session.topic to bind its CONFIRM sheet to its own request; audit-4 repair B): a frozen copy
+       of the topic and the peer's name/url/redirect strings, never the raw session object */
+    const str=v=>typeof v==='string'?v:undefined;
+    Object.defineProperty(w,'session',{enumerable:true,get:()=>{ try{ const s=raw.session; if(!s||typeof s!=='object') return undefined; const m=(s.peer&&s.peer.metadata)||{}, r=m.redirect||{};
+      return Object.freeze({topic:str(s.topic),peer:Object.freeze({metadata:Object.freeze({name:str(m.name),url:str(m.url),redirect:Object.freeze({native:str(r.native),universal:str(r.universal)})})})}); }catch(e){ return undefined; } }});
     const facade={client:{on:(ev,f)=>{ if(ev!=='session_request_sent') return; try{ raw.signer.client.on(ev,f); }catch(e){} }}}; def('signer',facade);
     beltWC(raw); }
   ISW.add(w); WRAP.set(raw,w); Object.preventExtensions(w); return w; }
@@ -345,13 +417,23 @@ const SG={
   setSale, txResolve, choose(k){ const b=document.querySelector('#sg-modal [data-out="'+k+'"]'); if(!b) return false; b.click(); return true; },
   modalOpen:()=>!!modalOn, modalText:()=>{ const m=document.getElementById('sg-modal'); return m?m.textContent:''; },
   txs:()=>[...CH.txs.values()].map(r=>({hash:r.hash,from:r.from,to:r.to,value:String(r.value),action:r.action,state:r.state,outcome:r.outcome||null,by:r.by,mode:r.mode||null,replaces:r.replaces||null})),
-  configure(o){ Object.assign(SET,o||{}); saveConf(); logTick(); },
+  configure(o){ Object.assign(SET,o||{}); saveConf(); if(o&&'clock' in o) applyClock(); logTick(); },
+  receipts:RECEIPTS, clocks:CLOCKS, lastChains:LASTCHAIN, track:trackNow, held:()=>HELD.slice(), navHold:()=>NAV_HOLD,
+  wcEmit:k=>{ const w=SW.PHONE; return !!(w&&w.wcEmit&&w.wcEmit(k)); }, wcReqs:()=>SW.PHONE&&SW.PHONE.wch?SW.PHONE.wch.reqs.map(r=>({id:r.ev.id,topic:r.ev.topic,method:r.request.method})):[],
+  /* CONTROLS · SCENARIOS: each SET UP puts the simulated wallets and the chain in the state the scenario needs (logged) */
+  scenario(k,v){ let r=true;
+    if(k==='lastchain'){ const how=LASTCHAIN[v]&&v!=='off'?v:'base-back'; Object.keys(SW).forEach(id=>{ const w=SW[id]; if(!w.st.asleep){ w.st.lastChain=how; w.st.armed=false; if(w.st.chainId!=='0x1') SG.wallet(id,{chainId:'0x1'}); } }); r=how; }
+    else if(k==='switch'){ const id=CONF.preset==='wc'?'PHONE':SW.ALPHA?'ALPHA':Object.keys(SW)[0]; Object.values(SW).forEach(w=>{ w.st.lastChain='off'; w.st.armed=false; }); SG.wallet(id,{chainId:'0x2105',switch:'accept'}); SET.auto='ask'; saveConf(); r=id; }
+    else if(k==='wc'){ SG.configure({wcEvent:['exact','earlier','oldtopic','foreign','none'].includes(v)?v:'earlier'}); r=SET.wcEvent; }
+    else if(k==='receipts'){ const m=RECEIPTS[v]?v:'first-hash'; SG.configure(m==='all'?{receipts:m,clock:'fast'}:{receipts:m}); r=m; }
+    else return false;
+    logReq('staging','scenario '+k,r,'SET UP'); if(DR){ const y=DR.querySelector('.sg-db').scrollTop; drawer(); drawer(); DR.querySelector('.sg-db').scrollTop=y; } note('SET UP: scenario '+k+' ('+r+'). Steps: CONTROLS · SCENARIOS.'); return r; },
   preset(k){ if(!PRESETS[k]) return false; CONF.preset=k; saveConf(); return true; },
   presets:PRESETS, preset_:()=>CONF.preset,
   wallet:(id,o)=>{ const w=SW[id]; if(!w) return null; if(o){ const was={chainId:w.st.chainId,ai:w.st.ai,authorized:w.st.authorized}; Object.assign(w.st,o);
       if(o.chainId&&o.chainId!==was.chainId) setTimeout(()=>w.emit('chainChanged',o.chainId),0);
       if(o.ai!=null&&o.ai!==was.ai&&w.st.authorized) setTimeout(()=>w.emit('accountsChanged',w.list()),0); }
-    return {id,name:w.st.name,chainId:w.st.chainId,account:w.acct(),authorized:w.st.authorized,switch:w.st.switch,connect:w.st.connect,delay:w.st.delay,asleep:w.st.asleep}; },
+    return {id,name:w.st.name,chainId:w.st.chainId,account:w.acct(),authorized:w.st.authorized,switch:w.st.switch,connect:w.st.connect,delay:w.st.delay,asleep:w.st.asleep,lastChain:w.st.lastChain,fired:w.st.fired}; },
   walletDisconnects:id=>{ const w=SW[id]; if(!w) return; if(id==='PHONE'&&w.phoneEnds) return w.phoneEnds(); w.st.authorized=false; setTimeout(()=>w.emit('accountsChanged',[]),0); },
   switchMode(m){ if(m!=='sim'&&m!=='real') return; ssSet(MODE_KEY,m); try{ const B=sessionStorage; for(let i=B.length-1;i>=0;i--){ const k=B.key(i); if(k&&(k.startsWith(SIMLS)||k===CONF_KEY)) B.removeItem(k); } }catch(e){}
     const u=new URL(location.href); u.searchParams.set('sgmode',m); location.replace(u.pathname+u.search); },
@@ -364,7 +446,7 @@ let noteT=null;
 function note(t){ const n=document.getElementById('sg-note'); if(!n) return; n.textContent=t; n.classList.add('on'); clearTimeout(noteT); noteT=setTimeout(()=>n.classList.remove('on'),6000); }
 function ui(){ const B=document.getElementById('sg-banner'); if(!B||B.dataset.on) return; B.dataset.on='1'; B.textContent=''; document.body.classList.add('sg-stage',REAL?'sg-mode-real':'sg-mode-sim');
   B.setAttribute('role','region'); B.setAttribute('aria-label','Test build');
-  B.append(el('b',{class:'sg-tb'},'TEST BUILD'),el('span',{class:'sg-mode'},el('span',{class:'sg-long'},REAL?'REAL WALLET — CONNECTION TEST':'SIMULATION'),el('span',{class:'sg-short'},REAL?'REAL WALLET TEST':'SIMULATION')),
+  B.append(el('b',{class:'sg-tb'},'TEST BUILD'),el('span',{class:'sg-mode'},el('span',{class:'sg-long'},REAL?'REAL WALLET — CONNECTION TEST':'SIMULATION'),el('span',{class:'sg-short'},REAL?'REAL WALLET TEST':'SIMULATION')),(()=>{ const f=el('span',{class:'sg-fast',id:'sg-fast',title:'The tracking deadlines are shortened on this page (CONTROLS · TRACKING)'},'FAST CLOCK'); f.hidden=SET.clock!=='fast'; return f; })(),
     el('span',{class:'sg-rev',title:'candidate index.html: git '+STAMP.rev+' (index.html last changed in '+STAMP.touched+') · sha256 '+STAMP.sha256},'candidate ',el('code',{id:'sg-rev'},STAMP.rev),' · sha256 ',el('code',{id:'sg-sha'},STAMP.sha256.slice(0,12))),
     el('span',{class:'sg-sp'}),el('button',{class:'sg-bb',id:'sg-ctl',onclick:()=>drawer()},'CONTROLS'),el('button',{class:'sg-bb',id:'sg-modebtn',onclick:()=>modeSheet()},'MODE'));
   document.body.appendChild(el('div',{id:'sg-note',role:'status'}));
@@ -372,11 +454,13 @@ function ui(){ const B=document.getElementById('sg-banner'); if(!B||B.dataset.on
 function modeSheet(){ modal((box,done)=>{ box.classList.add(REAL?'sg-real':'sg-sim');
   box.append(el('div',{class:'sg-h'},'CHOOSE THE TEST MODE'),
     el('div',{class:'sg-mo'+(REAL?'':' on')},el('b',null,'SIMULATION (default)'),el('p',null,'Simulated wallets and a simulated chain inside this page. Your real wallet is never visible to the page. Every result (confirmed, reverted, rejected, sped up, cancelled, replaced, unknown) and every delay can be chosen. Nothing leaves this page for Ethereum.')),
-    el('div',{class:'sg-mo'+(REAL?' on':'')},el('b',null,'REAL WALLET — CONNECTION TEST'),el('p',null,'Your real wallet (MetaMask, Rabby, Zerion… or WalletConnect on a phone) connects to this page for real: your wallet will ask to connect this site, and later maybe to switch network. No payment and no signature can be sent from this page: each one is stopped before your wallet and shown to you; you then pick a simulated result. The sale shown stays simulated.')),
+    el('div',{class:'sg-mo'+(REAL?' on':'')},el('b',null,'REAL WALLET — CONNECTION TEST'),el('p',null,'Your real wallet (MetaMask, Rabby, Zerion… or WalletConnect on a phone) connects to this page for real: your wallet will ask to connect this site, and later maybe to switch network. No payment and no signature can be sent from this page: each one is stopped before your wallet and shown to you; you then pick a simulated result. So this mode does not test your wallet’s own payment screen, nor delivery of a payment through the WalletConnect relay. The sale shown stays simulated.')),
     el('p',{class:'sg-n'},'Changing mode reloads the page into a clean state: no wallet connection, no pending transaction and no simulated state carries over.'),
     el('div',{class:'sg-btns'},el('button',{class:'sg-b'+(REAL?'':' sg-prime'),'data-mode':'sim',onclick:()=>{ done(); if(REAL) SG.switchMode('sim'); }},REAL?'RELOAD IN SIMULATION':'STAY IN SIMULATION'),
       el('button',{class:'sg-b'+(REAL?' sg-prime':''),'data-mode':'real',onclick:()=>{ done(); if(!REAL) SG.switchMode('real'); }},REAL?'STAY IN REAL-WALLET MODE':'RELOAD IN REAL-WALLET MODE'),el('button',{class:'sg-b',onclick:()=>done()},'CLOSE'))); }); }
-let DR=null;
+const s1Status=()=>{ const armed=Object.values(SW).filter(w=>w.st.lastChain&&w.st.lastChain!=='off').length; let i=-1; for(let k=LOG.length-1;k>=0;k--) if(/LAST-MOMENT/.test(LOG[k].route)){ i=k; break; }
+  return (armed?'ARMED ('+armed+' wallets, one shot)':'not armed')+(i<0?'':' · last change fired; eth_sendTransaction since: '+LOG.slice(i+1).filter(e=>e.method==='eth_sendTransaction').length); };
+let DR=null; const SHOWP=/^(open link|session_request_sent|chainChanged|scenario |eth_getTransactionReceipt)/;
 function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
   DR=el('aside',{id:'sg-drawer','aria-label':'Staging controls'}); document.body.appendChild(DR);
   const sec=(t,...k)=>el('section',{class:'sg-sec'},el('h4',null,t),...k);
@@ -384,6 +468,31 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
   const num=(lab,v,fn,step)=>el('label',{class:'sg-num'},lab,el('input',{type:'number',value:String(v),step:String(step||100),min:'0',onchange:e=>fn(+e.target.value)}));
   const body=el('div',{class:'sg-db'}); DR.append(el('div',{class:'sg-dh'},el('b',null,'STAGING CONTROLS · '+(REAL?'REAL WALLET':'SIMULATION')),el('button',{class:'sg-bb',onclick:()=>drawer()},'CLOSE')),body);
   body.append(sec('WHAT IS REAL HERE',el('p',{class:'sg-n'},REAL?'REAL: your wallet extension or WalletConnect phone wallet, its accounts, its network, connect / disconnect / revocation, account and network changes made in the wallet. SIMULATED: the sale, the plates’ chain data, every transaction result (your wallet never receives a transaction or a signature), gas estimates.':'SIMULATED: every wallet, every account, the network each wallet is on, the sale state, the plates’ chain data, blocks, receipts, every transaction result. REAL: the page code itself (index.html candidate '+STAMP.rev+') and the plate artwork files it loads from this site. No request leaves this page for an Ethereum node or a wallet.')));
+  /* SCENARIOS: one SET UP per scenario, then the steps to click on the page itself (the production code does the rest) */
+  const scn=(n,title,ctl,steps,expect)=>el('div',{class:'sg-scn','data-scn':n},el('div',{class:'sg-wn'},n+'. '+title),ctl,el('ol',{class:'sg-steps'},steps.map(t=>el('li',null,t))),el('p',{class:'sg-n'},'EXPECT: '+expect));
+  const pickSet=(name,opts,cur)=>{ let v=cur; return [seg(opts,cur,k=>{ v=k; },'data-'+name),()=>v]; };
+  const SCN=[];
+  if(!REAL){
+    const [lcSeg,lcV]=pickSet('lastchain',[['base','TO BASE'],['base-back','TO BASE AND BACK']],'base-back');
+    const armed=Object.values(SW).filter(w=>w.st.lastChain&&w.st.lastChain!=='off').length;
+    SCN.push(scn(1,'NETWORK CHANGES AT THE LAST MOMENT',el('div',null,lcSeg,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'lastchain',onclick:()=>SG.scenario('lastchain',lcV())},'SET UP'),el('span',{class:'sg-st',id:'sg-s1st'},s1Status()))),
+      ['SET UP (every simulated wallet goes to mainnet and is armed once).','CONNECT, pick SIM ALPHA · 1 (on a phone: approve the pairing).','Press COLLECT under the plate, pick a candidate, press COLLECT in the dialog (or press WITNESS).','In the simulated wallet screen nothing needs to be chosen: the wallet answers the page’s final check “0x1”, then announces Base (and back) before the page can send.'],
+      'the dialog / toast says the wallet changed network and nothing was sent; LOG (below) shows “chainChanged · LAST-MOMENT NETWORK CHANGE” and no eth_sendTransaction after it.'));
+    SCN.push(scn(2,'NORMAL COLLECT WITH THE INTENDED SWITCH',el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'switch',onclick:()=>SG.scenario('switch')},'SET UP')),
+      ['SET UP (SIM ALPHA, or the phone wallet, goes to Base with SWITCH: ACCEPT).','CONNECT, pick SIM ALPHA · 1: the wallet button shows [!] NOT MAINNET.','COLLECT, pick a candidate, COLLECT: the dialog says YOUR WALLET IS ON ANOTHER NETWORK.','Press SWITCH TO ETHEREUM: the wallet accepts, the collect goes on and the simulated wallet screen opens on mainnet (WITNESS instead switches by itself).','Press CONFIRMED.'],
+      'one wallet_switchEthereumChain, then one eth_sendTransaction with chainId 0x1, then [OK] DAY … IS YOURS.'));
+    const [wcSeg,wcV]=pickSet('wcevent',[['earlier','AN EARLIER REQUEST’S EVENT'],['oldtopic','OLD SESSION TOPIC'],['foreign','FOREIGN SESSION'],['none','NO EVENT'],['exact','ONLY THE CORRECT EVENT']],SET.wcEvent==='exact'?'earlier':SET.wcEvent);
+    SCN.push(scn(3,'OLD WALLETCONNECT EVENT DURING A NEW PROMPT (phone)',el('div',null,wcSeg,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'wc',onclick:()=>{ if(CONF.preset!=='wc'){ SG.configure({wcEvent:wcV()}); SG.preset('wc'); SG.reloadSim(); return; } SG.scenario('wc',wcV()); }},CONF.preset==='wc'?'SET UP':'SET UP (reloads with the phone WalletConnect set)'),
+        el('span',{class:'sg-st'},'now: '+(SET.wcEvent||'exact'))),
+        el('div',{class:'sg-row'},'emit now: ',[['earlier','EARLIER REQUEST'],['oldtopic','OLD TOPIC'],['foreign','FOREIGN'],['exact','CORRECT']].map(([k,t])=>el('button',{class:'sg-s','data-emit':k,onclick:()=>{ if(!SG.wcEmit(k)) note('No WalletConnect request yet: press COLLECT first.'); }},t)))),
+      ['On a phone (or a phone-sized window with a phone user agent): the CONFIRM sheet exists only there.','SET UP, then CONNECT, tap ZERION (the jump is held and logged), APPROVE PAIRING.','COLLECT, pick, COLLECT: the page’s CONFIRM IN ZERION sheet opens; the simulated phone emits the chosen old event first (and, for EARLIER/FOREIGN, its own event 1.5 s later). EMIT NOW sends one more while the sheet is open.','Tap OPEN ZERION (enabled on the right event, or after 8 s). The jump is held: LOG shows the exact link under “open link”.','Answer the simulated wallet screen as you like.'],
+      'OPEN never carries the old id or topic: with EARLIER or FOREIGN it carries this request’s own requestId and sessionTopic; with OLD TOPIC or NO EVENT it opens …/wc only, after 8 s, and the sheet says “No word yet…”.'));
+  }
+  { const [rSeg,rV]=pickSet('receipts',Object.entries(RECEIPTS),SET.receipts||'valid');
+    SCN.push(scn(REAL?1:4,'RECEIPTS: VALID, MALFORMED FIRST READER, ALL INVALID',el('div',null,rSeg,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'receipts',onclick:()=>SG.scenario('receipts',rV())},'SET UP'),el('span',{class:'sg-st'},'now: '+(SET.receipts||'valid')+' · clock '+(SET.clock||'normal')))),
+      ['Choose the readers’ answer and SET UP (ALL READERS INVALID also turns the FAST CLOCK on, see TRACKING below).',REAL?'CONNECT your wallet (ASK MY WALLET), then COLLECT or WITNESS: the payment is intercepted.':'CONNECT (SIM ALPHA · 1), then COLLECT or WITNESS.','In the wallet screen choose CONFIRMED (or REVERTED).','Watch the dialog and the LOG: each reader’s receipt answer is listed.'],
+      'VALID and FIRST READER …: the result you chose (the malformed first answer is skipped, the next reader’s valid one decides in the same round). ALL INVALID: pending, then “cannot confirm” at 20 s, then RESULT UNKNOWN at 45 s (FAST CLOCK); never confirmed or reverted.')); }
+  body.append(sec('SCENARIOS (audit 4)',...SCN,REAL?el('p',{class:'sg-n'},'The last-moment network change, the intended switch and the WalletConnect event scenarios need the simulated wallets: use SIMULATION (MODE). Your real wallet can of course change network itself while a payment is prepared; the page then stops before your wallet, as in simulation.'):null));
   body.append(sec('SALE (simulated chain)',seg(Object.entries(SALES).map(([k,t])=>[k,t]),S.sale,k=>setSale(k),'data-sale'),
     num('hours since the day opened (OPEN / SOLD)',3,h=>setSale(S.sale==='sold'?'sold':'open',h),0.5)));
   if(!REAL){
@@ -393,6 +502,7 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
         seg([['0x1','MAINNET'],['0x2105','BASE']],s.chainId,k=>{ SG.wallet(id,{chainId:k}); draw(); },'data-chain'),
         seg([['accept','SWITCH: ACCEPT'],['refuse','SWITCH: REFUSE']],s.switch,k=>SG.wallet(id,{switch:k}),'data-switch'),
         seg([['approve','CONNECT: APPROVE'],['refuse','CONNECT: REFUSE']],s.connect,k=>SG.wallet(id,{connect:k}),'data-connect'),
+        el('div',{class:'sg-row'},'last-moment network change: ',seg(Object.entries(LASTCHAIN),s.lastChain||'off',k=>SG.wallet(id,{lastChain:k,armed:false}),'data-lc')),
         el('div',{class:'sg-row'},el('button',{class:'sg-s',onclick:()=>{ SG.wallet(id,{ai:(w.st.ai+1)}); draw(); }},'NEXT ACCOUNT'),el('button',{class:'sg-s',onclick:()=>{ SG.walletDisconnects(id); setTimeout(draw,50); }},'WALLET DISCONNECTS'),
           num('answer delay ms',s.delay,v=>SG.wallet(id,{delay:v}))))); }); };
     draw();
@@ -400,15 +510,18 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
   } else {
     body.append(sec('YOUR WALLET: WHAT MAY REACH IT',el('p',{class:'sg-n'},'Forwarded (default-deny allowlist): '+[...FORWARD].join(', ')+'. eth_requestAccounts and wallet_switchEthereumChain only after you press ASK MY WALLET. Answered here, never forwarded: '+[...LOCAL].join(', ')+'. Stopped and shown, never forwarded: '+POLICY.TX.concat(POLICY.SIGN).join(', ')+'. Anything else: refused.')));
   }
-  body.append(sec('TRANSACTIONS',!REAL?el('label',{class:'sg-num'},'simulated wallet answers ',el('select',{onchange:e=>SG.configure({auto:e.target.value})},[['ask','ASK ME EACH TIME']].concat(Object.entries(OUTCOMES).map(([k,t])=>[k,'ALWAYS '+t]),[['rejected','ALWAYS REJECTED IN WALLET'],['error','ALWAYS WALLET ERROR']]).map(([k,t])=>{ const o=el('option',{value:k},t); if(k===SET.auto) o.selected=true; return o; }))):null,
+  body.append(sec('TRANSACTIONS AND TRACKING',!REAL?el('label',{class:'sg-num'},'simulated wallet answers ',el('select',{onchange:e=>SG.configure({auto:e.target.value})},[['ask','ASK ME EACH TIME']].concat(Object.entries(OUTCOMES).map(([k,t])=>[k,'ALWAYS '+t]),[['rejected','ALWAYS REJECTED IN WALLET'],['error','ALWAYS WALLET ERROR']]).map(([k,t])=>{ const o=el('option',{value:k},t); if(k===SET.auto) o.selected=true; return o; }))):null,
     num('mining delay ms (after the result is chosen)',SET.mine,v=>SG.configure({mine:v})),num('reader latency ms (each JSON-RPC answer)',SET.readerMs,v=>SG.configure({readerMs:v}),50),
     el('div',{class:'sg-row'},'first reader (publicnode): ',seg([['up','UP'],['down','DOWN (503)']],SET.firstReaderDown?'down':'up',k=>SG.configure({firstReaderDown:k==='down'}))),
+    el('label',{class:'sg-num'},'receipts the readers give ',el('select',{'data-ctl':'receipts',onchange:e=>SG.configure({receipts:e.target.value})},Object.entries(RECEIPTS).map(([k,t])=>{ const o=el('option',{value:k},t); if(k===(SET.receipts||'valid')) o.selected=true; return o; }))),
+    el('div',{class:'sg-row'},'tracking clock: ',seg([['normal','NORMAL'],['fast','FAST (staging only)']],SET.clock==='fast'?'fast':'normal',k=>SG.configure({clock:k}),'data-clock')),
+    el('p',{class:'sg-n'},CLOCKS.normal+'. '+CLOCKS.fast+'. FAST changes only these three numbers of the page’s own TRACK object, on this page; the tracking code is the page’s.'),
     el('div',{id:'sg-txs'})));
-  body.append(sec('WALLET REQUESTS (newest first)',el('ol',{id:'sg-log',class:'sg-log'})));
-  logTick=()=>{ if(!DR) return; const L=document.getElementById('sg-log'); if(L){ L.innerHTML=''; LOG.slice(-60).reverse().forEach(e=>L.append(el('li',{class:/INTERCEPT|REFUSED/.test(e.route)?'x':/FORWARD/.test(e.route)?'f':''},el('b',null,e.method),' · '+e.who+' · '+e.route+(e.result?' · '+e.result:'')))); }
+  body.append(sec('LOG: WALLET REQUESTS, READER RECEIPTS, EVENTS, HELD LINKS (newest first)',el('ol',{id:'sg-log',class:'sg-log'})));
+  logTick=()=>{ if(!DR) return; const s1=document.getElementById('sg-s1st'); if(s1) s1.textContent=s1Status(); const L=document.getElementById('sg-log'); if(L){ L.innerHTML=''; LOG.slice(-60).reverse().forEach(e=>L.append(el('li',{class:/INTERCEPT|REFUSED/.test(e.route)?'x':/FORWARD/.test(e.route)?'f':''},el('b',null,e.method),' · '+e.who+' · '+e.route+(e.result?' · '+e.result:'')+(SHOWP.test(e.method)&&e.params&&e.params!=='null'?' · '+e.params:'')))); }
     const T=document.getElementById('sg-txs'); if(T){ T.innerHTML=''; [...CH.txs.values()].filter(r=>!r.replaces).slice(-8).reverse().forEach(r=>T.append(el('div',{class:'sg-tx'},el('code',null,r.hash.slice(0,10)+'… '+r.action+' · '+r.state+(r.by?' → '+r.by.slice(0,10)+'…':'')),
       r.state==='pending'||r.state==='unknown'?el('div',{class:'sg-row'},(r.state==='unknown'?[['confirmed','LATE RECEIPT: CONFIRMED']]:Object.entries(OUTCOMES).filter(([k])=>k!=='pending')).map(([k,t])=>el('button',{class:'sg-s',onclick:()=>{ txResolve(r.hash,k); }},t.split(' (')[0]))):null))); } };
   logTick(); }
-const start=()=>{ ui(); pump(); };
+const start=()=>{ ui(); pump(); applyClock(); };
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
 })();

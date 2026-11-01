@@ -239,6 +239,141 @@ T('st13','the build refuses a changed index.html: a moved EIP-6963 anchor, an un
   fs.rmSync(dir,{recursive:true,force:true});
   return {pass:r.moved6963.rc===1&&/EIP-6963/.test(r.moved6963.msg)&&r.method.rc===1&&/wallet_disconnect/.test(r.method.msg)&&r.untapped.rc===1&&/does not tap/.test(r.untapped.msg)&&r.doubled.rc===1&&r.f9a6f80.rc===0&&r.c553222a.rc===0,ev:r}; });
 
+/* ═══ AUDIT 4 SCENARIOS (st16+): driven from CONTROLS (the drawer's own buttons), answered by the page's production code */
+const fullLog=E=>ev(E,()=>__SG.log.map(x=>({who:x.who,method:x.method,route:x.route,result:x.result,params:x.params})));
+async function drawerOpen(E,on){ const is=await ev(E,()=>!!document.getElementById('sg-drawer')); if(is!==on){ await E.page.click('#sg-ctl'); await sleep(250); } }
+async function ctl(E,sel){ await drawerOpen(E,true); const n=await E.page.locator('#sg-drawer '+sel).count(); if(n!==1) throw new Error('control '+sel+' found '+n+' times'); await E.page.locator('#sg-drawer '+sel).scrollIntoViewIfNeeded(); await E.page.click('#sg-drawer '+sel); await sleep(200); }
+const PHONE={viewport:{width:390,height:844},mobile:true,ua:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'};
+const sends=L=>L.filter(x=>x.method==='eth_sendTransaction');
+
+/* ── st16: scenario 1, the network changes at the last moment (to Base and back, from COLLECT; to Base, from WITNESS) */
+T('st16','SCENARIO 1 from CONTROLS: the simulated wallet answers the final check 0x1, then announces Base (and back) before the page sends: COLLECT and WITNESS stop with the changed-network message; the wallet log has no eth_sendTransaction',{wallets:[]},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20}));
+  await ctl(E,'[data-lastchain=base-back]'); await ctl(E,'[data-setup=lastchain]'); const armed=await ev(E,()=>__SG.wallet('ALPHA').lastChain); await drawerOpen(E,false);
+  await simConnect(E,/SIM ALPHA · 1/); const n0=(await E.toasts()).length;
+  await H.buy(E); const stop1=await E.until(async()=>/changed network|another network/i.test(await H.popText(E.page)),15000); await sleep(600);
+  const pop1=await H.popText(E.page); const t1=(await E.toasts()).slice(n0); const modal1=await modalOpen(E); await shot(E,'s1_collect_stopped');
+  const L1=await fullLog(E); const ev1=L1.filter(x=>x.method==='chainChanged'&&/LAST-MOMENT/.test(x.route)); const lab1=await label(E);
+  await ev(E,()=>{ const x=document.getElementById('ccX'); if(x) x.click(); }); await sleep(400);
+  await ctl(E,'[data-lastchain=base]'); await ctl(E,'[data-setup=lastchain]'); await drawerOpen(E,false); const n1=(await E.toasts()).length;
+  await H.witness(E,'0.01'); const stop2=await E.until(async()=>(await E.toasts()).slice(n1).some(x=>/changed network|another network/i.test(x)),15000); await sleep(800);
+  const t2=(await E.toasts()).slice(n1); const L2=await fullLog(E); const lab2=await label(E); const fired=await ev(E,()=>__SG.wallet('ALPHA').fired);
+  const est=L2.filter(x=>x.method==='eth_estimateGas').length;
+  return {pass:armed==='base-back'&&stop1&&/Nothing was sent/i.test(pop1+t1.join('|'))&&!modal1&&ev1.length===1&&/0x2105.*0x1/.test(ev1[0].params)&&/0x/.test(lab1)&&!/NOT MAINNET/.test(lab1)
+    &&stop2&&t2.some(x=>/Nothing was sent/.test(x))&&/NOT MAINNET|\[!\]/.test(lab2)&&fired===2&&est>=2&&sends(L2).length===0&&(await txs(E)).length===0,
+    ev:{armed,collect:{pop:pop1.slice(0,120),toasts:t1,label:lab1,event:ev1.map(x=>x.params)},witness:{toasts:t2,label:lab2},fired,estimates:est,sendTransaction:sends(L2).length}}; },{query:q('sim')});
+
+/* ── st17: scenario 2, the ordinary path: the wallet starts on Base, COLLECT asks for the switch, it is accepted, the purchase goes on */
+T('st17','SCENARIO 2 from CONTROLS: wallet on Base, COLLECT, the switch is accepted, the purchase goes on mainnet and is confirmed (one switch, one send, chainId 0x1)',{wallets:[]},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20})); await ctl(E,'[data-setup=switch]'); const w0=await ev(E,()=>__SG.wallet('ALPHA')); await drawerOpen(E,false);
+  await simConnect(E,/SIM ALPHA · 1/); await E.until(async()=>/NOT MAINNET|\[!\]/.test(await label(E)),4000); const lab0=await label(E);
+  await H.buy(E); const wrongView=await E.until(async()=>/ANOTHER NETWORK/.test(await H.popText(E.page)),10000); const wv=await H.popText(E.page); await shot(E,'s2_wrong_network_dialog');
+  await E.page.click('#nx-switch'); const m=await waitModal(E,12000); const mt=await modalText(E); await shot(E,'s2_after_switch_wallet_screen');
+  await clickModal(E,'[data-out=confirmed]'); const ok=await E.until(()=>toastHas(E,/Collecting the plate: confirmed/),15000); await sleep(500); const pop=await H.popText(E.page);
+  const L=await fullLog(E); const iSw=L.findIndex(x=>x.method==='wallet_switchEthereumChain'), iTx=L.findIndex(x=>x.method==='eth_sendTransaction');
+  const w1=await ev(E,()=>__SG.wallet('ALPHA'));
+  return {pass:w0.chainId==='0x2105'&&w0.switch==='accept'&&/NOT MAINNET|\[!\]/.test(lab0)&&wrongView&&/SWITCH TO ETHEREUM/.test(wv)&&m&&/WALLET IS ON1 · Ethereum mainnet/.test(mt)&&/INTENDED CHAIN1 · Ethereum mainnet/.test(mt)&&ok&&/IS YOURS/.test(pop)
+    &&L.filter(x=>x.method==='wallet_switchEthereumChain').length===1&&sends(L).length===1&&iSw>=0&&iSw<iTx&&/"chainId":"0x1"/.test(sends(L)[0].params)&&w1.chainId==='0x1',
+    ev:{w0,lab0,wrongView:wv.slice(0,80),modal:mt.slice(0,200),ok,pop:pop.slice(0,60),order:[iSw,iTx],send:sends(L).map(x=>x.params)}}; },{query:q('sim')});
+
+/* ── st18: scenario 3, old / foreign WalletConnect events while the new CONFIRM sheet is open (phone, simulated WalletConnect) */
+T('st18','SCENARIO 3 from CONTROLS (phone, simulated WalletConnect): an earlier request’s event, a foreign session’s and an old session topic while the CONFIRM sheet is open never reach OPEN; the held deep link is in the log; only this request’s own event gives requestId+sessionTopic',{wallets:[]},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20}));
+  await ctl(E,'[data-wcevent=earlier]'); await ctl(E,'[data-setup=wc]'); await drawerOpen(E,false);
+  await E.page.click('#wallet'); await E.until(()=>H.sheetOpen(E.page),5000); await E.until(()=>ev(E,()=>[...document.querySelectorAll('#wsheet button')].some(b=>/ZERION/.test(b.textContent)&&!b.disabled)),6000);
+  await H.clickSheet(E.page,/ZERION/); await clickModal(E,'[data-pair=yes]'); const conn=await E.until(async()=>/0x/.test(await label(E)),8000);
+  const pairLink=(await ev(E,()=>__SG.held())).slice(-1)[0]||'';
+  const openBtn=()=>ev(E,()=>{ const s=document.getElementById('wsheet'); if(!s||!s.classList.contains('on')) return null; const b=[...s.querySelectorAll('button')].find(b=>/^OPEN /.test(b.textContent)); return b?{t:b.textContent,on:!b.disabled}:null; });
+  const tapOpen=()=>ev(E,()=>{ const b=[...document.querySelectorAll('#wsheet button')].find(b=>/^OPEN /.test(b.textContent)); b.click(); });
+  const run=async(kind,manual)=>{ if(kind){ await ctl(E,'[data-wcevent='+kind+']'); await ctl(E,'[data-setup=wc]'); await drawerOpen(E,false); }
+    await E.until(async()=>!(await openBtn()),5000); const h0=(await ev(E,()=>__SG.held())).length; await H.witness(E,'0.01'); await E.until(async()=>!!(await openBtn())&&/Sending the request/.test(await ev(E,()=>document.getElementById('wsp').textContent)),6000); const sheet=await ev(E,()=>document.getElementById('wsheet').textContent);
+    if(manual){ await drawerOpen(E,true); for(const k of manual) await ctl(E,'[data-emit='+k+']'); await drawerOpen(E,false); }
+    const t0=Date.now(); await E.until(async()=>(await openBtn()||{}).on,12000); const ms=Date.now()-t0; const said=await ev(E,()=>document.getElementById('wsp').textContent); await shot(E,'s3_'+(kind||'earlier'));
+    await tapOpen(); await sleep(300); const link=(await ev(E,()=>__SG.held())).slice(h0).pop()||null; const reqs=await ev(E,()=>__SG.wcReqs()); const own=reqs[reqs.length-1];
+    await clickModal(E,'[data-out=rejected]'); await sleep(600); await H.closeWit(E.page);
+    return {sheet:sheet.slice(0,40),ms,said:said.slice(0,60),link,own,earlier:reqs.slice(0,-1).map(r=>r.id)}; };
+  const r1=await run(null);                       /* earlier request's event (made up: the first request has no predecessor) at 0.3 s, its own at 1.5 s */
+  const r2=await run('none',['earlier','foreign']);  /* no own event; the FIRST request's real event and a foreign one, emitted by hand */
+  const r3=await run('oldtopic');                 /* this request's params under the earlier session's topic */
+  const L=await fullLog(E); const evs=L.filter(x=>x.method==='session_request_sent').map(x=>x.route.replace('simulated WalletConnect event: ',''));
+  const exact=(r,o)=>r.link==='https://link.zerion.io/wc?requestId='+o.id+'&sessionTopic='+encodeURIComponent(o.topic);
+  const generic=r=>r.link==='https://link.zerion.io/wc';
+  const noOld=r=>r.earlier.every(id=>!String(r.link).includes(String(id)))&&!/foreign|simtopic-earlier/.test(String(r.link));
+  return {pass:conn&&/^https:\/\/link\.zerion\.io\/wc\?uri=wc%3A/.test(pairLink)&&/CONFIRM IN ZERION/.test(r1.sheet)&&exact(r1,r1.own)&&r1.ms<3000&&/is in ZERION now/.test(r1.said)
+    &&generic(r2)&&noOld(r2)&&r2.ms>5000&&/No word yet/.test(r2.said)&&generic(r3)&&noOld(r3)&&r3.ms>5000&&/No word yet/.test(r3.said)&&noOld(r1)
+    &&evs.some(x=>/EARLIER request/.test(x))&&evs.some(x=>/FOREIGN/.test(x))&&evs.some(x=>/OLD session/.test(x))&&sends(L).length===3&&E.sockets.length===0,
+    ev:{conn,pairLink:pairLink.slice(0,50),r1,r2,r3,events:evs}}; },Object.assign({query:q('sim')},PHONE));
+
+/* ── st19: scenario 4, receipts: valid; a malformed first reader (wrong hash / no status / bad block) and a valid fallback reader */
+T('st19','SCENARIO 4 from CONTROLS: valid receipts confirm; a malformed first-reader receipt (wrong hash, no status, a block before the send) is skipped and the fallback reader’s valid receipt decides (confirmed, and reverted when the chain says so)',{wallets:[]},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20,auto:'confirmed'})); await simConnect(E,/SIM ALPHA · 1/); const res=[];
+  for(const [mode,out,re] of [['valid','confirmed',/Your witness payment: confirmed$/],['first-hash','confirmed',/Your witness payment: confirmed$/],['first-status','reverted',/failed on Ethereum \(reverted\)/],['first-block','confirmed',/Your witness payment: confirmed$/]]){
+    await ctl(E,'[data-receipts='+mode+']'); await ctl(E,'[data-setup=receipts]'); await drawerOpen(E,false); await ev(E,o=>__SG.configure({auto:o}),out);
+    const n0=(await E.toasts()).length, l0=(await fullLog(E)).length; await H.witness(E,'0.01');
+    const ok=await E.until(async()=>(await E.toasts()).slice(n0).some(x=>re.test(x)),15000); await sleep(300);
+    const t=(await E.toasts()).slice(n0); const L=(await fullLog(E)).slice(l0).filter(x=>x.method==='eth_getTransactionReceipt'&&/^reader/.test(x.who));
+    res.push({mode,ok,set:await ev(E,()=>__SG.set.receipts),wrongVerdict:t.some(x=>out==='confirmed'?/reverted/.test(x):/: confirmed/.test(x)),answers:L.map(x=>x.who.replace('reader ','')+': '+x.route.replace(/^answered (a |the )?/,'').slice(0,40))});
+    await H.closeWit(E.page); await sleep(300); }
+  const good=r=>r.ok&&!r.wrongVerdict&&r.set===r.mode&&(r.mode==='valid'?r.answers.length===0:r.answers.length>=2&&/MALFORMED/.test(r.answers[0])&&r.answers.some(a=>/VALID/.test(a)&&a.split(':')[0]!==r.answers[0].split(':')[0]));
+  return {pass:res.every(good),ev:{res}}; },{query:q('sim')});
+
+/* ── st20: scenario 4, every reader invalid, with the FAST CLOCK: pending, then "cannot confirm" (TRACK.lost), then unknown (TRACK.stop); never confirmed or reverted */
+T('st20','SCENARIO 4 from CONTROLS: ALL READERS INVALID with the FAST CLOCK (staging only, shown in the banner): the payment stays pending, says cannot confirm at 20 s and RESULT UNKNOWN to the end (45 s), never confirmed or reverted; NORMAL restores the page’s deadlines',{wallets:[]},async E=>{
+  const t0k=await ev(E,()=>__SG.track()); await ev(E,()=>__SG.configure({mine:300,readerMs:20}));
+  await ctl(E,'[data-receipts=all]'); await ctl(E,'[data-setup=receipts]'); await drawerOpen(E,false);
+  const fast=await ev(E,()=>({track:__SG.track(),set:[__SG.set.receipts,__SG.set.clock],chip:!document.getElementById('sg-fast').hidden&&document.getElementById('sg-fast').getBoundingClientRect().width>0}));
+  await simConnect(E,/SIM ALPHA · 1/); await H.buy(E); await clickModal(E,'[data-out=confirmed]'); const tS=Date.now();
+  await E.until(async()=>/PENDING/i.test(await H.popText(E.page)),8000); const pend=await H.popText(E.page);
+  const atLost=await E.until(async()=>/UNKNOWN|CANNOT CONFIRM/i.test(await H.popText(E.page)),30000); const msLost=Date.now()-tS; const unk=await H.popText(E.page); await shot(E,'s4_all_invalid_unknown');
+  const before=(await fullLog(E)).filter(x=>x.method==='eth_getTransactionReceipt'&&/^reader/.test(x.who)).length;
+  await E.until(async()=>(await E.toasts()).filter(x=>/cannot confirm it yet/.test(x)).length>=2,40000); const msStop=Date.now()-tS; await sleep(4000);
+  const L=(await fullLog(E)).filter(x=>x.method==='eth_getTransactionReceipt'&&/^reader/.test(x.who)); const after=L.length; await sleep(4000); const later=(await fullLog(E)).filter(x=>x.method==='eth_getTransactionReceipt'&&/^reader/.test(x.who)).length;
+  const toasts=await E.toasts(); const verdict=toasts.some(x=>/: confirmed|reverted/.test(x)); const pop=await H.popText(E.page);
+  const hosts=[...new Set(L.map(x=>x.who))]; const allBad=L.every(x=>/MALFORMED/.test(x.route));
+  await ctl(E,'[data-clock=normal]'); const back=await ev(E,()=>({track:__SG.track(),chip:document.getElementById('sg-fast').hidden}));
+  return {pass:t0k.lost===600000&&t0k.stop===3600000&&t0k.poll===3000&&fast.track.lost===20000&&fast.track.stop===45000&&fast.track.poll===1500&&fast.set.join()==='all,fast'&&fast.chip
+    &&/PENDING/i.test(pend)&&atLost&&msLost>=17000&&msLost<32000&&/UNKNOWN|CANNOT CONFIRM/i.test(unk)&&msStop>=42000&&msStop<70000&&after===later&&before<after&&!verdict&&!/IS YOURS|NOT COLLECTED/.test(pop)
+    &&hosts.length===3&&allBad&&back.track.lost===600000&&back.track.stop===3600000&&back.track.poll===3000&&back.chip,
+    ev:{page:t0k,fast,pend:pend.slice(0,60),msLost,unk:unk.slice(0,80),msStop,receiptAnswers:[before,after,later],hosts,allBad,verdict,pop:pop.slice(0,60),back,cannot:toasts.filter(x=>/cannot confirm/.test(x)).length}}; },{query:q('sim')});
+
+/* ── st21: REAL WALLET: the method list re-enumerated against policy.js; the receipt controls and the fast clock act on intercepted payments; the external wallet never receives a write or a signature; the WalletConnect wrapper's session is a frozen copy */
+T('st21','REAL WALLET: every method literal in index.html is classified (no overlap between forwarded and write/sign); a malformed first reader then a valid one confirms an intercepted COLLECT; the external wallet receives only allowlisted methods (no write, no signature); session is a frozen copy on the WalletConnect wrapper',
+  {wallets:[mock('A')],ethereum:'A',wc:{accounts:[A1],chainId:'0x1'}},async E=>{
+  const src=fs.readFileSync(path.join(ROOT,'index.html'),'utf8'); const lits=[...new Set([...src.matchAll(/['"`]((?:eth|wallet|net|personal|web3)_[A-Za-z0-9_]+)['"`]/g)].map(m=>m[1]))].sort();
+  const F=Object.keys(POLICY.FORWARD), W=new Set(POLICY.TX.concat(POLICY.SIGN)); const known=new Set([...F,...Object.keys(POLICY.LOCAL),...POLICY.TX,...POLICY.SIGN,...POLICY.READER,...POLICY.KNOWN_UNUSED]);
+  const unclassified=lits.filter(m=>!known.has(m)), overlap=F.filter(m=>W.has(m)||m in POLICY.LOCAL), sentByPage=lits.filter(m=>!POLICY.READER.includes(m));
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20})); await ctl(E,'[data-receipts=first-hash]'); await ctl(E,'[data-setup=receipts]'); await drawerOpen(E,false);
+  await realConnect(E); await H.buy(E); await waitModal(E); const m=await modalText(E); await clickModal(E,'[data-out=confirmed]');
+  const ok=await E.until(()=>toastHas(E,/Collecting the plate: confirmed/),15000); const L=await fullLog(E); const rc=L.filter(x=>x.method==='eth_getTransactionReceipt'&&/^reader/.test(x.who)).map(x=>x.who+' '+x.route.slice(0,30));
+  const wcs=await ev(E,async()=>{ const p=await _wcGlobal().EthereumProvider.init({projectId:'x'}); const s0=p.session; return {wrapped:__SG.isWrapper(p),raw:p===__MW.wc.provider,before:s0===undefined}; });
+  const wcs2=await ev(E,async()=>{ __MW.wc.provider.session={topic:'t0pic',peer:{metadata:{name:'Phone',url:'https://x.invalid',redirect:{native:'phone://'}}},secret:{k:1}}; const p=await _wcGlobal().EthereumProvider.init({projectId:'x'}); const s=p.session;
+    let wrote=false; try{ s.topic='other'; wrote=s.topic==='other'; }catch(e){} return {topic:s.topic,name:s.peer.metadata.name,native:s.peer.metadata.redirect.native,frozen:Object.isFrozen(s)&&Object.isFrozen(s.peer.metadata),secret:'secret' in s,notRaw:s!==__MW.wc.provider.session,wrote}; });
+  const MW=await mwLog(E); const reached=[...new Set(MW.map(x=>x.method))]; const bad=reached.filter(x=>!F.includes(x)||W.has(x));
+  return {pass:!unclassified.length&&!overlap.length&&sentByPage.every(x=>known.has(x))&&/SUBMISSION INTERCEPTED/.test(m)&&/does not test your wallet’s own payment screen/.test(m)&&/WalletConnect relay/.test(m)&&ok&&rc.length>=2&&/MALFORMED/.test(rc[0])&&/VALID/.test(rc[rc.length-1])
+    &&wcs.wrapped&&!wcs.raw&&wcs.before&&wcs2.topic==='t0pic'&&wcs2.name==='Phone'&&wcs2.native==='phone://'&&wcs2.frozen&&!wcs2.secret&&wcs2.notRaw&&!wcs2.wrote&&!bad.length,
+    ev:{methods:lits,forwarded:F,overlap,unclassified,ok,receipts:rc,wc:[wcs,wcs2],walletReceived:reached,bad}}; },{query:q('real')});
+
+/* ── st22: the staging page differs from index.html by exactly the build's documented patches (undo them and the bytes are index.html's) */
+T('st22','test-wallet.html minus the documented patches (head insert, title, style, banner, the three provider taps) is index.html byte for byte; the build prints the same patch list',{wallets:[]},async E=>{
+  const src=fs.readFileSync(path.join(ROOT,'index.html'),'utf8'), pg=fs.readFileSync(path.join(ROOT,PAGE),'utf8'), css=fs.readFileSync(path.join(__dirname,'stage.css'),'utf8');
+  const cnt=(s,a)=>s.split(a).length-1; let u=pg; const undo=[];
+  const cut=(label,re,want)=>{ const m=u.match(re); const n=m?1:0; undo.push({label,n}); if(m) u=u.replace(re,want); };
+  cut('head insert (generated comment, robots noindex, staging runtime script)',/^([\s\S]*?<head><meta charset="utf-8">)\n<!-- TEST BUILD [^\n]*-->\n<meta name="robots" content="noindex,nofollow">\n<script>\n[\s\S]*?\n<\/script>/,'$1');
+  cut('title',/<title>TEST BUILD · STORMGLASS staging \(not the live site\)<\/title>/,'<title>DITHERVOID // STORMGLASS</title>');
+  const st='<style>\n'+css+'</style>\n</head>'; undo.push({label:'stage.css before </head>',n:cnt(u,st)}); u=u.split(st).join('</head>');
+  cut('banner after <body>',/<body>\n<div id="sg-banner">TEST BUILD · not the live site · candidate [0-9a-f+mod]+<\/div>/,'<body>');
+  const tap=(label,a,b)=>{ undo.push({label,n:cnt(u,a)}); u=u.split(a).join(b); };
+  tap('EIP-6963 detail tap','const d=__SG.detail(e&&e.detail);','const d=e&&e.detail;');
+  tap('WalletConnect namespace tap',"const _wcGlobal=()=>__SG.wcNS(globalThis['@walletconnect/ethereum-provider']);","const _wcGlobal=()=>globalThis['@walletconnect/ethereum-provider'];");
+  tap('window.ethereum taps','__SG.eth()','window.ethereum');
+  const same=u===src; const marks=MARKS.filter(x=>u.includes(x));
+  let rep=null; try{ rep=JSON.parse(execFileSync('node',[BUILD,'--patches','--out',path.join(OUT,'st22.html')].concat((/const STAMP=\{"rev":"([0-9a-f]+)"/.exec(pg)||[])[1]?['--candidate',(/const STAMP=\{"rev":"([0-9a-f]+)"/.exec(pg)||[])[1]]:[]),{encoding:'utf8'}).split('\n').find(l=>l.startsWith('{'))); }catch(e){ rep={error:String(e.message).slice(0,200)}; }
+  try{ fs.unlinkSync(path.join(OUT,'st22.html')); }catch(e){}
+  const nEth=cnt(src,'window.ethereum');
+  const okCounts=undo.every(x=>x.label==='window.ethereum taps'?x.n===nEth:x.n===1);
+  const okRep=rep&&Array.isArray(rep.patches)&&rep.patches.length===7&&rep.patches.find(p=>/window\.ethereum/.test(p.label)).count===nEth&&rep.patches.every(p=>p.count>=1);
+  return {pass:same&&!marks.length&&okCounts&&okRep,ev:{same,firstDiff:same?null:[...u].findIndex((c,i)=>c!==src[i]),marks,undo,patches:rep&&rep.patches}}; });
+
 module.exports={CASES,T};
 /* THE RUN (same exit rules as wallet.test.js: 0 only when every selected case ran and passed; 1 on a failure; 2 on a bad selection) */
 if(require.main===module){ let RUNNING='(none)'; process.on('beforeExit',()=>{ console.log('HARNESS FAIL the run stopped before it finished, in case '+RUNNING); process.exit(1); });
