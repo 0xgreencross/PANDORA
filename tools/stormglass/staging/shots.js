@@ -10,7 +10,8 @@ const UMD=['/home/claude/node_modules'].concat((process.env.NODE_PATH||'').split
 const ETHERS=fs.readFileSync(UMD,'utf8');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const IPHONE='Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
-const A5=process.env.A5ONLY==='1';   /* A5ONLY=1: only the audit-5 section (probe-a5.json) */
+const A5=process.env.A5ONLY==='1';
+const A5B=process.env.A5B==='1';   /* A5B=1: only the audit-5b section (the owed-change controls, the replacement that withdrew, the REAL-mode boundary texts; probe-a5b.json) */   /* A5ONLY=1: only the audit-5 section (probe-a5.json) */
 const LAW8=[[1440,900],[1366,768],[1280,800],[1024,768],[768,1024],[390,844]];
 /* flags.isMetaMask: on the phone size this is MetaMask's in-app browser (the page then uses window.ethereum, not WalletConnect) */
 const REALW={wallets:[{id:'A',name:'MetaMask',rdns:'io.metamask',chainId:'0x1',accounts:['0x0dd399a7ed92283e4983c2974fe377070d67f4eb'],flags:{isMetaMask:true}}],ethereum:'A'};
@@ -36,8 +37,44 @@ const buy=async page=>{ await page.evaluate(()=>{ const w=document.getElementByI
 const until=async(page,fn,ms=15000)=>{ const t=Date.now(); while(Date.now()-t<ms){ if(await page.evaluate(fn)) return true; await sleep(150); } return false; };
 const pop=page=>page.evaluate(()=>(document.getElementById('ccActs')||{}).textContent||'');
 async function simConnect(page){ await page.click('#wallet'); await sleep(1800); await page.evaluate(()=>{ const b=[...document.querySelectorAll('#wsBtns button')].find(b=>/SIM ALPHA · 1|SIM ALPHA/.test(b.textContent)); if(b) b.click(); }); await until(page,()=>/0x/.test(document.getElementById('wallet').textContent),8000); await sleep(400); }
+/* ═══ AUDIT 5b: what is owed changes after REVIEW (card 7), the replacement that withdrew, and the REAL-mode boundary texts, at 1440x900 and 390x844 */
+async function a5b(){
+  const dOpen=async(page,on)=>{ const is=await page.evaluate(()=>!!document.getElementById('sg-drawer')); if(is!==on){ await page.evaluate(()=>document.getElementById('sg-ctl').click()); await sleep(300); } };
+  const dJS=async(page,sel)=>{ await dOpen(page,true); await page.evaluate(s=>document.querySelector('#sg-drawer '+s).click(),sel); await sleep(250); };
+  const dTo=async(page,sel)=>{ await dOpen(page,true); await page.evaluate(s=>{ const e=document.querySelector('#sg-drawer '+s), b=document.querySelector('#sg-drawer .sg-db'); if(e&&b) b.scrollTop=e.offsetTop-b.offsetTop-4; },sel); await sleep(250); };
+  const review=async(page,addr)=>{ await page.evaluate(()=>refreshSeats()); await until(page,()=>{ const b=document.getElementById('withdrawTo'); return b&&b.style.display!=='none'; },20000);
+    await page.evaluate(()=>{ if(document.getElementById('wtoBox').hidden) document.getElementById('withdrawTo').click(); }); await page.fill('#wtoAddr',addr); await page.evaluate(()=>document.getElementById('wtoReview').click());
+    await until(page,()=>{ const s=document.getElementById('wsheet'); return s&&s.classList.contains('on'); },6000); await sleep(400); };
+  const sendBtn=page=>page.evaluate(()=>{ const b=[...document.querySelectorAll('#wsBtns button')].find(b=>/SEND|WITHDRAW|CONFIRM/i.test(b.textContent)&&!/CANCEL/i.test(b.textContent)); if(b) b.click(); return !!b; });
+  const R='0x52908400098527886e0f7030069857d2e4169ee7';
+  /* connect SIM ALPHA · 1 behind gates (the picker waits for every wallet's liveness answer: slow under load), never a fixed sleep */
+  const simConnect=async page=>{ await page.click('#wallet'); if(!(await until(page,()=>[...document.querySelectorAll('#wsBtns button')].some(b=>/SIM ALPHA · 1/.test(b.textContent)),20000))) throw new Error('no wallet list');
+    await page.evaluate(()=>[...document.querySelectorAll('#wsBtns button')].find(b=>/SIM ALPHA · 1/.test(b.textContent)).click()); if(!(await until(page,()=>/0x/.test(document.getElementById('wallet').textContent),15000))) throw new Error('did not connect'); await sleep(600); };
+  for(const [w,h] of [[1440,900],[390,844]]){ const sz=w+'x'+h, ua=w<700?IPHONE:undefined;
+    /* the card with the new controls */
+    let S=await open(w,h,'sim'); await dTo(S.page,'.sg-scn[data-scn="7"]'); await S.page.evaluate(()=>{ const e=document.querySelector('#sg-drawer [data-act=owed-now]'), b=document.querySelector('#sg-drawer .sg-db'); if(e&&b) b.scrollTop=Math.max(0,e.getBoundingClientRect().top-b.getBoundingClientRect().top+b.scrollTop-160); }); await sleep(200); await snap(S,'a5b_controls_card7_owed_changes_'+sz); await S.ctx.close();
+    /* INCREASES at the review sheet (CHANGE NOW), then the wallet screen with OWED NOW, CONFIRMED, the LOG */
+    S=await open(w,h,'sim'); await dJS(S.page,'[data-owed="0.05"]'); await dJS(S.page,'[data-setup=owed]'); await dOpen(S.page,false); await simConnect(S.page);
+    await review(S.page,R); await snap(S,'a5b_s7_review_sheet_'+sz); await dJS(S.page,'[data-owedchg=increase]'); await dJS(S.page,'[data-act=owed-now]'); await sleep(200); await snap(S,'a5b_s7_increase_now_with_drawer_'+sz); await dOpen(S.page,false);
+    await sendBtn(S.page); await until(S.page,()=>__SG.modalOpen(),8000); await sleep(400); await snap(S,'a5b_s7_wallet_screen_owed_now_0.1_'+sz);
+    await S.page.click('#sg-modal [data-out=confirmed]'); await until(S.page,()=>__SG.txs().some(t=>t.action==='withdrawTo'&&t.state==='confirmed'),15000); await sleep(3000); await S.page.evaluate(()=>{ const b=document.getElementById('wtoBox'); if(b&&!b.hidden) b.scrollIntoView({block:'center'}); }); await snap(S,'a5b_s7_increase_confirmed_'+sz);
+    await dTo(S.page,'#sg-log'); await snap(S,'a5b_s7_log_owed_change_payout_'+sz); await S.ctx.close();
+    /* BECOMES ZERO when the wallet screen opens: the wallet screen, then the revert */
+    S=await open(w,h,'sim'); await dJS(S.page,'[data-owed="0.05"]'); await dJS(S.page,'[data-setup=owed]'); await dJS(S.page,'[data-owedchg=zero]'); await dJS(S.page,'[data-act=owed-arm]'); await dOpen(S.page,false); await simConnect(S.page);
+    await review(S.page,R); await sendBtn(S.page); await until(S.page,()=>__SG.modalOpen(),8000); await sleep(400); await snap(S,'a5b_s7_zero_wallet_screen_'+sz);
+    await S.page.click('#sg-modal [data-out=confirmed]'); await until(S.page,()=>__SG.txs().some(t=>t.action==='withdrawTo'&&t.state==='reverted'),15000); await sleep(2500); await snap(S,'a5b_s7_zero_reverted_'+sz); await S.ctx.close();
+    /* the replacement that withdrew */
+    S=await open(w,h,'sim'); await dJS(S.page,'[data-owed="0.05"]'); await dJS(S.page,'[data-setup=owed]'); await dOpen(S.page,false); await simConnect(S.page);
+    await review(S.page,R); await sendBtn(S.page); await until(S.page,()=>__SG.modalOpen(),8000); await S.page.evaluate(()=>{ const b=document.querySelector('#sg-modal [data-out=replacedpaid]'); if(b) b.scrollIntoView({block:'center'}); }); await sleep(300); await snap(S,'a5b_s7_wallet_screen_replaced_by_withdrawal_'+sz);
+    await S.page.click('#sg-modal [data-out=replacedpaid]'); await until(S.page,()=>__SG.txs().some(t=>t.action==='withdrawTo'&&t.state==='replaced'),15000); await sleep(5000); await snap(S,'a5b_s7_replaced_outcome_'+sz); await S.ctx.close();
+    /* REAL WALLET: the mode chooser, CONTROLS' boundary text, the gate, the intercept panel with OWED NOW */
+    S=await open(w,h,'real',{wallet:REALW,ua}); await S.page.evaluate(()=>document.getElementById('sg-modebtn').click()); await sleep(300); await snap(S,'a5b_mode_chooser_real_'+sz); await S.page.evaluate(()=>[...document.querySelectorAll('#sg-modal button')].find(b=>/^CLOSE$/.test(b.textContent)).click()); await sleep(200);
+    await dTo(S.page,'[data-sg-explain=drawer-real]'); await snap(S,'a5b_controls_real_what_is_real_'+sz); await dTo(S.page,'.sg-scn[data-scn="7"]'); await dJS(S.page,'[data-owed="0.05"]'); await dJS(S.page,'[data-setup=owed]'); await dJS(S.page,'[data-owedchg=increase]'); await dJS(S.page,'[data-act=owed-arm]'); await dOpen(S.page,false);
+    await S.page.click('#wallet'); await until(S.page,()=>__SG.modalOpen(),8000); await sleep(300); await snap(S,'a5b_real_gate_'+sz); await S.page.click('#sg-modal [data-gate=go]'); await until(S.page,()=>/0x/.test(document.getElementById('wallet').textContent),8000); await sleep(800);
+    await review(S.page,R); await sendBtn(S.page); await until(S.page,()=>__SG.modalOpen(),8000); await sleep(400); await snap(S,'a5b_real_intercept_withdrawTo_owed_now_'+sz); await S.ctx.close(); } }
 (async()=>{
   br=await chromium.launch({args:['--no-sandbox','--disable-background-networking','--disable-component-update','--no-first-run'],executablePath:process.env.CHROMIUM||'/opt/pw-browsers/chromium'});
+  if(A5B){ await a5b(); fs.writeFileSync(path.join(OUT,'probe-a5b.json'),JSON.stringify({rows,refused:[...new Set(refused)]},null,1)); await br.close(); console.log('refused outside:',JSON.stringify([...new Set(refused)])); console.log('SHOTS DONE '+rows.length); return; }
   for(const [w,h] of A5?[]:LAW8){ const S=await open(w,h,'sim'); await snap(S,'banner_sim_'+w+'x'+h); await S.ctx.close(); }
   for(const [w,h] of A5?[]:[[1440,900],[390,844]]){ const sz=w+'x'+h, ua=w<700?IPHONE:undefined;
     /* SIMULATION */

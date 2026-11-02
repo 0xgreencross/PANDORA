@@ -5,7 +5,8 @@
    Run: PORT=8952 SCRIPT=../staging/staging.test.js bash tools/stormglass/wallet-tests/run.sh   (CASES=st1,st3 to select; OUT, LABEL as there)
    The production suite keeps running against index.html (TARGET), not this page. */
 const fs=require('fs'), path=require('path'), crypto=require('crypto'), {execFileSync}=require('child_process');
-const {chromium}=require('playwright');
+/* audit 5b: the shared runner starts first (earlier results moved aside, first snapshot, signal/error handlers) before anything can fail */
+const R=require('../wallet-tests/runner.js'); R.begin(module,{suite:'staging',label:'staging',caseMs:480000});   /* st25 alone takes ~2 min on a quiet machine: 8 min per case by default */
 const H=require('../wallet-tests/wallet.test.js');
 const {sleep,A1,A2}=H;
 const ROOT=path.join(__dirname,'../../..'), OUT=process.env.OUT||'/tmp/claude-0/pr1test', LABEL=process.env.LABEL||'staging';
@@ -15,7 +16,10 @@ const POLICY=require('./policy.js');
 const MARKS=['__SG','sg-banner','sg-stage','TEST BUILD','sgmode','STORMGLASS STAGING','sg.staging.mode','POLICY.FORWARD','SUBMISSION INTERCEPTED'];
 const WRITE=new Set(POLICY.TX.concat(POLICY.SIGN,['eth_estimateGas']));
 const CASES=[];
-const T=(id,name,cfg,run,o)=>{ if(!/^st[0-9a-z]+$/.test(id)){ console.log('HARNESS FAIL bad staging case id '+id); process.exit(2); } if(CASES.some(c=>c.id===id)){ console.log('HARNESS FAIL duplicate case id '+id); process.exit(2); } CASES.push({id,name,cfg,run,o:o||{}}); };
+/* a malformed or duplicate id: under the runner collected (REGERR: exit 2 with a results file), for any other loader exit 2 at once */
+const REGERR=[];
+const T=(id,name,cfg,run,o)=>{ const bad=typeof id!=='string'||!/^st[0-9a-z]+$/.test(id)?'bad staging case id '+JSON.stringify(id):CASES.some(c=>c.id===id)?'duplicate case id '+id:null;
+  if(bad){ if(!R.active()){ console.log('HARNESS FAIL '+bad); process.exit(2); } REGERR.push(bad+' in staging.test.js'); return; } CASES.push({id,name,cfg,run,o:o||{},file:'staging.test.js'}); };
 const mock=(id,x={})=>Object.assign({id,name:'Mock '+id,rdns:'test.'+id.toLowerCase(),chainId:'0x1',accounts:[A1,A2]},x);
 const q=m=>PAGE+'?sgmode='+m;
 /* page helpers */
@@ -600,25 +604,266 @@ T('st32','switching modes clears the audit-5 state: from the phone-in-a-wallet-a
     &&!inReal.ua&&inReal.EP&&inReal.me&&inReal.OPLOCK&&inReal.txs===0&&inReal.rdns.join()==='test.a'&&inReal.wrapped&&inReal.set.join()==='valid,0,accepts,accepts,-32603,async'&&inReal.preset==='desk3'&&/CONNECT/.test(inReal.label)&&inReal.wto==='none'&&mw.every(m=>m==='eth_chainId')
     &&!inSim.ua&&inSim.EP&&inSim.txs===0&&inSim.set.join()==='valid,0,accepts,accepts,-32603,async'&&inSim.preset==='desk3'&&inSim.rdns.every(x=>/^sim\.staging\./.test(x)),ev:{simBefore,inReal,mockAsked:mw,inSim}}; },{query:q('sim')});
 
+/* ═══ AUDIT 5b (st33+): THE STAGING BOUNDARY (Finding D) and OWED CHANGES AFTER REVIEW (request §4, staging side).
+   Boundary: REAL mode contacts real providers and (on a phone) the real WalletConnect relay for connection / session operations only; every
+   payment, signature, batch, raw transaction, user operation and unknown method stops at the wrapper; outcomes stay simulated. These cases run
+   with the harness's mocks and with every socket and outside host blocked: they prove the wrapper, not real relay delivery.
+   Page-wording independence: the withdrawal cases (st39-st41) match outcome CATEGORIES (the simulated transaction's state, the payout, toasts
+   matched loosely) and the recipient decoded from the calldata; they never match the review sheet's or the status line's exact copy (the page is
+   changing it in parallel), and they drive CONTROLS by JavaScript clicks so a focus trap / inert background on the page cannot hide them. */
+const b5ctl=async(E,sel)=>{ const ok=await ev(E,s=>{ if(!document.getElementById('sg-drawer')) document.getElementById('sg-ctl').click(); const b=document.querySelector('#sg-drawer '+s); if(!b) return false; b.click(); return true; },sel); if(!ok) throw new Error('control '+sel+' not found'); await sleep(150); };
+const b5drawerOff=E=>ev(E,()=>{ if(document.getElementById('sg-drawer')) document.getElementById('sg-ctl').click(); });
+const b5gateMethods=E=>mwLog(E).then(L=>L.map(x=>x.method));
+const b5raw=E=>ev(E,()=>{ const s=new Set(Object.values(__MW.P).map(x=>x.provider)); if(__MW.wc) s.add(__MW.wc.provider); if(window.__RAWP) s.add(window.__RAWP); return s.size; });
+/* every provider reference the page holds is a staging wrapper, never a raw (mock) provider */
+const b5refs=E=>ev(E,()=>{ const raw=new Set(Object.values(__MW.P).map(x=>x.provider)); if(__MW.wc) raw.add(__MW.wc.provider); if(window.__RAWP) raw.add(window.__RAWP);
+  const ok=p=>p==null||(__SG.isWrapper(p)&&!raw.has(p)); const eth=__SG.eth();
+  const all={EP:ok(EP),WC:ok(typeof _WC==='undefined'?null:_WC),eth:ok(eth),providers:eth&&Array.isArray(eth.providers)?eth.providers.every(ok):true,wallets:WALLETS.every(w=>ok(w.provider)),list:walletList().every(ok),choices:walletChoices().every(w=>ok(w.provider))};
+  return Object.assign(all,{allOk:Object.values(all).every(Boolean),EPset:EP!=null}); });
+/* a request on a wrapper; an intercept / signature panel that opens is answered REJECTED (or CLOSE · REFUSED) */
+const b5ask=(E,where,list)=>ev(E,async([where,list])=>{ const P=where==='EP'?EP:where==='eth'?__SG.eth():where==='prov1'?__SG.eth().providers[1]:where==='wc'?_WC:where==='late'?WALLETS.find(w=>w.info.rdns==='test.emitter').provider:WALLETS.find(w=>w.info.rdns==='test.b').provider;
+  const out={}; for(const [k,m,params] of list){ const mm=m==='@obj'?{toString(){ return 'eth_chainId'; }}:m;
+    const pr=Promise.resolve().then(()=>P.request(params===undefined?{method:mm}:{method:mm,params})).then(v=>'resolved '+String(v).slice(0,12),e=>'refused '+(e&&e.code));
+    for(let i=0;i<40;i++){ const done=await Promise.race([pr.then(()=>true),new Promise(r=>setTimeout(()=>r(false),25))]); if(done) break; const b=document.querySelector('#sg-modal [data-out=rejected]')||document.querySelector('#sg-modal .sg-b'); if(b){ out[k+'#panel']=__SG.modalText().slice(0,60); b.click(); } }
+    out[k]=await pr; } return out; },[where,list]);
+/* connect in REAL mode; returns whether the staging gate opened before the wallet was asked (it must, for every connection: audit 5b made the
+   one ASK MY WALLET count for one request) */
+async function b5connect(E,pick){ await H.closeWit(E.page); const n0=await ev(E,()=>__MW.log.filter(x=>x.method==='eth_requestAccounts').length); await E.page.click('#wallet');
+  if(pick){ if(!(await E.until(()=>H.sheetOpen(E.page),4000))) throw new Error('no picker'); await H.clickSheet(E.page,pick); }
+  const gate=await E.until(()=>modalOpen(E),4000); const asked=await ev(E,()=>__MW.log.filter(x=>x.method==='eth_requestAccounts').length)-n0; if(gate) await clickModal(E,'[data-gate=go]');
+  const conn=await E.until(async()=>/0x/.test(await label(E)),8000); await sleep(300); return {gate,askedBeforeGate:asked,conn}; }
+const PHONE5={viewport:{width:390,height:844},mobile:true,ua:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'};
+
+/* ── st33: the permitted connection operations follow the staging gate */
+T('st33','REAL WALLET: permitted connection operations follow the staging gate: before ASK MY WALLET the wallet gets only the eth_chainId liveness check (no eth_requestAccounts); CANCEL asks nothing; ASK MY WALLET forwards exactly one; a network switch asked by the page waits for its own gate (CANCEL: none, ASK: one); DISCONNECT forwards wallet_revokePermissions; on a phone the WalletConnect relay connection (init) comes first but the pairing (enable) and, for a restored stored session, eth_requestAccounts wait for the gate; everything the wallets received is on the allowlist',{wallets:[mock('A')],ethereum:'A'},async E=>{
+  const cnt=(m,pid)=>ev(E,([m,pid])=>__MW.log.filter(x=>x.method===m&&(!pid||x.pid===pid)).length,[m,pid]);
+  await ev(E,()=>__SG.configure({mine:200,readerMs:20}));
+  await E.page.click('#wallet'); const g1=await waitModal(E); const gt=await modalText(E); const before=await b5gateMethods(E); const req0=await cnt('eth_requestAccounts');
+  await clickModal(E,'[data-gate=no]'); await sleep(600); const reqCancel=await cnt('eth_requestAccounts'); const lCancel=await label(E);
+  await E.page.click('#wallet'); await waitModal(E); await clickModal(E,'[data-gate=go]'); const conn=await E.until(async()=>/0x/.test(await label(E)),8000); const reqGo=await cnt('eth_requestAccounts');
+  /* a switch the page asks (SWITCH TO ETHEREUM / opBegin go through ask(EP,'wallet_switchEthereumChain')) waits for its own gate */
+  const sw=async go=>{ await ev(E,()=>{ window.__sw=Promise.resolve().then(()=>EP.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x1'}]})).then(()=>'ok',e=>'refused '+e.code); }); const g=await waitModal(E); const t=await modalText(E); const n0=await cnt('wallet_switchEthereumChain');
+    await clickModal(E,go?'[data-gate=go]':'[data-gate=no]'); const r=await ev(E,()=>window.__sw); return {g,switchText:/switch to Ethereum mainnet/.test(t),atGate:n0,result:r,after:await cnt('wallet_switchEthereumChain')}; };
+  const s1=await sw(false), s2=await sw(true);
+  await H.disconnectUI(E); await E.until(async()=>/CONNECT/.test(await label(E)),5000); const revoke=await cnt('wallet_revokePermissions');
+  const again=await b5connect(E); await H.disconnectUI(E); await E.until(async()=>/CONNECT/.test(await label(E)),5000);   /* within seconds of the first ASK MY WALLET: the gate again */
+  const L=await mwLog(E); const notAllowed=[...new Set(L.map(x=>x.method))].filter(m=>!(m in POLICY.FORWARD)||WRITE.has(m));
+  /* a phone with WalletConnect (the harness's mock plays the relay and the phone wallet): fresh pairing, then a stored session restored at init */
+  const wcRow=async stored=>{ const P=await H.boot({wallets:[],wc:{accounts:[A1],chainId:'0x1'}},Object.assign({query:q('real')},PHONE5));
+    try{ await ev(P,()=>__SG.configure({mine:200,readerMs:20})); if(stored) await ev(P,()=>{ __MW.wc.provider.session={topic:'stored-topic',peer:{metadata:{name:'Phone'}}}; });
+      await P.page.click('#wallet'); const g=await P.until(()=>ev(P,()=>__SG.modalOpen()),8000); await sleep(400);
+      const at=await ev(P,()=>({init:!!__MW.wc.init,enables:__MW.wc.enables,req:__MW.log.filter(x=>x.method==='eth_requestAccounts').length,gateText:__SG.modalText().slice(0,400),label:document.getElementById('wallet').textContent}));
+      await P.page.click('#sg-modal [data-gate=go]'); if(!stored){ await P.until(()=>ev(P,()=>!!__MW.wc.approve),6000); await ev(P,()=>__MW.wc.approve()); }
+      const c=await P.until(async()=>/0x/.test(await ev(P,()=>document.getElementById('wallet').textContent)),8000);
+      const after=await ev(P,()=>({enables:__MW.wc.enables,req:__MW.log.filter(x=>x.method==='eth_requestAccounts').length,methods:[...new Set(__MW.log.map(x=>x.method))]}));
+      return {stored,gate:g,at,conn:c,after,errors:P.errors.slice()}; } finally{ await P.close().catch(()=>{}); } };
+  const w1=await wcRow(false), w2=await wcRow(true);
+  const wcOk=r=>r.gate&&r.at.init&&r.at.enables===0&&r.at.req===0&&/CONNECT/.test(r.at.label)&&/will now ask to connect/.test(r.at.gateText)&&/WalletConnect relay/.test(r.at.gateText)&&r.conn&&r.after.methods.every(m=>m in POLICY.FORWARD&&!WRITE.has(m))&&r.errors.length===0
+    &&(r.stored?(r.after.req===1&&r.after.enables===0):(r.after.enables===1));
+  return {pass:g1&&/will now ask to connect/.test(gt)&&before.every(m=>m==='eth_chainId')&&req0===0&&reqCancel===0&&/CONNECT/.test(lCancel)&&conn&&reqGo===1
+    &&s1.g&&s1.switchText&&s1.atGate===0&&s1.result==='refused 4001'&&s1.after===0&&s2.g&&s2.atGate===0&&s2.result==='ok'&&s2.after===1&&revoke===1&&again.gate&&again.askedBeforeGate===0&&again.conn&&!notAllowed.length&&wcOk(w1)&&wcOk(w2),
+    ev:{beforeGate:before,req:[req0,reqCancel,reqGo],reconnectSoonAfter:again,switchCancel:s1,switchGo:s2,revoke,notAllowed,walletConnect:[w1,w2]}}; },{query:q('real')});
+
+/* ── st34: default-deny: every payment / signature / batch / raw / user-operation method and every unknown method is stopped at every wrapper */
+const B5_INTERCEPT=['eth_sendTransaction','eth_sendUserOperation','wallet_sendCalls','wallet_sendTransaction','eth_sendRawTransaction','eth_signTransaction','wallet_grantPermissions','eth_sign','personal_sign','eth_signTypedData','eth_signTypedData_v1','eth_signTypedData_v3','eth_signTypedData_v4'];
+const B5_UNKNOWN=['stormglass_madeUpMethod','wallet_madeUpWrite','wallet_addEthereumChain','wallet_watchAsset','wallet_requestPermissions','wallet_getCapabilities','wallet_getCallsStatus','wallet_showCallsStatus','eth_getEncryptionPublicKey','eth_decrypt','eth_subscribe','eth_coinbase','ETH_SENDTRANSACTION','eth_sendtransaction',' eth_chainId','@obj'];
+const B5_PARAMS={eth_sendTransaction:[{from:'0x00000000000000000000000000000000000000aa',to:'0x00000000000000000000000000000000000000bb',value:'0x1',data:'0x'}],eth_sendUserOperation:[{sender:'0x00000000000000000000000000000000000000aa',callData:'0x'},'0x0000000071727De22E5E9d8BAf0edAc6f37da032'],wallet_sendCalls:[{version:'1.0',chainId:'0x1',from:'0x00000000000000000000000000000000000000aa',calls:[{to:'0x00000000000000000000000000000000000000bb',value:'0x1',data:'0x'}]}],
+  eth_sendRawTransaction:['0x02f8'],personal_sign:['0x68656c6c6f','0x00000000000000000000000000000000000000aa'],eth_sign:['0x00000000000000000000000000000000000000aa','0x68656c6c6f']};
+T('st34','REAL WALLET default-deny: on the EIP-6963 wallet, window.ethereum, providers[] and the WalletConnect wrapper (and on the connected EP), the 13 payment / signature / batch / raw / user-operation methods are intercepted (4001) and 16 unknown or unlisted methods (a made-up name, wallet_addEthereumChain, wallet_getCapabilities, a case variant, a padded name, a non-string method…) are refused (4200); a method name that changes between reads is read once; none of them reaches any mock wallet; inside the WalletConnect bundle the belt refuses eth_sendUserOperation and wallet_sendCalls',
+  {wallets:[mock('A',{announce:false}),mock('B')],ethereum:'A',providers:['A','B'],wc:{accounts:[A1],chainId:'0x1'}},async E=>{
+  await ev(E,()=>__SG.configure({mine:200,readerMs:20})); await ev(E,async()=>{ window.__WCW=await _wcGlobal().EthereumProvider.init({projectId:'x'}); });
+  const list=B5_INTERCEPT.map(m=>['x:'+m,m,B5_PARAMS[m]||[]]).concat(B5_UNKNOWN.map(m=>['u:'+m,m,[]]));
+  const res={}; for(const w of ['eth','prov1','b6963']) res[w]=await b5ask(E,w,list);
+  res.wc=await ev(E,async list=>{ const P=window.__WCW, out={}; for(const [k,m,params] of list){ const mm=m==='@obj'?{toString(){ return 'eth_chainId'; }}:m; const pr=Promise.resolve().then(()=>P.request({method:mm,params})).then(()=>'resolved',e=>'refused '+(e&&e.code));
+      for(let i=0;i<40;i++){ const done=await Promise.race([pr.then(()=>true),new Promise(r=>setTimeout(()=>r(false),25))]); if(done) break; const b=document.querySelector('#sg-modal [data-out=rejected]')||document.querySelector('#sg-modal .sg-b'); if(b) b.click(); } out[k]=await pr; } return out; },list);
+  await realConnect(E,/MOCK B/).catch(async()=>{ await realConnect(E); }); res.EP=await b5ask(E,'EP',list);
+  /* a method name that reads eth_chainId first and eth_sendTransaction after: the wrapper reads it once */
+  const toctou=await ev(E,async()=>{ let n=0; const args={get method(){ return n++?'eth_sendTransaction':'eth_chainId'; },params:[{from:'0x00000000000000000000000000000000000000aa',to:'0x00000000000000000000000000000000000000bb',value:'0x1'}]}; const r=await EP.request(args).then(v=>'resolved '+v,e=>'refused '+e.code); return {r,reads:n}; });
+  const belt=await ev(E,async()=>{ const out={}; for(const m of ['eth_sendUserOperation','wallet_sendCalls','eth_sendRawTransaction']) out[m]=await __MW.wc.provider.request({method:m,params:[{}]}).then(()=>'resolved',e=>'refused '+e.code); return out; });
+  const L=await ev(E,()=>__MW.log.map(x=>({pid:x.pid,method:typeof x.method==='string'?x.method:'(non-string method: '+typeof x.method+')'}))); const names=new Set(B5_INTERCEPT.concat(B5_UNKNOWN.filter(x=>x!=='@obj'))); const reached=L.filter(x=>names.has(x.method)||/^\(non-string/.test(x.method)||WRITE.has(x.method)).map(x=>x.pid+' '+x.method); const mwSends=await ev(E,()=>__MW.sends.length);
+  const bad=[]; for(const [w,r] of Object.entries(res)) for(const [k] of list){ const want=k.startsWith('x:')?'refused 4001':'refused 4200'; if(r[k]!==want) bad.push(w+' '+k+' = '+r[k]); }
+  return {pass:!bad.length&&toctou.r==='resolved 0x1'&&toctou.reads===1&&Object.values(belt).every(v=>v==='refused 4001')&&!reached.length&&mwSends===0,
+    ev:{bad:bad.slice(0,20),counts:Object.fromEntries(Object.entries(res).map(([w,r])=>[w,list.filter(([k])=>r[k]===(k.startsWith('x:')?'refused 4001':'refused 4200')).length+'/'+list.length])),sample:res.EP,toctou,belt,reached,mwSends,walletReceived:[...new Set(L.map(x=>x.pid+' '+x.method))]}}; },{query:q('real')});
+
+/* ── st35: every supported contract write, sent by the page's own send(), is intercepted with its decoded action; withdrawTo's recipient decoded exactly; before and after DISCONNECT → reconnect */
+const B5_R='0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359';   /* EIP-55 mixed-case, checksummed */
+T('st35','REAL WALLET: each supported contract write (bid, settle, pledge, sync, buy, witness, claim, withdraw, withdrawTo), sent through the page’s own send(), stops at the wrapper with its decoded action and the STORMGLASS target; withdrawTo shows and carries the exact checksummed recipient (decoded from the calldata of the simulated transaction); after DISCONNECT and a new connection the same holds; the mock wallet receives no write and no signature',{wallets:[mock('A')],ethereum:'A'},async E=>{
+  await ev(E,()=>__SG.configure({mine:200,readerMs:20})); await realConnect(E);
+  const C=(await ev(E,()=>CFG.contract)).toLowerCase();
+  const writes=[['bid','bid',[],'0x2386f26fc10000'],['settle','settleCandle',[]],['pledge','pledge',[],'0x2386f26fc10000'],['sync','sync',[]],['buy','buy',[13,3],'0x2386f26fc10000'],['witness','witness',[13],'0x2386f26fc10000'],['claim','claim',[]],['withdraw','withdraw',[]],['withdrawTo','withdrawTo',[B5_R]]];
+  const round=async(tag,pick)=>{ const out={}; for(const [name,fn,args,val] of (pick?writes.filter(w=>pick.includes(w[0])):writes)){
+      const r=await ev(E,async([name,fn,args,val])=>{ const p=send(name,W=>pad(W[fn],args,val?{value:BigInt(val)}:{})); let rows=null;
+        for(let i=0;i<200&&!rows;i++){ await new Promise(r=>setTimeout(r,25)); if(__SG.modalOpen()&&document.querySelector('#sg-modal [data-out]')) rows=Object.fromEntries([...document.querySelectorAll('#sg-modal dt')].map(d=>[d.textContent,d.nextSibling.textContent])); }
+        const head=__SG.modalText().slice(0,60); const b=document.querySelector('#sg-modal [data-out=rejected]'); if(b) b.click(); await Promise.race([p,new Promise(r=>setTimeout(r,4000))]); for(let i=0;i<40&&OPLOCK;i++) await new Promise(r=>setTimeout(r,50)); return {rows,head,lock:OPLOCK===null}; },[name,fn,args,val||null]);
+      out[name]=r; } return out; };
+  const r1=await round('first');
+  /* withdrawTo once more, CONFIRMED: the simulated transaction's calldata names the exact recipient */
+  await ev(E,()=>__SG.configure({owed:0.05}));
+  const conf=await ev(E,async R=>{ const p=send('withdrawTo',W=>pad(W.withdrawTo,[R])); for(let i=0;i<200&&!document.querySelector('#sg-modal [data-out=confirmed]');i++) await new Promise(r=>setTimeout(r,25)); document.querySelector('#sg-modal [data-out=confirmed]').click(); await Promise.race([p,new Promise(r=>setTimeout(r,8000))]); for(let i=0;i<100&&__SG.txs().some(t=>t.action==='withdrawTo'&&t.state==='pending');i++) await new Promise(r=>setTimeout(r,50)); return __SG.txs().filter(t=>t.action==='withdrawTo').map(t=>({data:t.data,from:t.from,to:t.to,value:t.value,state:t.state,mode:t.mode})); },B5_R);
+  await H.disconnectUI(E); await E.until(async()=>/CONNECT/.test(await label(E)),5000); const ep0=await ev(E,()=>EP===null);
+  const rc=await b5connect(E); const refs=await b5refs(E); const r2=await round('after reconnect',['witness','withdrawTo','claim']);
+  const L=await mwLog(E); const reached=L.filter(x=>WRITE.has(x.method)||!(x.method in POLICY.FORWARD)).map(x=>x.method); const mwSends=await ev(E,()=>__MW.sends.length);
+  const okRow=(name,fn,r)=>r&&r.rows&&/SUBMISSION INTERCEPTED/.test(r.head)&&(r.rows.ACTION||'').startsWith(fn+'(')&&(r.rows.TARGET||'').toLowerCase().startsWith(C)&&/STORMGLASS contract/.test(r.rows.TARGET)&&(r.rows.SENDER||'').toLowerCase()===A1&&r.lock
+    &&(name!=='withdrawTo'||(r.rows['PAYS TO (recipient)']===B5_R&&r.rows.ACTION.includes(B5_R)&&/^0\.0 ETH$/.test(r.rows.VALUE)));
+  const bad=writes.filter(([n,f])=>!okRow(n,f,r1[n])).map(w=>w[0]).concat(['witness','withdrawTo','claim'].filter(n=>!okRow(n,writes.find(w=>w[0]===n)[1],r2[n])).map(n=>'after:'+n));
+  const dec=conf.map(t=>decodeTo(t)); const last=conf[conf.length-1]||{};
+  return {pass:!bad.length&&conf.length===1&&dec[0]===B5_R&&last.state==='confirmed'&&last.mode==='intercepted'&&last.from===A1&&last.to===C&&last.value==='0'&&ep0&&rc.gate&&rc.askedBeforeGate===0&&rc.conn&&refs.allOk&&refs.EPset&&!reached.length&&mwSends===0,
+    ev:{bad,reconnect:rc,first:Object.fromEntries(Object.entries(r1).map(([k,v])=>[k,v.rows&&v.rows.ACTION])),withdrawToRows:r1.withdrawTo&&r1.withdrawTo.rows,afterReconnect:Object.fromEntries(Object.entries(r2).map(([k,v])=>[k,v.rows&&v.rows.ACTION])),confirmed:{decoded:dec,last},refs,reached,mwSends}}; },{query:q('real')});
+
+/* ── st36: no raw provider reference reaches the page, before and after DISCONNECT → reconnect; listeners run with the wrapper as `this` */
+T('st36','REAL WALLET, computer: an EventEmitter-style wallet (its listeners are called with this = the emitter) announced over EIP-6963, plus window.ethereum and providers[]: every provider the page holds is a wrapper; a listener added through the wrapper runs with this = the wrapper, never the raw provider, and removeListener still removes it; the page follows its account change; a WITNESS is intercepted; after DISCONNECT and a new connection the page holds the same wrapper and a WITNESS, personal_sign and wallet_sendCalls are again stopped: the raw wallet receives no write and no signature',
+  {wallets:[mock('A',{announce:false}),mock('B',{announce:false})],ethereum:'A',providers:['A','B']},async E=>{
+  await ev(E,()=>{ const L={}, log=window.__RAWLOG=[]; let acc=['0x00000000000000000000000000000000000000ee','0x00000000000000000000000000000000000000ef']; let auth=false;
+    const P=window.__RAWP={ isEmitter:true,
+      request({method,params}){ log.push(method); switch(method){ case 'eth_chainId': return Promise.resolve('0x1'); case 'eth_accounts': return Promise.resolve(auth?acc.slice():[]); case 'eth_requestAccounts': auth=true; return Promise.resolve(acc.slice());
+        case 'wallet_revokePermissions': auth=false; return Promise.resolve(null); case 'eth_sendTransaction': return Promise.resolve('0x'+'ab'.repeat(32)); case 'personal_sign': case 'wallet_sendCalls': return Promise.resolve('0x'+'cd'.repeat(65)); default: return Promise.reject(Object.assign(new Error('unsupported '+method),{code:4200})); } },
+      on(ev,f){ (L[ev]=L[ev]||[]).push(f); return P; }, removeListener(ev,f){ L[ev]=(L[ev]||[]).filter(x=>x!==f); return P; },
+      emit(ev,...a){ (L[ev]||[]).slice().forEach(f=>f.apply(P,a)); }, count:ev=>(L[ev]||[]).length, swap(){ acc=[acc[1],acc[0]]; P.emit('accountsChanged',acc.slice()); } };
+    window.dispatchEvent(new CustomEvent('eip6963:announceProvider',{detail:Object.freeze({info:Object.freeze({uuid:'00000000-0000-4000-8000-0000000000ee',name:'Emitter',icon:'',rdns:'test.emitter'}),provider:P})})); });
+  await ev(E,()=>__SG.configure({mine:200,readerMs:20})); await sleep(300);
+  await realConnect(E,/EMITTER/); const l0=await label(E); const refs1=await b5refs(E);
+  const lt=await ev(E,()=>{ const seen=[]; const f=function(c){ seen.push(this); }; EP.on('chainChanged',f); __RAWP.emit('chainChanged','0x1'); const n1=seen.length; EP.removeListener('chainChanged',f); __RAWP.emit('chainChanged','0x1');
+    return {delivered:n1,thisIsWrapper:seen[0]===EP,thisIsRaw:seen[0]===__RAWP,afterRemove:seen.length}; });
+  await ev(E,()=>__RAWP.swap()); const moved=await E.until(async()=>/00ef/i.test(await label(E)),5000);
+  const wit=async()=>{ await H.closeWit(E.page); await H.witness(E,'0.01'); const p=await waitModal(E); if(!p) return false; const t=await modalText(E); await clickModal(E,'[data-out=rejected]'); await E.until(()=>ev(E,()=>OPLOCK===null),8000); return p&&/SUBMISSION INTERCEPTED/.test(t)&&/witness\(arg0: 13\)/.test(t); };
+  const w1=await wit(); const EP1=await ev(E,()=>{ window.__EP1=EP; return __SG.isWrapper(EP); });
+  await H.disconnectUI(E); await E.until(async()=>/CONNECT/.test(await label(E)),5000); const revoked=await ev(E,()=>__RAWLOG.includes('wallet_revokePermissions'));
+  const rc=await b5connect(E,/EMITTER/); const refs2=await b5refs(E); const same=await ev(E,()=>EP===window.__EP1&&EP!==__RAWP);
+  const w2=await wit(); const sig=await b5ask(E,'EP',[['ps','personal_sign',B5_PARAMS.personal_sign],['sc','wallet_sendCalls',B5_PARAMS.wallet_sendCalls],['raw','eth_sendRawTransaction',['0x02']]]);
+  const lt2=await ev(E,()=>{ const seen=[]; const f=function(){ seen.push(this); }; EP.on('chainChanged',f); __RAWP.emit('chainChanged','0x1'); EP.removeListener('chainChanged',f); return seen[0]===EP&&seen[0]!==__RAWP; });
+  const rawLog=await ev(E,()=>__RAWLOG.slice()); const rawWrites=rawLog.filter(m=>WRITE_LIST.includes(m)); const L=await mwLog(E); const reached=L.filter(x=>WRITE.has(x.method)).map(x=>x.pid+' '+x.method);
+  return {pass:/00ee/i.test(l0)&&refs1.allOk&&refs1.EPset&&lt.delivered===1&&lt.thisIsWrapper&&!lt.thisIsRaw&&lt.afterRemove===1&&moved&&w1&&EP1&&revoked&&rc.gate&&rc.askedBeforeGate===0&&rc.conn&&refs2.allOk&&same&&w2&&Object.values(sig).filter(v=>/^refused/.test(v)).length===3&&sig.ps==='refused 4001'&&sig.sc==='refused 4001'&&lt2&&!rawWrites.length&&!reached.length&&E.errors.length===0,
+    ev:{label:l0,refs1,listenerThis:lt,reconnect:rc,moved,witness:[w1,w2],revoked,refs2,sameWrapper:same,sig,listenerThisAfterReconnect:lt2,rawLog:[...new Set(rawLog)],rawWrites,reached}}; },{query:q('real')});
+const WRITE_LIST=POLICY.TX.concat(POLICY.SIGN);
+
+/* ── st37: WalletConnect (mocked phone wallet): disconnect, a new pairing (a replaced session), the phone ending the session: the wrapper boundary holds */
+T('st37','REAL WALLET on a phone via WalletConnect (the harness mock plays the relay and the phone wallet): a COLLECT is intercepted; DISCONNECT, a new pairing (new session topic) through the gate, a WITNESS intercepted again; the phone ends the session, a third pairing, again intercepted; personal_sign, wallet_sendCalls and eth_sendUserOperation refused on the wrapper and by the belt inside the bundle; the page holds the same wrapper (never the raw provider), its session is a frozen copy carrying the new topic; the mock receives no write or signature',
+  {wallets:[],wc:{accounts:[A1],chainId:'0x1'}},async E=>{
+  await ev(E,()=>__SG.configure({mine:200,readerMs:20}));
+  const pair=async()=>{ await H.closeWit(E.page); await E.page.click('#wallet'); const g=await waitModal(E); const e0=await ev(E,()=>__MW.wc.enables); await clickModal(E,'[data-gate=go]'); await E.until(()=>ev(E,()=>!!__MW.wc.approve),6000); await ev(E,()=>__MW.wc.approve());
+    const c=await E.until(async()=>/0x/.test(await label(E)),8000); return {gate:g,enablesAtGate:e0,conn:c,topic:await ev(E,()=>_WC.session&&_WC.session.topic),frozen:await ev(E,()=>Object.isFrozen(_WC.session)),raw:await ev(E,()=>_WC===__MW.wc.provider)}; };
+  const stop=async how=>{ if(how==='buy') await H.buy(E); else await H.witness(E,'0.01'); const p=await waitModal(E); if(!p){ await H.closeWit(E.page); return false; } const t=await modalText(E); await clickModal(E,'[data-out=rejected]'); await E.until(()=>ev(E,()=>OPLOCK===null),8000); await H.closeWit(E.page); await ev(E,()=>{ const x=document.getElementById('ccX'); if(x) x.click(); }); return p&&/SUBMISSION INTERCEPTED/.test(t); };
+  const p1=await pair(); const W1=await ev(E,()=>{ window.__WC1=_WC; return __SG.isWrapper(_WC); }); const s1=await stop('buy');
+  await H.disconnectUI(E); const d1=await E.until(async()=>/CONNECT/.test(await label(E)),5000);
+  const p2=await pair(); const s2=await stop('witness');
+  await ev(E,()=>__MW.wc.phoneEnds()); const d2=await E.until(async()=>/CONNECT/.test(await label(E)),5000);
+  const p3=await pair(); const s3=await stop('witness'); const refs=await b5refs(E); const same=await ev(E,()=>_WC===window.__WC1&&EP===_WC);
+  const sig=await b5ask(E,'wc',[['ps','personal_sign',B5_PARAMS.personal_sign],['sc','wallet_sendCalls',B5_PARAMS.wallet_sendCalls],['uo','eth_sendUserOperation',B5_PARAMS.eth_sendUserOperation],['mu','wallet_madeUpWrite',[]]]);
+  const belt=await ev(E,async()=>{ const o={}; for(const m of ['personal_sign','wallet_sendCalls','eth_sendUserOperation','eth_sendTransaction']) o[m]=await __MW.wc.provider.request({method:m,params:[{}]}).then(()=>'resolved',e=>'refused '+e.code); return o; });
+  const w=await ev(E,()=>({enables:__MW.wc.enables,disconnects:__MW.wc.disconnects}));
+  const L=await mwLog(E); const reached=L.filter(x=>WRITE.has(x.method)||!(x.method in POLICY.FORWARD)).map(x=>x.method);
+  const okP=p=>p.gate&&p.enablesAtGate===w.enables-(p===p1?2:p===p2?1:0)-1&&p.conn&&p.frozen&&!p.raw;
+  return {pass:okP(p1)&&okP(p2)&&okP(p3)&&new Set([p1.topic,p2.topic,p3.topic]).size===3&&W1&&s1&&s2&&s3&&d1&&d2&&refs.allOk&&same&&sig.ps==='refused 4001'&&sig.sc==='refused 4001'&&sig.uo==='refused 4001'&&sig.mu==='refused 4200'
+    &&Object.values(belt).every(v=>v==='refused 4001')&&w.enables===3&&w.disconnects===1&&!reached.length&&E.errors.length===0,
+    ev:{pairings:[p1,p2,p3],intercepted:[s1,s2,s3],disconnected:[d1,d2],refs,sameWrapper:same,sig,belt,w,reached,walletReceived:[...new Set(L.map(x=>x.method))]}}; },Object.assign({query:q('real')},PHONE5));
+
+/* ── st38: the page and the staging report describe both modes accurately */
+const B5_RELAY=/WalletConnect relay/, B5_PAYINT=/payments? and signatures?[^.]{0,40}intercepted|intercepted[^.]{0,20}payments? and signatures?|INTERCEPTED: payments and signatures/i, B5_SIMOUT=/outcomes? (are |stay |is )?simulated|every transaction outcome|outcome[^.]{0,30}simulated/i, B5_NEVER=/never reach/i;
+T('st38','the staging page and the staging report describe both modes accurately: REAL WALLET (mode chooser, CONTROLS, the opening note, the gate, the intercept panel) says the real wallet and, on a phone, the WalletConnect relay are contacted for the connection, that payments and signatures are intercepted and that outcomes are simulated; SIMULATION says simulated wallets and results and no relay; nothing says “never reaches”; the report separates the modes and calls socket blocking a property of the test environment',{wallets:[mock('A')],ethereum:'A'},async E=>{
+  const real=await ev(E,async()=>{ const g=s=>{ const n=document.querySelector(s); return n?n.textContent:''; };
+    document.getElementById('sg-modebtn').click(); await new Promise(r=>setTimeout(r,200)); const modeReal=g('#sg-modal [data-sg-explain=mode-real]'), modeSim=g('#sg-modal [data-sg-explain=mode-sim]'); const modeAll=__SG.modalText();
+    const c=[...document.querySelectorAll('#sg-modal button')].find(b=>/^CLOSE$/.test(b.textContent)); if(c) c.click(); await new Promise(r=>setTimeout(r,150));
+    document.getElementById('sg-ctl').click(); await new Promise(r=>setTimeout(r,200)); const drawer=g('#sg-drawer [data-sg-explain=drawer-real]'), drawerAll=g('#sg-drawer'); document.getElementById('sg-ctl').click();
+    return {modeReal,modeSim,modeAll,drawer,drawerAll,note:__SG.realNote}; });
+  await E.page.click('#wallet'); await waitModal(E); const gate=await ev(E,()=>{ const n=document.querySelector('#sg-modal [data-sg-explain=gate]'); return {p:n?n.textContent:'',all:__SG.modalText()}; }); await clickModal(E,'[data-gate=go]'); await E.until(async()=>/0x/.test(await label(E)),8000);
+  await ev(E,()=>__SG.configure({mine:200,readerMs:20})); await H.witness(E,'0.01'); await waitModal(E); const icp=await modalText(E); await clickModal(E,'[data-out=rejected]');
+  /* SIMULATION, in a fresh context */
+  const S=await H.boot({wallets:[]},{query:q('sim')}); let sim;
+  try{ sim=await ev(S,async()=>{ const g=s=>{ const n=document.querySelector(s); return n?n.textContent:''; }; document.getElementById('sg-modebtn').click(); await new Promise(r=>setTimeout(r,200)); const modeSim=g('#sg-modal [data-sg-explain=mode-sim]'), all=__SG.modalText();
+      const c=[...document.querySelectorAll('#sg-modal button')].find(b=>/^CLOSE$/.test(b.textContent)); if(c) c.click(); await new Promise(r=>setTimeout(r,150)); document.getElementById('sg-ctl').click(); await new Promise(r=>setTimeout(r,200)); const drawer=g('#sg-drawer [data-sg-explain=drawer-sim]'), drawerAll=g('#sg-drawer'); document.getElementById('sg-ctl').click(); return {modeSim,all,drawer,drawerAll}; }); } finally{ await S.close().catch(()=>{}); }
+  const rep=fs.readFileSync(path.join(ROOT,'tools/stormglass/wallet-tests/audit5/STAGING5_REPORT.md'),'utf8'); const sec=(rep.split(/^## /m).find(s=>/^4b?\. .*boundary/i.test(s))||'');
+  const realOk=t=>B5_RELAY.test(t)&&/connect/i.test(t)&&B5_PAYINT.test(t)&&B5_SIMOUT.test(t)&&!B5_NEVER.test(t);
+  const checks={modeReal:realOk(real.modeReal),drawer:realOk(real.drawer),note:B5_RELAY.test(real.note)&&/connection/i.test(real.note)&&/intercepted/i.test(real.note)&&/outcomes are simulated/i.test(real.note)&&!B5_NEVER.test(real.note),
+    gate:/real request to your real wallet/.test(gate.p)&&/intercepted/.test(gate.p)&&/simulated/.test(gate.p)&&/will now ask to connect/.test(gate.all)&&!B5_NEVER.test(gate.all),
+    intercept:/SUBMISSION INTERCEPTED/.test(icp)&&/Payments and signatures are intercepted/.test(icp)&&/simulated/.test(icp)&&/WalletConnect relay/.test(icp)&&!B5_NEVER.test(icp),
+    simInReal:/Simulated wallets and simulated results/.test(real.modeSim)&&/no relay connection/.test(real.modeSim),
+    sim:/Simulated wallets and simulated results/.test(sim.modeSim)&&/no relay connection/.test(sim.modeSim)&&/WalletConnect relay/.test(sim.drawer)&&/SIMULATED/.test(sim.drawer)&&!B5_NEVER.test(sim.all+sim.drawerAll),
+    noNeverAnywhere:!B5_NEVER.test(real.modeAll+real.drawerAll),
+    report:/audit 5b/i.test(sec)&&B5_RELAY.test(sec)&&/intercepted/i.test(sec)&&/simulated/i.test(sec)&&/test environment/i.test(sec)&&/not evidence|never proof|is not proof/i.test(sec)&&/EthereumProvider\.init/.test(sec)&&!/never reaches the (real )?(WalletConnect )?relay/i.test(rep)};
+  return {pass:Object.values(checks).every(Boolean),ev:{checks,modeReal:real.modeReal.slice(0,200),drawer:real.drawer.slice(0,200),note:real.note,gate:gate.p,intercept:icp.slice(0,300),sim:sim.modeSim.slice(0,160),reportSection:sec.slice(0,200)}}; },{query:q('real')});
+
+/* ── st39-st41: SCENARIOS 7, what is owed changes after REVIEW (SIMULATION). The simulated contract pays all that is owed at execution. */
+async function b5withdraw(E,o){   /* o: {kind, when:'now'|'wallet', choose:'confirmed'|'replacedpaid', owed:'0.05'} */
+  await setupOwed(E,o.owed||'0.05','accepts'); await b5drawerOff(E);
+  if(!/0x/.test(await label(E))) await simConnect(E,/SIM ALPHA · 1/);
+  await wOpen(E); const n0=(await E.toasts()).length; const l0=(await fullLog(E)).length; const t0=(await txs(E)).length;
+  if(o.kind&&o.when==='wallet'){ await b5ctl(E,'[data-owedchg="'+o.kind+'"]'); await b5ctl(E,'[data-act=owed-arm]'); await b5drawerOff(E); }
+  await wReview(E,R1L); const sh=await E.until(async()=>/WITHDRAW/i.test(await H.sheetTitle(E.page)),6000); const sheet=await ev(E,()=>document.getElementById('wsheet').textContent);
+  if(o.kind&&o.when==='now'){ await b5ctl(E,'[data-owedchg="'+o.kind+'"]'); await b5ctl(E,'[data-act=owed-now]'); await b5drawerOff(E); }
+  const owedAtSend=await ev(E,a=>__SG.owedOf(a),ALPHA1);
+  /* every text the status line and the seats note show from here on (a sentence later cleared by a refresh still counts) */
+  await ev(E,()=>{ const h=window.__b5hist=[]; for(const id of ['wtoNote','seatsNote']){ const n=document.getElementById(id); if(!n) continue; new MutationObserver(()=>{ if(n.textContent) h.push(id+': '+n.textContent); }).observe(n,{childList:true,characterData:true,subtree:true}); } });
+  const pressed=await ev(E,()=>{ const b=[...document.querySelectorAll('#wsBtns button')].find(b=>/SEND|WITHDRAW|CONFIRM/i.test(b.textContent)&&!/CANCEL/i.test(b.textContent)); if(!b) return false; b.click(); return true; });
+  const wallet=await E.until(()=>modalOpen(E),8000); let panel=null, owedAtWallet=null;
+  if(wallet){ panel=await ev(E,()=>Object.fromEntries([...document.querySelectorAll('#sg-modal dt')].map(d=>[d.textContent,d.nextSibling.textContent]))); owedAtWallet=await ev(E,a=>__SG.owedOf(a),ALPHA1); await clickModal(E,'[data-out='+(o.choose||'confirmed')+']'); }
+  const settled=wallet?await E.until(async()=>{ const t=(await txs(E)).slice(t0).find(x=>x.action==='withdrawTo'); return !!t&&t.state!=='pending'&&(await ev(E,()=>OPLOCK===null)); },15000):await E.until(()=>ev(E,()=>OPLOCK===null),8000);
+  const FINAL=/: confirmed|reverted|failed|replaced|cancelled|cannot confirm|nothing was sent/i;
+  const verdict=await E.until(async()=>(await idToasts(E,n0)).some(x=>FINAL.test(x)),20000); await sleep(1200);
+  const T1=(await txs(E)).slice(t0); const tx=T1.find(x=>x.action==='withdrawTo')||null; const rep=T1.find(x=>x.replaces)||null; const L=(await fullLog(E)).slice(l0);
+  return {kind:o.kind,when:o.when,choose:o.choose||'confirmed',verdict,sheet:sh,sheetHasRecipient:sheet.includes(R1),pressed,wallet,panelOwed:panel&&panel['OWED NOW (simulated)'],panelPaysTo:panel&&panel['PAYS TO (recipient)'],owedAtSend,owedAtWallet,settled,
+    tx:tx&&{state:tx.state,why:tx.why,to:decodeTo(tx),from:tx.from},replacement:rep&&{action:rep.action,state:rep.state},sends:sends(L).length,payouts:L.filter(x=>x.method==='payout').map(x=>x.route.slice(0,120)),owedAfter:await ev(E,a=>__SG.owedOf(a),ALPHA1),
+    received:await ev(E,()=>__SG.receivedOf('0x52908400098527886e0f7030069857d2e4169ee7')),receivedSelf:await ev(E,a=>__SG.receivedOf(a),ALPHA1),toasts:await idToasts(E,n0),note:await wNote(E).catch(()=>''),hist:await ev(E,()=>window.__b5hist.slice()),changes:L.filter(x=>x.method==='owed change').map(x=>x.route)}; }
+const b5gwei=v=>BigInt(v);
+T('st39','SCENARIO 7 (audit 5b) from CONTROLS: after REVIEW what is owed INCREASES or DECREASES, at the review sheet before the wallet is asked (CHANGE NOW) and when the wallet screen opens (ARM): the transaction names the reviewed recipient, the outcome is confirmed and the simulated contract pays everything owed at execution (0.10 or 0.025 ETH, not the reviewed 0.05), owed back to 0',{wallets:[]},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20})); const rows=[];
+  for(const [kind,when] of [['increase','now'],['decrease','wallet'],['increase','wallet'],['decrease','now']]){ const r=await b5withdraw(E,{kind,when}); const want=kind==='increase'?100000000000000000n:25000000000000000n;
+    r.paid=b5gwei(r.received); r.want=String(want);   /* SET UP clears the received totals */
+    r.ok=r.sheet&&r.sheetHasRecipient&&r.pressed&&r.wallet&&r.settled&&r.tx&&r.tx.state==='confirmed'&&r.tx.to===R1&&r.tx.from===ALPHA1&&r.panelPaysTo===R1&&r.paid===want&&r.owedAfter==='0'&&r.sends===1&&r.changes.length===1
+      &&(when==='now'?r.owedAtSend===String(want):r.owedAtSend==='50000000000000000'&&r.owedAtWallet===String(want)&&new RegExp('^'+(Number(want)/1e18).toString().replace('.','\\.')).test(r.panelOwed||''))
+      &&r.toasts.some(x=>/confirmed/i.test(x))&&!r.toasts.some(x=>/reverted|failed/i.test(x));
+    rows.push(r); await H.closeWit(E.page); }
+  return {pass:rows.every(r=>r.ok)&&E.errors.length===0,ev:{rows:rows.map(r=>Object.assign({},r,{paid:String(r.paid)}))}}; },{query:q('sim')});
+T('st40','SCENARIO 7 (audit 5b) from CONTROLS: what is owed BECOMES ZERO after REVIEW: when the wallet screen opens, the confirmed choice reverts on the simulated contract (“nothing owed”), nothing is paid and the page reports a failure, never a payment; at the review sheet before the wallet is asked, either the page stops before the wallet (nothing sent) or the transaction reverts the same way; the recipient sent is the reviewed one',{wallets:[]},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20})); const rows=[];
+  for(const when of ['wallet','now']){ const r=await b5withdraw(E,{kind:'zero',when});
+    const reverted=r.wallet&&r.tx&&r.tx.state==='reverted'&&/nothing owed/.test(r.tx.why||'')&&r.tx.to===R1&&r.sends===1&&(r.toasts.some(x=>/reverted|failed/i.test(x))||/reverted|failed/i.test(r.note));
+    const stopped=!r.wallet&&r.sends===0&&!r.tx;   /* a page that reads owed again before asking the wallet (allowed; not required) */
+    r.ok=r.sheet&&r.sheetHasRecipient&&r.pressed&&r.settled&&r.owedAfter==='0'&&r.received==='0'&&r.payouts.length===0&&!r.toasts.some(x=>/: confirmed/i.test(x))&&!/^Done/i.test(r.note)
+      &&(when==='wallet'?reverted&&r.owedAtSend==='50000000000000000'&&r.owedAtWallet==='0'&&/^0\.0 ETH/.test(r.panelOwed||''):(reverted||stopped)&&r.owedAtSend==='0');
+    r.how=reverted?'reverted':stopped?'stopped before the wallet':'?'; rows.push(r); await H.closeWit(E.page); }
+  return {pass:rows.every(r=>r.ok)&&E.errors.length===0,ev:{rows}}; },{query:q('sim')});
+const B5_STILL_OWED=/stays in the contract|still owed|remains? owed|is still (owed|in the contract)|still holds|remains in the contract/i;
+T('st41','SCENARIO 7 (audit 5b): the wallet REPLACES the withdrawTo with a withdraw() that itself pays what was owed (simulated): the page reports the replacement, does not say the original amount is still owed, and its seats view refreshes to nothing owed; the simulated chain shows the original replaced, the replacement mined and the payout to the sender',{wallets:[]},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20}));
+  const r=await b5withdraw(E,{choose:'replacedpaid'});
+  const refreshed=await E.until(()=>ev(E,()=>{ const b=document.getElementById('withdrawTo'); const o=document.getElementById('nx-myOwed'); return (b&&b.style.display==='none')||(!!o&&/^0(\.0+)?\s/.test(o.textContent)); }),15000);
+  const allText=r.toasts.join(' | ')+' | '+r.note+' | '+r.hist.join(' | ');
+  const ok=r.wallet&&r.tx&&r.tx.state==='replaced'&&r.tx.to===R1&&r.replacement&&r.replacement.action==='withdraw'&&r.replacement.state==='mined'&&r.owedAfter==='0'&&r.receivedSelf==='50000000000000000'&&r.received==='0'
+    &&r.toasts.some(x=>/replaced/i.test(x))&&!B5_STILL_OWED.test(allText)&&refreshed;
+  return {pass:ok&&E.errors.length===0,ev:{r,refreshed,claimsStillOwed:B5_STILL_OWED.test(allText),text:allText.slice(0,300)}}; },{query:q('sim')});
+
+/* ── st42: the owed controls in REAL mode act on the simulated chain behind the intercept panel */
+T('st42','REAL WALLET, SCENARIO 7 (audit 5b): ARM “INCREASES” then WITHDRAW TO ANOTHER ADDRESS: the intercept panel opens with OWED NOW 0.1 ETH, CONFIRMED pays the reviewed recipient everything owed at execution (simulated), and the external wallet receives no write',{wallets:[mock('A')],ethereum:'A'},async E=>{
+  await ev(E,()=>__SG.configure({mine:300,readerMs:20})); await setupOwed(E,'0.05','accepts'); await realConnect(E); await wOpen(E);
+  await b5ctl(E,'[data-owedchg=increase]'); await b5ctl(E,'[data-act=owed-arm]'); await b5drawerOff(E);
+  await wReview(E,R1L); await E.until(async()=>/WITHDRAW/i.test(await H.sheetTitle(E.page)),6000);
+  await ev(E,()=>{ const b=[...document.querySelectorAll('#wsBtns button')].find(b=>/SEND|WITHDRAW|CONFIRM/i.test(b.textContent)&&!/CANCEL/i.test(b.textContent)); if(b) b.click(); });
+  await waitModal(E); const rows=await ev(E,()=>Object.fromEntries([...document.querySelectorAll('#sg-modal dt')].map(d=>[d.textContent,d.nextSibling.textContent]))); const head=await modalText(E);
+  await clickModal(E,'[data-out=confirmed]'); const done=await E.until(async()=>(await txs(E)).some(x=>x.action==='withdrawTo'&&x.state==='confirmed'),15000);
+  const t=(await txs(E)).find(x=>x.action==='withdrawTo'); const recv=await ev(E,()=>__SG.receivedOf('0x52908400098527886e0f7030069857d2e4169ee7')); const owed=await ev(E,a=>__SG.owedOf(a),A1);
+  const L=await mwLog(E); const reached=L.filter(x=>WRITE.has(x.method)||!(x.method in POLICY.FORWARD)).map(x=>x.method);
+  return {pass:/SUBMISSION INTERCEPTED/.test(head)&&/^0\.1 ETH/.test(rows['OWED NOW (simulated)']||'')&&rows['PAYS TO (recipient)']===R1&&done&&t.mode==='intercepted'&&decodeTo(t)===R1&&recv==='100000000000000000'&&owed==='0'&&!reached.length&&E.errors.length===0,
+    ev:{rows,done,tx:t&&{state:t.state,mode:t.mode,to:decodeTo(t)},received:recv,owed,reached}}; },{query:q('real')});
+
 module.exports={CASES,T};
-/* THE RUN (same exit rules as wallet.test.js: 0 only when every selected case ran and passed; 1 on a failure; 2 on a bad selection) */
-if(require.main===module){ let RUNNING='(none)'; process.on('beforeExit',()=>{ console.log('HARNESS FAIL the run stopped before it finished, in case '+RUNNING); process.exit(1); });
- (async()=>{
-  const want=(process.env.CASES||'').split(',').map(x=>x.trim()).filter(Boolean); const unknown=want.filter(x=>!CASES.some(c=>c.id===x));
-  if(unknown.length){ console.log('HARNESS FAIL unknown case ids in CASES: '+unknown.join(',')); process.exit(2); }
-  const sel=CASES.filter(c=>!want.length||want.includes(c.id)); if(!sel.length){ console.log('HARNESS FAIL no cases selected'); process.exit(2); }
-  const pg=fs.readFileSync(path.join(ROOT,PAGE)); console.log('SELECTED '+sel.length+' of '+CASES.length+': '+sel.map(c=>c.id).join(',')+' · page '+PAGE+' sha256 '+crypto.createHash('sha256').update(pg).digest('hex').slice(0,16));
-  const br=await chromium.launch({args:['--no-sandbox','--disable-background-networking','--disable-component-update','--no-first-run'],executablePath:process.env.CHROMIUM||'/opt/pw-browsers/chromium'}); H.setBrowser(br);
-  let gone=false; br.on('disconnected',()=>{ gone=true; }); const res=[];
-  for(const c of sel){ RUNNING=c.id; H.LIVE.length=0; const t0=Date.now(); let r;
-    try{ const E=await H.boot(c.cfg,c.o); r=await c.run(E); if(!r||typeof r!=='object') r={pass:false,ev:{bad:'case returned '+r}}; }
-    catch(e){ r={pass:false,ev:{exception:String(e&&e.message||e).slice(0,300)}}; }
-    finally{ for(const X of H.LIVE) await X.ctx.close().catch(()=>{}); }
-    const errs=H.LIVE.flatMap(X=>X.errors), outside=H.LIVE.flatMap(X=>X.outside), sockets=H.LIVE.flatMap(X=>X.sockets); r.ev=r.ev||{};
-    if(errs.length){ r.pass=false; r.ev.failedOnPageErrors=errs.slice(0,3); } if(gone){ r.pass=false; r.ev.browserGone=true; }
-    const ms=Date.now()-t0; res.push({id:c.id,name:c.name,pass:r.pass===true,ms,ev:r.ev,outsideRefused:[...new Set(outside)],socketsRefused:[...new Set(sockets)]});
-    console.log((r.pass===true?'PASS ':'FAIL ')+c.id.padEnd(4)+' '+c.name+' ('+ms+' ms)\n     '+JSON.stringify(r.ev).slice(0,700)+(outside.length||sockets.length?'\n     refused outside: '+JSON.stringify([...new Set(outside.concat(sockets))]).slice(0,300):''));
-    if(gone) break; }
-  await br.close().catch(()=>{}); fs.mkdirSync(OUT,{recursive:true}); fs.writeFileSync(path.join(OUT,'results-'+LABEL+'.json'),JSON.stringify(res,null,1));
-  const failed=res.filter(r=>!r.pass); console.log('RAN '+res.length+': '+res.map(r=>r.id).join(',')); console.log(LABEL+': '+(res.length-failed.length)+'/'+sel.length+' passed'+(failed.length?' · FAILED: '+failed.map(r=>r.id).join(','):''));
-  process.exit(failed.length||res.length!==sel.length?1:0); })().catch(e=>{ console.log('HARNESS FAIL',e&&e.stack||e); process.exit(1); }); }
+/* THE RUN (audit 5b): the shared runner (../wallet-tests/runner.js), the same execution, watchdogs, persistence and exit statuses as the
+   production suite, with this suite's own committed manifest (manifest.json beside this file; RELEASE=1 runs exactly its ids). The
+   results also identify the staging page tested (full sha256, re-hashed at the end, its commit) and the candidate index.html it was built
+   from (the build stamp's sha256 and rev, and whether `git show <rev>:index.html` has exactly that sha256). */
+function stagingIdentity(pf){ const html=fs.readFileSync(pf,'utf8'); let stamp=null; try{ stamp=JSON.parse((/const STAMP=(\{[^}]*\})/.exec(html)||[])[1]); }catch(e){}
+  const src=R.fileSource(pf), repo=src.repo||ROOT, o={page:path.relative(ROOT,pf),stagingPageEnv:process.env.STAGING_PAGE||null,stamp,candidate:null,index:null};
+  if(stamp&&/^[0-9a-f]{7,40}$/.test(stamp.rev)){ try{ const commit=R.git(repo,'rev-parse',stamp.rev+'^{commit}');
+      const sha=R.sha256(execFileSync('git',['-C',repo,'show',commit+':'+(stamp.src||'index.html')],{maxBuffer:1<<26,stdio:['ignore','pipe','ignore']}));
+      o.candidate={rev:stamp.rev,commit,repo,file:stamp.src||'index.html',sha256:stamp.sha256,gitSha256:sha,matchesStamp:sha===stamp.sha256}; }
+    catch(e){ o.candidate={rev:stamp.rev,commit:'unknown',sha256:stamp.sha256,matchesStamp:false,reason:'the stamp rev is not a commit of '+repo+' with '+(stamp.src||'index.html')}; } }
+  else o.candidate={rev:stamp?stamp.rev:null,commit:'unknown',sha256:stamp?stamp.sha256:null,matchesStamp:false,reason:stamp?'the build stamp names no commit (rev '+stamp.rev+')':'no build stamp in the page'};
+  const ix=path.join(ROOT,'index.html'); try{ const sha=R.sha256(fs.readFileSync(ix)); o.index={path:'index.html',sha256:sha,matchesStamp:!!stamp&&sha===stamp.sha256,source:R.fileSource(ix)}; }catch(e){ o.index={path:'index.html',error:e.message}; }
+  return o; }
+if(require.main===module){ const PF=path.join(ROOT,PAGE);
+  R.run({CASES,REGERR,early:()=>H.earlyError(),
+    target:()=>{ const b=fs.readFileSync(PF); return {path:PF,bytes:b.length,sha256:R.sha256(b),source:R.fileSource(PF)}; },servedFromDisk:true,
+    extra:()=>({staging:stagingIdentity(PF)}),
+    manifest:{file:path.join(__dirname,'manifest.json'),present:()=>['staging.test.js'],groupOf:f=>f==='staging.test.js'?'@staging':null,
+      note:'Every staging case id a RELEASE=1 staging run must register. Adding a case means adding its id here in the same commit (node staging.test.js --print-manifest prints the current registration).'},
+    harness:{home:path.join(__dirname,'..'),dirs:[__dirname,path.join(__dirname,'../wallet-tests')],root:ROOT},
+    boot:H.boot,LIVE:H.LIVE,setBrowser:H.setBrowser,bumpEpoch:H.bumpEpoch,logChars:700}); }

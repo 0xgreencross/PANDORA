@@ -5,9 +5,15 @@
                inside this page (no request leaves the page for Ethereum); the page's own discovery, connect, OpSigner, send() and
                trackTx run unchanged against them.
    REAL WALLET the visitor's real wallets (EIP-6963, window.ethereum, providers[], WalletConnect) — each wrapped before the page gets it.
-               A wrapper forwards only the allowlist (policy.js FORWARD), asks the visitor before eth_requestAccounts and chain
-               switches, and never forwards a transaction or a signature: those stop at the wrapper (the intercept panel), and the
-               visitor picks a simulated result that the simulated chain then reports to the page's tracking code.
+               THE BOUNDARY (audit 5b): real providers and the real WalletConnect relay ARE contacted, for connection and session
+               operations only: the allowlist (policy.js FORWARD: eth_chainId / eth_accounts checks, eth_requestAccounts and
+               wallet_switchEthereumChain after the staging gate ASK MY WALLET, wallet_revokePermissions, and read-only calls), and for
+               WalletConnect EthereumProvider.init (opens the relay connection and restores a stored session: on CONNECT, before the
+               gate, no wallet request), enable = pairing (after the gate) and disconnect. Every payment, signature, batch, raw
+               transaction and user operation stops at the wrapper (eth_sendTransaction: the intercept panel and a simulated result;
+               the rest: shown and refused), and every other method is refused (4200); inside the WalletConnect bundle a belt refuses
+               them too. Chain outcomes shown here stay simulated. The automated tests block every socket and outside host: that is the
+               test harness, not evidence that this page cannot reach a relay.
    The page reaches providers only through three taps the build writes into it: __SG.eth() for every window.ethereum read,
    __SG.detail() for the EIP-6963 announcement, __SG.wcNS() for the WalletConnect namespace. Plus window.fetch (JSON-RPC answered
    in-page; writes refused). */
@@ -41,6 +47,7 @@ if(CONF.preset==='phone2'&&!REAL&&!/iPhone|Android/i.test(navigator.userAgent)){
 if(!PRESETS[CONF.preset]) CONF.preset=isPhoneUA()?'wc':'desk3';
 const SET=Object.assign({auto:'ask',mine:2500,readerMs:120,firstReaderDown:false,receipts:'valid',clock:'normal',wcEvent:'exact',seatsPay:false,txid:'valid',txidWallet:false,connFail:'-32603',connHow:'async',owed:0,payer:'accepts',recipient:'accepts'},CONF.set||{});
 const saveConf=()=>ssSet(CONF_KEY,JSON.stringify({preset:CONF.preset,set:SET}));
+const REALNOTE='REAL WALLET — CONNECTION TEST. Your real wallet (on a phone: through the real WalletConnect relay) is contacted for the connection only; connecting and switching network wait for ASK MY WALLET on this page. Payments and signatures are intercepted before your wallet; outcomes are simulated.';
 
 /* ── the log every wallet request goes through (shown under CONTROLS · LOG; read by the tests) */
 const LOG=[]; let logTick=()=>{};
@@ -127,7 +134,7 @@ function txSubmit(tx,who){ const from=lc(tx.from), n=CH.nonce.has(from)?CH.nonce
     CH.txs.set(u.hash,u); mineInto(u,1); r.unrelatedHash=u.hash; logReq('staging','unrelated transaction mined',u.hash,'SIMULATED: another transaction of '+from+' (nonce '+u.nonce+') is mined in block '+u.block+'; '+r.hash.slice(0,10)+'… (nonce '+n+') stays pending'); }
   logTick(); return r; }
 function mineInto(r,status){ const b=CH.head(); r.block=b; r.status=status; (CH.inBlock.get(b)||CH.inBlock.set(b,[]).get(b)).push(r); CH.spent.set(r.from,Math.max(CH.spent.get(r.from)||0,r.nonce+1)); }
-const OUTCOMES={confirmed:'CONFIRMED',reverted:'REVERTED',sped:'SPED UP (same call, higher fee)',cancelled:'CANCELLED (0 ETH to yourself)',replaced:'REPLACED (another call)',unknown:'UNKNOWN (nonce spent, tx not found)',pending:'PENDING (decide later)'};
+const OUTCOMES={confirmed:'CONFIRMED',reverted:'REVERTED',sped:'SPED UP (same call, higher fee)',cancelled:'CANCELLED (0 ETH to yourself)',replaced:'REPLACED (another call)',replacedpaid:'REPLACED BY A WITHDRAWAL THAT PAID (the replacement withdrew what was owed)',unknown:'UNKNOWN (nonce spent, tx not found)',pending:'PENDING (decide later)'};
 /* what the simulated contract does with a write that would be mined (STORMGLASS.sol: withdraw / withdrawTo require something owed and that the payee accept ETH):
    it reverts, whatever the wallet screen's button said. A reason, or null. */
 function chainVerdict(r){ const a=r.action; if(a!=='withdraw'&&a!=='withdrawTo') return null; const v=owedOf(r.from); if(v===0n) return 'nothing owed (require "nothing owed")';
@@ -140,8 +147,15 @@ function txResolve(hash,outcome){ const r=CH.txs.get(hash); if(!r||r.state!=='pe
   else if(outcome==='unknown'){ r.state='unknown'; CH.spent.set(r.from,Math.max(CH.spent.get(r.from)||0,r.nonce+1)); }   /* spent by a transaction no reader can find */
   else { const x=Object.assign({},r,{hash:rnd32(),state:'mined',replaces:r.hash});
     if(outcome==='cancelled'){ x.to=r.from; x.data='0x'; x.value=0n; }
-    if(outcome==='replaced'){ x.data='0x3ccfd60b'; x.value=0n; x.action='withdraw'; }   /* withdraw(): another call to the same contract */
-    CH.txs.set(x.hash,x); mineInto(x,1); r.state=outcome; r.by=x.hash; if(outcome==='sped') effect(x); }
+    if(outcome==='replaced'||outcome==='replacedpaid'){ x.data='0x3ccfd60b'; x.value=0n; x.action='withdraw'; }   /* withdraw(): another call to the same contract */
+    /* REPLACED BY A WITHDRAWAL THAT PAID (audit 5b): the replacement is a withdraw() by the same sender that the simulated contract executes: it pays
+       the sender everything owed at that moment (a revert when nothing is owed or the sender rejects ETH). The original is replaced, not mined. */
+    /* audit 5b fix (a5v3): EVERY replacement that calls the contract runs on the simulated contract like any mined call: SPED UP (the same call) and
+       REPLACED / REPLACED BY A WITHDRAWAL THAT PAID (withdraw()). chainVerdict decides it: a call that would revert is mined with status 0 and changes
+       nothing (a sped-up withdrawTo to a recipient that rejects ETH, a withdraw() with nothing owed); one that runs has its effect (a replacement
+       withdraw() pays the sender what is owed). A cancellation (0 ETH to the sender itself) calls nothing. */
+    const runs=outcome!=='cancelled', why=runs?chainVerdict(x):null; if(why){ x.why=why; logReq('chain','revert',x.hash,'SIMULATED CONTRACT: the replacement '+x.action+' reverts: '+why); }
+    CH.txs.set(x.hash,x); mineInto(x,why?0:1); r.state=outcome==='replacedpaid'?'replaced':outcome; r.by=x.hash; if(runs&&!why) effect(x); }
   logTick(); return true; }
 function txSchedule(hash,outcome){ if(outcome==='pending') return; setTimeout(()=>txResolve(hash,outcome),Math.max(0,+SET.mine||0)); }
 function decode(tx){ try{ const E=window.ethers, A=(typeof ABI!=='undefined')?ABI:SIM_ABI; const I=new E.Interface(A); const p=I.parseTransaction({data:tx.data||tx.input||'0x',value:BigInt(tx.value||0)}); return p?{name:p.name,args:p.fragment.inputs.map((x,i)=>({name:x.name||('arg'+i),type:x.type,v:String(p.args[i])})),sig:p.signature}:{name:'(no call data)',args:[]}; }catch(e){ return {name:(tx.data||'0x')==='0x'?'(plain ETH transfer)':'(not a STORMGLASS call: '+String(tx.data).slice(0,10)+')',args:[]}; } }
@@ -260,19 +274,31 @@ const fmtEth=v=>{ try{ return window.ethers.formatEther(BigInt(v||0)); }catch(e)
 const chainName=c=>{ const n=typeof c==='string'?parseInt(c,16):Number(c); return n===1?'1 · Ethereum mainnet':n===8453?n+' · Base':n===42161?n+' · Arbitrum':String(c); };
 function txRows(tx,walletChain){ const d=decode(tx), C=lc(cfg('contract')||'');
   return [['INTENDED CHAIN',tx.chainId!=null?chainName(tx.chainId):'(not set)'],['WALLET IS ON',walletChain==null?'—':chainName(walletChain)],['SENDER',tx.from||'—'],['TARGET',(tx.to||'—')+(lc(tx.to)===C?'  (the STORMGLASS contract)':'')],
-    ['VALUE',fmtEth(tx.value)+' ETH'],['ACTION',d.name+(d.args.length?'('+d.args.map(a=>a.name+': '+a.v).join(', ')+')':'()')]].concat(d.name==='withdrawTo'?[['PAYS TO (recipient)',d.args[0]?d.args[0].v:'—'],['PAID FROM','what the contract owes the SENDER above; the sender’s wallet only authorises it']]:[],[['GAS LIMIT',tx.gas?String(BigInt(tx.gas)):'—']]); }
+    ['VALUE',fmtEth(tx.value)+' ETH'],['ACTION',d.name+(d.args.length?'('+d.args.map(a=>a.name+': '+a.v).join(', ')+')':'()')]].concat(d.name==='withdrawTo'?[['PAYS TO (recipient)',d.args[0]?d.args[0].v:'—'],['PAID FROM','what the contract owes the SENDER above; the sender’s wallet only authorises it']]:[],
+    d.name==='withdrawTo'||d.name==='withdraw'?[['OWED NOW (simulated)',fmtEth(owedOf(lc(tx.from)))+' ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)']]:[],[['GAS LIMIT',tx.gas?String(BigInt(tx.gas)):'—']]); }
 const kv=rows=>el('dl',{class:'sg-kv'},rows.map(([k,v])=>[el('dt',null,k),el('dd',null,v)]));
 /* the chooser: REAL mode = the intercept; SIMULATION = the simulated wallet's confirmation screen. Resolves an outcome key. */
 function chooser(tx,o){ if(SET.auto&&SET.auto!=='ask'&&!REAL) return Promise.resolve(SET.auto);
   return modal((box,done)=>{ box.classList.add(REAL?'sg-real':'sg-sim');
     box.append(el('div',{class:'sg-h'},REAL?'SUBMISSION INTERCEPTED: nothing was sent to your wallet':'SIMULATED WALLET · CONFIRMATION SCREEN'),
-      el('p',{class:'sg-p'},REAL?'The page prepared this transaction and handed it to your wallet. The staging wrapper stopped it before your wallet: your wallet never saw it, nothing can be paid. This checks how the page prepares a transaction and what it shows next. It does not test your wallet’s own payment screen, and on a phone it does not test delivery of a payment through the WalletConnect relay.':'This stands in for the wallet’s own confirmation screen ('+(o.who||'simulated wallet')+'). Choose what the wallet and the chain do.'),
+      el('p',{class:'sg-p'},REAL?'The page prepared this transaction and handed it to your wallet. The staging wrapper stopped it before your wallet (and, on a phone, before the WalletConnect relay): your wallet never saw it, nothing can be paid. Payments and signatures are intercepted here; the result you choose below is simulated. This checks how the page prepares a transaction and what it shows next. It does not test your wallet’s own payment screen, and on a phone it does not test delivery of a payment through the WalletConnect relay (in this mode the relay carries the connection only).':'This stands in for the wallet’s own confirmation screen ('+(o.who||'simulated wallet')+'). Choose what the wallet and the chain do.'),
       kv(txRows(tx,o.walletChain)),
       el('div',{class:'sg-h2'},'CHOOSE THE SIMULATED RESULT'),
-      el('div',{class:'sg-btns'},[['confirmed','CONFIRMED'],['reverted','REVERTED'],['rejected','REJECTED IN WALLET'],['sped','SPED UP'],['cancelled','CANCELLED'],['replaced','REPLACED BY ANOTHER CALL'],['unknown','UNKNOWN'],['pending','PENDING · DECIDE LATER'],['error','WALLET ERROR (no answer)']]
+      el('div',{class:'sg-btns'},[['confirmed','CONFIRMED'],['reverted','REVERTED'],['rejected','REJECTED IN WALLET'],['sped','SPED UP'],['cancelled','CANCELLED'],['replaced','REPLACED BY ANOTHER CALL'],...(/^withdraw(To)?$/.test(decode(tx).name)?[['replacedpaid','REPLACED BY A WITHDRAWAL THAT PAID']]:[]),['unknown','UNKNOWN'],['pending','PENDING · DECIDE LATER'],['error','WALLET ERROR (no answer)']]
         .map(([k,t])=>el('button',{class:'sg-b'+(k==='confirmed'?' sg-prime':''),'data-out':k,onclick:()=>done(k)},t))),
       el('p',{class:'sg-n'},'Results other than REJECTED and WALLET ERROR give the page a simulated transaction hash; the page’s own tracking (receipts, nonce scan, replacement check) then reads the simulated chain. Mining delay: '+(SET.mine/1000)+' s (CONTROLS). The page stays usable behind this panel, as it does behind a wallet window.')); },true); }
-async function handleSend(tx,o){ const out=await chooser(tx,o); if(o.onChoice) o.onChoice(out);
+/* OWED CHANGES AFTER REVIEW (audit 5b, CONTROLS · SCENARIOS 7). The contract's withdraw / withdrawTo pay everything owed WHEN THE TRANSACTION EXECUTES
+   (STORMGLASS.sol _withdraw: amount = owed[msg.sender], then owed = 0; nothing owed: revert "nothing owed"); the amount the page showed at REVIEW is a
+   snapshot. CHANGE NOW changes the simulated owed[] of the connected account at once (the page's REVIEW sheet is open: before the wallet is asked);
+   ARM changes it once, at the moment the wallet screen (REAL: the intercept panel) opens for a withdraw / withdrawTo. Simulated ETH only. */
+const OWEDCHG={increase:'INCREASES (+0.05 ETH)',decrease:'DECREASES (to half)',zero:'BECOMES ZERO'};
+let OWED_ARM=null;
+const pageMe=()=>{ try{ return typeof me==='string'&&me?lc(me):null; }catch(e){ return null; } };   /* the page's connected account (its global, read at call time) */
+function owedChange(kind,who,when){ const a=lc(who||pageMe()||(typeof connAcct==='function'?connAcct():'')||''); if(!/^0x[0-9a-f]{40}$/.test(a)||!OWEDCHG[kind]) return null;
+  const was=owedOf(a), now=kind==='increase'?was+eth(0.05):kind==='decrease'?was/2n:0n; S.owed.set(a,now);
+  logReq('chain','owed change',a,'SIMULATED: owed['+a+'] '+fmtEth(was)+' → '+fmtEth(now)+' ETH ('+OWEDCHG[kind]+', '+when+')'); logTick(); return {account:a,was:String(was),now:String(now),kind,when}; }
+async function handleSend(tx,o){ if(OWED_ARM){ const n=decode(tx).name; if(n==='withdraw'||n==='withdrawTo'){ const k=OWED_ARM.kind; OWED_ARM=null; owedChange(k,tx.from,'armed: when the wallet screen opened'); } }
+  const out=await chooser(tx,o); if(o.onChoice) o.onChoice(out);
   if(out==='rejected') throw err(4001,'User rejected the request.');
   if(out==='error') throw err(-32603,'Internal JSON-RPC error (simulated: the wallet gave no clear answer).');
   const r=txSubmit(tx,o.who); r.outcome=out; r.mode=REAL?'intercepted':'simulated'; txSchedule(r.hash,out); return r.hash; }
@@ -281,13 +307,16 @@ function signPanel(method,params,who){ return modal((box,done)=>{ box.classList.
   box.append(el('div',{class:'sg-h'},REAL?(tx?'TRANSACTION REQUEST INTERCEPTED':'SIGNATURE REQUEST INTERCEPTED')+': nothing was sent to your wallet':'SIMULATED WALLET · '+(tx?'TRANSACTION':'SIGNATURE')+' REQUEST'),
     el('p',{class:'sg-p'},'Method '+method+' from '+(who||'the page')+'. The STORMGLASS page never asks for this; this staging page never forwards it: it is refused.'),kv([['METHOD',method],['PARAMS',brief(params)]]),
     el('div',{class:'sg-btns'},el('button',{class:'sg-b sg-prime',onclick:()=>done('refused')},'CLOSE · REFUSED'))); },true); }
+/* ARMED: a WalletConnect pairing the visitor allowed (ASK MY WALLET on 'enable') lets the page's own eth_requestAccounts that follows it (within 20 s)
+   through without a second gate. ONE request only (audit 5b): the arming is used up by it, and only a pairing arms; before, any eth_requestAccounts of that
+   wallet within 20 s of an ASK MY WALLET (a reconnect right after DISCONNECT, say) reached the wallet without the gate. */
 const ARMED=new WeakMap();
-function gate(raw,who,method){ const t=ARMED.get(raw); if(method==='eth_requestAccounts'&&t&&Date.now()-t<20000) return Promise.resolve(true);
+function gate(raw,who,method){ const t=ARMED.get(raw); if(method==='eth_requestAccounts'&&t&&Date.now()-t<20000){ ARMED.delete(raw); return Promise.resolve(true); }
   return modal((box,done)=>{ box.classList.add('sg-real');
     const what=method==='eth_requestAccounts'||method==='enable'?'Your wallet ('+who+') will now ask to connect this site. Approve or refuse it in the wallet.':'Your wallet ('+who+') will now ask to switch to Ethereum mainnet. Approve or refuse it in the wallet.';
     box.append(el('div',{class:'sg-h'},'REAL WALLET · THIS WILL OPEN YOUR WALLET'),el('p',{class:'sg-p'},what),
-      el('p',{class:'sg-p'},'No payment and no signature can be sent from this page: transactions and signatures stop at the staging wrapper before your wallet.'),
-      el('div',{class:'sg-btns'},el('button',{class:'sg-b sg-prime','data-gate':'go',onclick:()=>{ if(method!=='wallet_switchEthereumChain') ARMED.set(raw,Date.now()); done(true); }},'ASK MY WALLET'),el('button',{class:'sg-b','data-gate':'no',onclick:()=>done(false)},'CANCEL'))); }); }
+      el('p',{class:'sg-p','data-sg-explain':'gate'},'This is a real request to your real wallet'+(raw&&raw.isWalletConnect?', sent through the WalletConnect relay':'')+'. No payment and no signature can be sent from this page: transactions and signatures are intercepted at the staging wrapper before your wallet; their outcomes are simulated.'),
+      el('div',{class:'sg-btns'},el('button',{class:'sg-b sg-prime','data-gate':'go',onclick:()=>{ if(method==='enable') ARMED.set(raw,Date.now()); done(true); }},'ASK MY WALLET'),el('button',{class:'sg-b','data-gate':'no',onclick:()=>done(false)},'CANCEL'))); }); }
 
 /* ═══ SIMULATION: the simulated wallets (EIP-1193), announced over EIP-6963; window.ethereum / providers[] / WalletConnect per preset */
 const SIMP=new Set(), SW={};
@@ -428,9 +457,12 @@ function wrap(raw,who){ if(!raw||(typeof raw!=='object'&&typeof raw!=='function'
   const w={}; const L=new Map();
   const def=(k,v)=>Object.defineProperty(w,k,{value:v,enumerable:true});
   def('request',args=>guard(raw,name(),args));
-  const on=k=>(ev,f)=>{ try{ (raw[k]||raw.on).call(raw,ev,f); }catch(e){ console.warn('staging: wallet events',e); } return w; };
+  /* listeners run with `this` = the wrapper (audit 5b): an EventEmitter-style wallet calls a listener with this = the emitter, the RAW
+     provider, which would hand page code the unguarded object. One stand-in per (listener, event), so removeListener still finds it. */
+  const lis=(ev,f)=>{ if(typeof f!=='function') return f; let m=L.get(f); if(!m){ m=new Map(); L.set(f,m); } let g=m.get(ev); if(!g){ g=function(...a){ return f.apply(w,a); }; m.set(ev,g); } return g; };
+  const on=k=>(ev,f)=>{ try{ (raw[k]||raw.on).call(raw,ev,lis(ev,f)); }catch(e){ console.warn('staging: wallet events',e); } return w; };
   def('on',on('on')); def('addListener',on('addListener')); def('once',on('once'));
-  def('removeListener',(ev,f)=>{ try{ (raw.removeListener||raw.off).call(raw,ev,f); }catch(e){} return w; }); def('off',w.removeListener);
+  def('removeListener',(ev,f)=>{ try{ (raw.removeListener||raw.off).call(raw,ev,lis(ev,f)); }catch(e){} return w; }); def('off',w.removeListener);
   FLAGS.forEach(k=>Object.defineProperty(w,k,{enumerable:true,get:()=>{ try{ return raw[k]===true; }catch(e){ return false; } }}));
   Object.defineProperty(w,'providers',{enumerable:true,get:()=>{ let ps=null; try{ ps=raw.providers; }catch(e){} return Array.isArray(ps)?ps.map(p=>wrap(p)):undefined; }});
   if(raw.isWalletConnect||typeof raw.enable==='function'&&raw.signer){   /* the WalletConnect EthereumProvider */
@@ -442,7 +474,7 @@ function wrap(raw,who){ if(!raw||(typeof raw!=='object'&&typeof raw!=='function'
     const str=v=>typeof v==='string'?v:undefined;
     Object.defineProperty(w,'session',{enumerable:true,get:()=>{ try{ const s=raw.session; if(!s||typeof s!=='object') return undefined; const m=(s.peer&&s.peer.metadata)||{}, r=m.redirect||{};
       return Object.freeze({topic:str(s.topic),peer:Object.freeze({metadata:Object.freeze({name:str(m.name),url:str(m.url),redirect:Object.freeze({native:str(r.native),universal:str(r.universal)})})})}); }catch(e){ return undefined; } }});
-    const facade={client:{on:(ev,f)=>{ if(ev!=='session_request_sent') return; try{ raw.signer.client.on(ev,f); }catch(e){} }}}; def('signer',facade);
+    const facade={client:{on:(ev,f)=>{ if(ev!=='session_request_sent'||typeof f!=='function') return; try{ raw.signer.client.on(ev,function(...a){ return f.apply(facade.client,a); }); }catch(e){} }}}; def('signer',facade);
     beltWC(raw); }
   ISW.add(w); WRAP.set(raw,w); Object.preventExtensions(w); return w; }
 /* defence in depth for WalletConnect: the raw provider's own request paths (provider.request, signer.request, the sign client's
@@ -470,6 +502,7 @@ const SG={
   configure(o){ Object.assign(SET,o||{}); saveConf(); if(o&&'clock' in o) applyClock(); logTick(); },
   txids:TXIDS, connErrors:CONNERR, owedOf:a=>String(owedOf(lc(a))), receivedOf:a=>String(S.received.get(lc(a))||0n), payouts:()=>S.payouts.map(p=>({to:p.to,v:String(p.v),why:p.why})),
   receipts:RECEIPTS, clocks:CLOCKS, lastChains:LASTCHAIN, track:trackNow, held:()=>HELD.slice(), navHold:()=>NAV_HOLD,
+  owedArm:()=>OWED_ARM?OWED_ARM.kind:null, owedChanges:OWEDCHG, realNote:REALNOTE,
   wcEmit:k=>{ const w=SW.PHONE; return !!(w&&w.wcEmit&&w.wcEmit(k)); }, wcReqs:()=>SW.PHONE&&SW.PHONE.wch?SW.PHONE.wch.reqs.map(r=>({id:r.ev.id,topic:r.ev.topic,method:r.request.method})):[],
   /* CONTROLS · SCENARIOS: each SET UP puts the simulated wallets and the chain in the state the scenario needs (logged) */
   scenario(k,v){ let r=true;
@@ -498,24 +531,33 @@ Object.defineProperty(window,'__SG',{value:Object.freeze(SG),configurable:false,
 /* ═══ THE BANNER AND THE CONTROLS */
 let noteT=null;
 function note(t){ const n=document.getElementById('sg-note'); if(!n) return; n.textContent=t; n.classList.add('on'); clearTimeout(noteT); noteT=setTimeout(()=>n.classList.remove('on'),6000); }
-function ui(){ const B=document.getElementById('sg-banner'); if(!B||B.dataset.on) return; B.dataset.on='1'; B.textContent=''; document.body.classList.add('sg-stage',REAL?'sg-mode-real':'sg-mode-sim');
+/* audit 5b fix: the page's wallet sheet is modal: while it is open every other top-level element of the page is inert. The staging chrome (the
+   banner with CONTROLS and MODE, the CONTROLS drawer, the note, the simulated wallet screen) is not part of the page under test: it stays usable over
+   the sheet, as the scenarios need (SCENARIO 3 emits relay events from CONTROLS while the CONFIRM sheet is open; SCENARIO 7 changes the account or
+   network while the withdrawal review is open). Only top-level elements whose id starts with "sg-" are released; the page's own stay inert. */
+function stagingLive(){ if(stagingLive.on||!document.body) return; stagingLive.on=1;
+  const free=el=>{ if(el&&el.parentNode===document.body&&/^sg-/.test(el.id||'')&&el.inert) el.inert=false; };
+  new MutationObserver(rs=>rs.forEach(r=>free(r.target))).observe(document.body,{subtree:true,attributes:true,attributeFilter:['inert']});
+  [...document.body.children].forEach(free); }
+function ui(){ stagingLive(); const B=document.getElementById('sg-banner'); if(!B||B.dataset.on) return; B.dataset.on='1'; B.textContent=''; document.body.classList.add('sg-stage',REAL?'sg-mode-real':'sg-mode-sim');
   B.setAttribute('role','region'); B.setAttribute('aria-label','Test build');
   B.append(el('b',{class:'sg-tb'},'TEST BUILD'),el('span',{class:'sg-mode'},el('span',{class:'sg-long'},REAL?'REAL WALLET — CONNECTION TEST':'SIMULATION'),el('span',{class:'sg-short'},REAL?'REAL WALLET TEST':'SIMULATION')),(()=>{ const f=el('span',{class:'sg-fast',id:'sg-fast',title:'The tracking deadlines are shortened on this page (CONTROLS · TRACKING)'},'FAST CLOCK'); f.hidden=SET.clock!=='fast'; return f; })(),
     el('span',{class:'sg-rev',title:'candidate index.html: git '+STAMP.rev+' (index.html last changed in '+STAMP.touched+') · sha256 '+STAMP.sha256},'candidate ',el('code',{id:'sg-rev'},STAMP.rev),' · sha256 ',el('code',{id:'sg-sha'},STAMP.sha256.slice(0,12))),
     el('span',{class:'sg-sp'}),el('button',{class:'sg-bb',id:'sg-ctl',onclick:()=>drawer()},'CONTROLS'),el('button',{class:'sg-bb',id:'sg-modebtn',onclick:()=>modeSheet()},'MODE'));
   document.body.appendChild(el('div',{id:'sg-note',role:'status'}));
-  if(REAL) setTimeout(()=>note('REAL WALLET — CONNECTION TEST. Your wallet is asked only to connect, switch network or disconnect, and only after you confirm on this page. Payments and signatures stop before your wallet.'),400); }
+  if(REAL) setTimeout(()=>note(REALNOTE),400); }
 function modeSheet(){ modal((box,done)=>{ box.classList.add(REAL?'sg-real':'sg-sim');
   box.append(el('div',{class:'sg-h'},'CHOOSE THE TEST MODE'),
-    el('div',{class:'sg-mo'+(REAL?'':' on')},el('b',null,'SIMULATION (default)'),el('p',null,'Simulated wallets and a simulated chain inside this page. Your real wallet is never visible to the page. Every result (confirmed, reverted, rejected, sped up, cancelled, replaced, unknown) and every delay can be chosen. Nothing leaves this page for Ethereum.')),
-    el('div',{class:'sg-mo'+(REAL?' on':'')},el('b',null,'REAL WALLET — CONNECTION TEST'),el('p',null,'Your real wallet (MetaMask, Rabby, Zerion… or WalletConnect on a phone) connects to this page for real: your wallet will ask to connect this site, and later maybe to switch network. No payment and no signature can be sent from this page: each one is stopped before your wallet and shown to you; you then pick a simulated result. So this mode does not test your wallet’s own payment screen, nor delivery of a payment through the WalletConnect relay. The sale shown stays simulated.')),
+    el('div',{class:'sg-mo'+(REAL?'':' on')},el('b',null,'SIMULATION (default)'),el('p',{'data-sg-explain':'mode-sim'},'Simulated wallets and simulated results, inside this page: no real wallet, no real provider. Your real wallet is never visible to the page, and the WalletConnect phone pairing is simulated too (no relay connection). Every result (confirmed, reverted, rejected, sped up, cancelled, replaced, unknown) and every delay can be chosen. Nothing leaves this page for Ethereum.')),
+    el('div',{class:'sg-mo'+(REAL?' on':'')},el('b',null,'REAL WALLET — CONNECTION TEST'),el('p',{'data-sg-explain':'mode-real'},'Your real wallet (MetaMask, Rabby, Zerion… or WalletConnect on a phone) is contacted for real, for the connection: the page checks its account and network, your wallet asks to connect this site and maybe to switch network (each only after you press ASK MY WALLET here), and DISCONNECT reaches it. On a phone this is a real connection to the WalletConnect relay: pairing, the session, account and network changes, disconnect. Payments and signatures are intercepted: every transaction, signature, batched call, raw transaction or user operation stops at the staging wrapper, before your wallet and before the relay, and is shown to you; any other request is refused. Outcomes are simulated: you pick the result, and the sale and every transaction result come from the simulated chain. So this mode does not test your wallet’s own payment screen, nor delivery of a payment through the WalletConnect relay.')),
     el('p',{class:'sg-n'},'Changing mode reloads the page into a clean state: no wallet connection, no pending transaction and no simulated state carries over.'),
     el('div',{class:'sg-btns'},el('button',{class:'sg-b'+(REAL?'':' sg-prime'),'data-mode':'sim',onclick:()=>{ done(); if(REAL) SG.switchMode('sim'); }},REAL?'RELOAD IN SIMULATION':'STAY IN SIMULATION'),
       el('button',{class:'sg-b'+(REAL?' sg-prime':''),'data-mode':'real',onclick:()=>{ done(); if(!REAL) SG.switchMode('real'); }},REAL?'STAY IN REAL-WALLET MODE':'RELOAD IN REAL-WALLET MODE'),el('button',{class:'sg-b',onclick:()=>done()},'CLOSE'))); }); }
 const s1Status=()=>{ const armed=Object.values(SW).filter(w=>w.st.lastChain&&w.st.lastChain!=='off').length; let i=-1; for(let k=LOG.length-1;k>=0;k--) if(/LAST-MOMENT/.test(LOG[k].route)){ i=k; break; }
   return (armed?'ARMED ('+armed+' wallets, one shot)':'not armed')+(i<0?'':' · last change fired; eth_sendTransaction since: '+LOG.slice(i+1).filter(e=>e.method==='eth_sendTransaction').length); };
 const connAcct=()=>{ const w=Object.values(SW).find(x=>x.st.authorized); return w?w.acct():null; };
-const LIVE={ owed:()=>{ const a=connAcct(); return 'owed to '+(a?a.slice(0,8)+'…':'every account')+': '+fmtEth(a?owedOf(lc(a)):eth(+SET.owed||0))+' ETH (simulated) · recipient '+(SET.recipient||'accepts')+' ETH'; },
+const LIVE={ owedchg:()=>{ const a=pageMe()||connAcct(); return (OWED_ARM?'ARMED: '+OWEDCHG[OWED_ARM.kind]+' · ':'')+(a?'owed now '+fmtEth(owedOf(lc(a)))+' ETH (simulated)':'not connected'); },
+  owed:()=>{ const a=connAcct(); return 'owed to '+(a?a.slice(0,8)+'…':'every account')+': '+fmtEth(a?owedOf(lc(a)):eth(+SET.owed||0))+' ETH (simulated) · recipient '+(SET.recipient||'accepts')+' ETH'; },
   pay:()=>{ const a=connAcct(); const last=S.payouts.slice(-1).map(p=>'last payout '+fmtEth(p.v)+' ETH → '+p.to.slice(0,8)+'… ('+(/^REJECTED/.test(p.why)?'refused, left owed':'paid')+')').join(''); return 'payer '+(SET.payer||'accepts')+' ETH'+(a?' · owed '+fmtEth(owedOf(lc(a)))+' · received '+fmtEth(S.received.get(lc(a))||0n):'')+(last?' · '+last:''); } };
 let DR=null; const SHOWP=/^(open link|session_request_sent|chainChanged|scenario |eth_getTransactionReceipt)/;
 function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
@@ -524,7 +566,7 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
   const seg=(opts,cur,fn,attr)=>el('div',{class:'sg-seg'},opts.map(([k,t])=>el('button',{class:'sg-s'+(k===cur?' on':''),[attr||'data-k']:k,onclick:e=>{ fn(k); [...e.target.parentNode.children].forEach(b=>b.classList.toggle('on',b===e.target)); }},t)));
   const num=(lab,v,fn,step)=>el('label',{class:'sg-num'},lab,el('input',{type:'number',value:String(v),step:String(step||100),min:'0',onchange:e=>fn(+e.target.value)}));
   const body=el('div',{class:'sg-db'}); DR.append(el('div',{class:'sg-dh'},el('b',null,'STAGING CONTROLS · '+(REAL?'REAL WALLET':'SIMULATION')),el('button',{class:'sg-bb',onclick:()=>drawer()},'CLOSE')),body);
-  body.append(sec('WHAT IS REAL HERE',el('p',{class:'sg-n'},REAL?'REAL: your wallet extension or WalletConnect phone wallet, its accounts, its network, connect / disconnect / revocation, account and network changes made in the wallet. SIMULATED: the sale, the plates’ chain data, every transaction result (your wallet never receives a transaction or a signature), gas estimates.':'SIMULATED: every wallet, every account, the network each wallet is on, the sale state, the plates’ chain data, blocks, receipts, every transaction result. REAL: the page code itself (index.html candidate '+STAMP.rev+') and the plate artwork files it loads from this site. No request leaves this page for an Ethereum node or a wallet.')));
+  body.append(sec('WHAT IS REAL HERE',el('p',{class:'sg-n','data-sg-explain':REAL?'drawer-real':'drawer-sim'},REAL?'REAL: your wallet extension or WalletConnect phone wallet, its accounts, its network; on a phone the WalletConnect relay (opened when you press CONNECT; it carries the pairing, the session, account and network changes and disconnect); connect and network switches (each after ASK MY WALLET), disconnect / revocation, account and network changes made in the wallet. INTERCEPTED: payments and signatures: every transaction, signature, batched call, raw transaction and user operation stops at the staging wrapper; your wallet and the relay never receive one. Unknown requests are refused. SIMULATED: the sale, the plates’ chain data, every transaction outcome, gas estimates. TESTS: the automated tests run this page with every socket and outside host blocked and mocked wallets; that is the test machine, not this page: opened in a real browser, this mode does contact the WalletConnect relay.':'SIMULATED: every wallet, every account, the network each wallet is on, the WalletConnect phone pairing, the sale state, the plates’ chain data, blocks, receipts, every transaction result. REAL: the page code itself (index.html candidate '+STAMP.rev+') and the plate artwork files it loads from this site. No request leaves this page for an Ethereum node, a wallet or the WalletConnect relay.')));
   /* SCENARIOS: one SET UP per scenario, then the steps to click on the page itself (the production code does the rest) */
   const scn=(n,title,ctl,steps,expect)=>el('div',{class:'sg-scn','data-scn':n},el('div',{class:'sg-wn'},n+'. '+title),ctl,el('ol',{class:'sg-steps'},steps.map(t=>el('li',null,t))),el('p',{class:'sg-n'},'EXPECT: '+expect));
   const pickSet=(name,opts,cur)=>{ let v=cur; return [seg(opts,cur,k=>{ v=k; },'data-'+name),()=>v]; };
@@ -561,10 +603,18 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
       'no request reaches SIM BETA (or any wallet but SIM ALPHA) before you pick it; after the pick exactly one eth_requestAccounts reaches SIM BETA. In REAL mode the same path stops at the staging gate (ASK MY WALLET) before any other wallet is asked.')); }
   { const [oSeg,oV]=pickSet('owed',[['0','OWES NOTHING'],['0.05','OWES 0.05 ETH'],['0.5','OWES 0.5 ETH']],String(SET.owed||0)); const [rSeg2,rV2]=pickSet('recipient',[['accepts','RECIPIENT ACCEPTS ETH'],['rejects','RECIPIENT REJECTS ETH']],SET.recipient||'accepts');
     const conn=()=>Object.values(SW).find(w=>w.st.authorized);
+    const [ocSeg,ocV]=pickSet('owedchg',Object.entries(OWEDCHG),'increase');
     SCN5.push(scn(7,'WITHDRAW TO ANOTHER ADDRESS',el('div',null,oSeg,rSeg2,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'owed',onclick:()=>{ SG.configure({recipient:rV2()}); SG.scenario('owed',oV()); }},'SET UP'),el('span',{class:'sg-st','data-live':'owed'},'')),
-        el('div',{class:'sg-row'},'before the wallet is asked: ',...(REAL?[]:[el('button',{class:'sg-s','data-act':'account',onclick:()=>{ const w=conn(); if(!w) return note('Connect a simulated wallet first.'); SG.wallet(Object.keys(SW).find(k=>SW[k]===w),{ai:w.st.ai+1}); }},'ACCOUNT CHANGES'),el('button',{class:'sg-s','data-act':'network',onclick:()=>{ const w=conn(); if(!w) return note('Connect a simulated wallet first.'); SG.wallet(Object.keys(SW).find(k=>SW[k]===w),{chainId:'0x2105',switch:'refuse'}); }},'NETWORK GOES TO BASE (and refuses to switch back)')]))),
-      ['SET UP: the simulated contract owes every account that amount (and the recipient accepts or rejects ETH).',REAL?'CONNECT your wallet (ASK MY WALLET).':'CONNECT (SIM ALPHA · 1).','Under YOUR SEATS press WITHDRAW TO ANOTHER ADDRESS, type an address, press REVIEW. Try 0x000…0 (zero), a short string, the contract address, your own address: the page refuses each with its message.','With a valid address: REVIEW shows the sheet; for “before the wallet is asked” press ACCOUNT CHANGES or NETWORK GOES TO BASE now, then SEND TO THIS ADDRESS: nothing is sent.','Otherwise SEND TO THIS ADDRESS: the wallet screen (REAL: the intercept panel) shows withdrawTo and the recipient. CONFIRMED (REJECTS ETH turns it into a revert, as the contract would), REVERTED, REJECTED IN WALLET.'],
-      'one eth_sendTransaction: withdrawTo(recipient), from the connected account, to the contract, value 0. Confirmed: owed back to 0 and the button goes. Recipient rejects ETH: “Failed on Ethereum (reverted)”, the box stays for another address. Account or network change before the handoff: nothing sent.')); }
+        el('div',{class:'sg-row'},'before the wallet is asked: ',...(REAL?[]:[el('button',{class:'sg-s','data-act':'account',onclick:()=>{ const w=conn(); if(!w) return note('Connect a simulated wallet first.'); SG.wallet(Object.keys(SW).find(k=>SW[k]===w),{ai:w.st.ai+1}); }},'ACCOUNT CHANGES'),el('button',{class:'sg-s','data-act':'network',onclick:()=>{ const w=conn(); if(!w) return note('Connect a simulated wallet first.'); SG.wallet(Object.keys(SW).find(k=>SW[k]===w),{chainId:'0x2105',switch:'refuse'}); }},'NETWORK GOES TO BASE (and refuses to switch back)')])),
+        /* audit 5b: what is owed changes after REVIEW (the review amount is a snapshot; the contract pays all owed when the transaction executes) */
+        el('div',{class:'sg-row'},'after REVIEW, what is owed: ',ocSeg),
+        el('div',{class:'sg-row'},el('button',{class:'sg-s','data-act':'owed-now',onclick:()=>{ const r=owedChange(ocV(),null,'now: before the wallet is asked'); if(!r) return note('Connect a wallet first: the change applies to the connected account.'); note('SIMULATED: owed '+fmtEth(BigInt(r.was))+' → '+fmtEth(BigInt(r.now))+' ETH for '+r.account.slice(0,8)+'…'); }},'CHANGE NOW (before the wallet is asked)'),
+          el('button',{class:'sg-s','data-act':'owed-arm',onclick:()=>{ OWED_ARM={kind:ocV()}; logReq('staging','owed change armed',ocV(),'ARMED: '+OWEDCHG[ocV()]+', when the '+(REAL?'intercept panel':'wallet screen')+' opens for a withdrawal'); note('ARMED: what is owed '+OWEDCHG[ocV()]+', when the '+(REAL?'intercept panel':'wallet screen')+' opens.'); }},REAL?'ARM: WHEN THE INTERCEPT PANEL OPENS':'ARM: WHEN THE WALLET SCREEN OPENS'),
+          el('span',{class:'sg-st','data-live':'owedchg'},''))),
+      ['SET UP: the simulated contract owes every account that amount (and the recipient accepts or rejects ETH).',REAL?'CONNECT your wallet (ASK MY WALLET).':'CONNECT (SIM ALPHA · 1).','Under YOUR SEATS press WITHDRAW TO ANOTHER ADDRESS, type an address, press REVIEW. Try 0x000…0 (zero), a short string, the contract address, your own address: the page refuses each with its message.','With a valid address: REVIEW shows the sheet; for “before the wallet is asked” press ACCOUNT CHANGES or NETWORK GOES TO BASE now, then SEND TO THIS ADDRESS: nothing is sent.','Otherwise SEND TO THIS ADDRESS: the wallet screen (REAL: the intercept panel) shows withdrawTo and the recipient. CONFIRMED (REJECTS ETH turns it into a revert, as the contract would), REVERTED, REJECTED IN WALLET.',
+       'What is owed changes after REVIEW: choose INCREASES, DECREASES or BECOMES ZERO; with the review sheet open press CHANGE NOW (before the wallet is asked), or press ARM before SEND TO THIS ADDRESS (it changes when the '+(REAL?'intercept panel':'wallet screen')+' opens). Then CONFIRMED. The panel’s OWED NOW row shows the amount the contract will pay.',
+       'REPLACED BY A WITHDRAWAL THAT PAID (in the '+(REAL?'intercept panel':'wallet screen')+'): your wallet replaced this transaction with a withdraw() that the simulated contract executes; it pays what is owed.'],
+      'one eth_sendTransaction: withdrawTo(recipient), from the connected account, to the contract, value 0. Confirmed: owed back to 0 and the button goes. Recipient rejects ETH: “Failed on Ethereum (reverted)”, the box stays for another address. Account or network change before the handoff: nothing sent. Owed changes after REVIEW: the recipient is still the one reviewed; the contract pays what is owed when it executes (more, or less, than the review said); BECOMES ZERO: it reverts (“nothing owed”), nothing is paid. Replaced by a withdrawal that paid: the page must not say the original amount is still owed (LOG: “payout”, “owed change”).')); }
   { const [pSeg,pV]=pickSet('payer',[['accepts','THE PAYER’S WALLET ACCEPTS ETH'],['rejects','THE PAYER’S WALLET REJECTS ETH']],SET.payer||'accepts');
     SCN5.push(scn(8,'SEAT EARNINGS WHEN THE PAYER PAYS: ARRIVE, OR WAIT AS OWED',el('div',null,pSeg,el('div',{class:'sg-row'},el('button',{class:'sg-s sg-go','data-setup':'payer',onclick:()=>SG.scenario('payer',pV())},'SET UP'),el('span',{class:'sg-st','data-live':'pay'},''))),
       ['SET UP: every account has seats and 0.0364 ETH of earnings pending (simulated), owes nothing, and has received nothing.',REAL?'CONNECT your wallet (ASK MY WALLET).':'CONNECT (SIM ALPHA · 1).','COLLECT (or WITNESS, or CLAIM) and choose CONFIRMED in the wallet screen.','Read the line next to SET UP and the LOG: “payout”.'],
@@ -586,7 +636,7 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
     draw();
     body.append(sec('SIMULATED WALLETS',el('label',{class:'sg-num'},'set of wallets (reloads the page) ',el('select',{onchange:e=>{ SG.preset(e.target.value); SG.reloadSim(); }},Object.entries(PRESETS).map(([k,t])=>{ const o=el('option',{value:k},t); if(k===CONF.preset) o.selected=true; return o; }))),wl));
   } else {
-    body.append(sec('YOUR WALLET: WHAT MAY REACH IT',el('p',{class:'sg-n'},'Forwarded (default-deny allowlist): '+[...FORWARD].join(', ')+'. eth_requestAccounts and wallet_switchEthereumChain only after you press ASK MY WALLET. Answered here, never forwarded: '+[...LOCAL].join(', ')+'. Stopped and shown, never forwarded: '+POLICY.TX.concat(POLICY.SIGN).join(', ')+'. Anything else: refused.')));
+    body.append(sec('YOUR WALLET: WHAT MAY REACH IT',el('p',{class:'sg-n'},'Forwarded (default-deny allowlist): '+[...FORWARD].join(', ')+'. eth_requestAccounts and wallet_switchEthereumChain only after you press ASK MY WALLET. Answered here, never forwarded: '+[...LOCAL].join(', ')+'. Stopped and shown, never forwarded: '+POLICY.TX.concat(POLICY.SIGN).join(', ')+'. Anything else: refused (4200), never forwarded. WalletConnect (phone): CONNECT opens the real relay connection (EthereumProvider.init; a session this site stored is restored; no request to the phone yet); the pairing waits for ASK MY WALLET; DISCONNECT ends the session; inside the WalletConnect bundle every send or sign request is refused too.')));
   }
   body.append(sec('TRANSACTIONS AND TRACKING',!REAL?el('label',{class:'sg-num'},'simulated wallet answers ',el('select',{onchange:e=>SG.configure({auto:e.target.value})},[['ask','ASK ME EACH TIME']].concat(Object.entries(OUTCOMES).map(([k,t])=>[k,'ALWAYS '+t]),[['rejected','ALWAYS REJECTED IN WALLET'],['error','ALWAYS WALLET ERROR']]).map(([k,t])=>{ const o=el('option',{value:k},t); if(k===SET.auto) o.selected=true; return o; }))):null,
     num('mining delay ms (after the result is chosen)',SET.mine,v=>SG.configure({mine:v})),num('reader latency ms (each JSON-RPC answer)',SET.readerMs,v=>SG.configure({readerMs:v}),50),
@@ -599,7 +649,7 @@ function drawer(){ if(DR){ DR.remove(); DR=null; logTick=()=>{}; return; }
   logTick=()=>{ if(!DR) return; const s1=document.getElementById('sg-s1st'); if(s1) s1.textContent=s1Status();
     DR.querySelectorAll('[data-live]').forEach(n=>{ n.textContent=LIVE[n.dataset.live]?LIVE[n.dataset.live]():''; }); const L=document.getElementById('sg-log'); if(L){ L.innerHTML=''; LOG.slice(-60).reverse().forEach(e=>L.append(el('li',{class:/INTERCEPT|REFUSED/.test(e.route)?'x':/FORWARD/.test(e.route)?'f':''},el('b',null,e.method),' · '+e.who+' · '+e.route+(e.result?' · '+e.result:'')+(e.call?' · CALL '+e.call:'')+(SHOWP.test(e.method)&&e.params&&e.params!=='null'?' · '+e.params:'')))); }
     const T=document.getElementById('sg-txs'); if(T){ T.innerHTML=''; [...CH.txs.values()].filter(r=>!r.replaces).slice(-8).reverse().forEach(r=>T.append(el('div',{class:'sg-tx'},el('code',null,r.hash.slice(0,10)+'… '+r.action+' · '+r.state+(r.by?' → '+r.by.slice(0,10)+'…':'')),
-      r.state==='pending'||r.state==='unknown'?el('div',{class:'sg-row'},(r.state==='unknown'?[['confirmed','LATE RECEIPT: CONFIRMED']]:Object.entries(OUTCOMES).filter(([k])=>k!=='pending')).map(([k,t])=>el('button',{class:'sg-s',onclick:()=>{ txResolve(r.hash,k); }},t.split(' (')[0]))):null))); } };
+      r.state==='pending'||r.state==='unknown'?el('div',{class:'sg-row'},(r.state==='unknown'?[['confirmed','LATE RECEIPT: CONFIRMED']]:Object.entries(OUTCOMES).filter(([k])=>k!=='pending'&&(k!=='replacedpaid'||/^withdraw/.test(r.action)))).map(([k,t])=>el('button',{class:'sg-s',onclick:()=>{ txResolve(r.hash,k); }},t.split(' (')[0]))):null))); } };
   logTick(); }
 const start=()=>{ ui(); pump(); applyClock(); };
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();

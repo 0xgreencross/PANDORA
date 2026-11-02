@@ -16,7 +16,7 @@ const RT_FILE=arg('--runtime')?path.resolve(arg('--runtime')):path.join(HERE,'st
 const SRC=path.resolve(arg('--src')||path.join(ROOT,'index.html')), OUT=path.resolve(arg('--out')||path.join(ROOT,'test-wallet.html')), CHECK=process.argv.includes('--check');
 const die=m=>{ console.error('STAGING BUILD FAIL '+m); process.exit(1); };
 /* the marks that exist only in the staging output (index.html must contain none of them; staging.test.js checks the same list) */
-const MARKS=['__SG','sg-banner','sg-stage','TEST BUILD','sgmode','STORMGLASS STAGING','sg.staging.mode','POLICY.FORWARD','SUBMISSION INTERCEPTED'];
+const MARKS=['__SG','id="sg-','sg-banner','sg-stage','TEST BUILD','sgmode','STORMGLASS STAGING','sg.staging.mode','POLICY.FORWARD','SUBMISSION INTERCEPTED'];
 
 /* rev: the candidate commit (--candidate REF, verified: REF's index.html is byte-identical to the source; --check reuses the rev the
    page already carries), else the last commit that touched the file. touched: that last commit. +mod: the file differs from it. */
