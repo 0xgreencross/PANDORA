@@ -39,6 +39,7 @@ T('st_freeze','the browser stops answering (SIGSTOP)',{wallets:[]},async E=>{
   if(process.env.ST_MARK) fs.writeFileSync(process.env.ST_MARK,JSON.stringify(pids));
   for(const p of pids) process.kill(p,'SIGSTOP');
   await E.page.evaluate(()=>1); return {pass:true,ev:{}}; });
+T('st_cleanhang','passes, then its cleanup never ends (a context whose close never settles)',{wallets:[]},async E=>{ H.LIVE.push({ctx:{close:()=>new Promise(()=>{})},errors:[],outside:[],sockets:[]}); return {pass:true,ev:{}}; });
 if(process.env.ST_DUP) T('st_ok','a second case under the same id',{wallets:[]},ok);
 if(process.env.ST_BADID) T('bad id!','a malformed id',{wallets:[]},ok);
 if(process.env.ST_LOADFAIL) throw new Error('st module load failure');
@@ -115,7 +116,7 @@ sc('release-unlisted-module',async()=>{ const r=await run('rel-extra',{RELEASE:'
   return {ok:r.rc===2&&!!j&&j.status==='manifest-mismatch'&&j.manifest.unlistedModules.join()==='audit5zz_selftest.test.js'&&j.manifest.unlistedIds.length>=10&&j.executed.length===0,ev:{rc:r.rc,unlistedModules:j&&j.manifest.unlistedModules,unlistedIds:j&&j.manifest.unlistedIds.length}}; });
 sc('release-missing-id',async()=>{ /* the manifest lists an id no module registers (a case deleted or renamed) */
   const mf=path.join(TDIR,'manifest.json'), orig=fs.readFileSync(mf,'utf8'); const m=JSON.parse(orig); m.modules['audit2.test.js'].ids.push('q99');
-  m.modules['audit5zz_selftest.test.js']={group:'@audit5',ids:['st_ok','st_ok2','st_fail','st_throw','st_reject','st_noderej','st_crash','st_kill','st_hang','st_freeze','st_last']};
+  m.modules['audit5zz_selftest.test.js']={group:'@audit5',ids:['st_ok','st_ok2','st_fail','st_throw','st_reject','st_noderej','st_crash','st_kill','st_hang','st_freeze','st_cleanhang','st_last']};
   fs.writeFileSync(mf,JSON.stringify(m)); let r; try{ r=await run('rel-id',{RELEASE:'1'}); } finally{ fs.writeFileSync(mf,orig); }
   const j=r.j; return {ok:r.rc===2&&!!j&&j.status==='manifest-mismatch'&&j.manifest.missingIds.join()==='audit2.test.js:q99'&&j.manifest.unlistedModules.length===0,ev:{rc:r.rc,missingIds:j&&j.manifest.missingIds}}; });
 sc('release-with-cases',async()=>{ const r=await run('rel-cases',{RELEASE:'1',CASES:'st_ok'}); const j=r.j;
@@ -140,6 +141,10 @@ sc('target-missing',async()=>{ const r=await run('target',{CASES:'st_ok',TARGET:
   return {ok:r.rc===1&&!!j&&j.status==='harness-failure'&&j.target.source.commit==='unknown'&&j.harnessFailures.some(h=>/cannot load TARGET/.test(h.msg))&&j.executed.length===0,ev:{rc:r.rc,status:j&&j.status,source:j&&j.target.source}}; });
 sc('hung-case',async()=>{ const r=await run('hang',{CASES:'st_hang,st_last',CASE_TIMEOUT_MS:'5000'}); const j=r.j, c=cs(j,'st_hang');
   return {ok:r.rc===1&&!!j&&j.status==='failed'&&j.completed===true&&j.timedOut.join()==='st_hang'&&c.ev.timedOut===true&&j.passed.join()==='st_last',ev:{rc:r.rc,status:j&&j.status,hang:c&&c.ev,ms:c&&c.ms}}; });
+sc('hung-cleanup',async()=>{ /* audit 5b: the cleanup deadline (CLEANUP_TIMEOUT_MS): a case whose contexts never close fails, the run goes on and ends nonzero */
+  const r=await run('cleanhang',{CASES:'st_cleanhang,st_last',CLEANUP_TIMEOUT_MS:'4000'}); const j=r.j, c=cs(j,'st_cleanhang');
+  return {ok:r.rc===1&&!!j&&j.status==='failed'&&j.failed.join()==='st_cleanhang'&&c.ev.cleanupTimedOut===true&&j.cleanupTimedOut.join()==='st_cleanhang'&&j.passed.join()==='st_last'&&j.harnessFailures.some(h=>/cleanup deadline/.test(h.msg))&&r.ms<60000,
+    ev:{rc:r.rc,status:j&&j.status,c:c&&c.ev,ms:r.ms}}; });
 sc('frozen-browser',async()=>{ const mark=path.join(TMP,'freeze.mark'); const r=await run('freeze',{CASES:'st_freeze,st_last',CASE_TIMEOUT_MS:'5000',ST_MARK:mark}); const j=r.j;
   let pids=[]; try{ pids=JSON.parse(fs.readFileSync(mark,'utf8')); }catch(e){} /* gone, or a zombie waiting for init to reap it (state Z): either way no longer running */
   const alive=pids.filter(p=>{ try{ return !/^\d+ \(.*\) Z/.test(fs.readFileSync('/proc/'+p+'/stat','utf8')); }catch(e){ return false; } });

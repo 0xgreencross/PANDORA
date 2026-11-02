@@ -60,19 +60,23 @@ async function row(spoil,guard){ const E=await H.boot({wallets:[one('A')],ethere
     const rc=c.mkRc(Hu,{from:A1,to:U.to,blockNumber:hex(R),status:'0x1'});
     c.tx=h=>h===Hx?c.mkTx(Hx,{from:A1,nonce:'0x7',blockHash:null,blockNumber:null,transactionIndex:null,to:REQ.to,input:REQ.data,value:REQ.value}):h===Hu?U:null;
     c.blockTxs=b=>b===R?[U]:[]; c.rc=h=>h===Hu?rc:null;
-    const bad=spoil({U,rc,R,bh,c}); let fixed=false; const hit={blk:0,rc:0};
+    const bad=spoil({U,rc,R,bh,c}); let fixed=false; const hit={blk:0,rc:0}, seen=[];
     const strip=o=>JSON.parse(JSON.stringify(o));   /* a field set to undefined is left out of the answer, as a reader that does not send it */
-    await serve(E,(h,q)=>{ if(fixed) return undefined;
+    await serve(E,(h,q)=>{ seen.push({m:q.method,p0:q.params&&q.params[0]}); if(fixed) return undefined;
       if(q.method==='eth_getBlockByNumber'&&q.params&&q.params[1]===true&&Number(q.params[0])===R&&(bad.tx||bad.blk)){ hit.blk++;
         const b=Object.assign({number:hex(R),hash:bh,parentHash:c.blockHash(R-1),timestamp:hex(Math.floor(Date.now()/1000)),transactions:[bad.tx||U]},bad.blk||{}); return strip(b); }
       if(q.method==='eth_getTransactionReceipt'&&q.params[0]===Hu&&bad.rc){ hit.rc++; return strip(bad.rc); }
       return undefined; });
     await startTrack(E,Hx,B);
     let mid;
-    if(guard){ await E.until(async()=>(await stateOf(E,Hx)).state!=='pending',6000); mid=await stateOf(E,Hx); return {mid:mid.state,by:mid.by===Hu,hit,final:mid.state}; }
-    await sleep(2200); mid=await stateOf(E,Hx);
-    fixed=true; await E.until(async()=>(await stateOf(E,Hx)).state!=='pending',6000); const fin=await stateOf(E,Hx);
-    return {mid:mid.state,hit,final:fin.state,by:fin.by===Hu}; }
+    if(guard){ await E.until(async()=>(await stateOf(E,Hx)).state!=='pending',30000); mid=await stateOf(E,Hx); return {mid:mid.state,by:mid.by===Hu,hit,final:mid.state}; }
+    /* gate (audit 5b fix; was sleep(2200)): the contradictory answer was served, then the tracker asked Hx's own receipt again (a later round:
+       the round that saw the contradiction is over), or it decided; both bounded 30 s */
+    const trig=await E.until(()=>hit.blk+hit.rc>0,30000); const k=seen.length;
+    const next=trig&&await E.until(async()=>(await stateOf(E,Hx)).state!=='pending'||seen.slice(k).some(x=>x.m==='eth_getTransactionReceipt'&&x.p0===Hx),30000);
+    mid=await stateOf(E,Hx);
+    fixed=true; await E.until(async()=>(await stateOf(E,Hx)).state!=='pending',30000); const fin=await stateOf(E,Hx);
+    return {gate:{trig,next},mid:mid.state,hit,final:fin.state,by:fin.by===Hu}; }
   finally{ await E.close().catch(()=>{}); } }
 
 T('a5r1','a replacement whose receipt or transaction names another block than the block it was read from (or a block with no valid hash) is no proof: pending while it lasts, replaced once consistent; consistent answers (any case, no tx blockHash) replaced at once',{wallets:[one('A')],ethereum:'A'},async E=>{
@@ -80,7 +84,7 @@ T('a5r1','a replacement whose receipt or transaction names another block than th
   for(const [name,mk] of ROWS) rows.push(Object.assign({name},await row(mk,false)));
   for(const [name,mk] of GUARDS) guards.push(Object.assign({name},await row(mk,true)));
   const reached=r=>r.hit.blk+r.hit.rc>0;
-  return {pass:rows.every(r=>reached(r)&&r.mid==='pending'&&r.final==='replaced'&&r.by)&&guards.every(g=>g.final==='replaced'&&g.by)&&reached(guards[1])&&reached(guards[2]),
+  return {pass:rows.every(r=>reached(r)&&r.gate.next&&r.mid==='pending'&&r.final==='replaced'&&r.by)&&guards.every(g=>g.final==='replaced'&&g.by)&&reached(guards[1])&&reached(guards[2]),
     ev:{rows,guards}}; });
 
 /* ════════ a5r2: SWITCH TO ETHEREUM ASKS ONLY THE CONNECTED WALLET ════════
@@ -104,11 +108,12 @@ T('a5r2','SWITCH TO ETHEREUM after DISCONNECT asks no wallet (never window.ether
   const askedA=await E.until(async()=>(await cnt(E,'A','wallet_switchEthereumChain'))===a0+1&&!(await E.page.evaluate(()=>document.getElementById('nx-switch').disabled)),6000);
   const bWhileConnected=(await cnt(E,'B'))-b0;
   /* disconnect, then the same button */
+  await E.page.evaluate(()=>{ window.__a5r2sw=document.getElementById('nx-switch'); });   /* held from before DISCONNECT: since a5p1 the stale wrong-network view (and its button) goes with the wallet; the press below is one arriving as the session ends */
   await E.page.evaluate(()=>disconnect(true));   /* DISCONNECT's own call (as a4s7): the dialog covers the header button */
   const off=await E.until(async()=>/CONNECT/.test(await E.label())&&await E.page.evaluate(()=>!me&&!EP),5000);
   const a1=await cnt(E,'A'), b1=await cnt(E,'B');
-  const still=await E.page.evaluate(()=>{ const b=document.getElementById('nx-switch'); return !!b&&b.offsetParent!==null&&!b.disabled; });
-  if(still) await E.page.evaluate(()=>document.getElementById('nx-switch').click());
+  const still=await E.page.evaluate(()=>{ const b=window.__a5r2sw; return !!b&&!b.disabled; });
+  if(still) await E.page.evaluate(()=>window.__a5r2sw.click());
   await E.until(async()=>(await cnt(E,'B','wallet_switchEthereumChain'))>0,2500); await sleep(800);
   /* what each wallet was ASKED to do (a prompt, an account, a transaction, a switch); silent reads (eth_chainId, eth_call) are not counted,
      nor A's own revocation (DISCONNECT) */

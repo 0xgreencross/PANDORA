@@ -42,7 +42,7 @@ T('a4v1','guard (S5): phone, paired through the ZERION button: the confirmation 
   await H.clickSheet(page,/^ZERION$/); const jumped=await E.until(async()=>jumps.length>0,3000); await page.evaluate(()=>__MW.wc.approve());
   const con=await E.until(async()=>/0x/.test(await E.label()),6000);
   await page.evaluate(()=>__MW.P.WC.set({gate:{eth_sendTransaction:true}})); await fillPressJs(E,'0.01');
-  const g=await E.until(()=>page.evaluate(()=>__MW.P.WC.waiting('eth_sendTransaction')>0),8000); await sleep(300); const v=await sheetView(page);
+  const g=await E.until(()=>page.evaluate(()=>__MW.P.WC.waiting('eth_sendTransaction')>0),8000); await E.until(async()=>/^CONFIRM IN /.test(await H.sheetTitle(page)),3000); const v=await sheetView(page);   /* gate (audit 5b fix; was sleep(300)) */
   await page.evaluate(()=>{ __MW.P.WC.set({gate:{}}); __MW.P.WC.release('eth_sendTransaction'); }); await E.until(async()=>(await E.sends()).length>0,6000);
   return {pass:ready&&jumped&&/^https:\/\/link\.zerion\.io\/wc\?uri=wc%3A/.test(jumps[0])&&con&&g&&v.title==='CONFIRM IN ZERION'&&v.buttons.some(b=>b.t==='OPEN ZERION')&&/ZERION/.test(v.stored||''),ev:{jump:(jumps[0]||'').slice(0,60),paired:con,gateHit:g,sheet:v}}; },IPHONE);
 
@@ -107,7 +107,7 @@ T('a4v7','guard (S4): link after the 20 s sheet: RAINBOW in the restored sheet o
   const page=E.page, jumps=[]; await page.route('https://rnbwapp.com/**',r=>{ jumps.push(r.request().url()); r.fulfill({status:204,body:''}); });
   await page.evaluate(()=>{ const w=__MW.wc.provider, orig=w.enable.bind(w); w.enable=async()=>{ await new Promise(r=>setTimeout(r,21500)); return orig(); }; });
   await page.click('#wallet'); const dead=await E.until(async()=>/DID NOT ANSWER/.test(await H.sheetTitle(page)),23000);
-  const uri=await E.until(()=>page.evaluate(()=>!!__MW.wc.approve),5000); await sleep(200);
+  const uri=await E.until(()=>page.evaluate(()=>!!__MW.wc.approve),5000); await E.until(()=>page.evaluate(()=>[...document.querySelectorAll('#wsBtns button')].some(b=>/^(METAMASK|RAINBOW|ZERION)$/.test(b.textContent)&&!b.disabled)),3000);   /* gate (audit 5b fix; was sleep(200)): the app buttons are back and awake */
   const link=await page.evaluate(()=>__MW.wc.uris); await H.clickSheet(page,/^RAINBOW$/); const jumped=await E.until(async()=>jumps.length>0,3000);
   await page.evaluate(()=>__MW.wc.approve()); const con=await E.until(async()=>/0x/.test(await E.label()),6000); const stored=await page.evaluate(()=>localStorage.getItem('SG_WC_APP'));
   return {pass:dead&&uri&&jumped&&/^https:\/\/rnbwapp\.com\/wc\?uri=wc%3A/.test(jumps[0])&&con&&/RAINBOW/.test(stored||''),ev:{deadSheet:dead,linkArrived:uri,links:link,jump:(jumps[0]||'').slice(0,60),paired:con,stored}}; },IPHONE);
@@ -115,7 +115,7 @@ T('a4v7','guard (S4): link after the 20 s sheet: RAINBOW in the restored sheet o
 /* ═══ a4v8, a4v9 (S5, the other ways in): a pairing that completes with no app button tapped (the link reached the wallet some other
    way) forgets the older app; an app tapped first and then abandoned for COPY CONNECTION LINK or OTHER WALLET is not kept either. */
 async function wcPayView(E){ const page=E.page; await page.evaluate(()=>__MW.P.WC.set({gate:{eth_sendTransaction:true}})); await fillPressJs(E,'0.01');
-  const g=await E.until(()=>page.evaluate(()=>__MW.P.WC.waiting('eth_sendTransaction')>0),8000); await sleep(300); const v=await sheetView(page);
+  const g=await E.until(()=>page.evaluate(()=>__MW.P.WC.waiting('eth_sendTransaction')>0),8000); await E.until(async()=>/^CONFIRM IN /.test(await H.sheetTitle(page)),3000); const v=await sheetView(page);   /* gate (audit 5b fix; was sleep(300)) */
   await page.evaluate(()=>{ __MW.P.WC.set({gate:{}}); __MW.P.WC.release('eth_sendTransaction'); }); await E.until(async()=>(await E.sends()).length>0,6000); return Object.assign(v,{gateHit:g}); }
 T('a4v8','phone, an older app (ZERION) stored, the pairing completes with no app button tapped: the confirmation sheet neither names nor opens ZERION',{wallets:[],wc:{accounts:[A1,A2],chainId:'0x1'}},async E=>{
   const page=E.page; await page.evaluate(()=>localStorage.setItem('SG_WC_APP',JSON.stringify({name:'ZERION',href:'https://link.zerion.io'})));

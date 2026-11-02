@@ -2,7 +2,7 @@
 # Serves the repo root on 127.0.0.1:$PORT (ThreadingTCPServer, law 16) and runs the wallet tests against $TARGET.
 # usage: PORT=8932 TARGET=/path/to/index.html LABEL=name [CASES=a1,b | RELEASE=1] [OUT=dir] bash tools/stormglass/wallet-tests/run.sh
 # Long: start it in the background, e.g. (setsid nohup timeout 900 bash run.sh > /tmp/x.log 2>&1 &) and poll the log.
-# The status is node's (0 only for a complete, passing, saved run; see wallet.test.js). SIGTERM/SIGINT are passed to node, which
+# The status is node's (0 only for a complete, passing, saved run; see runner.js, shared by wallet.test.js and ../staging/staging.test.js). SIGTERM/SIGINT are passed to node, which
 # writes an "interrupted" results file and exits 143/130; the HTTP server is always stopped. The last line is always "XDONE rc=N"
 # (a log without it means this script itself was killed: treat it as a failure).
 DIR="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$DIR/../../.." && pwd)"; PORT=${PORT:-8932}

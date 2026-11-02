@@ -68,7 +68,7 @@ T('a4s2','account change: while the new account\'s seats are being read, the pan
   const during=await E.page.evaluate(()=>({seats:document.getElementById('nx-mySeats').textContent,mineShown:!document.getElementById('nx-mine').hidden,note:document.getElementById('seatsNote').textContent.slice(0,90),claim:!document.getElementById('claim').disabled}));
   const claimPressed=await click(E,'claim'); await sleep(1500);
   const asked=(await reqs(E,'A','eth_sendTransaction')).map(x=>({from:x.params[0].from,data:x.params[0].data.slice(0,10)}));
-  await E.page.evaluate(()=>{ __SH.q.forEach(f=>f()); }); await sleep(800);
+  await E.page.evaluate(()=>{ __SH.q.forEach(f=>f()); }); await E.until(()=>E.page.evaluate(()=>document.getElementById('nx-mySeats').textContent==='0.0000'&&document.getElementById('claim').disabled),10000);   /* gate (audit 5b fix; was sleep(800)): the released reads answered */
   const after=await E.page.evaluate(()=>({seats:document.getElementById('nx-mySeats').textContent,claim:!document.getElementById('claim').disabled}));
   const oldShown=(during.mineShown&&during.seats==='2.0000')||/0\.0364/.test(during.note);
   return {pass:shown&&held&&/00bb/i.test(lab)&&!oldShown&&!during.claim&&asked.length===0&&after.seats==='0.0000'&&!after.claim,
@@ -121,7 +121,7 @@ T('a4s5','phone, WalletConnect link arrives after the 20 s "DID NOT ANSWER" shee
   await page.evaluate(()=>{ const w=__MW.wc.provider, orig=w.enable.bind(w); w.enable=async()=>{ await new Promise(r=>setTimeout(r,21500)); return orig(); }; });
   await page.click('#wallet'); const s1=await E.until(()=>H.sheetOpen(page),4000);
   const dead=await E.until(async()=>/DID NOT ANSWER/.test(await H.sheetTitle(page)),23000);
-  const uri=await E.until(()=>page.evaluate(()=>!!__MW.wc.approve),5000); await sleep(300);
+  const uri=await E.until(()=>page.evaluate(()=>!!__MW.wc.approve),5000); await E.until(()=>page.evaluate(()=>[...document.querySelectorAll('#wsBtns button')].some(b=>/^(METAMASK|RAINBOW|ZERION)$/.test(b.textContent)&&!b.disabled)),3000);   /* gate (audit 5b fix; was sleep(300)) */
   const v=await page.evaluate(()=>({title:document.getElementById('wsk').textContent,text:document.getElementById('wsp').textContent,buttons:[...document.querySelectorAll('#wsBtns button')].map(b=>({t:b.textContent,on:!b.disabled}))}));
   const apps=v.buttons.filter(b=>/^(METAMASK|RAINBOW|ZERION)$/.test(b.t)&&b.on).length;
   const coherent=(/DID NOT ANSWER/.test(v.title)&&/blocking it/.test(v.text))||(apps===3&&/Tap the app/.test(v.text));
@@ -139,7 +139,7 @@ T('a4s6','phone, WalletConnect paired through COPY CONNECTION LINK while an olde
   const con=await E.until(async()=>/0x/.test(await E.label()),6000);
   await page.evaluate(()=>__MW.P.WC.set({gate:{eth_sendTransaction:true}}));
   await openWit(page); await page.fill('#wAmt','0.01'); await page.click('#bWit');
-  const g=await E.until(()=>page.evaluate(()=>__MW.P.WC.waiting('eth_sendTransaction')>0),8000); await sleep(300);
+  const g=await E.until(()=>page.evaluate(()=>__MW.P.WC.waiting('eth_sendTransaction')>0),8000); await E.until(async()=>/^CONFIRM IN /.test(await H.sheetTitle(page)),3000);   /* gate (audit 5b fix; was sleep(300)) */
   const v=await page.evaluate(()=>({title:document.getElementById('wsk').textContent,buttons:[...document.querySelectorAll('#wsBtns button')].map(b=>b.textContent),stored:localStorage.getItem('SG_WC_APP')}));
   await page.evaluate(()=>{ __MW.P.WC.set({gate:{}}); __MW.P.WC.release('eth_sendTransaction'); }); await E.until(async()=>(await E.sends()).length>0,6000);
   return {pass:ready&&con&&g&&!/ZERION/.test(v.title)&&!v.buttons.some(b=>/ZERION/.test(b)),ev:{paired:con,gateHit:g,sheet:v}}; },IPHONE);

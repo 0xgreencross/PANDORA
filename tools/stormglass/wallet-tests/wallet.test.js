@@ -3,10 +3,13 @@
    env: PORT (the server run.sh starts), TARGET (the index.html to test, default the repo's), LABEL (name in the results),
         CASES (comma list of case ids, default all), OUT (results dir, default /tmp/claude-0/pr1test). */
 const fs=require('fs'), path=require('path');
+/* audit 5b: the runner (runner.js, shared with the staging suite) starts first: when this file is the main script it moves an earlier
+   results file aside, writes this run's first snapshot and installs the signal / error handlers before anything below can fail */
+const R=require('./runner.js'); R.begin(module,{suite:'wallet',label:'worktree'});
 /* audit 5: under the runner a dependency or file that cannot be loaded is recorded (EARLY) and ends the run through the normal path
    (the earlier results file moved aside, a results file saying harness-failure, exit 1), never as a bare Node crash */
 let EARLY=null;
-const early=(what,f)=>{ try{ return f(); }catch(e){ if(require.main!==module) throw e; EARLY=EARLY||(what+': '+String(e&&e.message||e).split('\n')[0]); return null; } };
+const early=(what,f)=>{ try{ return f(); }catch(e){ if(!R.active()) throw e; EARLY=EARLY||(what+': '+String(e&&e.message||e).split('\n')[0]); return null; } };
 const {chromium}=early('playwright',()=>require('playwright'))||{};
 const {installMock}=early('mockwallet.js',()=>require('./mockwallet.js'))||{};
 const {makeChain,HOST}=early('fakechain.js (needs ethers)',()=>require('./fakechain.js'))||{};
@@ -106,7 +109,7 @@ const CASES=[];
 const REGERR=[];
 const T=(id,name,cfg,run,o)=>{ const file=T.loading||'wallet.test.js';
   const bad=typeof id!=='string'||!/^[A-Za-z0-9_-]+$/.test(id)?'bad case id '+JSON.stringify(id):CASES.some(c=>c.id===id)?'duplicate case id '+id+' ('+JSON.stringify(name).slice(0,80)+')':null;
-  if(bad){ if(require.main!==module){ console.log('HARNESS FAIL '+bad); process.exit(2); } REGERR.push(bad+' in '+file); return; }
+  if(bad){ if(require.main!==module||!R.active()){ console.log('HARNESS FAIL '+bad); process.exit(2); } REGERR.push(bad+' in '+file); return; }
   CASES.push({id,name,cfg,run,o,file}); };
 const one=(id,ch='0x1',x={})=>Object.assign({id,name:'Wallet '+id,rdns:'test.'+id.toLowerCase(),chainId:ch,accounts:[id==='B'?B1:A1,A2]},x);
 
@@ -444,189 +447,24 @@ T('n6','parseAmount table (in the page): wei exact, 18 decimals ok, 19 rejected,
   const bad=rows.filter(r=>r.got!==r.want);
   return {pass:bad.length===0,ev:{n:rows.length,bad}}; });
 
-module.exports={ALLHITS,LIVE,boot,connect,sheetOpen,sheetButtons,setBrowser:b=>{ browser=b; },sleep,one:(...a)=>one(...a),witGeo,witPass,witClick,witSheet,witOk,closeWit,ETH,
+module.exports={ALLHITS,LIVE,boot,connect,sheetOpen,sheetButtons,setBrowser:b=>{ browser=b; },bumpEpoch:()=>{ EPOCH++; },earlyError:()=>EARLY,sleep,one:(...a)=>one(...a),witGeo,witPass,witClick,witSheet,witOk,closeWit,ETH,
   T,CASES,clickSheet,sheetTitle,cancelSheet,disconnectUI,witness,buy,popText,openWit,typeAndPress,sendName,DONE,A1,A2,B1,FOUNDERS,CANDLE};
-/* THE RUN (audit 5). Exit status: 0 only when every selected case ran, passed (pass===true) and every results snapshot was saved.
-   1: a case failed (assertion, exception, page error, unhandled rejection, renderer crash, case watchdog), the browser died or could not
-      launch or stopped answering, the run stopped before it finished (event loop drained, whole-run watchdog), or the results could not
-      be written at some point of the run (sticky: a later good write never clears it).
-   2: the selection or the registration is wrong (unknown id, zero cases, duplicate or malformed id, a case module that does not load)
-      or, with RELEASE=1, the registered cases differ from manifest.json (a module or a case missing, or one not listed).
-   130 / 143: interrupted by SIGINT / SIGTERM (the results say "interrupted").
-   Results: $OUT/results-$LABEL.json (schema stormglass-wallet-results/2, see README), written atomically (temp file in the same folder,
-   fsync, rename) at the start, after every case and at the end. A file of that name left by an earlier run is first renamed to
-   results-$LABEL.prev-<its run id or mtime>.json, so an older successful run can never stand in for this one. */
-const crypto=require('crypto'), cp=require('child_process');
-const sha256=b=>crypto.createHash('sha256').update(b).digest('hex');
-let RUNNING='(none: before the first case)';
-let SEL=[], RES=[];
-const HF=[];                       /* harness failures of this run: sticky, any entry makes the exit status nonzero */
-let PERSIST_FAILED=false, FINISHED=false, BROWSER_PIDS=[];
-const UNHANDLED=[];   /* Node-side unhandled rejections: each fails the case running then and the run */
-const CASE_MS=+process.env.CASE_TIMEOUT_MS||120000, RUN_MS=+process.env.RUN_TIMEOUT_MS||2700000;
-const RFILE=path.join(OUT,'results-'+LABEL+'.json');
-const RUN={schema:'stormglass-wallet-results/2',
-  runId:new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z')+'-'+process.pid+'-'+crypto.randomBytes(3).toString('hex'),
-  label:LABEL, mode:null, status:'starting', completed:false, exit:null, startedAt:new Date().toISOString(), finishedAt:null, interruptedBy:null,
-  target:null, harness:null, deps:null, env:null, manifest:null, registered:null, groups:null,
-  selected:[], executed:[], passed:[], failed:[], timedOut:[], unexecuted:[], running:null, harnessFailures:HF,
-  persistence:{ok:true,snapshots:0,failures:[],file:RFILE,previous:null}, cases:RES};
-function harnessFail(msg){ msg=String(msg).slice(0,600); HF.push({at:new Date().toISOString(),during:RUNNING,msg}); console.log('HARNESS FAIL '+msg); }
-function refresh(){ const ex=RES.map(r=>r.id);
-  Object.assign(RUN,{selected:SEL.map(c=>c.id),executed:ex,passed:RES.filter(r=>r.pass).map(r=>r.id),failed:RES.filter(r=>!r.pass).map(r=>r.id),
-    timedOut:RES.filter(r=>r.ev&&r.ev.timedOut).map(r=>r.id),unexecuted:SEL.filter(c=>!ex.includes(c.id)).map(c=>c.id)}); }
-/* one snapshot: temp file beside the results, written, fsynced, renamed over. A failure is a harness failure for the whole run. */
-function writeResults(){ refresh(); RUN.persistence.snapshots++; const n=RUN.persistence.snapshots;
-  const tmp=path.join(OUT,'.results-'+LABEL+'.json.'+RUN.runId+'.tmp');
-  try{ fs.mkdirSync(OUT,{recursive:true}); const fd=fs.openSync(tmp,'w');
-    try{ fs.writeSync(fd,JSON.stringify(RUN,null,1)); fs.fsyncSync(fd); } finally{ fs.closeSync(fd); }
-    fs.renameSync(tmp,RFILE); return true; }
-  catch(e){ PERSIST_FAILED=true; RUN.persistence.ok=false; RUN.persistence.failures.push({snapshot:n,at:new Date().toISOString(),msg:String(e&&e.message||e).slice(0,300)});
-    harnessFail('cannot write results (snapshot '+n+'): '+(e&&e.message||e)); try{ fs.unlinkSync(tmp); }catch(_){} return false; } }
-/* an earlier run's file under this name is kept, renamed by its run id (or mtime for the old array format) */
-function setAside(){ let st; try{ st=fs.statSync(RFILE); }catch(e){ return true; }
-  let id=null; try{ const j=JSON.parse(fs.readFileSync(RFILE,'utf8')); if(j&&!Array.isArray(j)&&typeof j.runId==='string'&&/^[\w.-]+$/.test(j.runId)) id=j.runId; }catch(e){}
-  const dest=path.join(OUT,'results-'+LABEL+'.prev-'+(id||('legacy-'+st.mtime.toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z')))+'.json');
-  try{ fs.renameSync(RFILE,dest); RUN.persistence.previous=dest; console.log('RESULTS an earlier file was moved aside: '+dest); return true; }
-  catch(e){ PERSIST_FAILED=true; RUN.persistence.ok=false; harnessFail('cannot move the earlier results file aside: '+e.message); return false; } }
-function exitFor(status){ if(status==='interrupted') return null;
-  refresh(); const ok=RUN.unexecuted.length===0&&RUN.failed.length===0&&RES.length===SEL.length&&SEL.length>0&&!HF.length&&!PERSIST_FAILED; return ok?0:1; }
-/* the browser's own processes (Playwright starts Chromium as a child of this process, in its own process group) */
-function childPids(){ try{ return cp.execFileSync('pgrep',['-P',String(process.pid)],{encoding:'utf8',timeout:5000}).split(/\s+/).filter(Boolean).map(Number); }catch(e){ return []; } }
-function killBrowser(){ for(const pid of BROWSER_PIDS){ try{ process.kill(-pid,'SIGKILL'); }catch(e){} try{ process.kill(pid,'SIGKILL'); }catch(e){} } }
-/* every way out goes through here once: final status, final snapshot, summary lines, exit */
-function finish(status,code,why){ if(FINISHED) return; FINISHED=true;
-  if(why) RUN.interruptedBy=why; if(status==='interrupted'||status==='incomplete') killBrowser();
-  refresh(); RUN.running=status==='interrupted'||status==='incomplete'?RUNNING:null;
-  if(code==null){ code=exitFor(status); if(status==='done') status=code===0?'passed':RUN.unexecuted.length?'incomplete':'failed'; }
-  RUN.status=status; RUN.completed=RUN.unexecuted.length===0&&SEL.length>0&&status!=='interrupted'&&status!=='incomplete'&&!/error|mismatch|harness/.test(status);
-  RUN.exit=status==='interrupted'?'interrupted':code; RUN.exitCode=code; RUN.finishedAt=new Date().toISOString();
-  if(!writeResults()&&code===0) code=1;   /* the final snapshot failed: what is on disk is an earlier one (status running), and the run is not a success */
-  console.log('RAN '+RES.length+': '+RES.map(r=>r.id).join(',')+(RUN.unexecuted.length?' · NOT RUN: '+RUN.unexecuted.join(','):''));
-  console.log(LABEL+': '+RUN.passed.length+'/'+SEL.length+' passed'+(RUN.failed.length?' · FAILED: '+RUN.failed.join(','):'')+(RUN.unexecuted.length?' · NOT RUN: '+RUN.unexecuted.length:'')+(HF.length?' · HARNESS FAILURES: '+HF.length:''));
-  console.log('RESULTS '+RFILE+' run '+RUN.runId+' mode '+RUN.mode+' status '+status+' completed '+RUN.completed+' exit '+(status==='interrupted'?'interrupted ('+code+')':code)+(PERSIST_FAILED?' (persistence FAILED)':''));
-  process.exit(code); }
-/* what produced this run: the target's commit (the repo holding TARGET), the harness revision, the dependency versions */
-function git(dir,...a){ return cp.execFileSync('git',['-C',dir,...a],{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:10000}).trim(); }
-function targetSource(file){ let real; try{ real=fs.realpathSync(file); }catch(e){ return {commit:'unknown',reason:'TARGET not found: '+e.message}; }
-  const dir=path.dirname(real); let top,head;
-  try{ top=fs.realpathSync(git(dir,'rev-parse','--show-toplevel')); head=git(dir,'rev-parse','HEAD'); }catch(e){ return {commit:'unknown',reason:'TARGET is not inside a git work tree ('+String(e.stderr||e.message).trim().slice(0,160)+')'}; }
-  const rel=path.relative(top,real); let headBlob=null; try{ headBlob=git(top,'rev-parse','HEAD:'+rel); }catch(e){}
-  let blob=null; try{ blob=git(top,'hash-object','--',rel); }catch(e){}
-  const matches=!!headBlob&&blob===headBlob;
-  return {commit:head,repo:top,path:rel,blob,headBlob,matchesHead:matches,
-    reason:matches?null:!headBlob?'TARGET is not committed in this repo (untracked copy): the commit names the repo holding it, not the source of these bytes':'TARGET differs from the file in HEAD (uncommitted change)'}; }
-function harnessRev(files){ const o={dir:path.relative(ROOT,__dirname)||'.',commit:'unknown',tree:'unknown',dirty:null,reason:null};
-  try{ o.commit=git(__dirname,'rev-parse','HEAD'); o.tree=git(__dirname,'rev-parse','HEAD:./'); o.dirty=git(__dirname,'status','--porcelain','--untracked-files=all','--','.').split('\n').filter(Boolean); }
-  catch(e){ o.reason='not a git work tree ('+String(e.stderr||e.message).trim().slice(0,160)+')'; }
-  /* the bytes that actually ran: every file of this folder Node loaded, by name and sha256 */
-  o.files={}; for(const f of files.sort()) try{ o.files[path.relative(__dirname,f)]=sha256(fs.readFileSync(f)); }catch(e){ o.files[path.relative(__dirname,f)]='unreadable'; }
-  o.contentSha256=sha256(JSON.stringify(o.files)); return o; }
-/* the version of the copy that is actually loaded: playwright as Node resolves it from here, ethers from the UMD file the page is served */
-function pkgAt(dir){ try{ const j=JSON.parse(fs.readFileSync(path.join(dir,'package.json'),'utf8')); return {version:j.version,path:dir}; }catch(e){ return {version:'unknown',path:dir,reason:e.message}; } }
-
-/* the committed release manifest: every case module and every id it must register */
+/* THE RUN (audit 5, shared since audit 5b): runner.js does the execution and persistence for this suite and the staging suite (exit
+   statuses, results schema, watchdogs, manifest checks: see runner.js and README). This file gives it the cases, the manifest and the target. */
 const MANIFEST=path.join(__dirname,'manifest.json');
 const MODRE=/^(wallet|harness|audit[\w-]*)\.test\.js$/;
 function groupOf(f){ return f==='wallet.test.js'?'@orig':f==='audit2.test.js'?'@audit2':f==='audit3.test.js'?'@audit3':f==='audit3b.test.js'?'@audit3b':f==='harness.test.js'?'@harness':/^audit4/.test(f)?'@audit4':/^audit5/.test(f)?'@audit5':null; }
-function currentManifest(){ const m={}; for(const c of CASES){ const e=m[c.file]=m[c.file]||{group:groupOf(c.file),ids:[]}; e.ids.push(c.id); } return m; }
-function manifestDiff(){ let want; try{ want=JSON.parse(fs.readFileSync(MANIFEST,'utf8')).modules; if(!want||typeof want!=='object') throw new Error('no "modules" object'); }
-  catch(e){ return {file:MANIFEST,error:'cannot read the manifest: '+e.message}; }
-  const have=currentManifest(), present=fs.readdirSync(__dirname).filter(f=>MODRE.test(f)).sort(), d={file:MANIFEST,sha256:sha256(fs.readFileSync(MANIFEST)),
-    missingModules:Object.keys(want).filter(f=>!present.includes(f)), unlistedModules:present.filter(f=>!(f in want)),
-    modulesWithoutCases:present.filter(f=>(f in want)&&!have[f]&&want[f].ids.length), missingIds:[], unlistedIds:[], wrongGroup:[]};
-  const all=new Set(Object.values(want).flatMap(e=>e.ids));
-  for(const [f,e] of Object.entries(want)){ const h=new Set((have[f]||{ids:[]}).ids); for(const id of e.ids) if(!h.has(id)) d.missingIds.push(f+':'+id);
-    if(have[f]&&have[f].group!==e.group) d.wrongGroup.push(f+': '+have[f].group+' (manifest '+e.group+')'); }
-  for(const c of CASES) if(!(c.file in want)||!want[c.file].ids.includes(c.id)) d.unlistedIds.push(c.file+':'+c.id+(all.has(c.id)?' (listed under another module)':''));
-  d.expected=all.size; d.registered=CASES.length;
-  d.ok=!d.missingModules.length&&!d.unlistedModules.length&&!d.modulesWithoutCases.length&&!d.missingIds.length&&!d.unlistedIds.length&&!d.wrongGroup.length&&d.expected===d.registered;
-  return d; }
-
-if(require.main===module){
-  /* Node exits 0 when the event loop drains with the run still awaiting something (seen when the browser process dies: Playwright's
-     promise never settles). The run always ends through finish(); reaching beforeExit means it never finished. */
-  process.on('beforeExit',()=>{ harnessFail('the run stopped before it finished, in case '+RUNNING+' (a promise never settled: browser gone?)'); finish('incomplete',1,'event loop drained'); });
-  process.on('SIGINT',()=>{ console.log('HARNESS FAIL interrupted (SIGINT) in case '+RUNNING); finish('interrupted',130,'SIGINT'); });
-  process.on('SIGTERM',()=>{ console.log('HARNESS FAIL interrupted (SIGTERM) in case '+RUNNING); finish('interrupted',143,'SIGTERM'); });
-  /* case or runner code that lets a promise reject unobserved fails the case running then, and the run */
-  process.on('unhandledRejection',e=>{ const m=String(e&&e.stack||e).slice(0,300); UNHANDLED.push({during:RUNNING,msg:m}); harnessFail('unhandled rejection in Node during '+RUNNING+': '+m); });
-  process.on('uncaughtException',e=>{ harnessFail('uncaught exception in Node during '+RUNNING+': '+String(e&&e.stack||e).slice(0,300)); finish('incomplete',1,'uncaught exception'); });
-  setTimeout(()=>{ harnessFail('whole-run watchdog: the run took more than '+RUN_MS+' ms (RUN_TIMEOUT_MS)'); finish('interrupted',1,'run watchdog '+RUN_MS+' ms'); },RUN_MS).unref();
-}
-if(require.main===module) (async()=>{
-  const RELEASE=process.env.RELEASE==='1', CASESENV=process.env.CASES;
-  RUN.mode=RELEASE?'release':(CASESENV!=null&&CASESENV.trim()!=='')?'subset':'all (not release-verified)';
-  RUN.env={CASES:CASESENV==null?null:CASESENV,RELEASE:process.env.RELEASE||null,CASE_TIMEOUT_MS:CASE_MS,RUN_TIMEOUT_MS:RUN_MS,NODE_OPTIONS:process.env.NODE_OPTIONS||null,OUT,PORT,cwd:process.cwd()};
-  RUN.target={path:TARGET,bytes:Buffer.byteLength(PAGE),sha256:sha256(PAGE),source:targetSource(TARGET)};
+if(require.main===module) R.run({CASES,REGERR,early:()=>EARLY,
+  target:()=>{ if(EARLY&&/^TARGET /.test(EARLY)) return {path:TARGET,bytes:0,sha256:null,source:R.fileSource(TARGET)}; return {path:TARGET,bytes:Buffer.byteLength(PAGE),sha256:R.sha256(PAGE),source:R.fileSource(TARGET)}; },
   /* the case modules: each loaded under its own name (c.file), its group from the name */
-  const load=f=>{ T.loading=f; try{ require('./'+f); }catch(e){ REGERR.push('case module '+f+' did not load: '+String(e&&e.message||e).slice(0,200)); } T.loading=null; };
-  load('audit2.test.js');
-  if(fs.existsSync(path.join(__dirname,'audit3.test.js'))) load('audit3.test.js');
-  if(fs.existsSync(path.join(__dirname,'audit3b.test.js'))) load('audit3b.test.js');
-  load('harness.test.js');
-  /* audit 4 / audit 5: every audit4*.test.js, then every audit5*.test.js file in this folder (sorted) */
-  for(const f of fs.readdirSync(__dirname).filter(f=>/^audit4.*\.test\.js$/.test(f)).sort()) load(f);
-  for(const f of fs.readdirSync(__dirname).filter(f=>/^audit5.*\.test\.js$/.test(f)).sort()) load(f);
-  const G={}; for(const c of CASES){ const g=groupOf(c.file)||'@other'; (G[g]=G[g]||[]).push(c.id); }
-  RUN.registered=CASES.length; RUN.groups=Object.fromEntries(Object.entries(G).map(([g,ids])=>[g,ids.length]));
-  RUN.harness=harnessRev(Object.keys(require.cache).filter(f=>path.dirname(f)===__dirname));
-  RUN.deps={node:process.version,playwright:early('playwright',()=>pkgAt(path.dirname(require.resolve('playwright'))))||'unknown',ethers:UMD?pkgAt(path.join(path.dirname(UMD),'..')):'unknown',ethersUmd:{path:UMD||null,sha256:ETHERS?sha256(ETHERS):null},chromium:null,chromiumPath:process.env.CHROMIUM||'/opt/pw-browsers/chromium'};
-  if(process.argv.includes('--print-manifest')){ const m=currentManifest(); console.log(JSON.stringify({schema:1,note:'Every case module and id a RELEASE=1 run must register. Adding a module or a case means adding it here in the same commit (node wallet.test.js --print-manifest prints the current registration).',modules:m},null,1)); process.exit(0); }
-  /* preflight: the earlier file moved aside and a first snapshot ("starting") written, or nothing runs */
-  if(!setAside()||!writeResults()){ console.log('HARNESS FAIL the results cannot be saved in '+OUT+': no case is run'); return finish('harness-failure',1); }
-  if(EARLY){ harnessFail('cannot load '+EARLY); return finish('harness-failure',1); }
-  if(REGERR.length){ for(const m of REGERR) harnessFail(m); return finish('registration-error',2); }
-  RUN.manifest=manifestDiff();
-  if(RELEASE){
-    if(CASESENV!=null&&CASESENV.trim()!==''){ harnessFail('RELEASE=1 runs the whole manifest: CASES must not be set (got '+JSON.stringify(CASESENV)+')'); return finish('selection-error',2); }
-    if(/(^|\s)(-r|--require|--import|--loader|--experimental-loader)\b/.test(process.env.NODE_OPTIONS||'')){ harnessFail('RELEASE=1 refuses preloaded code in NODE_OPTIONS ('+process.env.NODE_OPTIONS+')'); return finish('selection-error',2); }
-    if(!RUN.manifest.ok){ const d=RUN.manifest; harnessFail('the registered cases do not match manifest.json: '+JSON.stringify({error:d.error,missingModules:d.missingModules,unlistedModules:d.unlistedModules,modulesWithoutCases:d.modulesWithoutCases,missingIds:d.missingIds,unlistedIds:d.unlistedIds,wrongGroup:d.wrongGroup,expected:d.expected,registered:d.registered}).slice(0,500)); return finish('manifest-mismatch',2); } }
-  else if(!RUN.manifest.ok) console.log('WARN not release-verified: the registered cases differ from manifest.json (RELEASE=1 would refuse this run): '+JSON.stringify(RUN.manifest).slice(0,300));
-  const want=(CASESENV||'').split(',').map(x=>x.trim()).filter(Boolean).flatMap(x=>/^@/.test(x)?(G[x]||[]):[x]);
-  if(CASESENV!=null&&CASESENV.trim()!==''&&!want.length){ harnessFail('CASES='+JSON.stringify(CASESENV)+' selects no case'); return finish('selection-error',2); }
-  const known=new Set(CASES.map(c=>c.id)), unknown=want.filter(x=>!known.has(x));
-  if(unknown.length){ harnessFail('unknown case ids in CASES: '+unknown.join(',')); return finish('selection-error',2); }
-  const sel=SEL=CASES.filter(c=>!want.length||want.includes(c.id));
-  if(!sel.length){ harnessFail('no cases selected'); return finish('selection-error',2); }
-  console.log('SELECTED '+sel.length+' of '+CASES.length+': '+sel.map(c=>c.id).join(',')+' · target '+TARGET+' sha256 '+RUN.target.sha256.slice(0,16));
-  console.log('RUN '+RUN.runId+' mode '+RUN.mode+' · target commit '+RUN.target.source.commit+(RUN.target.source.reason?' ('+RUN.target.source.reason+')':'')+' · harness '+RUN.harness.commit.slice(0,12)+(RUN.harness.dirty&&RUN.harness.dirty.length?' +'+RUN.harness.dirty.length+' uncommitted':'')+' · results '+RFILE);
-  RUN.status='running'; writeResults();
-  /* --webrtc-ip-handling-policy=disable_non_proxied_udp (G2, audit 4): WebRTC gathers no UDP candidates and sends no STUN packet (Playwright's
-     routing never sees UDP; a4h1 proves the block with a local STUN listener) */
-  const pre=new Set(childPids());
-  try{ browser=await Promise.race([chromium.launch({args:['--no-sandbox','--disable-background-networking','--disable-component-update','--no-first-run','--webrtc-ip-handling-policy=disable_non_proxied_udp'],executablePath:process.env.CHROMIUM||'/opt/pw-browsers/chromium'}),
-      sleep(60000).then(()=>{ throw new Error('browser launch took more than 60 s'); })]); }
-  catch(e){ BROWSER_PIDS=childPids().filter(p=>!pre.has(p)); harnessFail('the browser did not launch: '+String(e&&e.message||e).split('\n')[0]); return finish('harness-failure',1); }
-  BROWSER_PIDS=childPids().filter(p=>!pre.has(p)); RUN.deps.chromium=browser.version();
-  let browserGone=false; const goneP=new Promise(res=>browser.on('disconnected',()=>{ browserGone=true; res(); }));
-  /* a case races the browser's disconnect: when the browser dies mid-case the case fails here and the rest are reported unexecuted */
-  const goneErr=goneP.then(()=>{ throw new Error('browser disconnected during the case'); }); goneErr.catch(()=>{});   /* one handled rejection, raced by every case */
-  const healthy=()=>Promise.race([(async()=>{ const x=await browser.newContext(); await x.close(); return true; })().catch(()=>false),sleep(15000).then(()=>false)]);
-  for(const c of sel){ let r, timedOut=false, stuck=false; const t0=Date.now(); LIVE.length=0; let wallet=null; RUNNING=c.id; const u0=UNHANDLED.length;
-    /* the case watchdog: no result after CASE_TIMEOUT_MS fails the case; its contexts are closed and the case's epoch ends (a late boot() from it is refused) */
-    let wd; const watchdog=new Promise((_,rej)=>{ wd=setTimeout(()=>rej(Object.assign(new Error('case watchdog: no result after '+CASE_MS+' ms'),{watchdog:true})),CASE_MS); });
-    try{ r=await Promise.race([(async()=>{ const E=await boot(c.cfg,c.o||{}); return await c.run(E); })(),goneErr,watchdog]); if(!r||typeof r!=='object') r={pass:false,ev:{bad:'case returned '+r}}; r.ev=r.ev||{}; }
-    catch(e){ timedOut=!!(e&&e.watchdog); r={pass:false,ev:{exception:String(e&&e.message||e).slice(0,300)}}; if(timedOut){ r.ev.timedOut=true; EPOCH++; } }
-    finally{ clearTimeout(wd);
-      /* what each page's wallets were asked (eth_sendTransaction requests) vs what the mock let through (sends), read before closing */
-      wallet=[]; for(const X of LIVE){ try{ if(X.page&&!X.page.isClosed()) wallet.push(await Promise.race([X.page.evaluate(()=>window.__MW?{asked:__MW.log.filter(x=>x.method==='eth_sendTransaction').length,sent:__MW.sends.length}:null),sleep(3000).then(()=>'page did not answer')])); }catch(e){ wallet.push(null); } }
-      for(const X of LIVE){ const closed=await Promise.race([X.ctx.close().catch(()=>{}).then(()=>true),sleep(5000).then(()=>false)]); if(!closed) stuck=true; } }
-    /* a case that hung, or contexts that would not close: the browser must still answer, or it is killed and the run ends incomplete */
-    if((timedOut||stuck)&&!browserGone&&!(await healthy())){ harnessFail('the browser stopped answering (case '+c.id+(timedOut?', watchdog':'')+', contexts '+(stuck?'did not close':'closed')+'): killed'); killBrowser(); browserGone=true; }
-    /* page errors and crashes from every context the case opened fail the case (o.allowPageErrors to opt out) */
-    const errs=LIVE.flatMap(X=>X.errors), outside=LIVE.flatMap(X=>X.outside), sockets=LIVE.flatMap(X=>X.sockets);
-    r.pageErrors=errs.slice(0,3);
-    if(errs.length&&!(c.o&&c.o.allowPageErrors)){ r.pass=false; r.ev.failedOnPageErrors=errs.slice(0,3); }
-    if(UNHANDLED.length>u0){ r.pass=false; r.ev.unhandledRejection=UNHANDLED.slice(u0).map(x=>x.msg.slice(0,200)); }
-    if(browserGone){ r.pass=false; r.ev.browserGone=true; }
-    if(stuck) r.ev.contextsDidNotClose=true;
-    const ms=Date.now()-t0; RES.push({id:c.id,name:c.name,file:c.file,pass:r.pass===true,ms,ev:r.ev,pageErrors:r.pageErrors,contexts:LIVE.length,wallet,outsideRefused:[...new Set(outside)],socketsRefused:[...new Set(sockets)]});
-    console.log((r.pass===true?'PASS ':'FAIL ')+c.id.padEnd(3)+' '+c.name+' ('+ms+' ms)\n     '+JSON.stringify(r.ev).slice(0,400)+(outside.length||sockets.length?'\n     refused outside: '+JSON.stringify([...new Set(outside.concat(sockets))]).slice(0,300):''));
-    RUNNING='(between cases, after '+c.id+')'; writeResults();
-    if(browserGone){ harnessFail('the browser is gone (after case '+c.id+')'); break; } }
-  RUNNING='(closing the browser)';
-  if(!browserGone) await Promise.race([browser.close().catch(()=>{}),sleep(5000)]);
-  killBrowser();
-  finish('done');
-})().catch(e=>{ harnessFail('runner: '+String(e&&e.stack||e).slice(0,400)); finish('harness-failure',1); });
+  load:()=>{ const load=f=>{ T.loading=f; try{ require('./'+f); }catch(e){ REGERR.push('case module '+f+' did not load: '+String(e&&e.message||e).slice(0,200)); } T.loading=null; };
+    load('audit2.test.js');
+    if(fs.existsSync(path.join(__dirname,'audit3.test.js'))) load('audit3.test.js');
+    if(fs.existsSync(path.join(__dirname,'audit3b.test.js'))) load('audit3b.test.js');
+    load('harness.test.js');
+    /* audit 4 / audit 5: every audit4*.test.js, then every audit5*.test.js file in this folder (sorted) */
+    for(const f of fs.readdirSync(__dirname).filter(f=>/^audit4.*\.test\.js$/.test(f)).sort()) load(f);
+    for(const f of fs.readdirSync(__dirname).filter(f=>/^audit5.*\.test\.js$/.test(f)).sort()) load(f); },
+  manifest:{file:MANIFEST,present:()=>fs.readdirSync(__dirname).filter(f=>MODRE.test(f)).sort(),groupOf,
+    note:'Every case module and id a RELEASE=1 run must register. Adding a module or a case means adding it here in the same commit (node wallet.test.js --print-manifest prints the current registration).'},
+  harness:{home:__dirname,dirs:[__dirname],root:ROOT},boot,LIVE,setBrowser:b=>{ browser=b; },bumpEpoch:()=>{ EPOCH++; }});

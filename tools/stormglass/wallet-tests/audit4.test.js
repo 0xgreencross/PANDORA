@@ -117,7 +117,7 @@ T('a4c7','guard: a chain change AFTER the hand-off: the page does not claim it s
   await connect(E); await track(E,{poll:400}); await E.P('A').set({gate:{eth_sendTransaction:true}}); const n=(await E.toasts()).length; await fillWit(E,'0.01'); await pressWit(E);
   const g=await E.waitGate('A','eth_sendTransaction',6000);
   await E.P('A').set({chainId:'0x2105'}); await E.P('A').emit('chainChanged','0x2105'); await sleep(200);
-  await fillWit(E,'0.02'); await pressWit(E); await sleep(300); const busy=(await toastsSince(E,n)).slice(-1)[0]||'';
+  await fillWit(E,'0.02'); await pressWit(E); await E.until(async()=>/in your wallet now/i.test((await toastsSince(E,n)).slice(-1)[0]||''),6000); const busy=(await toastsSince(E,n)).slice(-1)[0]||'';   /* gate (audit 5b fix; was sleep(300)) */
   await E.P('A').set({gate:{}}); await E.P('A').release('eth_sendTransaction');
   const sent=await E.until(async()=>(await toastsSince(E,n)).some(x=>/: sent \(/.test(x)),6000);
   const conf=await E.until(async()=>(await toastsSince(E,n)).some(x=>DONE.test(x)),15000);
@@ -213,7 +213,7 @@ T('a4w5','WalletConnect: unrelated methods and malformed events never wake OPEN;
       {id:10,topic:'T',request:{method:'eth_sendTransaction',params:JSON.parse(JSON.stringify(q.params))}},{id:11,topic:'T',request:{method:'eth_sendTransaction'}}];
     evs.forEach((x,i)=>{ try{ K.send(P,x); }catch(e){ out.woke.push('throw '+i); } if(K.st().disabled!==true) out.woke.push(i); });
     window.__P=P; return out; });
-  await sleep(8300); const st=await E.page.evaluate(()=>__K.st()), link=await openLink(E);
+  await E.until(()=>E.page.evaluate(()=>/No word yet/.test(document.getElementById('wsp').textContent)),20000); const st=await E.page.evaluate(()=>__K.st()), link=await openLink(E);   /* gate (audit 5b fix; was sleep(8300)): the page's 8 s fallback has run */
   return {pass:asleep(r.start)&&r.woke.length===0&&st.on&&st.disabled===false&&link===ZL&&/No word yet/.test(st.text)&&!/in ZERION now/.test(st.text)&&E.errors.length===0, ev:{woke:r.woke,after8s:st,link}}; },IPHONE);
 
 T('a4w6','guard: the correct current event wakes OPEN with this request\'s id and session topic; closing the sheet cancels nothing (the request answers later)',{wallets:[]},async E=>{
@@ -250,7 +250,7 @@ T('a4w9','WalletConnect: two network-switch requests one after the other, the fi
     K.ask(P,'wallet_switchEthereumChain',[{chainId:'0x1'}]); out.start=K.st();
     K.send(P,K.evSwitch(P,0,91)); out.afterFirst=K.st(); K.send(P,K.evSwitch(P,1,92)); out.afterOwn=K.st(); window.__P=P; return out; });
   const linkEarly=r.afterFirst.disabled?null:await openLink(E);
-  await sleep(8300); const st=await E.page.evaluate(()=>__K.st()), link=await openLink(E);
+  await E.until(()=>E.page.evaluate(()=>/No word yet/.test(document.getElementById('wsp').textContent)),20000); const st=await E.page.evaluate(()=>__K.st()), link=await openLink(E);   /* gate (audit 5b fix; was sleep(8300)): the page's 8 s fallback has run */
   return {pass:r.firstDone&&asleep(r.start)&&r.afterFirst.disabled===true&&linkEarly===null&&st.disabled===false&&link===ZL&&/No word yet/.test(st.text), ev:{r,linkEarly,after8s:st,link}}; },IPHONE);
 
 T('a4w10','WalletConnect: no session topic to check against (exact correlation cannot be established): a plausible event gives no request-specific link; after 8 s OPEN only opens the wallet, with the honest text',{wallets:[]},async E=>{
@@ -258,7 +258,7 @@ T('a4w10','WalletConnect: no session topic to check against (exact correlation c
   const r=await E.page.evaluate(()=>{ const K=__K, P=K.mk(null); _WC=P; wcHook(P); K.ask(P,'eth_sendTransaction',[{n:1}]); const out={start:K.st()};
     K.send(P,Object.assign(K.ev(P,0,101),{topic:'T'})); out.after=K.st(); window.__P=P; return out; });
   const linkEarly=r.after.disabled?null:await openLink(E);
-  await sleep(8300); const st=await E.page.evaluate(()=>__K.st()), link=await openLink(E);
+  await E.until(()=>E.page.evaluate(()=>/No word yet/.test(document.getElementById('wsp').textContent)),20000); const st=await E.page.evaluate(()=>__K.st()), link=await openLink(E);   /* gate (audit 5b fix; was sleep(8300)): the page's 8 s fallback has run */
   return {pass:asleep(r.start)&&r.after.disabled===true&&linkEarly===null&&link===ZL&&/No word yet that the request reached ZERION/.test(st.text), ev:{r,linkEarly,after8s:st,link}}; },IPHONE);
 
 /* ════════ FINDING C: receipts ════════
@@ -282,15 +282,18 @@ const table=(mk)=>async E=>{
   const rows=mk({c,B,good}).map((r,i)=>Object.assign({hash:r.hash||H32(i+1),block:B},r));
   const F=new Map(rows.map(r=>[r.hash.toLowerCase(),r]));
   c.rc=h=>{ const r=F.get(String(h).toLowerCase()); if(!r) return null; return r.fixed?good(h):r.rc(h); };
-  await startTrack(E,rows.map(r=>({hash:r.hash,block:r.block}))); await sleep(2600);
+  await startTrack(E,rows.map(r=>({hash:r.hash,block:r.block})));
+  /* gate (audit 5b fix; was sleep(2600)): every row expected pending has had its malformed receipt read 4 times (3 answers handled, the
+     tracker still asking), every other row has decided; bounded 30 s */
+  const gate=await E.until(async()=>{ const R=await results(E); return rows.every(r=>r.want==='pending'?reads(E,r.hash)>=4:R[r.hash].state!=='pending'); },30000);
   const first=await results(E), out=[];
   for(const r of rows){ const R=first[r.hash]; out.push({row:r.name,want:r.want,got:R.state,reads:reads(E,r.hash)}); }
   rows.filter(r=>r.want==='pending').forEach(r=>{ r.fixed=true; });
-  await E.until(async()=>{ const R=await results(E); return rows.filter(r=>r.want==='pending').every(r=>R[r.hash].state!=='pending'); },6000);
+  await E.until(async()=>{ const R=await results(E); return rows.filter(r=>r.want==='pending').every(r=>R[r.hash].state!=='pending'); },30000);
   const fin=await results(E);
   out.forEach((o,i)=>{ const r=rows[i]; o.later=fin[r.hash].state; o.tells=fin[r.hash].tells.join(','); });
   const ok=out.every(o=>o.want==='pending'?o.got==='pending'&&o.reads>=3&&o.later==='confirmed'&&!o.tells:o.got===o.want);
-  return {pass:ok&&E.errors.length===0, ev:{wrong:out.filter(o=>!(o.want==='pending'?o.got==='pending'&&o.reads>=3&&o.later==='confirmed'&&!o.tells:o.got===o.want)),rows:out.map(o=>o.row+'='+o.got+(o.want==='pending'?'>'+o.later+'('+o.reads+')':''))}}; };
+  return {pass:gate&&ok&&E.errors.length===0, ev:{gate,wrong:out.filter(o=>!(o.want==='pending'?o.got==='pending'&&o.reads>=3&&o.later==='confirmed'&&!o.tells:o.got===o.want)),rows:out.map(o=>o.row+'='+o.got+(o.want==='pending'?'>'+o.later+'('+o.reads+')':''))}}; };
 
 T('a4r1','receipt status: missing, 0x2, "ok", 2, 1, 0 (numbers), 0x01 or no receipt keep it pending (then a valid one confirms); exactly 0x1 confirms and 0x0 reverts',{wallets:[one('A')],ethereum:'A'},table(({good})=>[
   {name:'null',rc:()=>null,want:'pending'},
@@ -365,10 +368,10 @@ T('a4r7','the first reader answers a malformed receipt (another hash, status 0x0
 T('a4r8','every reader answers a malformed receipt (another hash, no status) for good: never confirmed or reverted; "cannot confirm" at TRACK.lost, unknown at TRACK.stop, receipts asked until then',{wallets:[one('A')],ethereum:'A'},async E=>{
   const LOST=2500, STOP=5000; await track(E,{poll:200,timeout:1500,lost:LOST,stop:STOP}); const c=E.chain, B=c.blockNo(), Hx=H32(8);
   c.rc=h=>h===Hx?drop(c.mkRc('0x'+'ef'.repeat(32),{blockNumber:hex(B+1)}),'status'):null;
-  await startTrack(E,[{hash:Hx,block:B}]); await sleep(1500); const mid=(await results(E))[Hx];
+  await startTrack(E,[{hash:Hx,block:B}]); const gate=await E.until(()=>reads(E,Hx)>=3,STOP); const mid=(await results(E))[Hx];   /* gate (audit 5b fix; was sleep(1500)): the malformed receipt read 3 times (2 handled) */
   await E.until(async()=>(await results(E))[Hx].state!=='pending',STOP+4000); const R=(await results(E))[Hx];
   const per=['publicnode','mevblocker','drpc'].map(h=>Object.entries(c.hits).filter(([k])=>k.includes(h)&&k.includes('eth_getTransactionReceipt')).reduce((a,[,v])=>a+v,0));
-  return {pass:mid.state==='pending'&&R.state==='unknown'&&R.tells.includes('unknown')&&R.ms>=STOP&&reads(E,Hx)>=10&&per.every(x=>x>0), ev:{mid:mid.state,state:R.state,tells:R.tells,ms:R.ms,receiptReads:reads(E,Hx),perReader:per}}; });
+  return {pass:gate&&mid.state==='pending'&&R.state==='unknown'&&R.tells.includes('unknown')&&R.ms>=STOP&&reads(E,Hx)>=10&&per.every(x=>x>0), ev:{mid:mid.state,state:R.state,tells:R.tells,ms:R.ms,receiptReads:reads(E,Hx),perReader:per}}; });
 
 T('a4r9','replacement: the receipt for the transaction that spent the nonce belongs to the original, to another tx, has no status, or another sender: no verdict; once valid: "replaced"',{wallets:[one('A')],ethereum:'A'},async E=>{
   await track(E,{poll:200,timeout:1500,lost:600000,stop:3600000,scan:5}); const c=E.chain, B=c.blockNo(), out=[];
@@ -380,11 +383,15 @@ T('a4r9','replacement: the receipt for the transaction that spent the nonce belo
     c.tx=h=>h===Hx?c.mkTx(h,{nonce:'0x7',blockHash:null,blockNumber:null,transactionIndex:null}):h===H2?c.mkTx(H2,Object.assign({from:A1,nonce:'0x7',blockNumber:hex(R)},rtx)):null;
     c.blockTxs=b=>b===R?[c.mkTx(H2,Object.assign({from:A1,nonce:'0x7',blockNumber:hex(R)},rtx))]:[];
     c.rc=h=>{ if(h!==H2) return null; const rc=c.mkRc(H2,{from:A1,to:rtx.to,blockNumber:hex(R),status:'0x1'}); return fixed?rc:spoil(rc,Hx); };
-    await startTrack(E,[{hash:Hx,block:B}]); await sleep(1800);
+    await startTrack(E,[{hash:Hx,block:B}]);
+    /* gate (audit 5b fix; was sleep(1800)): the spoiled replacement receipt was read twice, then the tracker asked the original's receipt
+       again (a later round), or it decided; bounded 30 s */
+    const trig=await E.until(()=>reads(E,H2)>=2,30000); const k=E.chain.log.length;
+    const next=trig&&await E.until(async()=>(await results(E))[Hx].state!=='pending'||E.chain.log.slice(k).some(x=>x.m==='eth_getTransactionReceipt'&&x.p&&x.p[0]===Hx),30000);
     const mid=(await results(E))[Hx].state, rd=reads(E,H2); fixed=true;
-    await E.until(async()=>(await results(E))[Hx].state!=='pending',6000); const fin=(await results(E))[Hx];
-    out.push({name,mid,replacementReceiptReads:rd,final:fin.state,by:fin.by===H2}); }
-  return {pass:out.every(o=>o.mid==='pending'&&o.replacementReceiptReads>=2&&o.final==='replaced'&&o.by), ev:{rows:out}}; });
+    await E.until(async()=>(await results(E))[Hx].state!=='pending',30000); const fin=(await results(E))[Hx];
+    out.push({name,gate:trig&&next,mid,replacementReceiptReads:rd,final:fin.state,by:fin.by===H2}); }
+  return {pass:out.every(o=>o.gate&&o.mid==='pending'&&o.replacementReceiptReads>=2&&o.final==='replaced'&&o.by), ev:{rows:out}}; });
 
 T('a4r10','guard, the documented policy (one valid receipt from the reader asked, no cross-check, no reorg re-check): the first reader\'s valid 0x0 decides even if another reader says 0x1; a first reader that has no receipt yet keeps it pending',{wallets:[one('A')],ethereum:'A'},async E=>{
   await track(E,{poll:300,timeout:1500,lost:600000,stop:3600000}); const c=E.chain, B=c.blockNo(), Ha=H32(0xa1), Hb=H32(0xa2); let firstB=0;
@@ -403,7 +410,7 @@ T('a4r11','the page itself (WITNESS): the reviewer\'s receipt (another transacti
   c.rc=h=>valid?c.mkRc(h,{blockNumber:hex(c.blockNo()+1),status:'0x1'}):drop(c.mkRc('0x'+'ef'.repeat(32),{}),'status');
   const n=(await E.toasts()).length; await fillWit(E,'0.01'); await pressWit(E);
   const sent=await E.until(async()=>(await E.sends()).length>0,8000); const h=sent?(await E.sends())[0].hash:'';
-  await E.until(async()=>reads(E,h)>=4,8000); await sleep(300);
+  await E.until(async()=>reads(E,h)>=5,30000);   /* gate (audit 5b fix; was reads>=4 then sleep(300)): the 4th malformed receipt handled, the tracker asked again */
   const t1=await toastsSince(E,n), r1=reads(E,h); valid=true;
   const conf=await E.until(async()=>(await toastsSince(E,n)).some(x=>DONE.test(x)),10000); const t=await toastsSince(E,n);
   return {pass:sent&&r1>=4&&!t1.some(x=>/reverted|failed|confirmed/i.test(x))&&conf&&!t.some(x=>/reverted/i.test(x)), ev:{sent,readsWhileMalformed:r1,toastsWhileMalformed:t1.slice(-2),confirmed:conf,toasts:t.slice(-2)}}; });
@@ -413,6 +420,6 @@ T('a4r12','COLLECT: the reviewer\'s receipt keeps the dialog on PENDING (never N
   c.rc=h=>valid?c.mkRc(h,{blockNumber:hex(c.blockNo()+1),status:'0x1'}):drop(c.mkRc('0x'+'ef'.repeat(32),{}),'status');
   await openOpt(E,3); await pressCollect(E);
   const pend=await E.until(async()=>/PENDING/.test(await popText(E.page)),8000); const h=(await E.sends()).length?(await E.sends())[0].hash:'';
-  await E.until(async()=>reads(E,h)>=4,8000); await sleep(300); const p1=await popText(E.page), r1=reads(E,h); valid=true;
+  await E.until(async()=>reads(E,h)>=5,30000); const p1=await popText(E.page), r1=reads(E,h); valid=true;   /* gate (audit 5b fix; was reads>=4 then sleep(300)) */
   const done=await E.until(async()=>/IS YOURS/.test(await popText(E.page)),10000);
   return {pass:pend&&r1>=4&&/PENDING/.test(p1)&&!/NOT COLLECTED/.test(p1)&&done, ev:{pending:pend,readsWhileMalformed:r1,popupWhileMalformed:p1.slice(0,80),collected:done}}; });

@@ -51,8 +51,13 @@ const orig=(c,h,nonce,o={})=>c.mkTx(h,Object.assign({nonce,blockHash:null,blockN
 const spender=(c,h,nonce,R,kind)=>c.mkTx(h,Object.assign({nonce,blockNumber:hex(R)},kind==='cancel'?{to:A1,input:'0x',value:'0x0'}:kind==='same'?{to:REQ.to,input:REQ.data,value:REQ.value,gasPrice:'0x77359400',maxFeePerGas:'0x77359400'}:{to:'0x000000000000000000000000000000000000dEaD',input:'0xdeadbeef',value:'0x0'}));
 
 /* one scenario: hash Hx (the payment being followed) is pending; the sender's nonce 7 is spent in block R by U (kind), nonce 8 is the
-   payment's real nonce unless the case says otherwise. fn(h,q) is the per-reader override. Returns the state after `ms`, then (if
-   o.release) the state once Hx's own receipt is served. */
+   payment's real nonce unless the case says otherwise. fn(h,q) is the per-reader override. Returns the state at the gate, then (if
+   o.release) the state once Hx's own receipt is served.
+   THE GATE (audit 5b fix: it was a fixed window, `sleep(o.ms)`, which a loaded machine could outrun before the trigger was even served):
+   o.want set and not 'pending' (a verdict is expected): the tracker has decided (bounded 30 s). Otherwise: the trigger was served
+   (o.trig(served,E), default: a reader override answered) and the tracker then began a LATER round (its own receipt asked again after
+   that point), or it decided (a verdict ends the rounds); both bounded 30 s. The round that saw the trigger is then over: its verdict,
+   if it made one, is in the state read. out.gate records both steps. */
 async function scen(E,o){ const c=E.chain, B=c.blockNo(), R=B+2, Hx=o.hash||H32('a5'), Hu=H32('b7');
   await track(E,Object.assign({poll:250,timeout:4000,lost:600000,stop:3600000,scan:6},o.track||{}));   /* 4 s: a cold first request must not time out and move the reader cursor by itself */
   c.topAns=()=>hex(B+6); c.nonceLatest=o.latest==null?8:o.latest;
@@ -63,10 +68,15 @@ async function scen(E,o){ const c=E.chain, B=c.blockNo(), R=B+2, Hx=o.hash||H32(
   c.rc=h=>h===Hu?c.mkRc(Hu,{from:A1,to:U.to,blockNumber:hex(R),status:'0x1'}):h===Hx&&released?c.mkRc(Hx,{from:A1,to:REQ.to,blockNumber:hex(B+5),status:'0x1'}):null;
   const served={n:0}; await serve(E,(h,q)=>{ if(o.fn){ const v=o.fn(h,q,{Hx,Hu,U,c,R,B}); if(v!==undefined){ served.n++; return v; } } return undefined; });
   await startTrack(E,[{hash:Hx,block:B,req:o.req===undefined?REQ:o.req,wallet:typeof o.wallet==='function'?o.wallet({Hx,Hu,U,c}):o.wallet}]);
-  await sleep(o.ms||2500); const mid=(await results(E))[Hx];
-  const out={mid:mid.state,by:mid.by,served:served.n,byHashReaders:askedBy(E,'eth_getTransactionByHash',Hx),walletAsked:await walletAsked(E,Hx),scanned:E.RQ.filter(x=>x.m==='eth_getBlockByNumber'&&x.p&&x.p[1]===true).length};
-  if(o.release){ released=true; await E.until(async()=>(await results(E))[Hx].state!=='pending',6000); out.final=(await results(E))[Hx].state; }
+  const gate=await gateRound(E,Hx,o,served); const mid=(await results(E))[Hx];
+  const out={gate,mid:mid.state,by:mid.by,served:served.n,byHashReaders:askedBy(E,'eth_getTransactionByHash',Hx),walletAsked:await walletAsked(E,Hx),scanned:E.RQ.filter(x=>x.m==='eth_getBlockByNumber'&&x.p&&x.p[1]===true).length};
+  if(o.release){ released=true; await E.until(async()=>(await results(E))[Hx].state!=='pending',30000); out.final=(await results(E))[Hx].state; }
   return out; }
+async function gateRound(E,Hx,o,served){ const decided=async()=>(await results(E))[Hx].state!=='pending';
+  if(o.want&&o.want!=='pending') return {decided:await E.until(decided,30000)};
+  const trig=await E.until(async()=>o.trig?await o.trig(served,E,Hx):served.n>0,30000); const k=E.RQ.length;
+  const next=trig&&await E.until(async()=>await decided()||E.RQ.slice(k).some(x=>x.m==='eth_getTransactionReceipt'&&x.p&&String(x.p[0]).toLowerCase()===Hx.toLowerCase()),30000);
+  return {trig,next}; }
 const W1=[one('A')];
 
 T('a5n1','a reader answers the original hash with ANOTHER transaction of the same sender (the one that spent nonce 7): not trusted, the next reader is asked; stays pending (never "replaced"), then its own receipt confirms',{wallets:W1,ethereum:'A'},async E=>{
@@ -82,7 +92,7 @@ const HASHROWS=[['missing',t=>{ delete t.hash; return t; }],['null',t=>Object.as
 T('a5n3','the reader\'s answer has a missing or malformed hash (and nonce 7, pointing at the sender\'s other transaction): never used, the next reader is asked; pending, then confirmed',{wallets:W1,ethereum:'A'},async E=>{
   const rows=[];
   for(const [name,spoil] of HASHROWS){ const X=await H.boot({wallets:W1,ethereum:'A'}); try{
-      const r=await scen(X,{release:true,ms:1800,fn:(h,q,Y)=>h==='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?spoil(orig(Y.c,Y.Hx,'0x7')):undefined});
+      const r=await scen(X,{release:true,fn:(h,q,Y)=>h==='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?spoil(orig(Y.c,Y.Hx,'0x7')):undefined});
       rows.push(Object.assign({name},r)); } finally{ await X.close().catch(()=>{}); } }
   return {pass:rows.every(r=>r.served>0&&r.mid==='pending'&&r.byHashReaders.includes('mev')&&r.final==='confirmed'), ev:{rows}}; });
 
@@ -91,7 +101,7 @@ const NONCEROWS=[['missing',t=>{ delete t.nonce; return t; }],['null',t=>Object.
 T('a5n4','the reader\'s nonce is missing, negative or not a hex quantity: never used (no "replaced", no early "unknown"), the next reader is asked; a valid nonce 0x0 is used (cancelled at nonce 0)',{wallets:W1,ethereum:'A'},async E=>{
   const rows=[];
   for(const [name,spoil] of NONCEROWS){ const X=await H.boot({wallets:W1,ethereum:'A'}); try{
-      const r=await scen(X,{release:true,ms:1800,fn:(h,q,Y)=>h==='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?spoil(orig(Y.c,Y.Hx,'0x8')):undefined});
+      const r=await scen(X,{release:true,fn:(h,q,Y)=>h==='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?spoil(orig(Y.c,Y.Hx,'0x8')):undefined});
       const tells=(await results(X))[H32('a5')].tells; rows.push(Object.assign({name,tells:tells.join(',')},r)); } finally{ await X.close().catch(()=>{}); } }
   /* nonce 0x0: the original's nonce is 0; nonce 0 is spent by a 0-ETH transaction to self: cancelled (zero must not read as "no nonce") */
   const Z=await H.boot({wallets:W1,ethereum:'A'}); let z={};
@@ -102,18 +112,18 @@ T('a5n4','the reader\'s nonce is missing, negative or not a hex quantity: never 
   return {pass:rows.every(r=>r.served>0&&r.mid==='pending'&&!r.tells&&r.byHashReaders.includes('mev')&&r.final==='confirmed')&&z.state==='cancelled'&&z.by&&z.walletAsked===0, ev:{rows,zero:z}}; });
 
 T('a5n5','the first reader is invalid, the second valid: the second reader\'s nonce decides (a real cancellation at nonce 7 is "cancelled"); the wallet is never asked',{wallets:W1,ethereum:'A'},async E=>{
-  const r=await scen(E,{kind:'cancel',ms:4000,fn:(h,q,X)=>h==='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===X.Hx?orig(X.c,X.Hx,'0x7',{hash:H32('ee')}):h!=='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===X.Hx?orig(X.c,X.Hx,'0x7'):undefined});
+  const r=await scen(E,{kind:'cancel',want:'cancelled',fn:(h,q,X)=>h==='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===X.Hx?orig(X.c,X.Hx,'0x7',{hash:H32('ee')}):h!=='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===X.Hx?orig(X.c,X.Hx,'0x7'):undefined});
   return {pass:r.served>0&&r.mid==='cancelled'&&r.by===H32('b7')&&r.byHashReaders.includes('pn')&&r.byHashReaders.includes('mev')&&r.walletAsked===0, ev:r}; });
 
 T('a5n6','every public reader answers the original hash with another transaction: none trusted; the wallet is asked and its valid answer (nonce 8) keeps it pending; then confirmed',{wallets:W1,ethereum:'A'},async E=>{
-  const r=await scen(E,{release:true,wallet:X=>orig(X.c,X.Hx,'0x8'),fn:(h,q,X)=>q.method==='eth_getTransactionByHash'&&q.params[0]===X.Hx?X.U:undefined});
+  const r=await scen(E,{release:true,trig:async(sv,E,Hx)=>sv.n>=3&&(await walletAsked(E,Hx))>=1,wallet:X=>orig(X.c,X.Hx,'0x8'),fn:(h,q,X)=>q.method==='eth_getTransactionByHash'&&q.params[0]===X.Hx?X.U:undefined});
   return {pass:r.served>=3&&r.mid==='pending'&&['pn','mev','drpc'].every(k=>r.byHashReaders.includes(k))&&r.walletAsked>=1&&r.final==='confirmed', ev:r}; });
 
 T('a5n7','the readers have not seen it and the WALLET answers with another transaction (or another sender, a malformed nonce, another call, recipient, value or chain): not trusted, stays pending; asked at most 5 times; then confirmed',{wallets:W1,ethereum:'A'},async E=>{
   const rows=[];
   for(const [name,mk] of [['otherTx',X=>X.U],['otherSender',X=>orig(X.c,X.Hx,'0x7',{from:B1})],['badNonce',X=>orig(X.c,X.Hx,'7')],['otherCall',X=>orig(X.c,X.Hx,'0x7',{input:'0xdeadbeef'})],['otherTo',X=>orig(X.c,X.Hx,'0x7',{to:'0x000000000000000000000000000000000000dEaD'})],['otherValue',X=>orig(X.c,X.Hx,'0x7',{value:'0x0'})],['otherChain',X=>orig(X.c,X.Hx,'0x7',{chainId:'0x2105'})],['dataNotInput',X=>{ const t=orig(X.c,X.Hx,'0x7'); t.data='0xdeadbeef'; return t; }]]){
     const X=await H.boot({wallets:W1,ethereum:'A'}); try{
-      const r=await scen(X,{release:true,ms:3500,wallet:mk,fn:(h,q,Y)=>q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?null:undefined});
+      const r=await scen(X,{release:true,trig:async(sv,E,Hx)=>(await walletAsked(E,Hx))>=1,wallet:mk,fn:(h,q,Y)=>q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?null:undefined});
       rows.push(Object.assign({name},r)); } finally{ await X.close().catch(()=>{}); } }
   return {pass:rows.every(r=>r.mid==='pending'&&r.walletAsked>=1&&r.walletAsked<=5&&r.final==='confirmed'), ev:{rows}}; });
 
@@ -122,7 +132,7 @@ T('a5n7','the readers have not seen it and the WALLET answers with another trans
 T('a5n8','a poisoned nonce (another hash, nonce 7) where nonce 7 was spent by the same call / a cancellation / another call: never confirmed, cancelled or replaced; pending until its own receipt',{wallets:W1,ethereum:'A'},async E=>{
   const rows=[];
   for(const kind of ['same','cancel','other']){ const X=await H.boot({wallets:W1,ethereum:'A'}); try{
-      const r=await scen(X,{kind,release:true,ms:2500,fn:(h,q,Y)=>h==='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?Object.assign({},Y.U,{hash:H32('ee')}):undefined});
+      const r=await scen(X,{kind,release:true,fn:(h,q,Y)=>h==='pn'&&q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?Object.assign({},Y.U,{hash:H32('ee')}):undefined});
       rows.push(Object.assign({kind},r)); } finally{ await X.close().catch(()=>{}); } }
   return {pass:rows.every(r=>r.served>0&&r.mid==='pending'&&r.final==='confirmed'), ev:{rows}}; });
 
@@ -133,12 +143,12 @@ T('a5n9','legitimate speed-up, cancellation and replacement are still classified
   const rows=[];
   for(const [kind,want] of [['same','confirmed'],['cancel','cancelled'],['other','replaced']]) for(const [rep,f] of (kind==='other'?REPS:REPS.slice(0,2))){
     const X=await H.boot({wallets:W1,ethereum:'A'}); try{
-      const r=await scen(X,{kind,ms:3500,fn:(h,q,Y)=>q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?f(orig(Y.c,Y.Hx,'0x7')):undefined});
+      const r=await scen(X,{kind,want,fn:(h,q,Y)=>q.method==='eth_getTransactionByHash'&&q.params[0]===Y.Hx?f(orig(Y.c,Y.Hx,'0x7')):undefined});
       rows.push({kind,rep,want,got:r.mid,by:r.by===H32('b7'),walletAsked:r.walletAsked}); } finally{ await X.close().catch(()=>{}); } }
   return {pass:rows.every(r=>r.got===r.want&&r.by&&r.walletAsked===0), ev:{rows:rows.map(r=>r.kind+'/'+r.rep+'='+r.got+(r.by?'':' (by?)')+(r.walletAsked?' wallet'+r.walletAsked:''))}}; });
 
 T('a5n10','late original receipt after "unknown" (no reader and no wallet gives a usable transaction): unknown at TRACK.lost, then its own receipt still confirms',{wallets:W1,ethereum:'A'},async E=>{
-  const r=await scen(E,{release:true,ms:2600,track:{lost:2000},wallet:X=>X.U,fn:(h,q,X)=>q.method==='eth_getTransactionByHash'&&q.params[0]===X.Hx?X.U:undefined});
+  const r=await scen(E,{release:true,track:{lost:2000},trig:async(sv,E,Hx)=>(await results(E))[Hx].tells.includes('unknown')&&(await walletAsked(E,Hx))>=1,wallet:X=>X.U,fn:(h,q,X)=>q.method==='eth_getTransactionByHash'&&q.params[0]===X.Hx?X.U:undefined});
   const tells=(await results(E))[H32('a5')].tells;
   return {pass:r.mid==='pending'&&tells.includes('unknown')&&r.final==='confirmed'&&r.walletAsked>=1, ev:Object.assign({tells},r)}; });
 
@@ -152,12 +162,12 @@ T('a5n11','a replacement whose block, transaction and receipt contradict each ot
   const rows=[];
   for(const [name,mk] of CONTRA){ const X=await H.boot({wallets:W1,ethereum:'A'}); try{
       let fixed=false, hit=0;
-      const r=await scen(X,{realNonce:'0x7',ms:2200,fn:(h,q,Y)=>{ if(fixed) return undefined; const bad=mk(Y);
+      const r=await scen(X,{realNonce:'0x7',trig:async()=>hit>0,fn:(h,q,Y)=>{ if(fixed) return undefined; const bad=mk(Y);
           if(bad.tx&&q.method==='eth_getBlockByNumber'&&q.params&&q.params[1]===true&&Number(q.params[0])===Y.R){ hit++; return Object.assign(blockOf(Y,Y.R),{transactions:[bad.tx]}); }
           if(bad.blk&&q.method==='eth_getBlockByNumber'&&q.params&&q.params[1]===true&&Number(q.params[0])===Y.R){ hit++; return Object.assign(blockOf(Y,Y.R),{number:bad.blk,transactions:[Y.U]}); }
           if(bad.rc&&q.method==='eth_getTransactionReceipt'&&q.params[0]===Y.Hu){ hit++; return bad.rc; }
           return undefined; }});
-      fixed=true; const Hx=H32('a5'); await X.until(async()=>(await results(X))[Hx].state!=='pending',6000); const fin=(await results(X))[Hx];
+      fixed=true; const Hx=H32('a5'); await X.until(async()=>(await results(X))[Hx].state!=='pending',30000); const fin=(await results(X))[Hx];
       rows.push({name,hit,mid:r.mid,final:fin.state,by:fin.by===H32('b7')}); } finally{ await X.close().catch(()=>{}); } }
   return {pass:rows.every(r=>r.hit>0&&r.mid==='pending'&&r.final==='replaced'&&r.by), ev:{rows}}; });
 /* a full block as the fake chain gives it (fakechain.js block(n)): number n, hash = n padded to 32 bytes */
@@ -175,10 +185,12 @@ T('a5n12','end to end: WITNESS sent, the first reader answers its hash with the 
   await closeWit(E.page); await openWit(E.page); await E.page.fill('#wAmt','0.01'); const n=(await E.toasts()).length; await E.page.click('#bWit');
   const g=await E.waitGate('A','eth_sendTransaction',8000); handed=true; mine='0x'+(1).toString(16).padStart(64,'0'); await E.P('A').set({gate:{}}); await E.P('A').release('eth_sendTransaction');
   await E.until(async()=>(await E.sends()).length>0,8000); mine=(await E.sends())[0].hash;
-  await sleep(3500); const mid=await toastsSince(E,n); released=true;
+  /* gate (audit 5b fix; was sleep(3500)): the poisoned answer was served, then the tracker asked this payment's receipt again (a later round) */
+  const trig=await E.until(()=>served>0,30000); const k=E.RQ.length; const next=trig&&await E.until(()=>E.RQ.slice(k).some(x=>x.m==='eth_getTransactionReceipt'&&x.p&&x.p[0]===mine),30000);
+  const mid=await toastsSince(E,n); released=true;
   const conf=await E.until(async()=>(await toastsSince(E,n)).some(x=>DONE.test(x)),12000); const t=await toastsSince(E,n);
   const bad=t.some(x=>/replaced|cancelled|reverted|cannot confirm/i.test(x)||NOTSENT.test(x));
-  return {pass:g&&served>0&&!bad&&conf&&!mid.some(x=>DONE.test(x)), ev:{gateHit:g,served,confirmed:conf,toasts:t}}; });
+  return {pass:g&&served>0&&next&&!bad&&conf&&!mid.some(x=>DONE.test(x)), ev:{gateHit:g,served,laterRound:next,confirmed:conf,toasts:t}}; });
 
 /* ════════ a5x: ADJACENT ════════
    a5x1 (lead from the orchestrator's baseline, a4s3 under load): with every public reader down, the ledger's background drawing awaited
@@ -189,7 +201,8 @@ T('a5n12','end to end: WITNESS sent, the first reader answers its hash with the 
 const PLATES=ethers.id('plates(uint256)').slice(2,10), MEDIAN=ethers.id('median7()').slice(2,10);
 const pastPlate=body=>{ const m=String(body||'').match(new RegExp('0x'+PLATES+'([0-9a-f]{64})','gi'))||[]; return m.some(x=>Number(BigInt('0x'+x.slice(10)))<13); };
 T('a5x1','every reader fails the past plates\' reads (HTTP 500): the ledger cards stay labels, no unhandled rejection, the day still shows; the next card is still tried',{wallets:[]},async E=>{
-  await sleep(4000);
+  /* gate (audit 5b fix; was sleep(4000)): three failing plate reads were served (so the first two were handled and the next card tried) and the ledger and day are drawn */
+  await E.until(()=>E.chain.fails>=3&&E.page.evaluate(()=>document.getElementById('ledgerGrid').children.length===13&&/DAY 13/.test(document.getElementById('panel').textContent)),30000);
   const r=await E.page.evaluate(()=>({cards:document.getElementById('ledgerGrid').children.length,day:/DAY 13/.test(document.getElementById('panel').textContent)}));
   return {pass:E.chain.fails>=3&&r.cards===13&&r.day&&E.errors.length===0, ev:{failedPlateRequests:E.chain.fails,ledger:r,pageErrors:E.errors}}; },
   {chain:c=>{ c.fails=0; c.hostMode=(h,body)=>{ if(pastPlate(body)){ c.fails++; return '500'; } return null; }; }});
@@ -215,15 +228,15 @@ const ANSWERS=new Set([4001,-32002]);
 const syncThrow=(E,id,method,code)=>E.page.evaluate(([id,method,code])=>{ const p=__MW.P[id].provider, orig=p.request.bind(p);
   p.request=a=>{ if(a&&a.method===method){ __MW.log.push({pid:id,method,params:null,chain:__MW.P[id].st.chainId,t:performance.now()}); const e=new Error('sync '+code); e.code=code; throw e; } return orig(a); }; },[id,method,code]);
 const B_TOUCH=async E=>({rq:await reqs(E,'B','eth_requestAccounts'),acc:await reqs(E,'B','eth_accounts'),tx:await reqs(E,'B','eth_sendTransaction')});
-async function phoneRow(cfg,o,code,how,pickRe){ const X=await H.boot(cfg,o); try{
+async function phoneRow(cfg,o,code,how,pickRe){ const X=await H.boot(cfg,o); let r0gate=false; try{
     if(how==='sync') await syncThrow(X,'A','eth_requestAccounts',code); else await X.P('A').set({reject:{eth_requestAccounts:{code,message:'wallet error '+code}}});
     if(cfg.wc){ await X.page.click('#wallet'); await X.until(async()=>(await sheetButtons(X.page)).some(b=>/USE THIS BROWSER/.test(b)),4000); await clickSheet(X.page,/USE THIS BROWSER/); }
     else await X.page.click('#wallet');
-    await X.until(async()=>(await reqs(X,'A','eth_requestAccounts'))>0,4000); await sleep(1500);
-    const r={code,how,rqA:await reqs(X,'A','eth_requestAccounts'),before:await B_TOUCH(X),label:await X.label(),offer:(await sheetTitle(X.page))==='YOUR WALLET DID NOT CONNECT',btns:await sheetButtons(X.page),toast:(await X.toasts()).slice(-1)[0]||''};
+    await X.until(async()=>(await reqs(X,'A','eth_requestAccounts'))>0,4000); r0gate=await X.until(()=>X.page.evaluate(()=>CONNECTING===null),15000);   /* gate (audit 5b fix; was sleep(1500)): the connection attempt is over */
+    const r={gate:r0gate,code,how,rqA:await reqs(X,'A','eth_requestAccounts'),before:await B_TOUCH(X),label:await X.label(),offer:(await sheetTitle(X.page))==='YOUR WALLET DID NOT CONNECT',btns:await sheetButtons(X.page),toast:(await X.toasts()).slice(-1)[0]||''};
     r.text=await X.page.evaluate(()=>document.getElementById('wsp').textContent);
     /* an answer (4001/-32002) is a toast; any other failure is the offer sheet, which names the error itself (no toast over it) */
-    r.ok=r.rqA===1&&r.before.rq===0&&r.before.acc===0&&r.before.tx===0&&!/0x/.test(r.label)&&r.offer===!ANSWERS.has(code)&&(r.offer?r.text.includes(String(code))||/error/i.test(r.text):!!r.toast);
+    r.ok=r.gate&&r.rqA===1&&r.before.rq===0&&r.before.acc===0&&r.before.tx===0&&!/0x/.test(r.label)&&r.offer===!ANSWERS.has(code)&&(r.offer?r.text.includes(String(code))||/error/i.test(r.text):!!r.toast);
     if(r.offer){ await clickSheet(X.page,/CHOOSE ANOTHER WALLET/); const list=await X.until(async()=>(await sheetTitle(X.page))==='CONNECT WITH',4000); const lb=await sheetButtons(X.page);
       if(list) await clickSheet(X.page,pickRe); r.picked=await X.until(async()=>/00cc/i.test(await X.label()),5000); r.list=lb; r.after=await B_TOUCH(X); r.rqAafter=await reqs(X,'A','eth_requestAccounts');
       r.ok=r.ok&&list&&r.picked&&r.after.rq===1&&r.after.tx===0&&r.rqAafter===1; }
@@ -246,15 +259,15 @@ T('a5m7','phone in a wallet app whose failing wallet is also the REMEMBERED choi
 T('a5m5','iPhone Safari, a WalletConnect session that fails eth_requestAccounts (-32603): no injected wallet is asked to connect; nothing connects',{wallets:[one('B','0x1',{authorized:true})],wc:{accounts:[A1],chainId:'0x1'}},async E=>{
   await E.page.evaluate(()=>{ const p=__MW.wc.provider, orig=p.request.bind(p); p.request=a=>{ if(a&&a.method==='eth_requestAccounts'&&p.session){ __MW.log.push({pid:'WC',method:'eth_requestAccounts',params:null,chain:'0x1',t:performance.now()}); const e=new Error('Internal error'); e.code=-32603; return Promise.reject(e); } return orig(a); }; });
   await E.page.click('#wallet'); const uri=await E.until(()=>E.page.evaluate(()=>!!__MW.wc.approve),6000); await E.page.evaluate(()=>__MW.wc.approve&&__MW.wc.approve());
-  const wcAsked=await E.until(async()=>(await reqs(E,'WC','eth_requestAccounts'))>0,6000); await sleep(1500);
+  const wcAsked=await E.until(async()=>(await reqs(E,'WC','eth_requestAccounts'))>0,6000); const over=await E.until(()=>E.page.evaluate(()=>CONNECTING===null),15000);   /* gate (audit 5b fix; was sleep(1500)): the attempt is over */
   const b=await B_TOUCH(E), lab=await E.label();
-  return {pass:uri&&wcAsked&&b.rq===0&&b.acc===0&&b.tx===0&&!/0x/.test(lab), ev:{paired:uri,wcAsked,B:b,label:lab,sheet:await sheetTitle(E.page)}}; },SAFARI);
+  return {pass:uri&&wcAsked&&over&&b.rq===0&&b.acc===0&&b.tx===0&&!/0x/.test(lab), ev:{paired:uri,wcAsked,B:b,label:lab,sheet:await sheetTitle(E.page)}}; },SAFARI);
 T('a5m6','computer, remembered wallet B fails (-32603) while A is authorised: A is not asked; the next CONNECT lists both; A picked by hand connects',{wallets:[one('A','0x1',{authorized:true}),one('B','0x1',{reject:{eth_requestAccounts:{code:-32603,message:'Internal error'}}})]},async E=>{
-  await E.page.click('#wallet'); const asked=await E.until(async()=>(await reqs(E,'B','eth_requestAccounts'))>0,5000); await sleep(1200);
+  await E.page.click('#wallet'); const asked=await E.until(async()=>(await reqs(E,'B','eth_requestAccounts'))>0,5000); const over=await E.until(()=>E.page.evaluate(()=>CONNECTING===null),15000);   /* gate (audit 5b fix; was sleep(1200)): the attempt is over */
   const a0={rq:await reqs(E,'A','eth_requestAccounts'),acc:await reqs(E,'A','eth_accounts')}, lab0=await E.label();
   await closeWit(E.page); await E.page.click('#wallet'); const list=await E.until(async()=>(await sheetTitle(E.page))==='CONNECT WITH',4000); const btns=await sheetButtons(E.page);
   if(list) await clickSheet(E.page,/WALLET A/); const con=await E.until(async()=>/00aa/i.test(await E.label()),5000);
-  return {pass:asked&&a0.rq===0&&a0.acc===0&&!/0x/.test(lab0)&&list&&btns.length===2&&con, ev:{asked,A:a0,label:lab0,list,btns,connectedA:con}}; },{store:{'stormglass.wallet':'test.b'}});
+  return {pass:asked&&over&&a0.rq===0&&a0.acc===0&&!/0x/.test(lab0)&&list&&btns.length===2&&con, ev:{asked,attemptOver:over,A:a0,label:lab0,list,btns,connectedA:con}}; },{store:{'stormglass.wallet':'test.b'}});
 
 /* ════════ a5w: WITHDRAW TO ANOTHER ADDRESS ════════
    The contract owes the connected wallet 0.05 ETH (owed(), the fake chain). The flow: WITHDRAW TO ANOTHER ADDRESS opens a box; REVIEW checks
@@ -287,7 +300,7 @@ T('a5w1','valid recipient: the sheet shows the full checksummed address and 0.05
 const BAD=[['empty',''],['short','0x1234'],['ens','vitalik.eth'],['zero','0x0000000000000000000000000000000000000000'],['badChecksum','0x52908400098527886E0F7030069857D2E4169Ee7'],['noPrefix','52908400098527886e0f7030069857d2e4169ee7'],['contract',CONTRACT.toLowerCase()],['self',A1]];
 T('a5w2','empty, malformed, ENS, zero, a bad checksum, no 0x, the STORMGLASS contract and the connected wallet itself are refused with a reason: no sheet, nothing asked of the wallet',{wallets:[one('A')],ethereum:'A'},async E=>{
   await connect(E); await wOpen(E); const rows=[];
-  for(const [name,v] of BAD){ await E.page.evaluate(()=>{ document.getElementById('wtoNote').textContent=''; }); await wReview(E,v); await sleep(300);
+  for(const [name,v] of BAD){ await E.page.evaluate(()=>{ document.getElementById('wtoNote').textContent=''; }); await wReview(E,v); await E.until(async()=>(await wNote(E))!=='',3000);   /* gate (audit 5b fix; was sleep(300)): REVIEW has answered */
     rows.push({name,note:(await wNote(E)).slice(0,60),sheet:await sheetOpen(E.page)}); }
   const asked={est:await reqs(E,'A','eth_estimateGas'),send:await reqs(E,'A','eth_sendTransaction')};
   return {pass:rows.every(r=>r.note&&!/Reading/.test(r.note)&&!r.sheet)&&asked.est===0&&asked.send===0, ev:{rows,asked}}; },OWED);
@@ -303,17 +316,18 @@ T('a5w4','repeated clicks: SEND pressed twice at once, then REVIEW + SEND again 
   await connect(E); await wOpen(E); await wReview(E,R1L); await wSheet(E);
   await E.page.evaluate(()=>{ const b=[...document.querySelectorAll('#wsBtns button')].find(b=>/SEND TO THIS ADDRESS/.test(b.textContent)); b.click(); b.click(); b.click(); });
   const g=await E.waitGate('A','eth_sendTransaction',8000); const n=(await E.toasts()).length;
-  await wReview(E,R2L()); const sh2=await wSheet(E); await pressSend(E); await sleep(800);
+  await wReview(E,R2L()); const sh2=await wSheet(E); await pressSend(E);
+  await E.until(async()=>(await toastsSince(E,n)).some(x=>/in your wallet now|still waiting/i.test(x)),6000);   /* gate (audit 5b fix; was sleep(800)) */
   const busy=(await toastsSince(E,n)).some(x=>/in your wallet now|still waiting/i.test(x));
-  await E.P('A').set({gate:{}}); await E.P('A').release('eth_sendTransaction'); await sleep(1500);
-  return {pass:g&&sh2&&busy&&(await reqs(E,'A','eth_sendTransaction'))===1&&(await E.sends()).length===1, ev:{gateHit:g,secondSheet:sh2,busy,requests:await reqs(E,'A','eth_sendTransaction'),toasts:await toastsSince(E,n)}}; },OWED);
+  await E.P('A').set({gate:{}}); await E.P('A').release('eth_sendTransaction'); const settled=await E.until(async()=>(await E.P('A').answered('eth_sendTransaction'))>=1&&(await E.sends()).length>=1,8000); await sleep(1500);   /* barrier: the held request answered; then an absence window (no second request) */
+  return {pass:g&&sh2&&busy&&settled&&(await reqs(E,'A','eth_sendTransaction'))===1&&(await E.sends()).length===1, ev:{gateHit:g,secondSheet:sh2,busy,requests:await reqs(E,'A','eth_sendTransaction'),toasts:await toastsSince(E,n)}}; },OWED);
 function R2L(){ return R2.toLowerCase(); }
 
 T('a5w5','account change between REVIEW and SEND, a network change before the hand-off, and DISCONNECT before the hand-off: nothing is sent',{wallets:[one('A')],ethereum:'A'},async E=>{
   const out={};
   /* a: another account after REVIEW */
   await connect(E); await wOpen(E); await wReview(E,R1L); await wSheet(E); await E.P('A').emit('accountsChanged',[A2]);
-  const moved=await E.until(async()=>/00bb/i.test(await E.label()),5000); const n=(await E.toasts()).length; await pressSend(E); await sleep(800);
+  const moved=await E.until(async()=>/00bb/i.test(await E.label()),5000); const n=(await E.toasts()).length; await pressSend(E); await E.until(async()=>(await toastsSince(E,n)).some(x=>NOTSENT.test(x)),6000);   /* gate (audit 5b fix; was sleep(800)) */
   out.account={moved,toasts:await toastsSince(E,n),est:await reqs(E,'A','eth_estimateGas'),send:await reqs(E,'A','eth_sendTransaction')};
   /* b: network change after the chain check, while gas is estimated */
   const X=await H.boot(WCFG,OWED); try{ await connect(X); await wOpen(X); await wReview(X,R1L); await wSheet(X); await X.P('A').set({gate:{eth_estimateGas:true}}); const m=(await X.toasts()).length; await pressSend(X);
@@ -348,10 +362,10 @@ T('a5w8','the button appears only while owed > 0: hidden at owed 0; shown once o
   const c=E.chain; c.values.owed=0n; await connect(E); await E.until(()=>E.page.evaluate(()=>!document.getElementById('nx-mine').hidden),6000); const atZero=await shown(E);
   c.values.owed=ethers.parseEther('0.05'); await E.page.evaluate(()=>refreshSeats()); const atOwed=await E.until(()=>shown(E),5000);
   await wOpen(E); await E.page.fill('#wtoAddr',R1L);
-  c.values.owed=0n; await E.P('A').emit('accountsChanged',[A2]); await E.until(async()=>/00bb/i.test(await E.label()),5000); await sleep(800);
+  c.values.owed=0n; await E.P('A').emit('accountsChanged',[A2]); await E.until(async()=>/00bb/i.test(await E.label()),5000); await E.until(async()=>!(await shown(E))&&await E.page.evaluate(()=>document.getElementById('wtoBox').hidden),5000);   /* gate (audit 5b fix; was sleep(800)) */
   const other={button:await shown(E),box:await E.page.evaluate(()=>({hidden:document.getElementById('wtoBox').hidden,value:document.getElementById('wtoAddr').value}))};
   c.values.owed=ethers.parseEther('0.05'); await E.page.evaluate(()=>refreshSeats()); const back=await E.until(()=>shown(E),5000);
-  await disconnectUI(E); await sleep(300); const afterDisc=await shown(E);
+  await disconnectUI(E); await E.until(async()=>!(await shown(E)),5000); const afterDisc=await shown(E);   /* gate (audit 5b fix; was sleep(300)) */
   return {pass:!atZero&&atOwed&&!other.button&&other.box.hidden&&other.box.value===''&&back&&!afterDisc, ev:{atZero,atOwed,otherAccount:other,back,afterDisconnect:afterDisc}}; });
 
 /* a5x3: the earnings copy says what the contract does: it TRIES to send in the same transaction; a wallet that cannot accept ETH keeps the
