@@ -1,0 +1,23 @@
+OK   control-release  {"rc":0,"status":"passed","mode":"release","completed":true,"identity":true,"runId":"20261102T063920Z-25490-33bb60","candidate":{"rev":"5b6257d","commit":"5b6257dd22c91b803b659e4052b0a24ffe90049d","repo":"/home/claude/wt-5b-final","file":"index.html","sha256":"a870ac02cad516c5fb436f29629986925648140aa7bee002bf1b990332ed3e0a","gitSha256":"a870ac02cad516c5fb436f29629986925648140aa7bee002bf1b990332ed3e0a","matchesStamp":true},"verifier":{"ok":"0 VERIFY WARN the harness is not its commit (not a git work tree (fatal: not a git repository (or any of the parent directories): .git)) | VER","strict":"1
+OK   control-subset-real  {"rc":0,"status":"passed","mode":"subset","executed":["st2"],"registered":42}
+OK   release-missing-case  {"rc":2,"status":"manifest-mismatch","missingIds":["staging.test.js:st32"],"ran":0}
+OK   release-missing-selftest-case  {"rc":2,"status":"manifest-mismatch","missingIds":["staging.test.js:stzmissing"],"ran":0}
+OK   release-unexpected-case  {"rc":2,"status":"manifest-mismatch","unlistedIds":["staging.test.js:st99"],"ran":0}
+OK   duplicate-case  {"rc":2,"status":"registration-error","results":true}
+OK   release-malformed-manifest  {"rc":2,"status":"manifest-mismatch","duplicateIds":["st1 (staging.test.js, staging.test.js)"],"malformedIds":["staging.test.js: \"bad id!\""]}
+OK   release-with-cases  {"rc":2,"status":"selection-error","ran":0}
+OK   initial-write-fails  {"rc":1,"file":{"status":"harness-failure","completed":false,"persistence":{"ok":false,"snapshots":2,"failures":[{"snapshot":1,"at":"2026-11-02T06:39:44.254Z","msg":"EIO: injected by selftest-fault.js, write #1"}],"file":"/tmp/sg-selftest-fLE3Gn/out-w1/results-sg-w1.json","previous":null}},"noCaseRan":true}
+OK   intermediate-write-fails  {"rc":1,"status":"failed","persistence":{"ok":false,"snapshots":5,"failures":[{"snapshot":3,"at":"2026-11-02T06:39:47.551Z","msg":"EIO: injected by selftest-fault.js, write #3"}],"file":"/tmp/sg-selftest-fLE3Gn/out-w3/results-sg-w3.json","previous":null}}
+OK   final-write-fails  {"rc":1,"status":"running","completed":false,"exit":null}
+OK   previous-success-then-failed-run  {"first":{"rc":0,"runId":"20261102T063955Z-26956-22a0e8"},"second":{"rc":1,"runId":"20261102T063958Z-27122-d96fe4","status":"running","completed":false},"previousKeptAs":"results-sg-prev.prev-20261102T063955Z-26956-22a0e8.json","previousStatus":"passed","third":{"rc":1,"currentFile":{"runId":"20261102T064001Z-27288-942dcb","status":"harness-failure"}}}
+OK   previous-success-then-all-writes-fail  {"first":{"rc":0,"runId":"20261102T064002Z-27304-c10dd2"},"second":{"rc":1,"currentFile":"absent","noCaseRan":true},"previousKept":true}
+OK   hung-case  {"rc":1,"status":"failed","hang":{"exception":"case watchdog: no result after 5000 ms","timedOut":true},"ms":7824}
+OK   hung-cleanup  {"rc":1,"status":"failed","c":{"contextsDidNotClose":true,"cleanupTimedOut":true},"ms":8498}
+OK   run-watchdog  {"rc":1,"status":"interrupted","interruptedBy":"run watchdog 15000 ms","running":"stzhang","ms":15301}
+OK   launch-fails  {"rc":1,"status":"harness-failure","results":true}
+OK   browser-dies  {"rc":1,"status":"incomplete","failed":["stzkill"],"unexecuted":["stzlast"]}
+OK   node-rejection  {"rc":1,"status":"failed","c":{"unhandledRejection":["Error: stz node rejection\n    at Object.run (/tmp/sg-selftest-fLE3Gn/root/tools/stormglass/staging/zz_sgselftest.js:14:101)\n    at /tmp/sg-selftest-fLE3Gn/root/tools/stormglass/wallet-tests/runner.js:"]}}
+OK   second-context-page-rejection  {"rc":1,"status":"failed","c":{"failedOnPageErrors":["Error: stz second-context rejection"]},"contexts":2}
+OK   sigterm  {"rc":143,"status":"interrupted","exitCode":143,"interruptedBy":"SIGTERM","running":"stzhang"}
+OK   sigint  {"rc":130,"status":"interrupted","exitCode":130,"interruptedBy":"SIGINT","running":"stzhang"}
+SELFTEST-STAGING 22/22 passed (temp tree removed)

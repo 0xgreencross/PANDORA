@@ -1,0 +1,3271 @@
+{
+ "schema": "stormglass-wallet-results/2",
+ "suite": "staging",
+ "runId": "20261102T062653Z-13538-ede62e",
+ "label": "release-staging-04ddf49",
+ "mode": "release",
+ "status": "passed",
+ "completed": true,
+ "exit": 0,
+ "exitCode": 0,
+ "startedAt": "2026-11-02T06:26:53.435Z",
+ "finishedAt": "2026-11-02T06:38:42.762Z",
+ "interruptedBy": null,
+ "target": {
+  "path": "/home/claude/wt-5b-final/test-wallet.html",
+  "bytes": 365040,
+  "sha256": "47d1aec0959941862ebb4140502e1038134cf2bc409ac6eebe7b09e5dff7e6e1",
+  "source": {
+   "commit": "04ddf4932e791667747791105a4af15e6a450d49",
+   "repo": "/home/claude/wt-5b-final",
+   "path": "test-wallet.html",
+   "blob": "9ba3901ce7e39560b6569b29e46273ef2867a341",
+   "headBlob": "9ba3901ce7e39560b6569b29e46273ef2867a341",
+   "matchesHead": true,
+   "reason": null
+  },
+  "sha256AtEnd": "47d1aec0959941862ebb4140502e1038134cf2bc409ac6eebe7b09e5dff7e6e1"
+ },
+ "harness": {
+  "dir": "tools/stormglass",
+  "commit": "04ddf4932e791667747791105a4af15e6a450d49",
+  "tree": "7682169556a3b5c47f3f19aff4e6ce256a06a2c6",
+  "trees": {
+   "staging": "038e9d90be47977df9ab97cd8bb0aa750ead7ff7",
+   "wallet-tests": "9ff9e27029a928e33b27e73627eacc9ef0c108db"
+  },
+  "dirty": [],
+  "reason": null,
+  "files": {
+   "staging/policy.js": "c5492b2cee3ba1b6d73c5ed405806cb1910d87b3b1abed2e5921c1f307db798a",
+   "staging/staging.test.js": "c16ccf35022f85a4f6e5564f782fd6e09bf02ef8e40436f3c12102d16c0c9d3b",
+   "wallet-tests/fakechain.js": "2740ff568068e328bb482300f8447d15e24e98b32c6341d2d3efaa44cf6b47cf",
+   "wallet-tests/mockwallet.js": "037a13e3a0e0738a5701b2dfcc18d997ba0829bdd1d9897f14e126162c5222df",
+   "wallet-tests/runner.js": "ee25099c31aeec20ad47c983dda2c378b503cb936a6b061b8d8ad150999dbd7f",
+   "wallet-tests/wallet.test.js": "f9c0d8d965af41ab3bd6ad25606ea2cdb6606d24f388c32a1e56b13c4845d3ed"
+  },
+  "contentSha256": "c4405dbb79fd1da7569ca4f9e0d30dc7fa68d82e8e083ac0802b235267e745bd"
+ },
+ "deps": {
+  "node": "v22.22.0",
+  "playwright": {
+   "version": "1.64.0",
+   "path": "/home/claude/node_modules/playwright"
+  },
+  "ethers": {
+   "version": "6.13.2",
+   "path": "/home/claude/node_modules/ethers"
+  },
+  "ethersUmd": {
+   "path": "/home/claude/node_modules/ethers/dist/ethers.umd.min.js",
+   "sha256": "74e00c3e2a9ccd312e6d5154f9ccb0911d1b34cb49bc8220244a292a0a773c21"
+  },
+  "chromium": "141.0.7390.37",
+  "chromiumPath": "/opt/pw-browsers/chromium"
+ },
+ "env": {
+  "CASES": null,
+  "RELEASE": "1",
+  "CASE_TIMEOUT_MS": 480000,
+  "CLEANUP_TIMEOUT_MS": 30000,
+  "RUN_TIMEOUT_MS": 3500000,
+  "NODE_OPTIONS": "--use-openssl-ca",
+  "OUT": "/home/claude/audit5b/ev/final",
+  "PORT": "8961",
+  "STAGING_PAGE": null,
+  "cwd": "/home/claude/wt-5b-final"
+ },
+ "manifest": {
+  "file": "/home/claude/wt-5b-final/tools/stormglass/staging/manifest.json",
+  "sha256": "1767cdd482247bb0f3f405db61402e7fe25c18cdbd1b975629dbf897c118c83f",
+  "malformedIds": [],
+  "duplicateIds": [],
+  "missingModules": [],
+  "unlistedModules": [],
+  "modulesWithoutCases": [],
+  "missingIds": [],
+  "unlistedIds": [],
+  "wrongGroup": [],
+  "expected": 42,
+  "registered": 42,
+  "ok": true
+ },
+ "registered": 42,
+ "groups": {
+  "@staging": 42
+ },
+ "selected": [
+  "st1",
+  "st2",
+  "st3",
+  "st4",
+  "st5",
+  "st6",
+  "st7",
+  "st8",
+  "st9",
+  "st10",
+  "st11",
+  "st12",
+  "st14",
+  "st15",
+  "st13",
+  "st16",
+  "st17",
+  "st18",
+  "st19",
+  "st20",
+  "st21",
+  "st22",
+  "st23",
+  "st24",
+  "st25",
+  "st26",
+  "st27",
+  "st28",
+  "st29",
+  "st30",
+  "st31",
+  "st32",
+  "st33",
+  "st34",
+  "st35",
+  "st36",
+  "st37",
+  "st38",
+  "st39",
+  "st40",
+  "st41",
+  "st42"
+ ],
+ "executed": [
+  "st1",
+  "st2",
+  "st3",
+  "st4",
+  "st5",
+  "st6",
+  "st7",
+  "st8",
+  "st9",
+  "st10",
+  "st11",
+  "st12",
+  "st14",
+  "st15",
+  "st13",
+  "st16",
+  "st17",
+  "st18",
+  "st19",
+  "st20",
+  "st21",
+  "st22",
+  "st23",
+  "st24",
+  "st25",
+  "st26",
+  "st27",
+  "st28",
+  "st29",
+  "st30",
+  "st31",
+  "st32",
+  "st33",
+  "st34",
+  "st35",
+  "st36",
+  "st37",
+  "st38",
+  "st39",
+  "st40",
+  "st41",
+  "st42"
+ ],
+ "passed": [
+  "st1",
+  "st2",
+  "st3",
+  "st4",
+  "st5",
+  "st6",
+  "st7",
+  "st8",
+  "st9",
+  "st10",
+  "st11",
+  "st12",
+  "st14",
+  "st15",
+  "st13",
+  "st16",
+  "st17",
+  "st18",
+  "st19",
+  "st20",
+  "st21",
+  "st22",
+  "st23",
+  "st24",
+  "st25",
+  "st26",
+  "st27",
+  "st28",
+  "st29",
+  "st30",
+  "st31",
+  "st32",
+  "st33",
+  "st34",
+  "st35",
+  "st36",
+  "st37",
+  "st38",
+  "st39",
+  "st40",
+  "st41",
+  "st42"
+ ],
+ "failed": [],
+ "timedOut": [],
+ "cleanupTimedOut": [],
+ "unexecuted": [],
+ "running": null,
+ "harnessFailures": [],
+ "persistence": {
+  "ok": true,
+  "snapshots": 45,
+  "failures": [],
+  "file": "/home/claude/audit5b/ev/final/results-release-staging-04ddf49.json",
+  "previous": null
+ },
+ "cases": [
+  {
+   "id": "st1",
+   "name": "boots in SIMULATION by default: TEST banner, revision = build stamp of index.html, noindex, TEST title, mock (real) wallets invisible, no request leaves the page",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 2687,
+   "ev": {
+    "want": {
+     "rev": "5b6257d",
+     "revHasThisIndex": true,
+     "sha": "a870ac02cad516c5"
+    },
+    "got": {
+     "mode": "sim",
+     "stamp": {
+      "rev": "5b6257d",
+      "sha256": "a870ac02cad516c5fb436f29629986925648140aa7bee002bf1b990332ed3e0a",
+      "src": "index.html",
+      "touched": "5b6257d"
+     },
+     "banner": "TEST BUILDSIMULATIONSIMULATIONFAST CLOCKcandidate 5b6257d · sha256 a870ac02cad5CONTROLSMODE",
+     "bannerVisible": true,
+     "title": "TEST BUILD · STORMGLASS staging (not the live site)",
+     "robots": [
+      "noindex,nofollow"
+     ],
+     "rev": "5b6257d",
+     "shaShown": "a870ac02cad5",
+     "wallets": [
+      "sim.staging.alpha",
+      "sim.staging.alpha-twin",
+      "sim.staging.beta",
+      "sim.staging.asleep"
+     ],
+     "ethIsSim": true,
+     "panel": "DAY 13 · ON SALE · CLOSES IN 20:59:590.7063 ETH · FALLINGTHE",
+     "hits": 3
+    },
+    "leaks": {
+     "outside": [],
+     "chain": {},
+     "sockets": []
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st2",
+   "name": "SIMULATION: the picker lists the live simulated wallets (twins told apart, the asleep one left off); COLLECT shows the simulated wallet screen; CONFIRMED is tracked by the page’s own trackTx on the simulated readers",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 9318,
+   "ev": {
+    "btns": [
+     "SIM ALPHA · 1",
+     "SIM ALPHA · 2",
+     "SIM BETA (ON BASE)"
+    ],
+    "modal": "SIMULATED WALLET · CONFIRMATION SCREENThis stands in for the wallet’s own confirmation screen (SIM ALPHA). Choose what the wallet and the chain do.INTENDED CHAI",
+    "ok": true,
+    "pop": "[OK] DAY 13 IS YOURSPLATE#13THE GLASSOPEN ↗YOUR SEATS NOW…CLOSE",
+    "receiptReads": [
+     0,
+     2
+    ],
+    "txs": [
+     {
+      "hash": "0x54a2e4cd047b0cb3a8036fb37bda5f6bd1127e15026ec00baf741991d3d5621e",
+      "from": "0x0000000000000000000000000000000000000a11",
+      "to": "0xcf5eba884efa04940d31a663beb6d37f907d064c",
+      "value": "774809651809298949",
+      "data": "0xe90bc7b1000000000000000000000000000000000000000000000000000000000000000d0000000000000000000000000000000000000000000000000000000000000003",
+      "action": "buy",
+      "state": "confirmed",
+      "outcome": "confirmed",
+      "by": null,
+      "mode": "simulated",
+      "replaces": null,
+      "why": null,
+      "unrelated": false,
+      "nonce": 7
+     }
+    ],
+    "sold": false
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st3",
+   "name": "SIMULATION: confirmed, sped up, reverted, cancelled, replaced, unknown, rejected, wallet error each give the production wording; pending holds until resolved, then confirms (late)",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 33888,
+   "ev": {
+    "res": [
+     {
+      "o": "confirmed",
+      "ok": true,
+      "last": "Your witness payment: confirmed"
+     },
+     {
+      "o": "sped",
+      "ok": true,
+      "last": "Your witness payment: confirmed (sped up in your wallet)"
+     },
+     {
+      "o": "reverted",
+      "ok": true,
+      "last": "Your witness payment: sent, but it failed on Ethereum (reverted). Only"
+     },
+     {
+      "o": "cancelled",
+      "ok": true,
+      "last": "Your witness payment: cancelled in your wallet after it was sent. It d"
+     },
+     {
+      "o": "replaced",
+      "ok": true,
+      "last": "Your witness payment: your wallet replaced it with another transaction"
+     },
+     {
+      "o": "unknown",
+      "ok": true,
+      "last": "Your witness payment: sent (0x3b87…3d6b), but this page cannot confirm"
+     },
+     {
+      "o": "rejected",
+      "ok": true,
+      "last": "Cancelled in your wallet. Nothing was sent."
+     },
+     {
+      "o": "error",
+      "ok": true,
+      "last": "Your wallet did not say whether it sent this. Check your wallet’s acti"
+     }
+    ],
+    "pending": {
+     "sent": true,
+     "held": true,
+     "late": true
+    },
+    "readerHits": {
+     "eth_call": 236,
+     "eth_blockNumber": 22,
+     "eth_getBlockByNumber": 14,
+     "eth_getTransactionReceipt": 20,
+     "eth_getTransactionByHash": 7,
+     "eth_getTransactionCount": 14
+    },
+    "replacements": [
+     "0xcf5eba witness",
+     "0x000000 witness",
+     "0xcf5eba withdraw"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st4",
+   "name": "SIMULATION: the COLLECT dialog shows pending, NOT COLLECTED after a revert and the unknown view; a second COLLECT while the wallet screen is open only says so",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 13249,
+   "ev": {
+    "busy": true,
+    "pending": "PENDINGSent. Waiting for Ethereum to confirm.0x64d2…b9b8 ↗",
+    "failed": "[!!] NOT COLLECTEDIt reached Ethereum but failed (reverted). Only the network fee was spen",
+    "unknown": "[??] RESULT UNKNOWNYour wallet sent it, but this page cannot confirm the result yet. It keeps checking. Look it up befor",
+    "sends": 3
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st5",
+   "name": "SIMULATION: wallet on Base: switch refused sends nothing; switch accepted sends once on mainnet",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 8780,
+   "ev": {
+    "wrongLabel": "0x0000…0B01 · [!] NOT MAINNET",
+    "s1": 0,
+    "s2": 1,
+    "chain": "0x1",
+    "switches": [
+     "refused",
+     "ok"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st6",
+   "name": "SIMULATION: account change in the wallet, the wallet disconnecting, DISCONNECT, and a simulated day rollover reach the page",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 9541,
+   "ev": {
+    "l0": "0x0000…0a11",
+    "l1": "0x0000…0A12",
+    "l2": "CONNECT",
+    "l3": "CONNECT",
+    "revoke": true,
+    "days": [
+     13,
+     14
+    ],
+    "panel": "DAY 14 · ON SALE · CLOSES IN 23:58:591.6"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st7",
+   "name": "REAL WALLET: connect asks first (gate), then reaches the wallet; account change and DISCONNECT (revocation) work; only allowlisted methods reach the wallet",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 3578,
+   "ev": {
+    "gate": true,
+    "l0": "0x0000…00AA",
+    "l1": "0x0000…00bb",
+    "methods": [
+     "eth_chainId",
+     "eth_requestAccounts",
+     "eth_accounts",
+     "wallet_revokePermissions"
+    ],
+    "bad": [],
+    "before": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st8",
+   "name": "REAL WALLET: COLLECT / WITNESS / CLAIM / personal_sign / eth_signTypedData_v4 / wallet_sendCalls never reach the wallet; the intercept panel shows chain, sender, target, value, decoded call; the chosen result is tracked by the page",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 12065,
+   "ev": {
+    "panel": {
+     "INTENDED CHAIN": "1 · Ethereum mainnet",
+     "WALLET IS ON": "1 · Ethereum mainnet",
+     "SENDER": "0x00000000000000000000000000000000000000aa",
+     "TARGET": "0xcf5eba884efa04940d31a663beb6d37f907d064c  (the STORMGLASS contract)",
+     "VALUE": "0.774996152420137707 ETH",
+     "ACTION": "buy(arg0: 13, arg1: 3)",
+     "GAS LIMIT": "360000"
+    },
+    "c": [
+     true,
+     true,
+     true
+    ],
+    "sig": {
+     "personal_sign": "refused 4001",
+     "eth_signTypedData_v4": "refused 4001",
+     "wallet_sendCalls": "refused 4001",
+     "eth_sign": "refused 4001",
+     "foo_bar": "refused 4200"
+    },
+    "reached": [],
+    "walletMethods": [
+     "eth_chainId",
+     "eth_requestAccounts",
+     "eth_accounts"
+    ],
+    "txs": [
+     "buy confirmed",
+     "witness reverted"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st9",
+   "name": "REAL WALLET: a late-announced provider, window.ethereum, providers[] and a WalletConnect provider are all wrapped; writes through each stop at the wrapper; WalletConnect’s own request paths refuse writes too",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 4537,
+   "ev": {
+    "wrapped": {
+     "wallets": [
+      true
+     ],
+     "list": [
+      true,
+      true
+     ],
+     "choices": [
+      true,
+      true,
+      true
+     ],
+     "eth": true,
+     "providers": [
+      true,
+      true
+     ],
+     "wc": true,
+     "wcNSwrapped": true,
+     "lateListed": true,
+     "sameObject": true,
+     "rawLeak": false
+    },
+    "tries": {
+     "late": "refused 4001",
+     "eth": "refused 4001",
+     "providersB": "refused 4001",
+     "wc": "refused 4001",
+     "wcRawRequest": "refused 4001",
+     "wcRawSign": "refused 4001"
+    },
+    "reached": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st10",
+   "name": "switching modes reloads clean: no provider, account or pending operation crosses; the simulated storage is cleared; real wallets never reach SIMULATION",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 9642,
+   "ev": {
+    "simBefore": {
+     "txs": 1,
+     "simKeys": 1
+    },
+    "inReal": {
+     "EP": true,
+     "me": true,
+     "OPLOCK": true,
+     "txs": 0,
+     "simKeys": 0,
+     "wallets": [
+      true
+     ],
+     "rdns": [
+      "test.a"
+     ],
+     "url": "?sgmode=real",
+     "label": "CONNECT"
+    },
+    "mockAskedInReal": [],
+    "inSim": {
+     "EP": true,
+     "txs": 0,
+     "rdns": [
+      "sim.staging.alpha",
+      "sim.staging.alpha-twin",
+      "sim.staging.beta",
+      "sim.staging.asleep"
+     ],
+     "eth": false,
+     "label": "CONNECT"
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st11",
+   "name": "index.html is byte-identical before and after the build and carries no staging mark or link; test-wallet.html = build(index.html)",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 1405,
+   "ev": {
+    "sha": "a870ac02cad516c5",
+    "unchanged": true,
+    "sameAsCommitted": true,
+    "check": "STAGING CHECK OK test-wallet.html = build(index.html) · git 5b6257d · sha256 a870ac02cad516c5fb436f29629986925648140aa7b",
+    "marks": [],
+    "link": false,
+    "gitClean": "",
+    "build": "STAGING BUILD OK ../audit5b/ev/final/st11-test-wallet.html from index.html · git 5b6257d · sha256 a8"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st12",
+   "name": "SIMULATION on a phone: the simulated WalletConnect pairs, collects (confirmed) and follows the phone ending the session; the real WalletConnect bundle never loads",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 9916,
+   "ev": {
+    "pair": true,
+    "conn": true,
+    "ok": true,
+    "gone": true,
+    "wcjs": false,
+    "sockets": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st14",
+   "name": "REAL WALLET on Base: a WITNESS asks before the network switch; CANCEL on the staging gate asks the wallet nothing and sends nothing; ASK MY WALLET forwards the switch, then the payment is intercepted",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 7956,
+   "ev": {
+    "gate": "REAL WALLET · THIS WILL OPEN YOUR WALLETYour wallet (Mock A) will now ask to switch to Eth",
+    "switches": [
+     0,
+     0,
+     1
+    ],
+    "afterCancel": "Your wallet is on another network. Switch it to Ethereum mainnet. Nothing was sent.",
+    "ok": true,
+    "reached": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st15",
+   "name": "REAL WALLET on a phone via WalletConnect: pairing waits for the staging gate; a COLLECT stops at the wrapper (the phone wallet is never asked); DISCONNECT ends the session",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 11292,
+   "ev": {
+    "gate": true,
+    "enables0": 0,
+    "conn": true,
+    "ok": true,
+    "gone": true,
+    "w": {
+     "enables": 1,
+     "disconnects": 1,
+     "init": true,
+     "wrapped": true
+    },
+    "walletMethods": [
+     "eth_requestAccounts",
+     "eth_chainId",
+     "eth_accounts"
+    ],
+    "reached": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st13",
+   "name": "the build refuses a changed index.html: a moved EIP-6963 anchor, an unclassified wallet method, an ethereum read it does not tap, a doubled anchor; the earlier candidates f9a6f80 and 553222a still build",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 1248,
+   "ev": {
+    "moved6963": {
+     "rc": 1,
+     "msg": "STAGING BUILD FAIL anchor \"EIP-6963 announcement listener: the detail goes through __SG.detail() (provider tap)\" found 0 times (expected exactly 1): i"
+    },
+    "method": {
+     "rc": 1,
+     "msg": "STAGING BUILD FAIL index.html uses wallet/RPC methods the staging policy does not classify: wallet_disconnect (classify them in tools/stormglass/stagi"
+    },
+    "untapped": {
+     "rc": 1,
+     "msg": "STAGING BUILD FAIL an ethereum provider is read in a way the build does not tap: globalThis['ethereum']"
+    },
+    "doubled": {
+     "rc": 1,
+     "msg": "STAGING BUILD FAIL @walletconnect/ethereum-provider appears 2 times (expected 1: _wcGlobal)"
+    },
+    "f9a6f80": {
+     "rc": 0,
+     "msg": "STAGING BUILD OK ../audit5b/ev/final/st13/f9a6f80.out.html from ../audit5b/ev/final/st13/f"
+    },
+    "c553222a": {
+     "rc": 0,
+     "msg": "STAGING BUILD OK ../audit5b/ev/final/st13/553222a.out.html from ../audit5b/ev/final/st13/5"
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st16",
+   "name": "SCENARIO 1 from CONTROLS: the simulated wallet answers the final check 0x1, then announces Base (and back) before the page sends: COLLECT and WITNESS stop with the changed-network message; the wallet log has no eth_sendTransaction",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 8788,
+   "ev": {
+    "armed": "base-back",
+    "collect": {
+     "pop": "[!!] NOT COLLECTEDYour wallet changed network while this was waiting. Nothing was sent.BACK",
+     "toasts": [
+      "Collecting the plate: confirm in your wallet",
+      "Your wallet changed network while this was waiting. Nothing was sent."
+     ],
+     "label": "0x0000…0a11",
+     "event": [
+      "[\"0x2105\",\"0x1\"]"
+     ]
+    },
+    "witness": {
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your wallet changed network while this was waiting. Nothing was sent."
+     ],
+     "label": "0x0000…0a11 · [!] NOT MAINNET"
+    },
+    "fired": 2,
+    "estimates": 2,
+    "sendTransaction": 0
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st17",
+   "name": "SCENARIO 2 from CONTROLS: wallet on Base, COLLECT, the switch is accepted, the purchase goes on mainnet and is confirmed (one switch, one send, chainId 0x1)",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 9226,
+   "ev": {
+    "w0": {
+     "id": "ALPHA",
+     "name": "SIM ALPHA",
+     "chainId": "0x2105",
+     "account": "0x0000000000000000000000000000000000000a11",
+     "authorized": false,
+     "switch": "accept",
+     "connect": "approve",
+     "delay": 0,
+     "asleep": false,
+     "lastChain": "off",
+     "fired": 0
+    },
+    "lab0": "0x0000…0a11 · [!] NOT MAINNET",
+    "wrongView": "[!!] YOUR WALLET IS ON ANOTHER NETWORKYour wallet is on another network. Switch ",
+    "modal": "SIMULATED WALLET · CONFIRMATION SCREENThis stands in for the wallet’s own confirmation screen (SIM ALPHA). Choose what the wallet and the chain do.INTENDED CHAIN1 · Ethereum mainnetWALLET IS ON1 · Eth",
+    "ok": true,
+    "pop": "[OK] DAY 13 IS YOURSPLATE#13THE GLASSOPEN ↗YOUR SEATS NOW2.0",
+    "order": [
+     12,
+     21
+    ],
+    "send": [
+     "[{\"chainId\":\"0x1\",\"gas\":\"0x57e40\",\"value\":\"0xac0ad45f0a32a05\",\"from\":\"0x0000000000000000…"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st18",
+   "name": "SCENARIO 3 from CONTROLS (phone, simulated WalletConnect): an earlier request’s event, a foreign session’s and an old session topic while the CONFIRM sheet is open never reach OPEN; the held deep link is in the log; only this request’s own event gives requestId+sessionTopic",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 33509,
+   "ev": {
+    "conn": true,
+    "pairLink": "https://link.zerion.io/wc?uri=wc%3A000000000000000",
+    "r1": {
+     "sheet": "\n  CONFIRM IN ZERION\n  Sending the reque",
+     "ms": 1447,
+     "said": "The request is in ZERION now. Open it, check it, confirm or ",
+     "link": "https://link.zerion.io/wc?requestId=1793600981535001&sessionTopic=simtopic1xc11de4edc93038d8fb8f055a231bace069e47535fbe7e7c0ffb4ab",
+     "own": {
+      "id": 1793600981535001,
+      "topic": "simtopic1xc11de4edc93038d8fb8f055a231bace069e47535fbe7e7c0ffb4ab",
+      "method": "eth_sendTransaction"
+     },
+     "earlier": []
+    },
+    "r2": {
+     "sheet": "\n  CONFIRM IN ZERION\n  Sending the reque",
+     "ms": 6705,
+     "said": "No word yet that the request reached ZERION. Open ZERION and",
+     "link": "https://link.zerion.io/wc",
+     "own": {
+      "id": 1793600985467002,
+      "topic": "simtopic1xc11de4edc93038d8fb8f055a231bace069e47535fbe7e7c0ffb4ab",
+      "method": "eth_sendTransaction"
+     },
+     "earlier": [
+      1793600981535001
+     ]
+    },
+    "r3": {
+     "sheet": "\n  CONFIRM IN ZERION\n  Sending the reque",
+     "ms": 7983,
+     "said": "No word yet that the request reached ZERION. Open ZERION and",
+     "link": "https://link.zerion.io/wc",
+     "own": {
+      "id": 1793600995950004,
+      "topic": "simtopic1xc11de4edc93038d8fb8f055a231bace069e47535fbe7e7c0ffb4ab",
+      "method": "eth_sendTransaction"
+     },
+     "earlier": [
+      1793600981535001,
+      1793600985467002
+     ]
+    },
+    "events": [
+     "an earlier request’s event (same contents, another params array)",
+     "this request’s own event (after the other one)",
+     "an EARLIER request’s event (id 1793600981535001)",
+     "a FOREIGN session’s request",
+     "this request under an OLD session topic"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st19",
+   "name": "SCENARIO 4 from CONTROLS: valid receipts confirm; a malformed first-reader receipt (wrong hash, no status, a block before the send) is skipped and the fallback reader’s valid receipt decides (confirmed, and reverted when the chain says so)",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 25567,
+   "ev": {
+    "res": [
+     {
+      "mode": "valid",
+      "ok": true,
+      "set": "valid",
+      "wrongVerdict": false,
+      "answers": []
+     },
+     {
+      "mode": "first-hash",
+      "ok": true,
+      "set": "first-hash",
+      "wrongVerdict": false,
+      "answers": [
+       "ethereum-rpc.publicnode.com: MALFORMED receipt (transactionHash is an",
+       "rpc.mevblocker.io: VALID receipt (status 0x1)"
+      ]
+     },
+     {
+      "mode": "first-status",
+      "ok": true,
+      "set": "first-status",
+      "wrongVerdict": false,
+      "answers": [
+       "rpc.mevblocker.io: MALFORMED receipt (no status field)",
+       "eth.drpc.org: VALID receipt (status 0x0)"
+      ]
+     },
+     {
+      "mode": "first-block",
+      "ok": true,
+      "set": "first-block",
+      "wrongVerdict": false,
+      "answers": [
+       "eth.drpc.org: MALFORMED receipt (blockNumber 0x1, befo",
+       "ethereum-rpc.publicnode.com: VALID receipt (status 0x1)"
+      ]
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st20",
+   "name": "SCENARIO 4 from CONTROLS: ALL READERS INVALID with the FAST CLOCK (staging only, shown in the banner): the payment stays pending, says cannot confirm at 20 s and RESULT UNKNOWN to the end (45 s), never confirmed or reverted; NORMAL restores the page’s deadlines",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 60437,
+   "ev": {
+    "page": {
+     "poll": 3000,
+     "lost": 600000,
+     "stop": 3600000
+    },
+    "fast": {
+     "track": {
+      "poll": 1500,
+      "lost": 20000,
+      "stop": 45000
+     },
+     "set": [
+      "all",
+      "fast"
+     ],
+     "chip": true
+    },
+    "pend": "PENDINGSent. Waiting for Ethereum to confirm.0xc49c…c6e6 ↗",
+    "msLost": 20276,
+    "unk": "[??] RESULT UNKNOWNYour wallet sent it, but this page cannot confirm the result ",
+    "msStop": 45592,
+    "receiptAnswers": [
+     72,
+     162,
+     162
+    ],
+    "hosts": [
+     "reader ethereum-rpc.publicnode.com",
+     "reader rpc.mevblocker.io",
+     "reader eth.drpc.org"
+    ],
+    "allBad": true,
+    "verdict": false,
+    "pop": "[??] RESULT UNKNOWNYour wallet sent it, but this page cannot",
+    "back": {
+     "track": {
+      "poll": 3000,
+      "lost": 600000,
+      "stop": 3600000
+     },
+     "chip": true
+    },
+    "cannot": 2
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st21",
+   "name": "REAL WALLET: every method literal in index.html is classified (no overlap between forwarded and write/sign); a malformed first reader then a valid one confirms an intercepted COLLECT; the external wallet receives only allowlisted methods (no write, no signature); session is a frozen copy on the WalletConnect wrapper",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 7757,
+   "ev": {
+    "methods": [
+     "eth_accounts",
+     "eth_blobBaseFee",
+     "eth_blockNumber",
+     "eth_call",
+     "eth_chainId",
+     "eth_getBlockByNumber",
+     "eth_getTransactionByHash",
+     "eth_getTransactionCount",
+     "eth_getTransactionReceipt",
+     "eth_requestAccounts",
+     "eth_sendTransaction",
+     "eth_signTypedData_v4",
+     "personal_sign",
+     "wallet_addEthereumChain",
+     "wallet_revokePermissions",
+     "wallet_switchEthereumChain"
+    ],
+    "forwarded": [
+     "eth_accounts",
+     "eth_requestAccounts",
+     "eth_chainId",
+     "wallet_switchEthereumChain",
+     "wallet_revokePermissions",
+     "eth_blockNumber",
+     "eth_call",
+     "eth_getBlockByNumber",
+     "eth_getLogs",
+     "eth_getTransactionReceipt",
+     "eth_getTransactionByHash"
+    ],
+    "overlap": [],
+    "unclassified": [],
+    "ok": true,
+    "receipts": [
+     "reader ethereum-rpc.publicnode.com answered a MALFORMED receipt (",
+     "reader rpc.mevblocker.io answered the VALID receipt (st"
+    ],
+    "wc": [
+     {
+      "wrapped": true,
+      "raw": false,
+      "before": true
+     },
+     {
+      "topic": "t0pic",
+      "name": "Phone",
+      "native": "phone://",
+      "frozen": true,
+      "secret": false,
+      "notRaw": true,
+      "wrote": false
+     }
+    ],
+    "walletReceived": [
+     "eth_chainId",
+     "eth_requestAccounts",
+     "eth_accounts"
+    ],
+    "bad": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st22",
+   "name": "test-wallet.html minus the documented patches (head insert, title, style, banner, the three provider taps) is index.html byte for byte; the build prints the same patch list",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 1070,
+   "ev": {
+    "same": true,
+    "firstDiff": null,
+    "marks": [],
+    "undo": [
+     {
+      "label": "head insert (generated comment, robots noindex, staging runtime script)",
+      "n": 1
+     },
+     {
+      "label": "title",
+      "n": 1
+     },
+     {
+      "label": "stage.css before </head>",
+      "n": 1
+     },
+     {
+      "label": "banner after <body>",
+      "n": 1
+     },
+     {
+      "label": "EIP-6963 detail tap",
+      "n": 1
+     },
+     {
+      "label": "WalletConnect namespace tap",
+      "n": 1
+     },
+     {
+      "label": "window.ethereum taps",
+      "n": 11
+     }
+    ],
+    "patches": [
+     {
+      "label": "every window.ethereum read becomes __SG.eth() (provider tap)",
+      "count": 11,
+      "added": -55,
+      "anchor": "window.ethereum"
+     },
+     {
+      "label": "EIP-6963 announcement listener: the detail goes through __SG.detail() (provider tap)",
+      "count": 1,
+      "added": 13,
+      "anchor": "window.addEventListener('eip6963:announceProvider',e=>{ const d=e&&e.detail;"
+     },
+     {
+      "label": "WalletConnect namespace (_wcGlobal) goes through __SG.wcNS() (provider tap)",
+      "count": 1,
+      "added": 11,
+      "anchor": "const _wcGlobal=()=>globalThis['@walletconnect/ethereum-provider'];"
+     },
+     {
+      "label": "head start: generated-file comment, robots noindex,nofollow, the inline staging runtime (stage.js + policy.js)",
+      "count": 1,
+      "added": 105610,
+      "anchor": "<head><meta charset=\"utf-8\">"
+     },
+     {
+      "label": "title",
+      "count": 1,
+      "added": 27,
+      "anchor": "<title>DITHERVOID // STORMGLASS</title>"
+     },
+     {
+      "label": "head end: the staging stylesheet (stage.css)",
+      "count": 1,
+      "added": 6846,
+      "anchor": "</head>"
+     },
+     {
+      "label": "body start: the TEST BUILD banner",
+      "count": 1,
+      "added": 77,
+      "anchor": "<body>"
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st23",
+   "name": "SCENARIO 5 from CONTROLS: an unrelated transaction of the same sender (another hash; same, next or a lower, mined nonce) or an unusable answer from the first reader never makes the page say replaced, cancelled or confirmed: it stays pending, asks the next reader and then the wallet, and confirms from its own receipt; the log lists the readers asked",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 55407,
+   "ev": {
+    "rows": [
+     {
+      "n0": 0,
+      "mode": "other-same",
+      "wallet": false,
+      "set": [
+       "other-same",
+       false
+      ],
+      "sent": true,
+      "gate": true,
+      "rounds": true,
+      "readers": [
+       "ethereum-rpc.publicnode.com",
+       "rpc.mevblocker.io",
+       "eth.drpc.org"
+      ],
+      "readerAnswers": [
+       "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender (hash 0xefa9d5a8…, nonce 7)",
+       "rpc.mevblocker.io: answered ANOTHER transaction of the sender (hash 0xd925969a…, nonce 7)",
+       "eth.drpc.org: answered ANOTHER transaction of the sender (hash 0x4e0790e8…, nonce 7)"
+      ],
+      "walletAsks": [
+       "answered the VALID transaction (hash 0x13cbeb4d…, "
+      ],
+      "toasts": [
+       "Your witness payment: confirm in your wallet",
+       "Your witness payment: sent (0x13cb…112c), waiting for Ethere"
+      ],
+      "falseVerdict": false,
+      "waiting": true,
+      "pend": "pending",
+      "late": true
+     },
+     {
+      "n0": 3,
+      "mode": "other-next",
+      "wallet": false,
+      "set": [
+       "other-next",
+       false
+      ],
+      "sent": true,
+      "gate": true,
+      "rounds": true,
+      "readers": [
+       "ethereum-rpc.publicnode.com",
+       "rpc.mevblocker.io",
+       "eth.drpc.org"
+      ],
+      "readerAnswers": [
+       "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender (hash 0x769f3247…, nonce 9)",
+       "rpc.mevblocker.io: answered ANOTHER transaction of the sender (hash 0x49dc952d…, nonce 9)",
+       "eth.drpc.org: answered ANOTHER transaction of the sender (hash 0x1e3f7334…, nonce 9)"
+      ],
+      "walletAsks": [
+       "answered the VALID transaction (hash 0x6a75644a…, "
+      ],
+      "toasts": [
+       "Your witness payment: confirm in your wallet",
+       "Your witness payment: sent (0x6a75…3b5e), waiting for Ethere"
+      ],
+      "falseVerdict": false,
+      "waiting": true,
+      "pend": "pending",
+      "late": true
+     },
+     {
+      "n0": 6,
+      "mode": "other-mined",
+      "wallet": false,
+      "set": [
+       "other-mined",
+       false
+      ],
+      "sent": true,
+      "gate": true,
+      "rounds": true,
+      "readers": [
+       "ethereum-rpc.publicnode.com",
+       "rpc.mevblocker.io",
+       "eth.drpc.org"
+      ],
+      "readerAnswers": [
+       "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender, MINED (hash 0x838c315a…, n",
+       "rpc.mevblocker.io: answered ANOTHER transaction of the sender, MINED (hash 0x838c315a…, n",
+       "eth.drpc.org: answered ANOTHER transaction of the sender, MINED (hash 0x838c315a…, n"
+      ],
+      "walletAsks": [
+       "answered the VALID transaction (hash 0xd29c99dc…, "
+      ],
+      "toasts": [
+       "Your witness payment: confirm in your wallet",
+       "Your witness payment: sent (0xd29c…7bac), waiting for Ethere"
+      ],
+      "falseVerdict": false,
+      "waiting": true,
+      "pend": "pending",
+      "late": true
+     },
+     {
+      "n0": 9,
+      "mode": "other-mined",
+      "wallet": true,
+      "set": [
+       "other-mined",
+       true
+      ],
+      "sent": true,
+      "gate": true,
+      "rounds": true,
+      "readers": [
+       "ethereum-rpc.publicnode.com",
+       "rpc.mevblocker.io",
+       "eth.drpc.org"
+      ],
+      "readerAnswers": [
+       "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender, MINED (hash 0x000ace54…, n",
+       "rpc.mevblocker.io: answered ANOTHER transaction of the sender, MINED (hash 0x000ace54…, n",
+       "eth.drpc.org: answered ANOTHER transaction of the sender, MINED (hash 0x000ace54…, n",
+       "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender, MINED (hash 0x000ace54…, n"
+      ],
+      "walletAsks": [
+       "answered ANOTHER transaction of the sender, MINED ",
+       "answered ANOTHER transaction of the sender, MINED "
+      ],
+      "toasts": [
+       "Your witness payment: confirm in your wallet",
+       "Your witness payment: sent (0xc921…0a74), waiting for Ethere"
+      ],
+      "falseVerdict": false,
+      "waiting": true,
+      "pend": "pending",
+      "late": true
+     },
+     {
+      "n0": 12,
+      "mode": "first-other",
+      "wallet": false,
+      "set": [
+       "first-other",
+       false
+      ],
+      "sent": true,
+      "gate": true,
+      "rounds": true,
+      "readers": [
+       "ethereum-rpc.publicnode.com",
+       "rpc.mevblocker.io"
+      ],
+      "readerAnswers": [
+       "ethereum-rpc.publicnode.com: answered ANOTHER transaction of the sender (hash 0x2a9e5de3…, nonce 11",
+       "rpc.mevblocker.io: answered the VALID transaction (hash 0x7089e0d7…, nonce 11)"
+      ],
+      "walletAsks": [],
+      "toasts": [
+       "Your witness payment: confirm in your wallet",
+       "Your witness payment: sent (0x7089…03b1), waiting for Ethere"
+      ],
+      "falseVerdict": false,
+      "waiting": true,
+      "pend": "pending",
+      "late": true
+     },
+     {
+      "n0": 15,
+      "mode": "first-mined",
+      "wallet": false,
+      "set": [
+       "first-mined",
+       false
+      ],
+      "sent": true,
+      "gate": true,
+      "rounds": true,
+      "readers": [
+       "rpc.mevblocker.io",
+       "eth.drpc.org"
+      ],
+      "readerAnswers": [
+       "rpc.mevblocker.io: answered ANOTHER transaction of the sender, MINED (hash 0x3a469f2a…, n",
+       "eth.drpc.org: answered the VALID transaction (hash 0x609693b3…, nonce 12)"
+      ],
+      "walletAsks": [],
+      "toasts": [
+       "Your witness payment: confirm in your wallet",
+       "Your witness payment: sent (0x6096…d26d), waiting for Ethere"
+      ],
+      "falseVerdict": false,
+      "waiting": true,
+      "pend": "pending",
+      "late": true
+     },
+     {
+      "n0": 18,
+      "mode": "first-nohash",
+      "wallet": false,
+      "set": [
+       "first-nohash",
+       false
+      ],
+      "sent": true,
+      "gate": true,
+      "rounds": true,
+      "readers": [
+       "eth.drpc.org",
+       "ethereum-rpc.publicnode.com"
+      ],
+      "readerAnswers": [
+       "eth.drpc.org: answered a transaction with NO HASH (nonce 13)",
+       "ethereum-rpc.publicnode.com: answered the VALID transaction (hash 0x2fc4eaad…, nonce 13)"
+      ],
+      "walletAsks": [],
+      "toasts": [
+       "Your witness payment: confirm in your wallet",
+       "Your witness payment: sent (0x2fc4…3480), waiting for Ethere"
+      ],
+      "falseVerdict": false,
+      "waiting": true,
+      "pend": "pending",
+      "late": true
+     },
+     {
+      "n0": 21,
+      "mode": "first-decimal",
+      "wallet": false,
+      "set": [
+       "first-decimal",
+       false
+      ],
+      "sent": true,
+      "gate": true,
+      "rounds": true,
+      "readers": [
+       "ethereum-rpc.publicnode.com",
+       "rpc.mevblocker.io"
+      ],
+      "readerAnswers": [
+       "ethereum-rpc.publicnode.com: answered with the nonce as the DECIMAL \"14\" (a JSON-RPC quantity must ",
+       "rpc.mevblocker.io: answered the VALID transaction (hash 0x3a4c6b04…, nonce 14)"
+      ],
+      "walletAsks": [],
+      "toasts": [
+       "Your witness payment: confirm in your wallet",
+       "Your witness payment: sent (0x3a4c…5854), waiting for Ethere"
+      ],
+      "falseVerdict": false,
+      "waiting": true,
+      "pend": "pending",
+      "late": true
+     }
+    ],
+    "unrelatedMined": 3
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st24",
+   "name": "SCENARIO 5 keeps the legitimate outcomes: with a bad first reader (or every reader unrelated and the wallet valid) a real SPED UP, CANCELLED or REPLACED is still reported; with every reader AND the wallet unrelated nothing is reported but pending",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 35497,
+   "ev": {
+    "rows": [
+     {
+      "mode": "first-other",
+      "out": "sped",
+      "ok": true,
+      "wrongVerdict": false,
+      "last": "Your witness payment: confirmed (sped up in your wallet)"
+     },
+     {
+      "mode": "first-other",
+      "out": "cancelled",
+      "ok": true,
+      "wrongVerdict": false,
+      "last": "Your witness payment: cancelled in your wallet after it was sent. It did not go through; only network fees were spent."
+     },
+     {
+      "mode": "first-other",
+      "out": "replaced",
+      "ok": true,
+      "wrongVerdict": false,
+      "last": "Your witness payment: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+     },
+     {
+      "mode": "other-same",
+      "out": "replaced",
+      "ok": true,
+      "wrongVerdict": false,
+      "last": "Your witness payment: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+     },
+     {
+      "mode": "first-mined",
+      "out": "sped",
+      "ok": true,
+      "wrongVerdict": false,
+      "last": "Your witness payment: confirmed (sped up in your wallet)"
+     }
+    ],
+    "allUnrelated": {
+     "gate": true,
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0xd1bc…ee9e), waiting for Ethereum to conf"
+     ]
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st25",
+   "name": "SCENARIO 6 from CONTROLS (a phone inside a wallet app, two authorised wallets): the first wallet fails eth_requestAccounts (4001, 4100, 4200, 4900, 4901, -32002, -32603; rejected promise or synchronous throw): the page offers CHOOSE ANOTHER WALLET (not for 4001 and -32002), the second wallet’s log shows no request before the pick except the liveness ping on the list, and the pick connects with exactly one request",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 97240,
+   "ev": {
+    "rows": [
+     {
+      "code": 4001,
+      "how": "async",
+      "ok": true,
+      "offered": false,
+      "alpha": "REJECTED PROMISE 4001",
+      "betaBefore": [],
+      "toast": "Cancelled in your wallet. Nothing was sent."
+     },
+     {
+      "code": 4001,
+      "how": "sync",
+      "ok": true,
+      "offered": false,
+      "alpha": "SYNC THROW 4001",
+      "betaBefore": [],
+      "toast": "Cancelled in your wallet. Nothing was sent."
+     },
+     {
+      "code": 4100,
+      "how": "async",
+      "ok": true,
+      "offered": true,
+      "alpha": "REJECTED PROMISE 4100",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     },
+     {
+      "code": 4100,
+      "how": "sync",
+      "ok": true,
+      "offered": true,
+      "alpha": "SYNC THROW 4100",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     },
+     {
+      "code": 4200,
+      "how": "async",
+      "ok": true,
+      "offered": true,
+      "alpha": "REJECTED PROMISE 4200",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     },
+     {
+      "code": 4200,
+      "how": "sync",
+      "ok": true,
+      "offered": true,
+      "alpha": "SYNC THROW 4200",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     },
+     {
+      "code": 4900,
+      "how": "async",
+      "ok": true,
+      "offered": true,
+      "alpha": "REJECTED PROMISE 4900",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     },
+     {
+      "code": 4900,
+      "how": "sync",
+      "ok": true,
+      "offered": true,
+      "alpha": "SYNC THROW 4900",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     },
+     {
+      "code": 4901,
+      "how": "async",
+      "ok": true,
+      "offered": true,
+      "alpha": "REJECTED PROMISE 4901",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     },
+     {
+      "code": 4901,
+      "how": "sync",
+      "ok": true,
+      "offered": true,
+      "alpha": "SYNC THROW 4901",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     },
+     {
+      "code": -32002,
+      "how": "async",
+      "ok": true,
+      "offered": false,
+      "alpha": "REJECTED PROMISE -32002",
+      "betaBefore": [],
+      "toast": "Your wallet already has a request waiting. Open it"
+     },
+     {
+      "code": -32002,
+      "how": "sync",
+      "ok": true,
+      "offered": false,
+      "alpha": "SYNC THROW -32002",
+      "betaBefore": [],
+      "toast": "Your wallet already has a request waiting. Open it"
+     },
+     {
+      "code": -32603,
+      "how": "async",
+      "ok": true,
+      "offered": true,
+      "alpha": "REJECTED PROMISE -32603",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     },
+     {
+      "code": -32603,
+      "how": "sync",
+      "ok": true,
+      "offered": true,
+      "alpha": "SYNC THROW -32603",
+      "betaBefore": [],
+      "betaOnList": [
+       "eth_chainId"
+      ],
+      "betaAsk": 1,
+      "picked": true,
+      "toast": null
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 15,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st26",
+   "name": "SCENARIO 7 from CONTROLS: with 0.05 ETH owed, the zero, malformed, contract and own addresses are refused with the page’s messages and nothing reaches the wallet; a valid recipient gives withdrawTo(recipient) from the connected account, value 0, to the contract; CONFIRMED refreshes owed to 0; a recipient that rejects ETH reverts and the flow stays usable; REJECTED IN WALLET leaves it as it was",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 23494,
+   "ev": {
+    "owed0": "50000000000000000",
+    "rows": [
+     {
+      "name": "zero",
+      "note": "Not the zero address: the contract refuses it.",
+      "sheet": false
+     },
+     {
+      "name": "short",
+      "note": "That is not a full Ethereum address (0x followed by 40 characters; mix",
+      "sheet": false
+     },
+     {
+      "name": "contract",
+      "note": "That is the STORMGLASS contract: the ETH would stay in the vault as a ",
+      "sheet": false
+     },
+     {
+      "name": "own",
+      "note": "That is your connected wallet. To pay it there, press WITHDRAW.",
+      "sheet": false
+     }
+    ],
+    "asked": [
+     0,
+     0
+    ],
+    "sheet": "Withdraw all funds owed to your connected wallet 0x0000…0a11 when this transaction executes. Currently: 0.05000 ETH.This is a snapshot: the amount can",
+    "modal": "SIMULATED WALLET · CONFIRMATION SCREENThis stands in for the wallet’s own confirmation screen (SIM ALPHA). Choose what the wallet and the chain do.INTENDED CHAIN1 · Ethereum mainnetWALLET IS ON1 · Ethereum mainnetSENDER0x0000000000000000000000000000000000000a1",
+    "conf": true,
+    "gone": true,
+    "tx": [
+     {
+      "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+      "from": "0x0000000000000000000000000000000000000a11",
+      "target": "0xcf5eba884efa04940d31a663beb6d37f907d064c",
+      "value": "0",
+      "state": "confirmed"
+     }
+    ],
+    "call": "withdrawTo(0x52908400098527886E0F7030069857D2E4169EE7) · from 0x0000000000000000000000000000000000000a11 · to 0xcf5eba884efa04940d31a663beb6d37f907d064c · value 0.0 ETH · chainId 0x1",
+    "owedAfter": "0",
+    "pays": [
+     {
+      "to": "0x52908400098527886e0f7030069857d2e4169ee7",
+      "v": "50000000000000000",
+      "why": "withdrawTo: what was owed to 0x0000000000000000000000000000000000000a11"
+     }
+    ],
+    "reverted": {
+     "rev": true,
+     "revText": "Failed on Ethereum (reverted): 0x52908400098527886E0F7030069857D2E4169EE7 did not accept the ETH, or nothing was owed any more. What is owed stays in ",
+     "boxOpen": true,
+     "stillShown": true,
+     "state": "reverted",
+     "why": "the recipient rejects ETH (call failed)",
+     "owedKept": "50000000000000000"
+    },
+    "second": {
+     "conf2": true,
+     "state": "confirmed"
+    },
+    "rejected": {
+     "canc": true,
+     "keep": "0x52908400098527886e0f7030069857d2e4169ee7",
+     "usable": true
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st27",
+   "name": "SCENARIO 7 from CONTROLS: after REVIEW, an account change, the wallet going to Base (refusing to switch back) and the last-moment network change (scenario 1) each end SEND with “Nothing was sent”: the simulated wallet log has no eth_sendTransaction and no transaction exists",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 25720,
+   "ev": {
+    "rows": [
+     {
+      "kind": "account",
+      "sh": true,
+      "moved": true,
+      "stop": true,
+      "toasts": [
+       "Your wallet changed. Nothing was sent. Press REVIEW again."
+      ],
+      "sends": 0,
+      "txs": 0,
+      "modal": false,
+      "fired": null,
+      "errors": []
+     },
+     {
+      "kind": "network",
+      "sh": true,
+      "moved": true,
+      "stop": true,
+      "toasts": [
+       "Your wallet is on another network. Switch it to Ethereum mainnet. Nothing was sent."
+      ],
+      "sends": 0,
+      "txs": 0,
+      "modal": false,
+      "fired": null,
+      "errors": []
+     },
+     {
+      "kind": "lastchain",
+      "sh": true,
+      "moved": true,
+      "stop": true,
+      "toasts": [
+       "Withdrawing to another address: confirm in your wallet",
+       "Your wallet changed network while this was waiting. Nothing was sent."
+      ],
+      "sends": 0,
+      "txs": 0,
+      "modal": false,
+      "fired": 1,
+      "errors": []
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 4,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st28",
+   "name": "SCENARIO 8 from CONTROLS: a COLLECT by a payer with seats whose wallet accepts ETH sends the earnings to it (simulated ETH, nothing owed, no WITHDRAW); a payer whose wallet rejects ETH leaves them owed, WITHDRAW and WITHDRAW TO ANOTHER ADDRESS appear, WITHDRAW reverts for that wallet and WITHDRAW TO another address pays",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 23393,
+   "ev": {
+    "before": {
+     "owed": "0",
+     "rec": "0"
+    },
+    "accepts": {
+     "owed": "0",
+     "rec": "36400000000000000",
+     "pays": [
+      {
+       "to": "0x0000000000000000000000000000000000000a11",
+       "v": "36400000000000000",
+       "why": "seat earnings, the wallet accepts ETH"
+      }
+     ],
+     "w": "none",
+     "wt": "none",
+     "note": "You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.0 ETH.",
+     "log": [
+      "SIMULATED: 0.0364 ETH sent to 0x0000000000000000000000000000000000000a11 (seat earnings, the wallet accepts ETH)"
+     ]
+    },
+    "c1": true,
+    "rejects": {
+     "owed": "36400000000000000",
+     "rec": "0",
+     "pays": [
+      {
+       "to": "0x0000000000000000000000000000000000000a11",
+       "v": "36400000000000000",
+       "why": "REJECTED: left in owed"
+      }
+     ],
+     "w": "block",
+     "wt": "block",
+     "note": "You hold 2.0476 seats out of 17.0000. Earned and waiting for you: 0.0 ETH. The contract also holds 0.03640 ETH it could not send to your wallet: press WITHDRAW, or WITHDRAW TO ANOTHER ADDRESS if this wallet cannot accept ETH."
+    },
+    "c2": true,
+    "withdraw": {
+     "wRev": true,
+     "state": "reverted",
+     "why": "the payer’s wallet rejects ETH (call failed)"
+    },
+    "withdrawTo": {
+     "wtoOk": true
+    },
+    "final": {
+     "owed": "0",
+     "r1": "36400000000000000"
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st29",
+   "name": "REAL WALLET: WITHDRAW TO ANOTHER ADDRESS stops at the wrapper: the intercept panel shows chain, sender, target, value 0 and withdrawTo with the recipient decoded; the external wallet receives no write and no signature (a forged withdrawTo, a raw eth_sendTransaction and wallet_sendCalls included)",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 9468,
+   "ev": {
+    "rows": {
+     "INTENDED CHAIN": "1 · Ethereum mainnet",
+     "WALLET IS ON": "1 · Ethereum mainnet",
+     "SENDER": "0x00000000000000000000000000000000000000aa",
+     "TARGET": "0xcf5eba884efa04940d31a663beb6d37f907d064c  (the STORMGLASS contract)",
+     "VALUE": "0.0 ETH",
+     "ACTION": "withdrawTo(arg0: 0x52908400098527886E0F7030069857D2E4169EE7)",
+     "PAYS TO (recipient)": "0x52908400098527886E0F7030069857D2E4169EE7",
+     "PAID FROM": "what the contract owes the SENDER above; the sender’s wallet only authorises it",
+     "OWED NOW (simulated)": "0.05 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+     "GAS LIMIT": "360000"
+    },
+    "confirmed": true,
+    "forged": {
+     "eth_sendTransaction": "refused 4001",
+     "wallet_sendCalls": "refused 4001",
+     "eth_sendRawTransaction": "refused 4001"
+    },
+    "reached": [],
+    "walletReceived": [
+     "eth_chainId",
+     "eth_requestAccounts",
+     "eth_accounts"
+    ],
+    "mwSends": 0,
+    "tx": [
+     {
+      "mode": "intercepted",
+      "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+      "state": "confirmed"
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st30",
+   "name": "REAL WALLET on a phone in a wallet app: window.ethereum fails (-32603); the second, authorised wallet gets nothing (but a liveness ping on the list) until the visitor picks it, and its eth_requestAccounts waits for the staging gate; with the readers and the wallet fallback unrelated, an intercepted payment stays pending and the real wallet is not asked about it",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 14023,
+   "ev": {
+    "gate1": true,
+    "offer": true,
+    "BbeforePick": [],
+    "gateOpenForB": false,
+    "list": true,
+    "BonList": [
+     "eth_chainId"
+    ],
+    "gate2": true,
+    "bAtGate": 0,
+    "conn": true,
+    "bAfter": 1,
+    "aAsk": 1,
+    "identity": {
+     "gate": true,
+     "toasts": [
+      "Your witness payment: confirm in your wallet",
+      "Your witness payment: sent (0x3f2a…c899), waiting for Ethere"
+     ],
+     "mwNew": [
+      "eth_chainId",
+      "eth_chainId",
+      "eth_accounts",
+      "eth_chainId",
+      "eth_chainId"
+     ],
+     "reached": []
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st31",
+   "name": "the write enumeration: every method literal and every send(name) of index.html is classified by policy.js; the page ABI’s writes equal the listed CONTRACT_WRITES (withdrawTo included); in REAL mode each contract write, built from the page’s own ABI, stops at the wrapper (decoded in the panel) and the wallet receives none",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 5997,
+   "ev": {
+    "methods": [
+     "eth_accounts",
+     "eth_blobBaseFee",
+     "eth_blockNumber",
+     "eth_call",
+     "eth_chainId",
+     "eth_getBlockByNumber",
+     "eth_getTransactionByHash",
+     "eth_getTransactionCount",
+     "eth_getTransactionReceipt",
+     "eth_requestAccounts",
+     "eth_sendTransaction",
+     "eth_signTypedData_v4",
+     "personal_sign",
+     "wallet_addEthereumChain",
+     "wallet_revokePermissions",
+     "wallet_switchEthereumChain"
+    ],
+    "unclassified": [],
+    "sendNames": [
+     "bid",
+     "buy",
+     "claim",
+     "pledge",
+     "settle",
+     "sync",
+     "withdraw",
+     "withdrawTo",
+     "witness"
+    ],
+    "abiWrites": [
+     "bid",
+     "buy",
+     "claim",
+     "pledge",
+     "settleCandle",
+     "sync",
+     "withdraw",
+     "withdrawTo",
+     "witness"
+    ],
+    "listed": [
+     "bid",
+     "buy",
+     "claim",
+     "pledge",
+     "settleCandle",
+     "sync",
+     "withdraw",
+     "withdrawTo",
+     "witness"
+    ],
+    "direct": [],
+    "intercepted": {
+     "bid": {
+      "result": "refused 4001",
+      "panel": true,
+      "decoded": true
+     },
+     "buy": {
+      "result": "refused 4001",
+      "panel": true,
+      "decoded": true
+     },
+     "claim": {
+      "result": "refused 4001",
+      "panel": true,
+      "decoded": true
+     },
+     "pledge": {
+      "result": "refused 4001",
+      "panel": true,
+      "decoded": true
+     },
+     "settleCandle": {
+      "result": "refused 4001",
+      "panel": true,
+      "decoded": true
+     },
+     "sync": {
+      "result": "refused 4001",
+      "panel": true,
+      "decoded": true
+     },
+     "withdraw": {
+      "result": "refused 4001",
+      "panel": true,
+      "decoded": true
+     },
+     "withdrawTo": {
+      "result": "refused 4001",
+      "panel": true,
+      "decoded": true
+     },
+     "witness": {
+      "result": "refused 4001",
+      "panel": true,
+      "decoded": true
+     }
+    },
+    "reached": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st32",
+   "name": "switching modes clears the audit-5 state: from the phone-in-a-wallet-app set with a pending withdrawTo and unrelated-transaction answers, REAL mode has the desktop user agent, no provider, session or pending operation, default controls and only the external wallet; back in SIMULATION the controls are defaults again",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 13634,
+   "ev": {
+    "simBefore": {
+     "ua": true,
+     "pending": 1,
+     "set": [
+      "other-same",
+      0.05,
+      "rejects",
+      "rejects",
+      "4100"
+     ],
+     "preset": "phone2"
+    },
+    "inReal": {
+     "ua": false,
+     "EP": true,
+     "me": true,
+     "OPLOCK": true,
+     "txs": 0,
+     "rdns": [
+      "test.a"
+     ],
+     "wrapped": true,
+     "set": [
+      "valid",
+      0,
+      "accepts",
+      "accepts",
+      "-32603",
+      "async"
+     ],
+     "preset": "desk3",
+     "label": "CONNECT",
+     "wto": "none"
+    },
+    "mockAsked": [],
+    "inSim": {
+     "ua": false,
+     "EP": true,
+     "txs": 0,
+     "set": [
+      "valid",
+      0,
+      "accepts",
+      "accepts",
+      "-32603",
+      "async"
+     ],
+     "preset": "desk3",
+     "rdns": [
+      "sim.staging.alpha",
+      "sim.staging.alpha-twin",
+      "sim.staging.beta",
+      "sim.staging.asleep"
+     ]
+    }
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st33",
+   "name": "REAL WALLET: permitted connection operations follow the staging gate: before ASK MY WALLET the wallet gets only the eth_chainId liveness check (no eth_requestAccounts); CANCEL asks nothing; ASK MY WALLET forwards exactly one; a network switch asked by the page waits for its own gate (CANCEL: none, ASK: one); DISCONNECT forwards wallet_revokePermissions; on a phone the WalletConnect relay connection (init) comes first but the pairing (enable) and, for a restored stored session, eth_requestAccounts wait for the gate; everything the wallets received is on the allowlist",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 20771,
+   "ev": {
+    "beforeGate": [
+     "eth_chainId"
+    ],
+    "req": [
+     0,
+     0,
+     1
+    ],
+    "reconnectSoonAfter": {
+     "gate": true,
+     "askedBeforeGate": 0,
+     "conn": true
+    },
+    "switchCancel": {
+     "g": true,
+     "switchText": true,
+     "atGate": 0,
+     "result": "refused 4001",
+     "after": 0
+    },
+    "switchGo": {
+     "g": true,
+     "switchText": true,
+     "atGate": 0,
+     "result": "ok",
+     "after": 1
+    },
+    "revoke": 1,
+    "notAllowed": [],
+    "walletConnect": [
+     {
+      "stored": false,
+      "gate": true,
+      "at": {
+       "init": true,
+       "enables": 0,
+       "req": 0,
+       "gateText": "REAL WALLET · THIS WILL OPEN YOUR WALLETYour wallet (WalletConnect) will now ask to connect this site. Approve or refuse it in the wallet.This is a real request to your real wallet, sent through the WalletConnect relay. No payment and no signature can be sent from this page: transactions and signatures are intercepted at the staging wrapper before your wallet; their outcomes are simulated.ASK MY W",
+       "label": "CONNECT"
+      },
+      "conn": true,
+      "after": {
+       "enables": 1,
+       "req": 1,
+       "methods": [
+        "eth_requestAccounts",
+        "eth_chainId",
+        "eth_accounts"
+       ]
+      },
+      "errors": []
+     },
+     {
+      "stored": true,
+      "gate": true,
+      "at": {
+       "init": true,
+       "enables": 0,
+       "req": 0,
+       "gateText": "REAL WALLET · THIS WILL OPEN YOUR WALLETYour wallet (WalletConnect) will now ask to connect this site. Approve or refuse it in the wallet.This is a real request to your real wallet, sent through the WalletConnect relay. No payment and no signature can be sent from this page: transactions and signatures are intercepted at the staging wrapper before your wallet; their outcomes are simulated.ASK MY W",
+       "label": "CONNECT"
+      },
+      "conn": true,
+      "after": {
+       "enables": 0,
+       "req": 1,
+       "methods": [
+        "eth_requestAccounts",
+        "eth_chainId",
+        "eth_accounts"
+       ]
+      },
+      "errors": []
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 3,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st34",
+   "name": "REAL WALLET default-deny: on the EIP-6963 wallet, window.ethereum, providers[] and the WalletConnect wrapper (and on the connected EP), the 13 payment / signature / batch / raw / user-operation methods are intercepted (4001) and 16 unknown or unlisted methods (a made-up name, wallet_addEthereumChain, wallet_getCapabilities, a case variant, a padded name, a non-string method…) are refused (4200); a method name that changes between reads is read once; none of them reaches any mock wallet; inside the WalletConnect bundle the belt refuses eth_sendUserOperation and wallet_sendCalls",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 4660,
+   "ev": {
+    "bad": [],
+    "counts": {
+     "eth": "29/29",
+     "prov1": "29/29",
+     "b6963": "29/29",
+     "wc": "29/29",
+     "EP": "29/29"
+    },
+    "sample": {
+     "x:eth_sendTransaction#panel": "SUBMISSION INTERCEPTED: nothing was sent to your walletThe p",
+     "x:eth_sendTransaction": "refused 4001",
+     "x:eth_sendUserOperation#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "x:eth_sendUserOperation": "refused 4001",
+     "x:wallet_sendCalls#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "x:wallet_sendCalls": "refused 4001",
+     "x:wallet_sendTransaction#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "x:wallet_sendTransaction": "refused 4001",
+     "x:eth_sendRawTransaction#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "x:eth_sendRawTransaction": "refused 4001",
+     "x:eth_signTransaction#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "x:eth_signTransaction": "refused 4001",
+     "x:wallet_grantPermissions#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "x:wallet_grantPermissions": "refused 4001",
+     "x:eth_sign#panel": "SIGNATURE REQUEST INTERCEPTED: nothing was sent to your wall",
+     "x:eth_sign": "refused 4001",
+     "x:personal_sign#panel": "SIGNATURE REQUEST INTERCEPTED: nothing was sent to your wall",
+     "x:personal_sign": "refused 4001",
+     "x:eth_signTypedData#panel": "SIGNATURE REQUEST INTERCEPTED: nothing was sent to your wall",
+     "x:eth_signTypedData": "refused 4001",
+     "x:eth_signTypedData_v1#panel": "SIGNATURE REQUEST INTERCEPTED: nothing was sent to your wall",
+     "x:eth_signTypedData_v1": "refused 4001",
+     "x:eth_signTypedData_v3#panel": "SIGNATURE REQUEST INTERCEPTED: nothing was sent to your wall",
+     "x:eth_signTypedData_v3": "refused 4001",
+     "x:eth_signTypedData_v4#panel": "SIGNATURE REQUEST INTERCEPTED: nothing was sent to your wall",
+     "x:eth_signTypedData_v4": "refused 4001",
+     "u:stormglass_madeUpMethod": "refused 4200",
+     "u:wallet_madeUpWrite": "refused 4200",
+     "u:wallet_addEthereumChain": "refused 4200",
+     "u:wallet_watchAsset": "refused 4200",
+     "u:wallet_requestPermissions": "refused 4200",
+     "u:wallet_getCapabilities": "refused 4200",
+     "u:wallet_getCallsStatus": "refused 4200",
+     "u:wallet_showCallsStatus": "refused 4200",
+     "u:eth_getEncryptionPublicKey": "refused 4200",
+     "u:eth_decrypt": "refused 4200",
+     "u:eth_subscribe": "refused 4200",
+     "u:eth_coinbase": "refused 4200",
+     "u:ETH_SENDTRANSACTION": "refused 4200",
+     "u:eth_sendtransaction": "refused 4200",
+     "u: eth_chainId": "refused 4200",
+     "u:@obj": "refused 4200"
+    },
+    "toctou": {
+     "r": "resolved 0x1",
+     "reads": 1
+    },
+    "belt": {
+     "eth_sendUserOperation": "refused 4001",
+     "wallet_sendCalls": "refused 4001",
+     "eth_sendRawTransaction": "refused 4001"
+    },
+    "reached": [],
+    "mwSends": 0,
+    "walletReceived": [
+     "A eth_chainId",
+     "B eth_chainId",
+     "WC eth_chainId",
+     "B eth_requestAccounts",
+     "B eth_accounts"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st35",
+   "name": "REAL WALLET: each supported contract write (bid, settle, pledge, sync, buy, witness, claim, withdraw, withdrawTo), sent through the page’s own send(), stops at the wrapper with its decoded action and the STORMGLASS target; withdrawTo shows and carries the exact checksummed recipient (decoded from the calldata of the simulated transaction); after DISCONNECT and a new connection the same holds; the mock wallet receives no write and no signature",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 7641,
+   "ev": {
+    "bad": [],
+    "reconnect": {
+     "gate": true,
+     "askedBeforeGate": 0,
+     "conn": true
+    },
+    "first": {
+     "bid": "bid()",
+     "settle": "settleCandle()",
+     "pledge": "pledge()",
+     "sync": "sync()",
+     "buy": "buy(arg0: 13, arg1: 3)",
+     "witness": "witness(arg0: 13)",
+     "claim": "claim()",
+     "withdraw": "withdraw()",
+     "withdrawTo": "withdrawTo(arg0: 0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359)"
+    },
+    "withdrawToRows": {
+     "INTENDED CHAIN": "1 · Ethereum mainnet",
+     "WALLET IS ON": "1 · Ethereum mainnet",
+     "SENDER": "0x00000000000000000000000000000000000000aa",
+     "TARGET": "0xcf5eba884efa04940d31a663beb6d37f907d064c  (the STORMGLASS contract)",
+     "VALUE": "0.0 ETH",
+     "ACTION": "withdrawTo(arg0: 0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359)",
+     "PAYS TO (recipient)": "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359",
+     "PAID FROM": "what the contract owes the SENDER above; the sender’s wallet only authorises it",
+     "OWED NOW (simulated)": "0.0 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+     "GAS LIMIT": "360000"
+    },
+    "afterReconnect": {
+     "witness": "witness(arg0: 13)",
+     "claim": "claim()",
+     "withdrawTo": "withdrawTo(arg0: 0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359)"
+    },
+    "confirmed": {
+     "decoded": [
+      "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359"
+     ],
+     "last": {
+      "data": "0x72b0d90c000000000000000000000000fb6916095ca1df60bb79ce92ce3ea74c37c5d359",
+      "from": "0x00000000000000000000000000000000000000aa",
+      "to": "0xcf5eba884efa04940d31a663beb6d37f907d064c",
+      "value": "0",
+      "state": "confirmed",
+      "mode": "intercepted"
+     }
+    },
+    "refs": {
+     "EP": true,
+     "WC": true,
+     "eth": true,
+     "providers": true,
+     "wallets": true,
+     "list": true,
+     "choices": true,
+     "allOk": true,
+     "EPset": true
+    },
+    "reached": [],
+    "mwSends": 0
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st36",
+   "name": "REAL WALLET, computer: an EventEmitter-style wallet (its listeners are called with this = the emitter) announced over EIP-6963, plus window.ethereum and providers[]: every provider the page holds is a wrapper; a listener added through the wrapper runs with this = the wrapper, never the raw provider, and removeListener still removes it; the page follows its account change; a WITNESS is intercepted; after DISCONNECT and a new connection the page holds the same wrapper and a WITNESS, personal_sign and wallet_sendCalls are again stopped: the raw wallet receives no write and no signature",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 5010,
+   "ev": {
+    "label": "0x0000…00eE",
+    "refs1": {
+     "EP": true,
+     "WC": true,
+     "eth": true,
+     "providers": true,
+     "wallets": true,
+     "list": true,
+     "choices": true,
+     "allOk": true,
+     "EPset": true
+    },
+    "listenerThis": {
+     "delivered": 1,
+     "thisIsWrapper": true,
+     "thisIsRaw": false,
+     "afterRemove": 1
+    },
+    "reconnect": {
+     "gate": true,
+     "askedBeforeGate": 0,
+     "conn": true
+    },
+    "moved": true,
+    "witness": [
+     true,
+     true
+    ],
+    "revoked": true,
+    "refs2": {
+     "EP": true,
+     "WC": true,
+     "eth": true,
+     "providers": true,
+     "wallets": true,
+     "list": true,
+     "choices": true,
+     "allOk": true,
+     "EPset": true
+    },
+    "sameWrapper": true,
+    "sig": {
+     "ps#panel": "SIGNATURE REQUEST INTERCEPTED: nothing was sent to your wall",
+     "ps": "refused 4001",
+     "sc#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "sc": "refused 4001",
+     "raw#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "raw": "refused 4001"
+    },
+    "listenerThisAfterReconnect": true,
+    "rawLog": [
+     "eth_chainId",
+     "eth_requestAccounts",
+     "eth_accounts",
+     "wallet_revokePermissions"
+    ],
+    "rawWrites": [],
+    "reached": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st37",
+   "name": "REAL WALLET on a phone via WalletConnect (the harness mock plays the relay and the phone wallet): a COLLECT is intercepted; DISCONNECT, a new pairing (new session topic) through the gate, a WITNESS intercepted again; the phone ends the session, a third pairing, again intercepted; personal_sign, wallet_sendCalls and eth_sendUserOperation refused on the wrapper and by the belt inside the bundle; the page holds the same wrapper (never the raw provider), its session is a frozen copy carrying the new topic; the mock receives no write or signature",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 9283,
+   "ev": {
+    "pairings": [
+     {
+      "gate": true,
+      "enablesAtGate": 0,
+      "conn": true,
+      "topic": "topic1",
+      "frozen": true,
+      "raw": false
+     },
+     {
+      "gate": true,
+      "enablesAtGate": 1,
+      "conn": true,
+      "topic": "topic2",
+      "frozen": true,
+      "raw": false
+     },
+     {
+      "gate": true,
+      "enablesAtGate": 2,
+      "conn": true,
+      "topic": "topic3",
+      "frozen": true,
+      "raw": false
+     }
+    ],
+    "intercepted": [
+     true,
+     true,
+     true
+    ],
+    "disconnected": [
+     true,
+     true
+    ],
+    "refs": {
+     "EP": true,
+     "WC": true,
+     "eth": true,
+     "providers": true,
+     "wallets": true,
+     "list": true,
+     "choices": true,
+     "allOk": true,
+     "EPset": true
+    },
+    "sameWrapper": true,
+    "sig": {
+     "ps#panel": "SIGNATURE REQUEST INTERCEPTED: nothing was sent to your wall",
+     "ps": "refused 4001",
+     "sc#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "sc": "refused 4001",
+     "uo#panel": "TRANSACTION REQUEST INTERCEPTED: nothing was sent to your wa",
+     "uo": "refused 4001",
+     "mu": "refused 4200"
+    },
+    "belt": {
+     "personal_sign": "refused 4001",
+     "wallet_sendCalls": "refused 4001",
+     "eth_sendUserOperation": "refused 4001",
+     "eth_sendTransaction": "refused 4001"
+    },
+    "w": {
+     "enables": 3,
+     "disconnects": 1
+    },
+    "reached": [],
+    "walletReceived": [
+     "eth_requestAccounts",
+     "eth_chainId",
+     "eth_accounts"
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st38",
+   "name": "the staging page and the staging report describe both modes accurately: REAL WALLET (mode chooser, CONTROLS, the opening note, the gate, the intercept panel) says the real wallet and, on a phone, the WalletConnect relay are contacted for the connection, that payments and signatures are intercepted and that outcomes are simulated; SIMULATION says simulated wallets and results and no relay; nothing says “never reaches”; the report separates the modes and calls socket blocking a property of the test environment",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 6489,
+   "ev": {
+    "checks": {
+     "modeReal": true,
+     "drawer": true,
+     "note": true,
+     "gate": true,
+     "intercept": true,
+     "simInReal": true,
+     "sim": true,
+     "noNeverAnywhere": true,
+     "report": true
+    },
+    "modeReal": "Your real wallet (MetaMask, Rabby, Zerion… or WalletConnect on a phone) is contacted for real, for the connection: the page checks its account and network, your wallet asks to connect this site and ma",
+    "drawer": "REAL: your wallet extension or WalletConnect phone wallet, its accounts, its network; on a phone the WalletConnect relay (opened when you press CONNECT; it carries the pairing, the session, account an",
+    "note": "REAL WALLET — CONNECTION TEST. Your real wallet (on a phone: through the real WalletConnect relay) is contacted for the connection only; connecting and switching network wait for ASK MY WALLET on this page. Payments and signatures are intercepted before your wallet; outcomes are simulated.",
+    "gate": "This is a real request to your real wallet. No payment and no signature can be sent from this page: transactions and signatures are intercepted at the staging wrapper before your wallet; their outcomes are simulated.",
+    "intercept": "SUBMISSION INTERCEPTED: nothing was sent to your walletThe page prepared this transaction and handed it to your wallet. The staging wrapper stopped it before your wallet (and, on a phone, before the WalletConnect relay): your wallet never saw it, nothing can be paid. Payments and signatures are inte",
+    "sim": "Simulated wallets and simulated results, inside this page: no real wallet, no real provider. Your real wallet is never visible to the page, and the WalletConnec",
+    "reportSection": "4b. The staging boundary, as found in the code (audit 5b, Finding D)\nCorrection (audit 5b): earlier wording could be read as \"staging never contacts the real WalletConnect relay\". That is true of SIMU"
+   },
+   "pageErrors": [],
+   "contexts": 2,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st39",
+   "name": "SCENARIO 7 (audit 5b) from CONTROLS: after REVIEW what is owed INCREASES or DECREASES, at the review sheet before the wallet is asked (CHANGE NOW) and when the wallet screen opens (ARM): the transaction names the reviewed recipient, the outcome is confirmed and the simulated contract pays everything owed at execution (0.10 or 0.025 ETH, not the reviewed 0.05), owed back to 0",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 31355,
+   "ev": {
+    "rows": [
+     {
+      "kind": "increase",
+      "when": "now",
+      "choose": "confirmed",
+      "verdict": true,
+      "sheet": true,
+      "sheetHasRecipient": true,
+      "pressed": true,
+      "wallet": true,
+      "panelOwed": "0.1 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+      "panelPaysTo": "0x52908400098527886E0F7030069857D2E4169EE7",
+      "owedAtSend": "100000000000000000",
+      "owedAtWallet": "100000000000000000",
+      "settled": true,
+      "tx": {
+       "state": "confirmed",
+       "why": null,
+       "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+       "from": "0x0000000000000000000000000000000000000a11"
+      },
+      "replacement": null,
+      "sends": 1,
+      "payouts": [
+       "SIMULATED: 0.1 ETH sent to 0x52908400098527886e0f7030069857d2e4169ee7 (withdrawTo: what was owed to 0x000000000000000000"
+      ],
+      "owedAfter": "0",
+      "received": "100000000000000000",
+      "receivedSelf": "0",
+      "toasts": [
+       "Withdrawing to another address: confirm in your wallet",
+       "Withdrawing to another address: sent (0xb76e…3e35), waiting for Ethereum to confirm",
+       "Withdrawing to another address: confirmed"
+      ],
+      "note": "",
+      "hist": [
+       "wtoNote: Confirm in your wallet: pay to 0x52908400098527886E0F7030069857D2E4169EE7.",
+       "wtoNote: Sent (0xb76e…3e35), waiting for Ethereum to confirm.",
+       "wtoNote: Confirmed: the contract paid everything this wallet was owed when the transaction ran to 0x52908400098527886E0F7030069857D2E4169EE7. Reading what is owed now…",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW).",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW)."
+      ],
+      "changes": [
+       "SIMULATED: owed[0x0000000000000000000000000000000000000a11] 0.05 → 0.1 ETH (INCREASES (+0.05 ETH), now: before the wallet is asked)"
+      ],
+      "paid": "100000000000000000",
+      "want": "100000000000000000",
+      "ok": true
+     },
+     {
+      "kind": "decrease",
+      "when": "wallet",
+      "choose": "confirmed",
+      "verdict": true,
+      "sheet": true,
+      "sheetHasRecipient": true,
+      "pressed": true,
+      "wallet": true,
+      "panelOwed": "0.025 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+      "panelPaysTo": "0x52908400098527886E0F7030069857D2E4169EE7",
+      "owedAtSend": "50000000000000000",
+      "owedAtWallet": "25000000000000000",
+      "settled": true,
+      "tx": {
+       "state": "confirmed",
+       "why": null,
+       "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+       "from": "0x0000000000000000000000000000000000000a11"
+      },
+      "replacement": null,
+      "sends": 1,
+      "payouts": [
+       "SIMULATED: 0.025 ETH sent to 0x52908400098527886e0f7030069857d2e4169ee7 (withdrawTo: what was owed to 0x0000000000000000"
+      ],
+      "owedAfter": "0",
+      "received": "25000000000000000",
+      "receivedSelf": "0",
+      "toasts": [
+       "Withdrawing to another address: confirm in your wallet",
+       "Withdrawing to another address: sent (0x480b…4f2c), waiting for Ethereum to confirm",
+       "Withdrawing to another address: confirmed"
+      ],
+      "note": "",
+      "hist": [
+       "wtoNote: Confirm in your wallet: pay to 0x52908400098527886E0F7030069857D2E4169EE7.",
+       "wtoNote: Sent (0x480b…4f2c), waiting for Ethereum to confirm.",
+       "wtoNote: Confirmed: the contract paid everything this wallet was owed when the transaction ran to 0x52908400098527886E0F7030069857D2E4169EE7. Reading what is owed now…",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW).",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW)."
+      ],
+      "changes": [
+       "SIMULATED: owed[0x0000000000000000000000000000000000000a11] 0.05 → 0.025 ETH (DECREASES (to half), armed: when the wallet screen opened)"
+      ],
+      "paid": "25000000000000000",
+      "want": "25000000000000000",
+      "ok": true
+     },
+     {
+      "kind": "increase",
+      "when": "wallet",
+      "choose": "confirmed",
+      "verdict": true,
+      "sheet": true,
+      "sheetHasRecipient": true,
+      "pressed": true,
+      "wallet": true,
+      "panelOwed": "0.1 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+      "panelPaysTo": "0x52908400098527886E0F7030069857D2E4169EE7",
+      "owedAtSend": "50000000000000000",
+      "owedAtWallet": "100000000000000000",
+      "settled": true,
+      "tx": {
+       "state": "confirmed",
+       "why": null,
+       "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+       "from": "0x0000000000000000000000000000000000000a11"
+      },
+      "replacement": null,
+      "sends": 1,
+      "payouts": [
+       "SIMULATED: 0.1 ETH sent to 0x52908400098527886e0f7030069857d2e4169ee7 (withdrawTo: what was owed to 0x000000000000000000"
+      ],
+      "owedAfter": "0",
+      "received": "100000000000000000",
+      "receivedSelf": "0",
+      "toasts": [
+       "Withdrawing to another address: confirm in your wallet",
+       "Withdrawing to another address: sent (0x0e9d…3202), waiting for Ethereum to confirm",
+       "Withdrawing to another address: confirmed"
+      ],
+      "note": "",
+      "hist": [
+       "wtoNote: Confirm in your wallet: pay to 0x52908400098527886E0F7030069857D2E4169EE7.",
+       "wtoNote: Sent (0x0e9d…3202), waiting for Ethereum to confirm.",
+       "wtoNote: Confirmed: the contract paid everything this wallet was owed when the transaction ran to 0x52908400098527886E0F7030069857D2E4169EE7. Reading what is owed now…",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW).",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW)."
+      ],
+      "changes": [
+       "SIMULATED: owed[0x0000000000000000000000000000000000000a11] 0.05 → 0.1 ETH (INCREASES (+0.05 ETH), armed: when the wallet screen opened)"
+      ],
+      "paid": "100000000000000000",
+      "want": "100000000000000000",
+      "ok": true
+     },
+     {
+      "kind": "decrease",
+      "when": "now",
+      "choose": "confirmed",
+      "verdict": true,
+      "sheet": true,
+      "sheetHasRecipient": true,
+      "pressed": true,
+      "wallet": true,
+      "panelOwed": "0.025 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+      "panelPaysTo": "0x52908400098527886E0F7030069857D2E4169EE7",
+      "owedAtSend": "25000000000000000",
+      "owedAtWallet": "25000000000000000",
+      "settled": true,
+      "tx": {
+       "state": "confirmed",
+       "why": null,
+       "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+       "from": "0x0000000000000000000000000000000000000a11"
+      },
+      "replacement": null,
+      "sends": 1,
+      "payouts": [
+       "SIMULATED: 0.025 ETH sent to 0x52908400098527886e0f7030069857d2e4169ee7 (withdrawTo: what was owed to 0x0000000000000000"
+      ],
+      "owedAfter": "0",
+      "received": "25000000000000000",
+      "receivedSelf": "0",
+      "toasts": [
+       "Withdrawing to another address: confirm in your wallet",
+       "Withdrawing to another address: sent (0x62b9…28ab), waiting for Ethereum to confirm",
+       "Withdrawing to another address: confirmed"
+      ],
+      "note": "",
+      "hist": [
+       "wtoNote: Confirm in your wallet: pay to 0x52908400098527886E0F7030069857D2E4169EE7.",
+       "wtoNote: Sent (0x62b9…28ab), waiting for Ethereum to confirm.",
+       "wtoNote: Confirmed: the contract paid everything this wallet was owed when the transaction ran to 0x52908400098527886E0F7030069857D2E4169EE7. Reading what is owed now…",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW).",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW)."
+      ],
+      "changes": [
+       "SIMULATED: owed[0x0000000000000000000000000000000000000a11] 0.05 → 0.025 ETH (DECREASES (to half), now: before the wallet is asked)"
+      ],
+      "paid": "25000000000000000",
+      "want": "25000000000000000",
+      "ok": true
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st40",
+   "name": "SCENARIO 7 (audit 5b) from CONTROLS: what is owed BECOMES ZERO after REVIEW: when the wallet screen opens, the confirmed choice reverts on the simulated contract (“nothing owed”), nothing is paid and the page reports a failure, never a payment; at the review sheet before the wallet is asked, either the page stops before the wallet (nothing sent) or the transaction reverts the same way; the recipient sent is the reviewed one",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 17232,
+   "ev": {
+    "rows": [
+     {
+      "kind": "zero",
+      "when": "wallet",
+      "choose": "confirmed",
+      "verdict": true,
+      "sheet": true,
+      "sheetHasRecipient": true,
+      "pressed": true,
+      "wallet": true,
+      "panelOwed": "0.0 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+      "panelPaysTo": "0x52908400098527886E0F7030069857D2E4169EE7",
+      "owedAtSend": "50000000000000000",
+      "owedAtWallet": "0",
+      "settled": true,
+      "tx": {
+       "state": "reverted",
+       "why": "nothing owed (require \"nothing owed\")",
+       "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+       "from": "0x0000000000000000000000000000000000000a11"
+      },
+      "replacement": null,
+      "sends": 1,
+      "payouts": [],
+      "owedAfter": "0",
+      "received": "0",
+      "receivedSelf": "0",
+      "toasts": [
+       "Withdrawing to another address: confirm in your wallet",
+       "Withdrawing to another address: sent (0xb508…481c), waiting for Ethereum to confirm",
+       "Withdrawing to another address: sent, but it failed on Ethereum (reverted). Only the network fee was spent."
+      ],
+      "note": "",
+      "hist": [
+       "wtoNote: Confirm in your wallet: pay to 0x52908400098527886E0F7030069857D2E4169EE7.",
+       "wtoNote: Sent (0xb508…481c), waiting for Ethereum to confirm.",
+       "wtoNote: Failed on Ethereum (reverted): 0x52908400098527886E0F7030069857D2E4169EE7 did not accept the ETH, or nothing was owed any more. What is owed stays in the contract. You can try another address. Reading what is owed now…",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW).",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW)."
+      ],
+      "changes": [
+       "SIMULATED: owed[0x0000000000000000000000000000000000000a11] 0.05 → 0.0 ETH (BECOMES ZERO, armed: when the wallet screen opened)"
+      ],
+      "ok": true,
+      "how": "reverted"
+     },
+     {
+      "kind": "zero",
+      "when": "now",
+      "choose": "confirmed",
+      "verdict": true,
+      "sheet": true,
+      "sheetHasRecipient": true,
+      "pressed": true,
+      "wallet": true,
+      "panelOwed": "0.0 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+      "panelPaysTo": "0x52908400098527886E0F7030069857D2E4169EE7",
+      "owedAtSend": "0",
+      "owedAtWallet": "0",
+      "settled": true,
+      "tx": {
+       "state": "reverted",
+       "why": "nothing owed (require \"nothing owed\")",
+       "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+       "from": "0x0000000000000000000000000000000000000a11"
+      },
+      "replacement": null,
+      "sends": 1,
+      "payouts": [],
+      "owedAfter": "0",
+      "received": "0",
+      "receivedSelf": "0",
+      "toasts": [
+       "Withdrawing to another address: confirm in your wallet",
+       "Withdrawing to another address: sent (0x6e1e…7c3c), waiting for Ethereum to confirm",
+       "Withdrawing to another address: sent, but it failed on Ethereum (reverted). Only the network fee was spent."
+      ],
+      "note": "",
+      "hist": [
+       "wtoNote: Confirm in your wallet: pay to 0x52908400098527886E0F7030069857D2E4169EE7.",
+       "wtoNote: Sent (0x6e1e…7c3c), waiting for Ethereum to confirm.",
+       "wtoNote: Failed on Ethereum (reverted): 0x52908400098527886E0F7030069857D2E4169EE7 did not accept the ETH, or nothing was owed any more. What is owed stays in the contract. You can try another address. Reading what is owed now…",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW).",
+       "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW)."
+      ],
+      "changes": [
+       "SIMULATED: owed[0x0000000000000000000000000000000000000a11] 0.05 → 0.0 ETH (BECOMES ZERO, now: before the wallet is asked)"
+      ],
+      "ok": true,
+      "how": "reverted"
+     }
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st41",
+   "name": "SCENARIO 7 (audit 5b): the wallet REPLACES the withdrawTo with a withdraw() that itself pays what was owed (simulated): the page reports the replacement, does not say the original amount is still owed, and its seats view refreshes to nothing owed; the simulated chain shows the original replaced, the replacement mined and the payout to the sender",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 10552,
+   "ev": {
+    "r": {
+     "choose": "replacedpaid",
+     "verdict": true,
+     "sheet": true,
+     "sheetHasRecipient": true,
+     "pressed": true,
+     "wallet": true,
+     "panelOwed": "0.05 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+     "panelPaysTo": "0x52908400098527886E0F7030069857D2E4169EE7",
+     "owedAtSend": "50000000000000000",
+     "owedAtWallet": "50000000000000000",
+     "settled": true,
+     "tx": {
+      "state": "replaced",
+      "why": null,
+      "to": "0x52908400098527886E0F7030069857D2E4169EE7",
+      "from": "0x0000000000000000000000000000000000000a11"
+     },
+     "replacement": {
+      "action": "withdraw",
+      "state": "mined"
+     },
+     "sends": 1,
+     "payouts": [
+      "SIMULATED: 0.05 ETH sent to 0x0000000000000000000000000000000000000a11 (withdraw: what was owed)"
+     ],
+     "owedAfter": "0",
+     "received": "0",
+     "receivedSelf": "50000000000000000",
+     "toasts": [
+      "Withdrawing to another address: confirm in your wallet",
+      "Withdrawing to another address: sent (0x8fa2…1ff4), waiting for Ethereum to confirm",
+      "Withdrawing to another address: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+     ],
+     "note": "",
+     "hist": [
+      "wtoNote: Confirm in your wallet: pay to 0x52908400098527886E0F7030069857D2E4169EE7.",
+      "wtoNote: Sent (0x8fa2…1ff4), waiting for Ethereum to confirm.",
+      "wtoNote: This transaction did not run: your wallet replaced it with another one, which may itself have withdrawn. Check your wallet. Reading what is owed now…",
+      "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW).",
+      "seatsNote: You hold 2.0000 seats out of 17.0000. Earned and waiting for you: 0.03640 ETH (press CLAIM, or wait for the next time this wallet collects a plate or witnesses: either way the contract tries to send it to you in that transaction, and ETH your wallet rejects stays owed to it, for WITHDRAW)."
+     ],
+     "changes": []
+    },
+    "refreshed": true,
+    "claimsStillOwed": false,
+    "text": "Withdrawing to another address: confirm in your wallet | Withdrawing to another address: sent (0x8fa2…1ff4), waiting for Ethereum to confirm | Withdrawing to another address: your wallet replaced it with another transaction, so this one did not go through. Check your wallet. |  | wtoNote: Confirm in"
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "st42",
+   "name": "REAL WALLET, SCENARIO 7 (audit 5b): ARM “INCREASES” then WITHDRAW TO ANOTHER ADDRESS: the intercept panel opens with OWED NOW 0.1 ETH, CONFIRMED pays the reviewed recipient everything owed at execution (simulated), and the external wallet receives no write",
+   "file": "staging.test.js",
+   "pass": true,
+   "ms": 5312,
+   "ev": {
+    "rows": {
+     "INTENDED CHAIN": "1 · Ethereum mainnet",
+     "WALLET IS ON": "1 · Ethereum mainnet",
+     "SENDER": "0x00000000000000000000000000000000000000aa",
+     "TARGET": "0xcf5eba884efa04940d31a663beb6d37f907d064c  (the STORMGLASS contract)",
+     "VALUE": "0.0 ETH",
+     "ACTION": "withdrawTo(arg0: 0x52908400098527886E0F7030069857D2E4169EE7)",
+     "PAYS TO (recipient)": "0x52908400098527886E0F7030069857D2E4169EE7",
+     "PAID FROM": "what the contract owes the SENDER above; the sender’s wallet only authorises it",
+     "OWED NOW (simulated)": "0.1 ETH: the contract pays all that is owed when the transaction executes (nothing owed: it reverts)",
+     "GAS LIMIT": "360000"
+    },
+    "done": true,
+    "tx": {
+     "state": "confirmed",
+     "mode": "intercepted",
+     "to": "0x52908400098527886E0F7030069857D2E4169EE7"
+    },
+    "received": "100000000000000000",
+    "owed": "0",
+    "reached": []
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 0,
+     "sent": 0
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  }
+ ],
+ "staging": {
+  "page": "test-wallet.html",
+  "stagingPageEnv": null,
+  "stamp": {
+   "rev": "5b6257d",
+   "sha256": "a870ac02cad516c5fb436f29629986925648140aa7bee002bf1b990332ed3e0a",
+   "src": "index.html",
+   "touched": "5b6257d"
+  },
+  "candidate": {
+   "rev": "5b6257d",
+   "commit": "5b6257dd22c91b803b659e4052b0a24ffe90049d",
+   "repo": "/home/claude/wt-5b-final",
+   "file": "index.html",
+   "sha256": "a870ac02cad516c5fb436f29629986925648140aa7bee002bf1b990332ed3e0a",
+   "gitSha256": "a870ac02cad516c5fb436f29629986925648140aa7bee002bf1b990332ed3e0a",
+   "matchesStamp": true
+  },
+  "index": {
+   "path": "index.html",
+   "sha256": "a870ac02cad516c5fb436f29629986925648140aa7bee002bf1b990332ed3e0a",
+   "matchesStamp": true,
+   "source": {
+    "commit": "04ddf4932e791667747791105a4af15e6a450d49",
+    "repo": "/home/claude/wt-5b-final",
+    "path": "index.html",
+    "blob": "1e35b00333674e169dd6fe63da92cdb1997669ca",
+    "headBlob": "1e35b00333674e169dd6fe63da92cdb1997669ca",
+    "matchesHead": true,
+    "reason": null
+   }
+  }
+ }
+}

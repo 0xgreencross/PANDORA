@@ -1,0 +1,2 @@
+STAGING BUILD FAIL index.html already contains the staging mark "id=\"sg-" (staging code must never reach production)
+rc=1

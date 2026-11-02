@@ -1,0 +1,32 @@
+OK   control  {"rc":0,"status":"passed","completed":true,"exit":0,"identity":true,"runId":"20261102T064127Z-29759-244222","commit":"04ddf4932e791667747791105a4af15e6a450d49","reason":null,"harness":"not a git work tree (fatal: not a git repository (or any of the parent directories): .git)"}
+OK   unwritable-dir  {"rc":1,"noCaseRan":true,"said":["HARNESS FAIL cannot write results (snapshot 1): ENOTDIR: not a directory, mkdir '/tmp/wt-selftest-fj5846/a-file/sub'","HARNESS FAIL the results cannot be saved in /tmp/wt-selftest-fj5846/a-file/sub: no case is run"]}
+OK   write-fails  {"rc":1,"status":"failed","exit":1,"passed":["st_ok","st_ok2"],"persistence":{"ok":false,"snapshots":5,"failures":[{"snapshot":3,"at":"2026-11-02T06:41:35.331Z","msg":"EIO: injected by selftest-fault.js, write #3"}],"file":"/tmp/wt-selftest-fj5846/out-write-fails/results-st-write-fails.json","previous":null},"tmpLeft":[]}
+OK   rename-fails  {"rc":1,"status":"failed","exit":1,"passed":["st_ok","st_ok2"],"persistence":{"ok":false,"snapshots":5,"failures":[{"snapshot":3,"at":"2026-11-02T06:41:39.181Z","msg":"EIO: injected by selftest-fault.js, rename #3"}],"file":"/tmp/wt-selftest-fj5846/out-rename-fails/results-st-rename-fails.json","previous":null},"tmpLeft":[]}
+OK   open-fails  {"rc":1,"status":"failed","exit":1,"passed":["st_ok","st_ok2"],"persistence":{"ok":false,"snapshots":5,"failures":[{"snapshot":3,"at":"2026-11-02T06:41:44.006Z","msg":"ENOSPC: injected by selftest-fault.js, open /tmp/wt-selftest-fj5846/out-open-fails/.results-st-open-fails.json.20261102T064141Z-30363-756ed7.tmp"}],"file":"/tmp/wt-selftest-fj5846/out-open-fails/results-st-open-fails.json","previous":null},"tmpLeft":[]}
+OK   final-write-fails  {"rc":1,"status":"running","exit":null,"passed":["st_ok","st_ok2"],"persistence":{"ok":true,"snapshots":4,"failures":[],"file":"/tmp/wt-selftest-fj5846/out-final-write-fails/results-st-final-write-fails.json","previous":null},"tmpLeft":[]}
+OK   earlier-success-file  {"first":{"rc":1,"currentFileAfter":"(rewritten by run 2)","oldMovedTo":"results-st-earlier.prev-20200101T000000Z-1-aaaaaa.json","exists":true},"second":{"rc":1,"runId":"20261102T064149Z-30725-e9e90b","status":"harness-failure","legacyMoved":["results-st-earlier.prev-legacy-20261102T064148Z.json"]}}
+OK   launch-fails  {"rc":1,"status":"harness-failure","unexecuted":["st_ok","st_ok2"],"hf":["the browser did not launch: browserType.launch: Failed to launch chromium becaus"]}
+OK   browser-dies  {"rc":1,"status":"incomplete","passed":["st_ok"],"failed":["st_kill"],"unexecuted":["st_last"],"kill":{"exception":"browser disconnected during the case","browserGone":true}}
+OK   renderer-crash  {"rc":1,"status":"failed","crash":{"failedOnPageErrors":["page crashed"]}}
+OK   page-rejection  {"rc":1,"status":"failed","c":{"failedOnPageErrors":["Error: st page rejection"]}}
+OK   node-rejection  {"rc":1,"status":"failed","c":{"unhandledRejection":["Error: st node rejection\n    at Object.run (/tmp/wt-selftest-fj5846/root/tools/stormglass/wallet-tests/audit5zz_selftest.test.js:9:97)\n    at /tmp/wt-selftest-fj5846/root/tools/stormglass/wallet-tests"]},"hf":1}
+OK   case-exception-and-assertion  {"rc":1,"failed":["st_fail","st_throw"],"passed":["st_ok"]}
+OK   release-missing-module  {"rc":2,"status":"manifest-mismatch","missingModules":["audit3b.test.js"],"missingIds":17}
+OK   release-unlisted-module  {"rc":2,"unlistedModules":["audit5zz_selftest.test.js"],"unlistedIds":12}
+OK   release-missing-id  {"rc":2,"missingIds":["audit2.test.js:q99"]}
+OK   release-with-cases  {"rc":2,"status":"selection-error","hf":["RELEASE=1 runs the whole manifest: CASES must not be set (got \"st_ok\")"]}
+OK   unknown-id  {"rc":2,"status":"selection-error"}
+OK   duplicate-id  {"rc":2,"status":"registration-error"}
+OK   malformed-id  {"rc":2,"status":"registration-error"}
+OK   module-load-fails  {"rc":2,"status":"registration-error"}
+OK   empty-selection  {"rc":[2,2]}
+OK   dependency-missing  {"rc":1,"status":"harness-failure","hf":["cannot load playwright: Cannot find module 'playwright'"]}
+OK   target-missing  {"rc":1,"status":"harness-failure","source":{"commit":"unknown","reason":"not found: ENOENT: no such file or directory, lstat '/tmp/wt-selftest-fj5846/no-such-index.html'"}}
+OK   hung-case  {"rc":1,"status":"failed","hang":{"exception":"case watchdog: no result after 5000 ms","timedOut":true},"ms":5078}
+OK   hung-cleanup  {"rc":1,"status":"failed","c":{"contextsDidNotClose":true,"cleanupTimedOut":true},"ms":8650}
+OK   frozen-browser  {"rc":1,"status":"incomplete","unexecuted":["st_last"],"stoppedPids":[32659],"stillAlive":[],"ms":34476}
+OK   run-watchdog  {"rc":1,"status":"interrupted","interruptedBy":"run watchdog 12000 ms","running":"st_hang","ms":12420}
+OK   sigterm  {"rc":143,"status":"interrupted","exitCode":143,"interruptedBy":"SIGTERM","running":"st_hang","unexecuted":["st_hang","st_last"],"xdone":"XDONE rc=143"}
+OK   sigint  {"rc":130,"status":"interrupted","exitCode":130,"interruptedBy":"SIGINT","running":"st_hang","unexecuted":["st_hang","st_last"],"xdone":"XDONE rc=130"}
+OK   sigterm-group  {"rc":143,"status":"interrupted","exitCode":143,"interruptedBy":"SIGTERM","running":"st_hang","unexecuted":["st_hang","st_last"],"xdone":"XDONE rc=143"}
+SELFTEST 31/31 passed (temp tree removed)

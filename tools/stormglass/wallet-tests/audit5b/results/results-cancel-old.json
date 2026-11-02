@@ -1,0 +1,198 @@
+{
+ "schema": "stormglass-wallet-results/2",
+ "suite": "wallet",
+ "runId": "20261102T062037Z-12672-190cb3",
+ "label": "cancel-old",
+ "mode": "subset",
+ "status": "failed",
+ "completed": true,
+ "exit": 1,
+ "exitCode": 1,
+ "startedAt": "2026-11-02T06:20:37.676Z",
+ "finishedAt": "2026-11-02T06:20:47.270Z",
+ "interruptedBy": null,
+ "target": {
+  "path": "_a5b_prev.html",
+  "bytes": 252105,
+  "sha256": "504fc23c849a29a46155ec194bf7e4235b5039a5ce29321341058364b2749b13",
+  "source": {
+   "commit": "dfbe702aa1a5f989b11324328e7b61826e7a1d55",
+   "repo": "/home/claude/wt-5b",
+   "path": "_a5b_prev.html",
+   "blob": "7dcb619bbca3128b734a07fbf1d24bac12055651",
+   "headBlob": null,
+   "matchesHead": false,
+   "reason": "not committed in this repo (untracked copy): the commit names the repo holding it, not the source of these bytes"
+  }
+ },
+ "harness": {
+  "dir": "tools/stormglass/wallet-tests",
+  "commit": "dfbe702aa1a5f989b11324328e7b61826e7a1d55",
+  "tree": "f6eeab8ed2bcbecf281ebe6654013aa0eafcb073",
+  "trees": {
+   ".": "f6eeab8ed2bcbecf281ebe6654013aa0eafcb073"
+  },
+  "dirty": [
+   "M tools/stormglass/wallet-tests/audit5b.test.js"
+  ],
+  "reason": null,
+  "files": {
+   "audit2.test.js": "e876c2b5376fe144397d96ae9a1d972a113543778e12f3ed09f56b7429cadef5",
+   "audit3.test.js": "010539e385a4a9363c54799ec536c0ff02d72b4d7a64253899e9ab303080403e",
+   "audit3b.test.js": "e8eb9ddc253da6e11fc9e07428f4a8cab685cb8cac41c2c6a4f7e5a357cdb81a",
+   "audit4.test.js": "21d1061e6a6e950169224967a28879f98ff91e9695e4b77b1867d904c661215d",
+   "audit4review.test.js": "53c0379bd5cf37cd555f2228564a8420ad60c577a11c902e555a926c10fd9ec1",
+   "audit4scan.test.js": "a53134f44cb48342fbaa27fc3bca203ee2e656fa709e775d20c1729e677ba59b",
+   "audit5b.test.js": "d64766d93982ca1ab49070810d7befd5fbf48bc2e31fdc5c0ed665351a8abeeb",
+   "audit5fix.test.js": "642ce65afd706fdcb76df38011c3c4430eac48e72c4a757fad9e4a3f08f0f970",
+   "audit5page.test.js": "d5f7931d20ddf2c67297c42f7dfed771bdcd96050ee0504e567a1a83a36fa869",
+   "audit5post.test.js": "de532c31556406950d41efe4636266af4c794c96c683f724de50b1ca9db64e9a",
+   "audit5review.test.js": "53175638e5c76516dfa6e73c6accddb3f8e0a53941e1ccf92db9595cb7f9c1b1",
+   "audit5review2.test.js": "855c054cc8abfc1dd5392a11f578bbc7bf0a37a384e46e03d8dc70bda7935dbc",
+   "fakechain.js": "2740ff568068e328bb482300f8447d15e24e98b32c6341d2d3efaa44cf6b47cf",
+   "harness.test.js": "c9549a723a97769c19ea00ad47c402e62bcd143968793aa02852adcfad818783",
+   "mockwallet.js": "037a13e3a0e0738a5701b2dfcc18d997ba0829bdd1d9897f14e126162c5222df",
+   "runner.js": "ee25099c31aeec20ad47c983dda2c378b503cb936a6b061b8d8ad150999dbd7f",
+   "wallet.test.js": "f9c0d8d965af41ab3bd6ad25606ea2cdb6606d24f388c32a1e56b13c4845d3ed"
+  },
+  "contentSha256": "e75dad034d2d9ad5fd23104448e5ae2f396f389fc6af90735f296d5a23577b83"
+ },
+ "deps": {
+  "node": "v22.22.0",
+  "playwright": {
+   "version": "1.64.0",
+   "path": "/home/claude/node_modules/playwright"
+  },
+  "ethers": {
+   "version": "6.13.2",
+   "path": "/home/claude/node_modules/ethers"
+  },
+  "ethersUmd": {
+   "path": "/home/claude/node_modules/ethers/dist/ethers.umd.min.js",
+   "sha256": "74e00c3e2a9ccd312e6d5154f9ccb0911d1b34cb49bc8220244a292a0a773c21"
+  },
+  "chromium": "141.0.7390.37",
+  "chromiumPath": "/opt/pw-browsers/chromium"
+ },
+ "env": {
+  "CASES": "a5c6,a5c7",
+  "RELEASE": null,
+  "CASE_TIMEOUT_MS": 240000,
+  "CLEANUP_TIMEOUT_MS": 30000,
+  "RUN_TIMEOUT_MS": 2700000,
+  "NODE_OPTIONS": "--use-openssl-ca",
+  "OUT": "/home/claude/audit5b/ev/final",
+  "PORT": "8982",
+  "STAGING_PAGE": null,
+  "cwd": "/home/claude/wt-5b"
+ },
+ "manifest": {
+  "file": "/home/claude/wt-5b/tools/stormglass/wallet-tests/manifest.json",
+  "sha256": "bf750d8d7e68a90c17566e79e39baa1c84923ab2ecbb587ef6236d80e0c78db5",
+  "malformedIds": [],
+  "duplicateIds": [],
+  "missingModules": [],
+  "unlistedModules": [],
+  "modulesWithoutCases": [],
+  "missingIds": [],
+  "unlistedIds": [],
+  "wrongGroup": [],
+  "expected": 222,
+  "registered": 222,
+  "ok": true
+ },
+ "registered": 222,
+ "groups": {
+  "@orig": 38,
+  "@audit2": 35,
+  "@audit3": 21,
+  "@audit3b": 17,
+  "@harness": 2,
+  "@audit4": 48,
+  "@audit5": 61
+ },
+ "selected": [
+  "a5c6",
+  "a5c7"
+ ],
+ "executed": [
+  "a5c6",
+  "a5c7"
+ ],
+ "passed": [
+  "a5c6"
+ ],
+ "failed": [
+  "a5c7"
+ ],
+ "timedOut": [],
+ "cleanupTimedOut": [],
+ "unexecuted": [],
+ "running": null,
+ "harnessFailures": [],
+ "persistence": {
+  "ok": true,
+  "snapshots": 5,
+  "failures": [],
+  "file": "/home/claude/audit5b/ev/final/results-cancel-old.json",
+  "previous": null
+ },
+ "cases": [
+  {
+   "id": "a5c6",
+   "name": "replaced in the wallet by another transaction: the note does not say what is owed stays (the replacement may itself have withdrawn); it says so, and reads owed again (0.03)",
+   "file": "audit5b.test.js",
+   "pass": true,
+   "ms": 4327,
+   "ev": {
+    "kind": "replaced",
+    "sheet": true,
+    "outcomeSeen": true,
+    "note": "This transaction did not run: your wallet replaced it with another one, which may itself have withdrawn. Check your wallet. Owed to your connected wallet now: 0.03000 ETH.",
+    "toasts": [
+     "Withdrawing to another address: confirm in your wallet",
+     "Withdrawing to another address: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Withdrawing to another address: your wallet replaced it with another transaction, so this one did not go through. Check your wallet."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  },
+  {
+   "id": "a5c7",
+   "name": "cancelled in the wallet after it was sent (0 ETH to itself, no data: it cannot have withdrawn): the note says only that it was cancelled, no claim that the owed amount stayed and no claim that the cancellation withdrew; owed read again (0.03)",
+   "file": "audit5b.test.js",
+   "pass": false,
+   "ms": 4263,
+   "ev": {
+    "kind": "cancelled",
+    "sheet": true,
+    "outcomeSeen": true,
+    "note": "This transaction did not run: your wallet cancelled it with another one, which may itself have withdrawn. Check your wallet. Owed to your connected wallet now: 0.03000 ETH.",
+    "toasts": [
+     "Withdrawing to another address: confirm in your wallet",
+     "Withdrawing to another address: sent (0x0000…0001), waiting for Ethereum to confirm",
+     "Withdrawing to another address: cancelled in your wallet after it was sent. It did not go through; only network fees were spent."
+    ]
+   },
+   "pageErrors": [],
+   "contexts": 1,
+   "wallet": [
+    {
+     "asked": 1,
+     "sent": 1
+    }
+   ],
+   "outsideRefused": [],
+   "socketsRefused": []
+  }
+ ]
+}
