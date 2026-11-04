@@ -210,9 +210,21 @@ function markOwned(id) {
 }
 
 /* ---------- piece metadata / render ---------- */
+async function previewURI(tokenId) {
+  var C = NET.contract, rec = Math.floor(tokenId / 100), coder = ethers.AbiCoder.defaultAbiCoder();
+  var own = ethers.keccak256(coder.encode(['uint256','uint256'], [tokenId, 2]));
+  var base = BigInt(ethers.keccak256(coder.encode(['uint256','uint256'], [rec, 9])));
+  var w1slot = ethers.toBeHex(base + 1n, 32);
+  async function rpc(m, p) { var r = await fetch(NET.rpc, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: m, params: p }) }); var j = await r.json(); if (j.error) throw new Error(j.error.message); return j.result; }
+  var w1 = BigInt(await rpc('eth_getStorageAt', [C, w1slot, 'latest']));
+  var sd = {}; sd[own] = ethers.zeroPadValue('0x000000000000000000000000000000000000dEaD', 32); sd[w1slot] = ethers.toBeHex(w1 | (1n << 224n), 32);
+  var ov = {}; ov[C] = { stateDiff: sd };
+  var res = await rpc('eth_call', [{ to: C, data: iface.encodeFunctionData('tokenURI', [tokenId]), gas: '0x1c9c380' }, 'latest', ov]);
+  return iface.decodeFunctionResult('tokenURI', res)[0];
+}
 async function getMeta(tokenId, key) {
   if (S.metaCache.has(key)) return S.metaCache.get(key);
-  var uri = (await read('tokenURI', [tokenId], '0x1c9c380'))[0];
+  var uri = /:p$/.test(key) ? await previewURI(tokenId) : (await read('tokenURI', [tokenId], '0x1c9c380'))[0];
   var j = null;
   var m = /^data:application\/json;base64,(.*)$/.exec(uri);
   if (m) j = JSON.parse(b64dec(m[1]));
@@ -259,19 +271,21 @@ async function loadCardArt(card) {
   try {
     var meta = await getMeta(tokenId, key);
     if (card._key !== key) return;
-    mountPiece(art, meta, function () { return card._key !== key; });
+    var pf = mountPiece(art, meta, function () { return card._key !== key; });
+    if (pf) pf.style.pointerEvents = 'none';
   } catch (e) {
     if (card._key === key) { card._key = null; art.innerHTML = '<div class="empty">PIECE UNAVAILABLE</div>'; }
   }
 }
+function hasArt(r) { return !!(r.minted || !r.landedAt); }
 function wantArt(card, r) {
-  if (!r.minted) {
+  if (!hasArt(r)) {
     card._want = null; card._key = null;
-    $('.art', card).innerHTML = '<div class="empty">' + (r.landedAt ? 'NO EDITIONS WERE COLLECTED' : 'AWAITING FIRST EDITION') + '</div>';
+    $('.art', card).innerHTML = '<div class="empty">NO EDITIONS WERE COLLECTED</div>';
     return;
   }
-  var tokenId = r.rec * 100 + r.minted;
-  var key = tokenId + ':' + (r.landedAt ? 1 : 0);
+  var tokenId = r.rec * 100 + (r.minted || 1);
+  var key = r.minted ? tokenId + ':' + (r.landedAt ? 1 : 0) : tokenId + ':p';
   if (card._want === key) return;
   card._want = key; card._tokenId = tokenId;
   if (io) { card._key = null; io.observe($('.art', card)); } else loadCardArt(card);
@@ -342,8 +356,11 @@ function infoHtml(r, st, now, owned, msg) {
   }
   h += '<div class="kv"><span>MINTED</span><span>' + r.minted + '/' + r.cap + '</span></div>';
   h += '<div class="kv"><span>PRICE</span><span>' + fmtEth(r.price) + ' ETH</span></div>';
-  if (canMint(r, now)) h += '<div class="act"><button class="pri" data-act="mint">MINT ' + fmtEth(r.price) + ' ETH</button></div>';
-  else if (st === 'IN FLIGHT') h += '<div class="act"><button class="pri" disabled>ALL EDITIONS COLLECTED</button></div>';
+  var act = '';
+  if (canMint(r, now)) act += '<button class="pri" data-act="mint">MINT ' + fmtEth(r.price) + ' ETH</button>';
+  else if (st === 'IN FLIGHT') act += '<button class="pri" disabled>ALL EDITIONS COLLECTED</button>';
+  if (hasArt(r)) act += '<button data-act="gif"' + (act ? ' style="margin-top:8px"' : '') + '>SHARE GIF</button>';
+  if (act) h += '<div class="act">' + act + '</div>';
   h += '<div class="msg' + (msg && msg.err ? ' err' : '') + '">' + (msg ? msg.h : '') + '</div>';
   var toks = '';
   if (st === 'LANDED' && r.minted) {
@@ -358,12 +375,22 @@ function infoHtml(r, st, now, owned, msg) {
   if (toks) h += '<div class="toks">' + toks + '</div>';
   return h;
 }
+function isMine(rec, i) { var o = S.owned.get(rec); return !!(o && o.has(i)); }
+function shareCard(card, rec) {
+  if (!card._want || !card._tokenId) return;
+  var i = card._tokenId % 100;
+  openShare({ rec: rec, index: i, tokenId: card._tokenId, preview: /:p$/.test(card._want || ''), mine: isMine(rec, i) });
+}
 function wire(card, r) {
+  var art = $('.art', card);
+  art.onclick = function () { shareCard(card, r.rec); };
+  art.style.cursor = hasArt(r) ? 'pointer' : '';
   $$('button[data-act]', card).forEach(function (b) {
     b.addEventListener('click', function () {
       var act = b.getAttribute('data-act');
       if (act === 'mint') doMint(r.rec);
-      if (act === 'share') { var i = parseInt(b.getAttribute('data-idx'), 10); openShare({ rec: r.rec, index: i, tokenId: r.rec * 100 + i }); }
+      if (act === 'gif') shareCard(card, r.rec);
+      if (act === 'share') { var i = parseInt(b.getAttribute('data-idx'), 10); openShare({ rec: r.rec, index: i, tokenId: r.rec * 100 + i, mine: true }); }
     });
   });
 }
@@ -555,7 +582,7 @@ async function doMint(rec) {
     markOwned(tokenId);
     setMsg(rec, 'CONFIRMED TOKEN ' + tokenId);
     await refresh();
-    openShare({ rec: rec, index: idx, tokenId: tokenId });
+    openShare({ rec: rec, index: idx, tokenId: tokenId, mine: true });
   } catch (e) { setMsg(rec, esc(errText(e)), true); }
 }
 
@@ -588,8 +615,9 @@ function makeTweet(ctx, seen) {
   var link = deepLink(ctx.rec), name = pieceName(ctx.rec, ctx.index);
   var phrase = ctx.open ? 'currently minting at:' : 'recorded at:';
   var out = null;
+  var tpls = ctx.mine ? TEMPLATES : TEMPLATES.filter(function (t) { return t.indexOf('{verb}') < 0 && t.indexOf('in hand') < 0; });
   for (var tries = 0; tries < 400; tries++) {
-    var tpl = pick(TEMPLATES);
+    var tpl = pick(tpls);
     var tag = Math.random() < 0.22 ? pick(POOLS.tag) + ' ' : '';
     var text = tpl
       .replace('{verb}', pick(POOLS.verb)).replace('{noun}', pick(POOLS.noun)).replace('{tail}', pick(POOLS.tail))
@@ -609,7 +637,7 @@ var SH = null;
 function openShare(p) {
   var r = S.recs.get(p.rec);
   var open = r ? canMint(r, nowSec()) || stateOf(r, nowSec()) === 'IN FLIGHT' : true;
-  SH = { rec: p.rec, index: p.index, tokenId: p.tokenId, open: open, seen: new Set(), saved: false, file: null, busy: false, tw: null };
+  SH = { rec: p.rec, index: p.index, tokenId: p.tokenId, open: open, mine: !!p.mine, preview: !!p.preview, seen: new Set(), saved: false, file: null, busy: false, tw: null };
   var name = pieceName(p.rec, p.index);
   var dl = $('#dlgin');
   dl.innerHTML =
@@ -631,7 +659,7 @@ function openShare(p) {
   $('#shcl').addEventListener('click', function () { copy(SH.tw.link, this); });
   if ($('#shns')) $('#shns').addEventListener('click', function () { navigator.share({ text: SH.tw.body, url: SH.tw.link }).catch(function () { }); });
   newTweet();
-  var key = 'sh:' + p.tokenId + ':' + (r && r.landedAt ? 1 : 0) + ':' + Date.now();
+  var key = 'sh:' + p.tokenId + ':' + (r && r.landedAt ? 1 : 0) + ':' + Date.now() + (p.preview ? ':p' : '');
   var shid = SH;
   getMeta(p.tokenId, key).then(function (meta) {
     if (SH !== shid) return;
@@ -646,7 +674,7 @@ function closeShare() {
   SH = null;
 }
 function newTweet() {
-  var t = makeTweet({ rec: SH.rec, index: SH.index, open: SH.open }, SH.seen);
+  var t = makeTweet({ rec: SH.rec, index: SH.index, open: SH.open, mine: SH.mine }, SH.seen);
   SH.tw = t;
   $('#shtw').textContent = t.text;
   $('#shfc').href = 'https://farcaster.xyz/~/compose?text=' + encodeURIComponent(t.body) + '&embeds[]=' + encodeURIComponent(t.link);
@@ -707,27 +735,26 @@ async function onDownload() {
     setProg(0, 'WAITING FOR RENDER');
     var canvas = await waitCanvas(f, 90000);
     for (var w = 0; w < 100 && !canvasLive(canvas); w++) await sleep(150);
-    var N = 36, SZ = 480, iw = f.contentWindow;
-    var off = document.createElement('canvas'); off.width = off.height = SZ;
-    var ox = off.getContext('2d', { willReadFrequently: true }); ox.imageSmoothingEnabled = false;
-    var frames = [], t0 = performance.now();
-    for (var i = 0; i < N; i++) {
-      var wait = t0 + i * 40 - performance.now();
-      if (wait > 0) await sleep(wait);
-      await Promise.race([new Promise(function (r) { iw.requestAnimationFrame(function () { r(); }); }), sleep(80)]);
-      ox.drawImage(canvas, 0, 0, SZ, SZ);
-      frames.push(ox.getImageData(0, 0, SZ, SZ).data);
-      setProg(0.4 * (i + 1) / N, 'CAPTURING ' + (i + 1) + '/' + N);
-    }
+    var N = 144, SZ = isMobile() ? 360 : 480, iw = f.contentWindow;
     var mod = await import(GIFENC_URL);
     var enc = mod.GIFEncoder();
-    for (var j = 0; j < N; j++) {
-      var palette = mod.quantize(frames[j], 256);
-      var idx = mod.applyPalette(frames[j], palette);
-      enc.writeFrame(idx, SZ, SZ, { palette: palette, delay: 40, repeat: 0 });
-      setProg(0.4 + 0.6 * (j + 1) / N, 'ENCODING ' + (j + 1) + '/' + N);
-      await sleep(0);
-    }
+    var off = document.createElement('canvas'); off.width = off.height = SZ;
+    var ox = off.getContext('2d', { willReadFrequently: true }); ox.imageSmoothingEnabled = false;
+    var realNow = iw.Date.now, T0 = iw.Date.now(), T = T0;
+    function raf() { return Promise.race([new Promise(function (r) { iw.requestAnimationFrame(function () { r(); }); }), sleep(250)]); }
+    iw.Date.now = function () { return T; };
+    try {
+      for (var i = 0; i < N; i++) {
+        if (SH !== shid) return;
+        T = T0 + i * 80;
+        await raf(); await raf();
+        ox.drawImage(canvas, 0, 0, SZ, SZ);
+        var px = ox.getImageData(0, 0, SZ, SZ).data;
+        var palette = mod.quantize(px, 256);
+        enc.writeFrame(mod.applyPalette(px, palette), SZ, SZ, { palette: palette, delay: 80, repeat: 0 });
+        setProg((i + 1) / N, 'RENDERING ' + (i + 1) + '/' + N);
+      }
+    } finally { iw.Date.now = realNow; }
     enc.finish();
     var bytes = enc.bytes();
     window.BB.lastGif = bytes;
