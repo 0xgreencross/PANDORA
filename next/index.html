@@ -48,21 +48,13 @@ svg{display:none!important}
 #nx3-ti b{font-weight:400}
 #nx3-hr1{top:var(--b1);height:0!important;border-top:1px solid var(--d)}
 #nx3-hr2{top:var(--b6);height:0!important;border-top:1px solid var(--p)}
-#nx3-opt{top:var(--b1)}#nx3-cmd{top:var(--b2)}#nx3-msg{top:var(--b3)}#nx3-pf{top:var(--b4)}#nx3-st{top:var(--b5)}
+#nx3-msg{top:var(--b3)}#nx3-st{top:var(--b5)}
 #nx3 .k{color:var(--p)}
 #nx3 button{white-space:pre}
 #nx3 button:hover,#nx3 button:focus-visible{background:var(--p);color:var(--g)}
-#nx3-cmd label{color:var(--d)}
-#nx3-cmd input{display:inline-block;width:12ch;vertical-align:top;height:var(--rh);line-height:var(--rh);color:var(--p)}
-#nx3-cmd .u{position:absolute;top:0;left:var(--cux,0);color:var(--p)}
-#nx3-cmd .u.blink{animation:nx3b 1.06s steps(1) infinite!important}
 @keyframes nx3b{50%{opacity:0}}
-#nx3-cmd .fill{color:var(--d)}
 #nx3-msg{color:var(--d)}#nx3-msg.k{color:var(--p)}
 #nx3-st{color:var(--d)}
-body[data-touch] #nx3-opt,body[data-touch] #nx3-cmd,body[data-touch] #nx3-pf{height:calc(var(--rh)*2)}
-body[data-touch] #nx3 .tap{display:inline-block;padding-bottom:var(--rh);vertical-align:top}
-body[data-touch] #nx3-fld{height:calc(var(--rh)*2)}
 
 /* ----- the plate: full colour, pixelated, never cropped, never covered ----- */
 #plateBox,#nx-pv,#pcard .pv{visibility:visible;position:fixed!important;left:var(--plx)!important;top:var(--ply)!important;
@@ -119,12 +111,9 @@ body[data-touch] .nx3-on button,body[data-touch] .nx3-on summary{display:block;p
 #panel .nx-num::before{content:attr(data-lab);color:var(--d)}
 #panel .nx-num small{color:var(--d)}
 #panel .nx-sub{color:var(--d)}
-#panel .nx-cta:not([disabled])::before,#panel #bBuy::before{content:"C "}
-#panel #bBuy~* #bPick::before{content:"P "}
 #panel .nx-cta[disabled]{display:none!important}
 #panel>.note{color:var(--d);margin:var(--rh) 0}
 #panel .nx-wc span{display:block;width:38ch;color:var(--d)}
-#panel .nx-wc button::before{content:"W  "}
 #panel .traits{margin-top:var(--rh)}
 #nx-pcap{display:none}
 
@@ -175,11 +164,9 @@ body[data-touch] .nx3-on button,body[data-touch] .nx3-on summary{display:block;p
 #seatsNote{margin:var(--rh) 0}
 .nx-seatBtns{margin:0 0 var(--rh)!important}
 .nx-seatBtns button{display:block}
-#claim::before{content:"L  "}#withdraw::before{content:"D  "}#withdrawTo::before{content:"A  "}
 #nx-witBtn{display:none!important}
 #wtoBox{margin-bottom:var(--rh)}
 #wtoBox .row{display:block;white-space:nowrap}#wtoBox input{width:30ch}
-#wtoReview::before{content:"R  "}
 .nx-tw{display:block;width:38ch}
 #nx-seatTbl{display:block;width:38ch}
 #nx-seatTbl thead{display:block}#nx-seatTbl thead tr{display:block;white-space:pre;color:var(--d)}
@@ -269,8 +256,6 @@ footer.site nav a{display:block}
 #ccBuy,#ccPick{display:block;width:38ch}
 #ccBuy .ln{display:block}
 #ccBuy .sp{display:none}
-#ccBuy::before{content:"C  ";float:left;width:3ch;height:calc(var(--rh)*3)}
-#ccPick::before{content:"P  "}
 #ccActs{margin-top:var(--rh)}
 #ccActs .st{color:var(--p)}#ccActs .st.bad{color:var(--p)}
 #ccActs .nx-res{display:grid;grid-template-columns:16ch 22ch}
@@ -278,10 +263,8 @@ footer.site nav a{display:block}
 
 /* SGP080 / SGP090 / SGP051 */
 #wsBtns button{display:block;width:38ch}
-#wsBtns button::before{content:attr(data-nx3k) "  "}
 #nx-witBody .row{display:block;white-space:nowrap;margin-top:var(--rh)}
 #wAmt{width:12ch}
-#bWit::before{content:"  ENTER  "}
 #pcName{color:var(--p);margin-bottom:0}
 #pcLinks a{display:block}
 
@@ -291,10 +274,8 @@ header.top,nav.nx-strip,.nx-bar,#nx-chainBar,#toast,#candidates>h2,#nx-curve,.nx
 #nx-tip{display:none!important}
 
 /* reduced motion: the cursor stops blinking; the plate and the countdown are the content */
-@media (prefers-reduced-motion:reduce){#nx3-cmd .u.blink{animation:none!important}}
 
 /* keyed options: the key, then the text with a hanging indent */
-#panel .nx-cta,#panel #bBuy,#panel .nx-wc button,.nx-seatBtns button,#wtoReview,#ccPick,#wsBtns button{padding-left:3ch!important;text-indent:-3ch}
 #panel .nx-cta[disabled]{padding-left:0!important;text-indent:0}
 #nx3-price .now .nx3-dith{--p:var(--g)}
 body[data-touch] #nx-skyRows>div,body[data-touch] #nx-tl .nd,body[data-touch] #ledgerGrid .card i{padding-bottom:var(--rh)}
@@ -331,7 +312,6 @@ footer.site .note{margin-top:var(--rh)!important}
 #panel.nx3-on{display:flex!important;flex-direction:column}
 #panel .nx-num{order:-1}
 body:not([data-ph=sale]) #panel .nx-num small{display:none}
-#panel .nx-cta:not([disabled]),#panel #bBuy{padding-left:2ch!important;text-indent:-2ch}
 /* the sale strip under the plate (desktop) */
 #nx3-cap>div{height:var(--rh);white-space:pre;overflow:hidden}
 #nx3-cap>div[hidden]{display:none}
@@ -342,8 +322,47 @@ body:not([data-ph=sale]) #panel .nx-num small{display:none}
 #nx3-c0{color:var(--p)}
 #nx3-c1,#nx3-c2,#nx3-c3{padding-left:1ch}
 /* the current panel in the option line: reverse video */
-#nx3 .rv{background:var(--p);color:var(--g)}
-#panel .nx-cta:not([disabled]),#panel #bBuy{width:40ch!important}
+
+/* ===== v3: everything is a tap or a click. Buttons are solid blocks of the phosphor, text inside, square corners ===== */
+#nx3-go,#nx3-act{position:fixed;visibility:visible;display:flex;flex-wrap:wrap;align-content:flex-start;gap:0}
+body[data-mode=desk] #nx3-go{left:var(--sx);top:var(--b1);height:var(--nh)}
+body[data-mode=desk] #nx3-act{right:calc(100vw - var(--sx) - var(--sw));top:var(--b1);height:var(--nh);justify-content:flex-end}
+body:not([data-mode=desk]) #nx3-go{left:var(--sx);top:var(--b1);width:var(--sw);height:calc(var(--rh)*4);padding-left:var(--cw)}
+body:not([data-mode=desk]) #nx3-act{left:var(--sx);top:calc(var(--b1) + var(--rh)*4);width:var(--sw);height:calc(var(--rh)*2);padding-left:var(--cw)}
+.nx3-b{display:inline-block;height:var(--rh);line-height:var(--rh);padding:0 1ch;background:var(--d);color:var(--g)!important;white-space:pre;
+  outline:2px solid var(--g);outline-offset:-2px;cursor:pointer;text-align:left;font:inherit;text-transform:uppercase}
+.nx3-b.nx3-p{background:var(--p)}
+.nx3-b:hover{background:var(--p)}
+.nx3-b:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+.nx3-b[disabled]{background:none;color:var(--d)!important;outline:1px solid var(--d);outline-offset:-3px;cursor:default}
+body[data-mode=desk] #nx3-go .nx3-b,body[data-mode=desk] #nx3-act .nx3-b{margin-right:1ch}
+body:not([data-mode=desk]) #nx3-go .nx3-b{width:13ch;height:calc(var(--rh)*2);line-height:calc(var(--rh)*2)}
+body:not([data-mode=desk]) #nx3-act .nx3-b{width:8ch;height:calc(var(--rh)*2);line-height:calc(var(--rh)*2)}
+#nx3-st .nx3-w{height:var(--rh);vertical-align:top}
+#nx3-hr1{top:calc(var(--b1) - 1px)}
+#nx3-msg.k{cursor:default}
+/* the sale strip button */
+#nx3-c3{padding-left:1ch!important}
+#nx3-cc{width:38ch}
+/* buttons inside panels: primary = bright block, the rest = normal block */
+.nx3-on button:not(.nx-q):not(.nx-row):not(.nx3-x):not(#nx-glBtn):not([disabled]),.nx3-on .nx-row,.nx3-on .nx3-x,#nx-glBtn{
+  display:block;width:38ch;min-height:var(--rh);padding:0 1ch!important;margin:0 0 var(--rh)!important;background:var(--d);color:var(--g)!important;
+  outline:2px solid var(--g);outline-offset:-2px;text-indent:0!important;white-space:pre-wrap}
+.nx3-on button:not(.nx-q):not([disabled]) *{color:var(--g)!important}
+#bPick,#bBuy,#ccBuy,#bWit,#wtoReview{background:var(--p)!important}
+.nx3-on button:not([disabled]):hover,.nx3-on .nx-row:hover{background:var(--p)!important}
+.nx3-on button:focus-visible,.nx3-on .nx-row:focus-visible{outline:2px solid var(--p)!important;outline-offset:2px!important}
+.nx3-on .nx-row,.nx3-on .nx3-x,#nx-glBtn{margin:0!important}
+body[data-touch] .nx3-on button:not(.nx-q):not(.nx-row):not(.nx3-x):not(#nx-glBtn):not([disabled]),body[data-touch] .nx3-on .nx-row.nx-row,body[data-touch] .nx3-on .nx3-x.nx3-x,body[data-touch] #nx-glBtn#nx-glBtn{min-height:calc(var(--rh)*2);padding-top:calc(var(--rh)/2)!important;padding-bottom:calc(var(--rh)/2)!important}
+.nx-row .no,.nx-row .ttl{color:var(--g)!important}
+.nx3-on summary{display:block}
+#panel .nx-wc{margin-bottom:var(--rh)}
+.nx-seatBtns button{margin-bottom:0!important}
+#nx-witBody .row{display:block}
+#nx-witBody input{width:38ch;margin-bottom:var(--rh)}
+#wtoBox .row{display:block}#wtoBox input{width:38ch;margin-bottom:var(--rh)}
+#ccBuy .ln{display:block}
+#candGrid .card,#ledgerGrid .card{outline:0}
 
 </style></head>
 <body>
@@ -1884,12 +1903,13 @@ const glob=k=>{ try{ return (0,eval)(k); }catch(e){ return undefined; } };
 /* ---------- the frame ---------- */
 const F=document.createElement('div'); F.id='nx3';
 F.innerHTML='<div class="row" id="nx3-ti"></div><div class="row" id="nx3-hr1"></div>'
- +'<div class="row" id="nx3-opt" role="navigation" aria-label="Panels"></div>'
- +'<div class="row" id="nx3-cmd"><label for="nx3-in"> COMMAND ===> </label><span id="nx3-fld" style="position:relative;display:inline-block;width:12ch"><span class="fill" id="nx3-show"></span><input id="nx3-in" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Command" style="position:absolute;inset:0;width:12ch;color:transparent;background:transparent;border:0"></span></div>'
+ +'<nav id="nx3-go" aria-label="Panels"></nav><div id="nx3-act"></div>'
  +'<div class="row" id="nx3-msg" role="status" aria-live="polite"></div>'
- +'<div class="row" id="nx3-pf"></div><div class="row" id="nx3-hr2"></div><div class="row" id="nx3-st"></div>'
- +'<div id="nx3-cap"><div id="nx3-c0" class="k"></div><div id="nx3-c1"><span class="nx3-lead" id="nx3-c1l"></span>: <b id="nx3-c1v"></b></div><div id="nx3-c2"><span class="nx3-lead" id="nx3-c2l"></span>: <b id="nx3-c2v"></b></div><div id="nx3-c3"><button id="nx3-cc" class="tap"><span class="nx3-lead">C  COLLECT</span>: <b id="nx3-c3v"></b></button></div></div>';
+ +'<div class="row" id="nx3-hr2"></div><div class="row" id="nx3-st"></div>'
+ +'<div id="nx3-cap"><div id="nx3-c0" class="k"></div><div id="nx3-c1"><span class="nx3-lead" id="nx3-c1l"></span>: <b id="nx3-c1v"></b></div><div id="nx3-c2"><span class="nx3-lead" id="nx3-c2l"></span>: <b id="nx3-c2v"></b></div><div id="nx3-c3"><button id="nx3-cc" class="nx3-b nx3-p">COLLECT · <span id="nx3-c3v"></span></button></div></div>';
 B.appendChild(F);
+/* the wallet sheet makes the rest of the page inert; the frame keeps working, because BACK is how that panel closes now */
+new MutationObserver(()=>{ if(F.inert) F.inert=false; }).observe(F,{attributes:true,attributeFilter:['inert']});
 const HELP=document.createElement('section'); HELP.id='nx3-help'; HELP.className='nx3-pan'; B.appendChild(HELP);
 const PRICE=document.createElement('section'); PRICE.id='nx3-price'; PRICE.className='nx3-pan'; B.appendChild(PRICE);
 const SITE=document.createElement('section'); SITE.id='nx3-site'; SITE.className='nx3-pan'; B.appendChild(SITE);
@@ -1930,11 +1950,11 @@ function layout(){
  const W=innerWidth, H=innerHeight; let mode=(W>=1000&&H>=600&&W>H)?'desk':(H<520&&W>H)?'land':'tall';
  const s={}; let cw,rh,x0,y0,cols,rows;
  if(mode==='desk'){
-  for(cw=13.5;cw>=9;cw=Math.round((cw-.1)*10)/10){ rh=Math.round(cw*2.074); const pc=Math.ceil(540/cw); cols=pc+1+39; if(cols*cw<=W-16&&540+7*rh<=H-8) break; }
+  for(cw=13.5;cw>=9;cw=Math.round((cw-.1)*10)/10){ rh=Math.round(cw*2.074); const pc=Math.ceil(540/cw); cols=pc+1+39; if(cols*cw<=W-16&&540+5*rh<=H-8) break; }
   rh=Math.round(cw*2.074); const pc=Math.ceil(540/cw); cols=pc+1+39; rows=Math.floor(H/rh);
   x0=Math.floor((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
-  Object.assign(s,{plx:x0,ply:y0+rh,pls:540,bx:x0+(pc+1)*cw,by:y0+rh,bw:39*cw,bh:(rows-6)*rh,
-   ux:x0+(pc+1)*cw,uy:y0+rh,uw:39*cw,uh:(rows-6)*rh,tx:x0,ty:y0,tw:cols*cw,sx:x0,sw:cols*cw,bot:5});
+  Object.assign(s,{plx:x0,ply:y0+rh,pls:540,bx:x0+(pc+1)*cw,by:y0+rh,bw:39*cw,bh:(rows-4)*rh,
+   ux:x0+(pc+1)*cw,uy:y0+rh,uw:39*cw,uh:(rows-4)*rh,tx:x0,ty:y0,tw:cols*cw,sx:x0,sw:cols*cw,bot:3});
  } else if(mode==='tall'){
   cw=Math.min(W/42,13.5); rh=Math.round(Math.max(20,Math.min(28,cw*2.37))); cols=42; rows=Math.floor(H/rh);
   x0=Math.floor((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
@@ -1954,8 +1974,8 @@ function layout(){
  const v={cw:cw+'px',rh:rh+'px',fs:fs+'px'}; for(const k of ['plx','ply','pls','tx','ty','tw','sx','sw']) v[k]=s[k]+'px';
  /* bottom area rows */
  const bottomTop=(mode==='land'?rows:rows)*rh+(mode==='land'?0:y0)-s.bot*rh;
- const two=s.bot===8, r=rh;
- Object.assign(v,{b1:bottomTop+'px',b2:(bottomTop+(two?2:1)*r)+'px',b3:(bottomTop+(two?4:2)*r)+'px',b4:(bottomTop+(two?5:3)*r)+'px',b5:(bottomTop+(two?7:4)*r)+'px',b6:(bottomTop+(two?7:4)*r)+'px'});
+ const navRows=s.bot-2, r=rh;
+ Object.assign(v,{b1:bottomTop+'px',nh:(navRows*r)+'px',b3:(bottomTop+navRows*r)+'px',b5:(bottomTop+(navRows+1)*r)+'px',b6:(bottomTop+(navRows+1)*r)+'px'});
  { const capTop=G.y0+rh*Math.ceil((s.ply+s.pls-G.y0)/rh); const capRows=Math.max(0,Math.floor((bottomTop-capTop)/rh)); v.cy=capTop+'px'; v.ch=(capRows*rh)+'px'; }
  for(const k in v) R.style.setProperty('--'+k,v[k]);
  /* thumbnails in whole cells and rows */
@@ -1974,7 +1994,7 @@ function region(){
 }
 
 /* ---------- state ---------- */
-let cur=null, hist=[], pg=0, msgT=0, msgDefault='ENTER A NUMBER OR A PANEL NAME', lastMsg='';
+let cur=null, hist=[], pg=0, msgT=0, msgDefault='', lastMsg='';
 function show(pid,push){
  if(!P[pid]||!P[pid].el) return;
  if(push!==false&&cur&&cur!==pid&&!(P[cur].ov&&P[pid].ov)) hist.push(cur);
@@ -2077,15 +2097,18 @@ function paintFrame(){
  const gap=n-left.length-right.length; const t=left+pad(' '.repeat(Math.max(0,Math.floor((gap-mid.length)/2)))+mid,Math.max(0,gap))+right;
  const tt=pad(t,n); if($('nx3-ti').textContent!==tt) $('nx3-ti').textContent=tt;
  const wide=G.cols>60;
- const opts=[['1','SKY','SGP020'],['2','PRICE','SGP030'],['3','SEATS','SGP040'],['4','LEDGER','SGP050'],['5','MANUAL','SGP060'],['0','PLATE','SGP010']];
- const o=$('nx3-opt'); const want=opts.filter(x=>wide||x[0]!=='0');
- const oh=' '+want.map(x=>'<button class="tap" data-go="'+x[2]+'"'+(cur===x[2]?' aria-current="page"':'')+'>'+x[0]+' '+x[1]+'</button>').join(wide?'   ':' ')+(wide?'   <button class="tap" data-cmd="1">/ COMMAND</button>':'');
- if(o.dataset.h!==oh){ o.innerHTML=oh; o.dataset.h=oh; QA('[aria-current=page]',o).forEach(b=>b.classList.add('rv')); }
- const pfh=' '+[['F1','HELP'],['F3','EXIT'],['F7','UP'],['F8','DOWN']].concat(wide?[['F12','CANCEL']]:[]).map(k=>'<button class="tap" data-pf="'+k[0]+'">'+k[0]+'='+k[1]+'</button>').join(wide?'   ':' ');
- const pf=$('nx3-pf'); if(pf.dataset.h!==pfh){ pf.innerHTML=pfh; pf.dataset.h=pfh; }
+ const opts=[['SKY','SGP020'],['PRICE','SGP030'],['SEATS','SGP040'],['LEDGER','SGP050'],['MANUAL','SGP060'],['PLATE','SGP010']];
+ const grpCur=P[cur]&&P[cur].grp?GROUPS[P[cur].grp][0]:cur;
+ const gh=opts.map(x=>'<button class="nx3-b'+((grpCur===x[1]||(x[1]==='SGP060'&&/^SGP06/.test(cur)))?' nx3-p':'')+'" data-go="'+x[1]+'">'+x[0]+'</button>').join('');
+ const go=$('nx3-go'); if(go.dataset.h!==gh){ go.innerHTML=gh; go.dataset.h=gh; }
+ const m=pages(), grp=P[cur]&&P[cur].grp&&GROUPS[P[cur].grp], gi=grp?grp.indexOf(cur):0;
+ const canPrev=pg>0||gi>0, canNext=pg<m-1||(grp&&gi<grp.length-1);
+ const walletBtn=wide?'':'<button class="nx3-b" data-a="wallet">'+(walletText()||'WALLET')+'</button>';
+ const ah='<button class="nx3-b" data-a="back"'+(cur==='SGP010'&&!hist.length?' disabled':'')+'>BACK</button><button class="nx3-b" data-a="help">HELP</button><button class="nx3-b" data-a="prev"'+(canPrev?'':' disabled')+'>PREV</button><button class="nx3-b" data-a="next"'+(canNext?'':' disabled')+'>NEXT</button>'+walletBtn;
+ const ac=$('nx3-act'); if(ac.dataset.h!==ah){ ac.innerHTML=ah; ac.dataset.h=ah; }
  status();
- cmdPaint();
 }
+function walletText(){ const wb=$('wallet'); const wt=(wb&&wb.textContent.trim())||''; return /^0x|…|\.\.\./.test(wt)?wt.slice(0,6):''; }
 function status(){
  const nx=glob('NX')||{}; const tx=nx.tx;
  let ready=(tx==='confirm'||tx==='pending')?'X WAIT':$('nx-chainBar')&&!$('nx-chainBar').hidden?'X NETWORK':(($('nx-pre').textContent||'').includes('--')?'X SYSTEM':'READY');
@@ -2095,15 +2118,17 @@ function status(){
  const wide=G.cols>60, n=Math.round(G.sw/G.cw);
  const pos=(cur||'')+' ';
  const s=sale(); const cd=!s||!s.t?'':(s.ph==='sale'?'CLOSES IN ':s.ph==='sold'?'NEXT IN ':'OPENS IN ')+s.t;
- const l=wide?' '+pad(ready,8)+'  WALLET '+pad(wal,14)+'  DAY '+pad(day,4)+'  '+cd:' '+pad(ready,6)+' '+pad(wal,11)+' D'+pad(day,3)+' '+cd.replace(' IN ',' ');
- const sl=wide?pad(l,n-pos.length)+pos:pad(l,n); if($('nx3-st').textContent!==sl) $('nx3-st').textContent=sl;
+ if(wide){ const w=/^0x|…/.test(wal)?wal:'CONNECT WALLET'; const l=' '+pad(ready,8)+'  '; const r='  DAY '+pad(day,4)+'  '+cd; const tail=pad(r,n-l.length-w.length-2-pos.length)+pos;
+  const h=esc(l)+'<button class="nx3-b nx3-w" data-a="wallet">'+esc(w)+'</button>'+esc(tail);
+  const st=$('nx3-st'); if(st.dataset.h!==h){ st.innerHTML=h; st.dataset.h=h; } }
+ else { const l=' '+pad(ready,6)+' '+pad(wal,11)+' D'+pad(day,3)+' '+cd.replace(' IN ',' '); const sl=pad(l,n); const st=$('nx3-st'); if(st.dataset.h!==sl){ st.textContent=sl; st.dataset.h=sl; } }
 }
 let badT=0;
 let brightUntil=0;
-function msg(t,bright){ if(bright) brightUntil=Date.now()+(t.startsWith('PRESS')||t.startsWith('TAP')?10000:5000); lastMsg=t; $('nx3-msg').textContent=' '+t; $('nx3-msg').classList.toggle('k',!!bright); clearTimeout(msgT); if(t!==msgDefault) msgT=setTimeout(()=>{ msg(defMsg()); },7000); }
+function msg(t,bright){ if(t===undefined) t=''; if(bright) brightUntil=Date.now()+5000; lastMsg=t; $('nx3-msg').textContent=' '+t; $('nx3-msg').classList.toggle('k',!!bright); clearTimeout(msgT); if(t!==msgDefault) msgT=setTimeout(()=>{ msg(defMsg()); },7000); }
 function defMsg(){
- if($('nx-chainBar')&&!$('nx-chainBar').hidden) return 'YOUR WALLET IS ON ANOTHER NETWORK. S SWITCHES TO ETHEREUM';
- return {SGP020:'F1 EXPLAINS THE READING UNDER THE CURSOR',SGP060:'ARROWS MOVE, ENTER OPENS A CHAPTER',SGP070:'TYPE A NUMBER AND ENTER, OR TAP ONE',SGP071:'C COLLECTS. F7 AND F8 SHOW THE OTHER OPTIONS',SGP080:'ARROWS MOVE, ENTER CHOOSES',SGP090:'TYPE AN AMOUNT AND PRESS ENTER'}[cur]||msgDefault;
+ if($('nx-chainBar')&&!$('nx-chainBar').hidden) return 'YOUR WALLET IS ON ANOTHER NETWORK';
+ return {SGP020:'TAP A READING TO SEE WHAT IT MEANS',SGP033:'TAP A PHASE TO READ ITS RULE',SGP060:'TAP A CHAPTER',SGP070:'TAP ONE TO WATCH IT MOVE',SGP071:'PREV AND NEXT SHOW THE OTHER OPTIONS',SGP090:'TYPE AN AMOUNT'}[cur]||msgDefault;
 }
 /* the page's own toasts land on the message line */
 new MutationObserver(()=>{ const t=$('toast').textContent.trim(); if(t) msg(t.toUpperCase(),1); }).observe($('toast'),{childList:true,characterData:true,subtree:true});
@@ -2114,45 +2139,16 @@ function capPaint(){ strip(); }
 new MutationObserver(capPaint).observe($('plateTag'),{childList:true,characterData:true,subtree:true,attributes:true});
 new MutationObserver(capPaint).observe($('nx-pcap'),{childList:true,characterData:true,subtree:true});
 
-/* ---------- the command line ---------- */
-let buf='';
-const inp=$('nx3-in');
-function cmdPaint(){ const show=$('nx3-show'); const v=buf; const a=document.activeElement;
- const live=!!buf||a===inp||!a||a===B||a===document.documentElement;
- const h='<span style="color:var(--p)">'+esc(v)+'</span>'+(v.length<12?'<span class="u'+(rm||!live?'':' blink')+'">_</span>':'')+esc('_'.repeat(Math.max(0,11-v.length)));
- if(show.dataset.h!==h){ show.innerHTML=h; show.dataset.h=h; }
-}
-document.addEventListener('focusin',()=>cmdPaint()); document.addEventListener('focusout',()=>setTimeout(cmdPaint,0));
-inp.addEventListener('input',()=>{ buf=inp.value.toUpperCase().slice(0,12); cmdPaint(); });
-inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); run(buf); buf=''; inp.value=''; cmdPaint(); } else if(e.key==='Escape'){ buf=''; inp.value=''; cmdPaint(); inp.blur(); } });
-function run(v){
- v=v.trim().toUpperCase(); if(!v){ return; }
- if(cur==='SGP070'&&/^\d{1,2}$/.test(v)){ const c=QA('#candGrid .card')[+v]; if(c){ c.click(); return; } }
- const m=v.match(/^([A-Z]+)\s*(\d+)?$/)||[]; const w=m[1], n=m[2];
- const go={PLATE:'SGP010',SKY:'SGP020',PRICE:'SGP030',SEATS:'SGP040',LEDGER:'SGP050',MANUAL:'SGP060',GLOSSARY:'SGP069',FAQ:'SGP068',SITE:'SGP06S'}[w];
- if(w==='PLATE'&&n!=null){ const c=QA('#ledgerGrid .card').find(c=>{ const i=c.querySelector('i'); return i&&new RegExp('^(DAY '+n+'|PLATE '+(n==='0'?'ZERO':'#')+')$').test(i.textContent.trim()); }); if(c){ c.click(); return; } }
- if(w==='MANUAL'&&n){ const id='SGP06'+n; if(P[id]){ openCh(id); return; } }
- if(go){ show(go); return; }
- if(w==='HELP'){ help(); return; }
- if(w==='PICK'&&n!=null){ const b=$('bPick'); if(b&&!b.disabled){ glob('popOpen')(+n); return; } }
- const act={COLLECT:()=>clickIf('bBuy')||clickIf('bPick'),WITNESS:()=>clickIf('bWitCta'),CONNECT:()=>clickIf('wallet'),CLAIM:()=>clickIf('claim'),WITHDRAW:()=>clickIf('withdraw'),
-  SWITCH:()=>clickIf('nx-chainBar'),ENGINES:()=>{location.href='/engines/'},PANDORA:()=>{location.href='/pandora/'},GARDENS:()=>{location.href='/pandora/gardens.html'},
-  SHOWCASE:()=>{location.href='/pandora/showcase.html'},SEALED:()=>{location.href='/pandora/sealed.html'},GLASS:()=>{location.href='/glass/?seed=424242'},SOURCE:()=>{window.open('https://github.com/0xgreencross/PANDORA','_blank','noopener')}}[w];
- if(act&&act()!==false) return;
- badT=Date.now()+4000; status(); setTimeout(status,4100);
- msg('INVALID COMMAND: '+v.slice(0,12),1);
-}
-function clickIf(id){ const b=$(id); if(!b||b.disabled||(b.offsetParent===null&&getComputedStyle(b).display==='none'&&!b.closest('.nx3-pan'))) return false; b.click(); return true; }
-
+function clickIf(id){ const b=$(id); if(!b||b.disabled) return false; b.click(); return true; }
 /* ---------- help: F1 on a field opens its own [?]; F1 elsewhere opens the panel's help ---------- */
 function help(){
  const a=document.activeElement; const row=a&&a.closest&&a.closest('#nx-skyRows>div,#nx-tl .nd,.nx3-pan [data-ref]');
  const q=row&&(row.matches('.nx-q')?row:row.querySelector('.nx-q'));
  if(q){ q.click(); return; }
  const p=P[cur]; if(!p) return;
- if(p.ov||cur.startsWith('SGH')) { msg('HELP IS OPEN. F3 RETURNS',1); return; }
+ if(p.ov||cur.startsWith('SGH')) { msg('THIS IS THE HELP. BACK RETURNS',1); return; }
  const src=[...QA('p.cap',p.el).filter(c=>c.textContent.trim()),...(p.cap||[]).map(sel),...(p.ref||[]).map(sel)].filter((x,i,a)=>x&&a.indexOf(x)===i);
- if(p.menu||p.ch||!src.length){ msg('THIS PANEL IS THE EXPLANATION. F3 RETURNS',1); return; }
+ if(p.menu||p.ch||!src.length){ msg('THIS PANEL IS THE EXPLANATION',1); return; }
  HELP.innerHTML='<h2 class="nx-t"><b>'+esc(p.t)+' · HELP</b></h2>';
  src.forEach(n=>{ const c=n.cloneNode(true); c.removeAttribute('id'); c.hidden=false; c.style.display=''; c.classList.add('src'); c.classList.remove('cap','nx3-pan','nx3-on');
   QA('[id]',c).forEach(x=>{ x.dataset.nid=x.id; x.removeAttribute('id'); }); QA('[hidden]',c).forEach(x=>x.hidden=false); QA('details',c).forEach(d=>d.open=true); QA('.nx-q',c).forEach(x=>x.remove()); HELP.appendChild(c); });
@@ -2178,9 +2174,9 @@ function rowsTabbable(){
 }
 new MutationObserver(()=>{ rowsTabbable(); leaders(); }).observe(B,{childList:true,subtree:true,characterData:true});
 function focusFirst(){
- if(touch) return;
+ return;
  const el=P[cur]&&P[cur].el; if(!el) return;
- if(document.activeElement===inp) return;
+
  const f=QA('button:not([disabled]),[tabindex="0"],summary,input,a[href]',el).find(x=>x.getClientRects().length&&getComputedStyle(x).visibility==='visible');
  if(f&&!P[cur].ov) try{ f.focus({preventScroll:true}); }catch(e){}
 }
@@ -2194,46 +2190,27 @@ function moveFocus(d){
  if(r.top<pr.top||r.bottom>pr.bottom) page(r.top<pr.top?-1:1);
 }
 
-/* ---------- keys ---------- */
-const PANELKEY={'1':'SGP020','2':'SGP030','3':'SGP040','4':'SGP050','5':'SGP060','0':'SGP010'};
-const ACT={
- SGP010:{c:()=>clickIf('bBuy')||clickIf('bPick'),p:()=>$('bBuy')?clickIf('bPick'):false,w:()=>clickIf('bWitCta'),k:()=>clickIf('wallet')},
- SGP040:{l:()=>clickIf('claim'),d:()=>clickIf('withdraw'),a:()=>clickIf('withdrawTo'),r:()=>clickIf('wtoReview'),k:()=>clickIf('wallet')},
- SGP071:{c:()=>clickIf('ccBuy'),p:()=>clickIf('ccPick')},
- SGP06E:{e:()=>{location.href='/engines/'},p:()=>{location.href='/pandora/'}}
-};
+/* ---------- keys: only the obvious ones; everything is a tap or a click ---------- */
 document.addEventListener('keydown',e=>{
  if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.altKey) return;
- const k=e.key, t=e.target, typing=t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA')&&t!==inp;
- const fk={F1:help,F3:back,F7:()=>cur==='SGP071'?$('ccPrev').click():page(-1),F8:()=>cur==='SGP071'?$('ccNext').click():page(1),F12:back,PageUp:()=>page(-1),PageDown:()=>page(1)}[k];
- if(fk){ e.preventDefault(); fk(); return; }
- if(typing){ if(k==='Enter'&&t.id==='wAmt'){ e.preventDefault(); clickIf('bWit'); } return; }
- if(t===inp) return;
- if(k==='Escape'){ if(P[cur]&&P[cur].ov) return; if(buf){ buf=''; cmdPaint(); return; } e.preventDefault(); back(); return; }
- if(k==='?'){ e.preventDefault(); help(); return; }
- if(k==='/'){ e.preventDefault(); if(!$('ccard').classList.contains('on')) inp.focus(); return; }
- if(k==='ArrowDown'||k==='ArrowUp'){ if(cur==='SGP071') return; e.preventDefault(); moveFocus(k==='ArrowDown'?1:-1); return; }
- if(k==='Enter'){ if(buf){ e.preventDefault(); const v=buf; buf=''; cmdPaint(); run(v); } return; }
- if(k==='Backspace'){ if(buf){ e.preventDefault(); buf=buf.slice(0,-1); cmdPaint(); } return; }
- if(k.length!==1) return;
- if(buf){ e.preventDefault(); buf=(buf+k.toUpperCase()).slice(0,12); cmdPaint(); return; }
- if(/\d/.test(k)&&cur==='SGP070'){ e.preventDefault(); buf=k; cmdPaint(); return; }
- if(/\d/.test(k)&&cur==='SGP080'){ const b=QA('#wsBtns button')[+k-1]; if(b){ e.preventDefault(); b.click(); return; } }
- if(PANELKEY[k]){ e.preventDefault(); if(P[cur]&&P[cur].ov&&cur!=='SGH000') { back(); setTimeout(()=>show(PANELKEY[k]),0); } else show(PANELKEY[k]); return; }
- const a=ACT[cur]&&ACT[cur][k.toLowerCase()];
- if(a){ e.preventDefault(); if(a()===false){ msg('NOT AVAILABLE NOW',1); } return; }
- if(k.toLowerCase()==='c'&&!P[cur].ov&&B.dataset.ph==='sale'){ e.preventDefault(); clickIf('bBuy')||clickIf('bPick'); return; }
- if(k.toLowerCase()==='s'&&$('nx-chainBar')&&!$('nx-chainBar').hidden){ e.preventDefault(); $('nx-chainBar').click(); return; }
- if(/[a-z]/i.test(k)&&!$('ccard').classList.contains('on')){ e.preventDefault(); buf=k.toUpperCase(); cmdPaint(); }
+ const t=e.target; if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA')){ if(e.key==='Enter'&&t.id==='wAmt'){ e.preventDefault(); clickIf('bWit'); } return; }
+ if(e.key==='Escape'){ if(P[cur]&&P[cur].ov) return; e.preventDefault(); back(); }
+ else if(e.key==='PageDown'){ e.preventDefault(); act('next'); } else if(e.key==='PageUp'){ e.preventDefault(); act('prev'); }
 });
-/* taps on the frame */
-$('nx3-cc').addEventListener('click',()=>{ clickIf('bBuy')||clickIf('bPick'); });
+function act(a){
+ if(a==='back') back(); else if(a==='help') help();
+ else if(a==='prev'){ if(cur==='SGP071') $('ccPrev').click(); else page(-1); }
+ else if(a==='next'){ if(cur==='SGP071') $('ccNext').click(); else page(1); }
+ else if(a==='wallet') clickIf('wallet');
+}
 F.addEventListener('click',e=>{
- const b=e.target.closest('button'); if(!b) { if(e.target.closest('#nx3-cmd')) inp.focus(); return; }
+ const b=e.target.closest('button'); if(!b||b.disabled) return;
+ if(b.id==='nx3-cc'){ clickIf('bBuy')||clickIf('bPick'); return; }
  if(b.dataset.go){ if(P[cur]&&P[cur].ov&&cur!=='SGH000'){ back(); setTimeout(()=>show(b.dataset.go),0); } else show(b.dataset.go); }
- else if(b.dataset.cmd){ inp.focus(); }
- else if(b.dataset.pf){ ({F1:help,F3:back,F7:()=>cur==='SGP071'?$('ccPrev').click():page(-1),F8:()=>cur==='SGP071'?$('ccNext').click():page(1),F12:back})[b.dataset.pf](); }
+ else if(b.dataset.a) act(b.dataset.a);
 });
+/* the switch-network bar becomes a button on the panel's message line */
+$('nx3-msg').addEventListener('click',()=>{ if($('nx-chainBar')&&!$('nx-chainBar').hidden) $('nx-chainBar').click(); });
 
 /* ---------- PRICE: today's steps, the price as dither density ---------- */
 function drawPrice(){
@@ -2306,8 +2283,7 @@ new MutationObserver(()=>{ const w=$('welcome'); if(w&&!w.hidden&&w.textContent.
 /* ---------- start ---------- */
 addEventListener('resize',()=>layout());
 layout(); show('SGP010',false); msg(msgDefault); capPaint(); rowsTabbable(); leaders();
-let seen=null; try{ seen=localStorage.getItem('nx3seen'); localStorage.setItem('nx3seen','1'); }catch(e){}
-if(!seen){ msg(touch?'TAP A LINE TO OPEN IT, OR TAP A KEY BELOW':'PRESS A NUMBER OR A LETTER, OR / TO TYPE A COMMAND',1); }
+
 B.style.visibility='hidden'; requestAnimationFrame(()=>{ B.style.visibility=''; });
 window.NX3={show,page,help,G:()=>G,cur:()=>cur};
 })();
