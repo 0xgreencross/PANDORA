@@ -74,7 +74,7 @@ body:not([data-mode=desk]) #nx3-cap{display:none}
 /* ----- panels: one is visible at a time, at the panel region, paged not scrolled ----- */
 .nx3-pan{display:none}
 .nx3-pan.nx3-on{display:block!important;visibility:visible;position:fixed!important;left:var(--bx)!important;top:var(--by)!important;
-  width:var(--bw)!important;height:var(--bh)!important;max-height:none!important;max-width:none!important;overflow:hidden!important;
+  width:var(--bw)!important;height:var(--bh)!important;max-height:none!important;max-width:none!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;
   padding:0 0 0 var(--bpad)!important;margin:0!important;background:var(--g);z-index:4;transform:none!important;inset:auto}
 .nx3-on *{max-height:none;max-width:none}
 .nx3-on .box{display:block;width:auto;height:auto;position:static;padding:0;background:none}
@@ -413,6 +413,14 @@ body[data-mode=desk] #nx3-act .nx3-b:last-child{margin-right:0!important}
 #money .split .big{width:6ch;color:var(--p);font-size:inherit!important;line-height:var(--rh)!important}
 #money .split .k{width:auto}
 #money .split .k::before{content:attr(data-sw) " ";color:var(--p)}
+
+.nx3-pan::-webkit-scrollbar{display:none}
+/* chapter link rows at the end of a chapter: real buttons, same size as everything else */
+.nx-ch .row.nx3-links{display:grid!important;grid-template-columns:1fr 1fr;gap:2px!important;width:38ch;margin:var(--rh) 0;font-size:inherit!important;letter-spacing:normal!important;line-height:calc(var(--rh)*2)}
+.nx-ch .row.nx3-links a{display:block;height:calc(var(--rh)*2);padding:0 .5ch;background:var(--d);color:var(--g)!important;text-decoration:none!important;white-space:nowrap;overflow:hidden;text-overflow:clip;text-transform:uppercase}
+.nx-ch .row.nx3-links a:hover,.nx-ch .row.nx3-links a:focus-visible{background:var(--p)}
+.nx-ch .row.nx3-links a:last-child:nth-child(odd){grid-column:span 2}
+.nx3-on a[href*="etherscan"]{word-break:break-all;overflow-wrap:anywhere;white-space:normal}
 
 </style></head>
 <body>
@@ -2088,14 +2096,15 @@ function page(n,abs){
  if(!abs&&grp&&(np<0||np>=m)){ const i=grp.indexOf(cur)+(np<0?-1:1); if(i>=0&&i<grp.length){ show(grp[i],false); if(np<0) page(pages()-1,true); return; } }
  if(!abs&&(np<0||np>=m)){ msg(np<0?'TOP OF DATA':'BOTTOM OF DATA',1); return; }
  pg=Math.max(0,Math.min(m-1,np));
- el.scrollTop=pg*G.rh*Math.max(1,Math.round(el.clientHeight/G.rh));
+ el.scrollTo({top:pg*G.rh*Math.max(1,Math.round(el.clientHeight/G.rh)),behavior:abs?'auto':'smooth'});
  paintFrame();
 }
-['wheel','touchmove'].forEach(t=>B.addEventListener(t,e=>{ if(e.target.closest&&e.target.closest('.nx3-pan')) e.preventDefault(); },{passive:false}));
-/* swipe up / down pages on touch */
-(()=>{ let y=null,x=null; B.addEventListener('touchstart',e=>{ y=e.touches[0].clientY; x=e.touches[0].clientX; },{passive:true});
- B.addEventListener('touchend',e=>{ if(y==null) return; const dy=e.changedTouches[0].clientY-y, dx=e.changedTouches[0].clientX-x; y=null;
-  if(Math.abs(dy)>50&&Math.abs(dy)>Math.abs(dx)*1.5&&e.target.closest&&e.target.closest('.nx3-pan')) page(dy<0?1:-1); },{passive:true}); })();
+/* panels scroll natively (wheel, trackpad, touch); PREV/NEXT still jump a page; the page count follows the scroll */
+function pgFromScroll(){ const el=P[cur]&&P[cur].el; if(!el) return; const h=G.rh*Math.max(1,Math.round(el.clientHeight/G.rh)); const m=pages();
+ const np=el.scrollTop+el.clientHeight>=el.scrollHeight-2?m-1:Math.min(m-1,Math.floor((el.scrollTop+h*0.5)/h)); if(np!==pg){ pg=np; paintFrame(); } }
+document.addEventListener('scroll',e=>{ if(e.target&&e.target.classList&&e.target.classList.contains('nx3-on')) pgFromScroll(); },true);
+/* a wheel over the plate or the frame scrolls the open panel (desktop) */
+B.addEventListener('wheel',e=>{ const t=e.target; if(t.closest&&t.closest('.nx3-on')) return; const el=P[cur]&&P[cur].el; if(!el||el.scrollHeight<=el.clientHeight+2) return; el.scrollTop+=e.deltaY; e.preventDefault(); },{passive:false});
 
 /* ---------- the sale, read from the page's own state ---------- */
 function sale(){
@@ -2208,6 +2217,10 @@ function help(){
 /* ---------- the manual ---------- */
 function openCh(pid){ const id=chapterOf[pid]; if(!id) { show(pid); return; } show(pid); }
 QA('.nx-row').forEach(b=>{ b.addEventListener('click',e=>{ const id=b.getAttribute('aria-controls'); const pid=Object.keys(chapterOf).find(k=>chapterOf[k]===id); if(pid){ setTimeout(()=>show(pid),0); } },true); });
+/* links to a part of the page open that part as its panel */
+document.addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('a[href^="#"]'); if(!a) return; const id=a.getAttribute('href').slice(1); if(!id) return;
+ const pid=Object.keys(P).find(k=>P[k].el&&P[k].el.id===id&&!P[k].ov&&!/^SGP0[2-5]0$/.test(k)&&P[k].ch)||Object.keys(P).find(k=>P[k].el&&P[k].el.id===id&&!P[k].ov);
+ if(pid){ e.preventDefault(); e.stopPropagation(); show(pid); } },true);
 const glb=$('nx-glBtn'); if(glb) glb.addEventListener('click',()=>setTimeout(()=>show('SGP069'),0),true);
 /* chapter E (engines) and S (site) at the end of the manual list */
 (()=>{ const man=$('nx-manual'); if(!man) return; const mk=(no,ttl,pid)=>{ const b=document.createElement('button'); b.className='nx-row nx3-x'; b.innerHTML='<span class="no">'+no+'</span><span><span class="ttl">'+ttl+'</span></span>'; b.addEventListener('click',()=>show(pid)); man.appendChild(b); };
@@ -2320,7 +2333,7 @@ let drawing=false;
 function glassTap(){
  let prog=null;
  ['plate','plateB','ccPlate','pcPlate'].forEach(id=>{ const f=$(id); let d=null; try{ d=f&&f.contentDocument; }catch(e){} if(!d||!d.head) return;
-  if(!d.getElementById('nx3g')){ const s=d.createElement('style'); s.id='nx3g'; s.textContent='#osd,#prog,#gosd{display:none!important}'; d.head.appendChild(s); }
+  if(!d.getElementById('nx3g')){ const s=d.createElement('style'); s.id='nx3g'; s.textContent='#osd,#prog,#gosd{display:none!important}'; d.head.appendChild(s); } if(!d.nx3w){ d.nx3w=1; d.addEventListener('wheel',e=>{ const el=P[cur]&&P[cur].el; if(!el||el.scrollHeight<=el.clientHeight+2) return; el.scrollTop+=e.deltaY; e.preventDefault(); },{passive:false}); }
   const vis=f.classList.contains('front')||id==='ccPlate'&&B.dataset.exp||id==='pcPlate'&&B.dataset.pc;
   const pr=d.getElementById('prog'), os=d.getElementById('gosd')||d.getElementById('osd');
   if(vis&&pr){ const w=parseFloat(pr.style.width)||0; if(w>0&&w<100) prog={w:Math.round(w),t:(os&&os.textContent||'').toUpperCase()}; } });
@@ -2393,7 +2406,7 @@ drawPrice=function(){
 function moneyViz(){ moneyCh();
  const host=iOf('vaultLive'); if(!host) return; let v=$('nx3-money'); if(!v){ v=document.createElement('div'); v.id='nx3-money'; v.className='nx3-viz'; const st=host.querySelector('.nx-stack'); (st||host.firstChild).before(v); }
  const W=38; const seg=[[70,'█','cf'],[20,'▓','cf'],[10,'░','cf']];
- let bar=''; seg.forEach(([p,ch])=>{ bar+=ch.repeat(Math.round(W*p/100)); });
+ const n1=Math.round(W*.7), n2=Math.round(W*.2); const bar='█'.repeat(n1)+'▓'.repeat(n2)+'░'.repeat(W-n1-n2);
  const s=saleData(); let vg='';
  try{ const eth=glob('ethers'); const vault=+eth.formatEther(glob('ST').vault); const ref=parseFloat(($('nx-ref').textContent||'').replace(/[^\d.]/g,''));
   if(vault&&ref){ const k=vault/ref; const cells=Math.min(36,Math.floor(k)); vg='<div class="vl cy">THE VAULT IN REFERENCE PRICES</div><div class="vl"><span class="cf">'+'■'.repeat(cells)+'</span>'+(k>36?'<span class="cy">+</span>':'')+'</div><div class="vl cy">'+esc('×'+k.toFixed(1)+' · EACH ■ BUYS ONE UNSOLD DAY')+'</div>'; } }catch(e){}
@@ -2402,7 +2415,7 @@ function moneyViz(){ moneyCh();
 }
 function moneyCh(){
  const sp=Q('#money .split'); if(!sp||$('nx3-mch')) return; const v=document.createElement('div'); v.id='nx3-mch'; v.className='nx3-viz';
- const W=38; v.innerHTML='<div class="vl"><span class="cf">'+'█'.repeat(Math.round(W*.7))+'▓'.repeat(Math.round(W*.2))+'░'.repeat(Math.round(W*.1))+'</span></div><div class="vl"> </div>';
+ const W=38; v.innerHTML='<div class="vl"><span class="cf">'+'█'.repeat(Math.round(W*.7))+'▓'.repeat(Math.round(W*.2))+'░'.repeat(W-Math.round(W*.7)-Math.round(W*.2))+'</span></div><div class="vl"> </div>';
  sp.before(v); const ch=['█','▓','░','↻']; [...sp.children].forEach((d,i)=>{ const k=d.querySelector('.k'); if(k&&!k.dataset.sw) k.dataset.sw=ch[i]||''; });
 }
 /* the timeline: the price of every day so far above the rail of phases */
@@ -2464,7 +2477,8 @@ function miniViz(){
  if(host.dataset.h!==h){ host.innerHTML=h; host.dataset.h=h; }
  host.hidden=!h;
 }
-function viz(){ try{ moneyViz(); tlViz(); ledgerViz(); seatViz(); skyViz(); miniViz(); }catch(e){ console.warn('nx3 viz',e); } }
+function linkRows(){ QA('.nx-ch .row').forEach(r=>{ if(r.classList.contains('nx3-links')) return; const k=[...r.children]; if(k.length&&k.every(a=>a.tagName==='A'&&/^#/.test(a.getAttribute('href')||''))) r.classList.add('nx3-links'); }); }
+function viz(){ try{ linkRows(); moneyViz(); tlViz(); ledgerViz(); seatViz(); skyViz(); miniViz(); }catch(e){ console.warn('nx3 viz',e); } }
 setInterval(viz,1000);
 
 /* the SMALL WEATHER welcome opens as its own panel when the page shows it */
