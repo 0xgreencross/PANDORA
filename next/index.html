@@ -421,6 +421,47 @@ body[data-mode=desk] #nx3-act .nx3-b:last-child{margin-right:0!important}
 .nx-ch .row.nx3-links a:hover,.nx-ch .row.nx3-links a:focus-visible{background:var(--p)}
 .nx-ch .row.nx3-links a:last-child:nth-child(odd){grid-column:span 2}
 .nx3-on a[href*="etherscan"]{word-break:break-all;overflow-wrap:anywhere;white-space:normal}
+/* ===== v6 ===== */
+:root{--t:color-mix(in srgb,var(--p) 82%,var(--g))}
+/* reading text: bright enough to read for long; labels stay dim */
+.nx3-on p,.nx3-on .note,#panel>.note,#panel .nx-sub,.nx3-on li,.nx3-on dd{color:var(--t)!important}
+.nx3-on p a,.nx3-on p dfn,.nx3-on .note a,.nx3-on .note dfn{color:var(--p)!important}
+/* the MORE row at the foot of a panel that continues */
+#nx3-more{position:fixed;visibility:visible;z-index:6;width:calc(var(--cw)*38);height:var(--rh);line-height:var(--rh);padding:0;border:0;margin:0;
+  background:var(--g);color:var(--p);font:inherit;text-align:center;letter-spacing:.2em;cursor:pointer;box-shadow:0 calc(var(--rh)*-1) var(--rh) var(--g)}
+#nx3-more[hidden]{display:none}
+@media (hover:hover){#nx3-more:hover{background:var(--p);color:var(--g)}}
+/* primary action stands out, secondary is an outline */
+#bPick,#bBuy,#ccBuy{min-height:calc(var(--rh)*2)!important;line-height:var(--rh);padding-top:calc(var(--rh)/2)!important;padding-bottom:calc(var(--rh)/2)!important;background:var(--p)!important;-webkit-text-stroke:.02em currentColor}
+#bWit#bWit,#bWitCta#bWitCta,#nx-barWit#nx-barWit,#nx-witBtn#nx-witBtn{background:transparent!important;color:var(--p)!important;outline:0!important;box-shadow:inset 0 0 0 2px var(--p)!important}
+#bWit#bWit *,#bWitCta#bWitCta *{color:var(--p)!important}
+@media (hover:hover){#bWit#bWit:hover,#bWitCta#bWitCta:hover,#nx-barWit#nx-barWit:hover{background:var(--p)!important;color:var(--g)!important}
+#bWit#bWit:hover *,#bWitCta#bWitCta:hover *{color:var(--g)!important}}
+/* graphs you can tap */
+.nx3-viz[role=img]{cursor:pointer}
+/* screen readers skip the block characters drawn by CSS */
+@supports (content:"x" / ""){
+ #nx-skyRows>div>span:nth-child(3)::before{content:attr(data-g) " " / ""!important}
+ #nx-seatTbl tbody tr::after{content:attr(data-bar) / ""}
+}
+#nx-skyRows>div>span:nth-child(3)[data-load]::before{color:var(--d)}
+/* the transaction */
+.nx3-steps{display:grid!important;grid-template-columns:repeat(3,1fr);width:38ch;height:calc(var(--rh)*2);line-height:calc(var(--rh)*2);margin-bottom:var(--rh)}
+.nx3-steps span{text-align:center;color:var(--d);box-shadow:inset 0 0 0 2px var(--g),inset 0 0 0 4px var(--d)}
+.nx3-steps span.dn{background:var(--d);color:var(--g)}
+.nx3-steps span.on{background:var(--p);color:var(--g)}
+.nx3-txbar{margin-bottom:var(--rh)}
+#ccActs[data-tx=done]>.st{font-size:calc(var(--fs)*1.75);line-height:calc(var(--rh)*2);height:calc(var(--rh)*2);white-space:nowrap;overflow:hidden}
+#ccActs[data-tx=failed]>.st,#ccActs[data-tx=unknown]>.st,#ccActs[data-tx=wrong]>.st{background:var(--p);color:var(--g)!important;padding:0 1ch;width:38ch}
+#ccActs[data-tx=pending]>.st{color:var(--p)}
+/* PRICE page 2 title */
+.nx3-brk{display:block}
+/* desktop: the panel buttons fill the plate width, the actions fill the panel width, all cells equal */
+body[data-mode=desk] #nx3-go{display:grid!important;grid-template-columns:repeat(6,1fr);left:var(--plx)!important;width:var(--pls)!important;height:var(--rh)!important}
+body[data-mode=desk] #nx3-act{display:grid!important;grid-template-columns:repeat(4,1fr);left:var(--kx)!important;right:auto!important;width:calc(var(--cw)*38)!important;height:var(--rh)!important}
+body[data-mode=desk] #nx3-go .nx3-b,body[data-mode=desk] #nx3-act .nx3-b{margin:0!important;width:auto!important;padding:0 .5ch;text-align:center}
+body:not([data-mode=desk]) .nx3-steps{height:var(--rh);line-height:var(--rh);margin:0}
+body:not([data-mode=desk]) .nx3-txbar{margin:0}
 
 </style></head>
 <body>
@@ -2008,10 +2049,12 @@ function layout(){
  const W=innerWidth, H=innerHeight; let mode=(W>=1000&&H>=600&&W>H)?'desk':(H<520&&W>H)?'land':'tall';
  const s={}; let cw,rh,x0,y0,cols,rows;
  if(mode==='desk'){
-  for(cw=13.5;cw>=9;cw=Math.round((cw-.1)*10)/10){ rh=Math.round(cw*2.074); const pc=Math.ceil(540/cw); cols=pc+1+39; if(cols*cw<=W-16&&540+5*rh<=H-8) break; }
-  rh=Math.round(cw*2.074); const pc=Math.ceil(540/cw); cols=pc+1+39; rows=Math.floor(H/rh);
+  /* the plate at exactly 2x (1080, crisp pixels) when the screen is big enough, else at 1x */
+  let PL=1080; const fit=pl=>{ for(let c=13.5;c>=11;c=Math.round((c-.1)*10)/10){ const r=Math.round(c*2.074); const n=Math.ceil(pl/c)+1+39; if(n*c<=W-16&&pl+5*r<=H-8) return c; } return 0; };
+  cw=fit(1080); if(!cw){ PL=540; for(cw=13.5;cw>=9;cw=Math.round((cw-.1)*10)/10){ rh=Math.round(cw*2.074); const pc=Math.ceil(540/cw); cols=pc+1+39; if(cols*cw<=W-16&&540+5*rh<=H-8) break; } }
+  rh=Math.round(cw*2.074); const pc=Math.ceil(PL/cw); cols=pc+1+39; rows=Math.floor(H/rh);
   x0=Math.floor((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
-  Object.assign(s,{plx:x0,ply:y0+rh,pls:540,bx:x0+(pc+1)*cw,by:y0+rh,bw:39*cw,bh:(rows-4)*rh,
+  Object.assign(s,{plx:x0,ply:y0+rh,pls:PL,bx:x0+(pc+1)*cw,by:y0+rh,bw:39*cw,bh:(rows-4)*rh,
    ux:x0+(pc+1)*cw,uy:y0+rh,uw:39*cw,uh:(rows-4)*rh,tx:x0,ty:y0,tw:cols*cw,sx:x0,sw:cols*cw,bot:3});
  } else if(mode==='tall'){
   cw=Math.min(W/42,13.5); rh=Math.round(Math.max(20,Math.min(28,cw*2.37))); cols=42; rows=Math.floor(H/rh);
@@ -2144,7 +2187,7 @@ const pad=(s,n)=>{ s=String(s); return s.length>=n?s.slice(0,n):s+' '.repeat(n-s
 function titleRight(){
  const m=pages(); const grp=P[cur]&&P[cur].grp;
  if(grp){ const g=GROUPS[grp]; return 'PAGE '+(g.indexOf(cur)+1)+' OF '+g.length; }
- if(m>1) return (G.cols>60?'PAGE ':'')+(pg+1)+' OF '+m+(G.cols>60?'   MORE: ':' ')+(pg>0?'-':' ')+(pg<m-1?'+':' ');
+ if(m>1) return (G.cols>60?'PAGE ':'')+(pg+1)+' OF '+m;
  if(cur==='SGP010'||cur==='SGP051'){ const s=$('state').textContent.trim(); return s.replace(/^DAY /,'PLATE ')||'PLATE'; }
  return P[cur]?P[cur].t:'';
 }
@@ -2187,7 +2230,7 @@ let brightUntil=0;
 function msg(t,bright){ if(t===undefined) t=''; if(bright) brightUntil=Date.now()+5000; lastMsg=t; $('nx3-msg').textContent=' '+t; $('nx3-msg').classList.toggle('k',!!bright); clearTimeout(msgT); if(t!==msgDefault) msgT=setTimeout(()=>{ msg(defMsg()); },7000); }
 function defMsg(){
  if($('nx-chainBar')&&!$('nx-chainBar').hidden) return 'YOUR WALLET IS ON ANOTHER NETWORK';
- return {SGP020:'TAP A READING TO SEE WHAT IT MEANS',SGP033:'TAP A PHASE TO READ ITS RULE',SGP060:'TAP A CHAPTER',SGP070:'TAP ONE TO WATCH IT MOVE',SGP071:'PREV AND NEXT SHOW THE OTHER OPTIONS',SGP090:'TYPE AN AMOUNT'}[cur]||msgDefault;
+ return {SGP030:'TAP THE CURVE FOR THE PRICE AT ANY TIME',SGP040:'TAP A HOLDER FOR THEIR SHARE',SGP050:'TAP A BAR FOR THAT DAY',SGP033:'TAP A BAR OR A PHASE',SGP020:'TAP A READING TO SEE WHAT IT MEANS',SGP060:'TAP A CHAPTER',SGP070:'TAP ONE TO WATCH IT MOVE',SGP071:'PREV AND NEXT SHOW THE OTHER OPTIONS',SGP090:'TYPE AN AMOUNT'}[cur]||msgDefault;
 }
 /* the page's own toasts land on the message line */
 new MutationObserver(()=>{ const t=$('toast').textContent.trim(); if(t) msg(t.toUpperCase(),1); }).observe($('toast'),{childList:true,characterData:true,subtree:true});
@@ -2261,7 +2304,7 @@ document.addEventListener('keydown',e=>{
  else if(e.key==='PageDown'){ e.preventDefault(); act('next'); } else if(e.key==='PageUp'){ e.preventDefault(); act('prev'); }
 });
 function act(a){
- if(a==='back') back(); else if(a==='help') help();
+ if(a==='back'){ if(P[cur]&&!P[cur].ov&&history.state&&history.state.nx3&&hist.length) history.back(); else back(); } else if(a==='help') help();
  else if(a==='prev'){ if(cur==='SGP071') $('ccPrev').click(); else page(-1); }
  else if(a==='next'){ if(cur==='SGP071') $('ccNext').click(); else page(1); }
  else if(a==='wallet') clickIf('wallet');
@@ -2324,7 +2367,10 @@ function sampleHue(){
  }catch(e){ return null; }
 }
 let lastHue=null;
-function phosphor(){ const c=sampleHue(); const v=c||'#c8ff3a'; if(v!==lastHue){ lastHue=v; R.style.setProperty('--p',v); } }
+function hexRgb(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(x=>x+x).join(''); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); }
+function lumC(c){ return c.map(x=>x/255).map(x=>x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)).reduce((a,x,i)=>a+x*[.2126,.7152,.0722][i],0); }
+function dimFor(v){ const p=hexRgb(v), g=[2,3,2]; let k=.55, c; for(;k<=1.001;k+=.025){ c=p.map((x,i)=>Math.round(x*k+g[i]*(1-k))); if((lumC(c)+.05)/(lumC(g)+.05)>=4.6) break; } return 'rgb('+c.join(',')+')'; }
+function phosphor(){ const c=sampleHue(); const v=c||'#c8ff3a'; if(v!==lastHue){ lastHue=v; R.style.setProperty('--p',v); R.style.setProperty('--d',dimFor(v)); } }
 let tries=0, phT=0; const phRun=()=>{ clearInterval(phT); tries=0; phT=setInterval(()=>{ phosphor(); if(++tries>40) clearInterval(phT); },1500); }; phRun();
 new MutationObserver(phRun).observe($('state'),{childList:true,characterData:true,subtree:true});
 
@@ -2338,7 +2384,7 @@ function glassTap(){
   const pr=d.getElementById('prog'), os=d.getElementById('gosd')||d.getElementById('osd');
   if(vis&&pr){ const w=parseFloat(pr.style.width)||0; if(w>0&&w<100) prog={w:Math.round(w),t:(os&&os.textContent||'').toUpperCase()}; } });
  if(Date.now()<brightUntil) return;
- if(prog){ drawing=true; const t=G.cols>60&&prog.t?prog.t.replace(/ · \d+%$/,'')+' · '+prog.w+'%':'DRAWING THE PLATE · '+prog.w+'%'; if(lastMsg!==t) msg(t); }
+ if(prog){ drawing=true; const n=Math.round(prog.w/10); const t='DRAWING THE PLATE '+'▓'.repeat(n)+'░'.repeat(10-n)+' '+prog.w+'%'; if(lastMsg!==t) msg(t); }
  else if(drawing){ drawing=false; msg(defMsg()); }
 }
 /* ---------- graphics: block characters only, drawn from the page's own numbers ---------- */
@@ -2373,14 +2419,17 @@ function curve(cols,rows,opts){
  const axis='<span class="cy">'+pad('',7)+'└'+'─'.repeat(cols)+'</span>';
  const xl='<span class="cy">'+pad('',8)+pad(tl,Math.floor(cols/2))+pad(tm,cols-Math.floor(cols/2)-tl.length)+tl+'</span>';
  const mark=nowCol>=0?'<span class="cy">'+pad('',8+nowCol)+'</span><span class="cn">▼ NOW</span>':soldCol>=0?'<span class="cy">'+pad('',8+soldCol)+'</span><span class="cn">▼ SOLD</span>':'';
- return {html:(opts&&opts.mark===false?'':'<div class="vl">'+(mark||' ')+'</div>')+lines.map(l=>'<div class="vl">'+l+'</div>').join('')+'<div class="vl">'+axis+'</div><div class="vl">'+xl+'</div>',seat:seatRow>=0};
+ const pNow=paid||start*Math.pow(2,-(clamp(now,D.open,D.close)-D.open)/HALF);
+ const sum=(D.sold?'Sold for '+fmtP(paid)+' ETH. ':'Price now '+fmtP(pNow)+' ETH. ')+'It started at '+fmtP(start)+' ETH and halves every '+(HALF/3600).toFixed(1)+' hours until '+(miaTime(D.close)||'').toUpperCase()+' Miami time.';
+ return {html:(opts&&opts.mark===false?'':'<div class="vl">'+(mark||' ')+'</div>')+lines.map(l=>'<div class="vl">'+l+'</div>').join('')+'<div class="vl">'+axis+'</div><div class="vl">'+xl+'</div>',seat:seatRow>=0,
+  meta:{k:'c',cols,open:D.open,span,start,HALF},sum};
 }
 /* every day so far, as columns of block characters: one column per plate */
 function days(){
  return QA('#nx-tl .nd').map(n=>{ const b=n.querySelector('b'), sm=n.querySelector('small'); const t=(sm?sm.innerHTML.split(/<br\s*\/?>/i).pop():''); const m=t.match(/([\d.]+)\s*ETH/); const id=(b&&b.textContent.match(/DAY (\d+)/)||[])[1];
   const q=n.querySelector('.nx-q'); return id?{id:+id,p:m?+m[1]:null,vault:q&&q.dataset.ref==='#nx-rule-6',now:n.classList.contains('now')}:null; }).filter(Boolean);
 }
-function history(cols,rows){
+function histChart(cols,rows){
  const all=days().filter(x=>x.p!=null); const room=cols-8; if(all.length<2) return null;
  const step=Math.max(1,Math.min(4,Math.floor(room/all.length))); const bw=step>=3?step-1:step;
  const d=all.slice(-Math.floor(room/step)); const mx=Math.max(...d.map(x=>x.p));
@@ -2389,18 +2438,22 @@ function history(cols,rows){
  const lines=[]; for(let r=0;r<rows;r++) lines.push('<span class="cy">'+(r===0?yl:'       ')+'│</span>'+d.map((x,i)=>'<span class="'+(x.now?'cn':x.vault?'cv':'cf')+'">'+colsArr[i][r].repeat(bw)+'</span>'+(step>bw?' ':'')).join(''));
  const w=d.length*step; const first=d[0].id, last=d[d.length-1].id;
  const lab='        '+pad('DAY '+first,Math.max(8,w-('DAY '+last).length))+'DAY '+last;
- return {html:lines.map(l=>'<div class="vl">'+l+'</div>').join('')+'<div class="vl cy">       └'+'─'.repeat(w)+'</div><div class="vl cy">'+esc(lab.slice(0,40))+'</div>',n:d.length,mx};
+ return {html:lines.map(l=>'<div class="vl">'+l+'</div>').join('')+'<div class="vl cy">       └'+'─'.repeat(w)+'</div><div class="vl cy">'+esc(lab.slice(0,40))+'</div>',n:d.length,mx,
+  meta:{k:'h',step,d:d.map(x=>[x.id,x.p,x.vault?1:0])},sum:'Price paid for each plate from day '+first+' to day '+last+'. Highest '+fp(mx)+' ETH.'};
 }
 /* PRICE page 1 becomes the curve, then the steps */
 const drawPriceSteps=drawPrice;
 drawPrice=function(){
+ const st0=PRICE.scrollTop; try{ drawPrice2(); } finally { if(PRICE.scrollTop!==st0) PRICE.scrollTop=st0; }
+};
+function drawPrice2(){
  drawPriceSteps();
  const c=curve(30,Math.max(4,Math.min(10,Math.floor(G.bh/G.rh)-5)));
- if(!c) return;
+ if(!c){ const h2=PRICE.querySelector('h2'); if(h2&&!PRICE.querySelector('.nx3-viz')){ const b=document.createElement('div'); b.className='nx3-viz'; b.setAttribute('aria-hidden','true'); b.innerHTML='<div class="vl"><span class="nx3-load" data-n="38"></span></div>'; h2.after(b); } return; }
  const s=saleData(); const legend='<div class="vl"><span class="cf">█</span> <span class="cy">PRICE STILL TO COME   </span><span class="cp">█</span> <span class="cy">PASSED</span></div>'
   +(c.seat?'<div class="vl"><span class="cs">──</span> <span class="cy">'+esc('FULL SEAT AT '+glob('fmtP')(s.found)+' ETH OR MORE')+'</span></div>':'');
  const h2=PRICE.querySelector('h2'); const box=document.createElement('div'); box.className='nx3-viz'; box.innerHTML=c.html+legend+'<div class="vl"> </div>';
- if(h2){ h2.innerHTML='<b>PRICE CURVE</b>'; h2.after(box); }
+ box._tap=c.meta; box.setAttribute('role','img'); box.setAttribute('aria-label',c.sum); if(h2){ h2.innerHTML='<b>PRICE CURVE</b>'; h2.after(box); } pgBreak();
 };
 /* the money: the split as one bar, the vault against the reference price */
 function moneyViz(){ moneyCh();
@@ -2421,13 +2474,13 @@ function moneyCh(){
 /* the timeline: the price of every day so far above the rail of phases */
 function tlViz(){
  const host=iOf('nx-tl'); if(!host) return; let v=$('nx3-tlv'); if(!v){ v=document.createElement('div'); v.id='nx3-tlv'; v.className='nx3-viz'; $('nx-tl').before(v); }
- const hi=history(38,5); const h=hi?'<div class="vl cy">PRICE PAID, EVERY DAY</div>'+hi.html+'<div class="vl"><span class="cf">█</span><span class="cy"> BOUGHT  </span><span class="cv">█</span><span class="cy"> BY THE VAULT  </span><span class="cn">█</span><span class="cy"> TODAY</span></div><div class="vl"> </div>':'';
+ const hi=histChart(38,5); if(hi){ v._tap=hi.meta; v.setAttribute('role','img'); v.setAttribute('aria-label',hi.sum); } const h=hi?'<div class="vl cy">PRICE PAID, EVERY DAY</div>'+hi.html+'<div class="vl"><span class="cf">█</span><span class="cy"> BOUGHT  </span><span class="cv">█</span><span class="cy"> BY THE VAULT  </span><span class="cn">█</span><span class="cy"> TODAY</span></div><div class="vl"> </div>':'<div class="vl"><span class="nx3-load" data-n="38"></span></div>';
  if(v.dataset.h!==h){ v.innerHTML=h; v.dataset.h=h; }
 }
 /* the ledger opens with the same history */
 function ledgerViz(){
  const host=$('ledger'); if(!host) return; let v=$('nx3-lgv'); if(!v){ v=document.createElement('div'); v.id='nx3-lgv'; v.className='nx3-viz'; const h2=host.querySelector('h2'); (h2||host.firstChild).after(v); }
- const hi=history(38,5); const h=hi?hi.html+'<div class="vl"> </div>':'';
+ const hi=histChart(38,5); if(hi){ v._tap=hi.meta; v.setAttribute('role','img'); v.setAttribute('aria-label',hi.sum); } const h=hi?hi.html+'<div class="vl"> </div>':'<div class="vl"><span class="nx3-load" data-n="38"></span></div>';
  if(v.dataset.h!==h){ v.innerHTML=h; v.dataset.h=h; }
 }
 /* seats: each holder's share as a bar under its row */
@@ -2464,7 +2517,7 @@ function gaugeFor(label,val){
  return fill(0);
 }
 function skyViz(){
- QA('#nx-skyRows>div').forEach(r=>{ const sp=r.children; if(sp.length<3) return; const g=gaugeFor(sp[0].textContent.trim(),sp[1].textContent); if(sp[2].dataset.g!==g) sp[2].dataset.g=g;
+ QA('#nx-skyRows>div').forEach(r=>{ const sp=r.children; if(sp.length<3) return; const lab=sp[0].textContent.trim(); const loading=!sp[2].textContent.trim()||(lab.toUpperCase()!=='LINEAGE'&&isNaN(num(sp[1].textContent))); if(loading){ sp[2].dataset.load='1'; return; } delete sp[2].dataset.load; const g=gaugeFor(lab,sp[1].textContent); if(sp[2].dataset.g!==g) sp[2].dataset.g=g;
   if(!r.dataset.nx3v){ r.dataset.nx3v='1'; r.addEventListener('click',()=>setTimeout(()=>msg((sp[0].textContent+' · '+sp[1].textContent).toUpperCase(),1),50)); } });
 }
 /* under the plate on the PLATE panel (desktop): today's curve, small */
@@ -2473,12 +2526,63 @@ function miniViz(){
  const avail=Math.round(parseFloat(getComputedStyle(R).getPropertyValue('--ch'))/G.rh)||0;
  let h='';
  if(cur==='SGP010'&&G.mode==='desk'&&avail>=6){ const rows=Math.min(5,avail-3); const c=s&&!s.D.sold&&s.now>=s.D.open?curve(32,rows,{mark:true}):null;
-  if(c) h=c.html; else { const hi=history(40,Math.min(4,avail-3)); if(hi) h='<div class="vl cy">PRICE PAID, EVERY DAY</div>'+hi.html; } }
+  if(c){ h=c.html; host._tap=c.meta; host.setAttribute('aria-label',c.sum); } else { const hi=histChart(40,Math.min(4,avail-3)); if(hi){ h='<div class="vl cy">PRICE PAID, EVERY DAY</div>'+hi.html; host._tap=hi.meta; host.setAttribute('aria-label',hi.sum); } } }
+ host.setAttribute('role','img');
  if(host.dataset.h!==h){ host.innerHTML=h; host.dataset.h=h; }
  host.hidden=!h;
 }
 function linkRows(){ QA('.nx-ch .row').forEach(r=>{ if(r.classList.contains('nx3-links')) return; const k=[...r.children]; if(k.length&&k.every(a=>a.tagName==='A'&&/^#/.test(a.getAttribute('href')||''))) r.classList.add('nx3-links'); }); }
-function viz(){ try{ linkRows(); moneyViz(); tlViz(); ledgerViz(); seatViz(); skyViz(); miniViz(); }catch(e){ console.warn('nx3 viz',e); } }
+/* ---------- v6: more row, history, taps, loaders, transactions, price page break ---------- */
+const more=document.createElement('button'); more.id='nx3-more'; more.type='button'; more.textContent='▼ MORE'; more.hidden=true; F.appendChild(more);
+more.addEventListener('click',()=>{ const el=P[cur]&&P[cur].el; if(el){ const ph=G.rh*Math.max(1,Math.round(el.clientHeight/G.rh)); el.scrollTo({top:(Math.floor((el.scrollTop+2)/ph)+1)*ph,behavior:'smooth'}); } });
+function moreRow(){ const el=P[cur]&&P[cur].el; let on=false;
+ if(el&&el.scrollHeight>el.clientHeight+4&&el.scrollTop+el.clientHeight<el.scrollHeight-4){ const r=el.getBoundingClientRect(); if(r.height>G.rh*3){ on=true; more.style.top=(r.bottom-G.rh)+'px'; more.style.left=(r.left+G.cw)+'px'; } }
+ if(more.hidden===on) more.hidden=!on; }
+document.addEventListener('scroll',e=>{ if(e.target&&e.target.classList&&e.target.classList.contains('nx3-on')) moreRow(); },true);
+setInterval(moreRow,700);
+
+/* every panel has its own address: the back button and shared links work */
+const SLUG={SGP020:'sky',SGP030:'price',SGP031:'clock',SGP032:'vault',SGP033:'timeline',SGP040:'seats',SGP050:'ledger',SGP060:'manual',SGP061:'manual/project',SGP062:'manual/sale',SGP063:'manual/art',SGP064:'manual/sky',SGP065:'manual/seats',SGP066:'manual/money',SGP067:'manual/trust',SGP068:'manual/faq',SGP069:'glossary',SGP06E:'engines',SGP06S:'site'};
+const urlOf=pid=>SLUG[pid]?location.pathname+location.search+'#/'+SLUG[pid]:location.pathname+location.search;
+const pidOf=h=>{ const s=(h||'').replace(/^#\/?/,''); if(!s) return 'SGP010'; return Object.keys(SLUG).find(k=>SLUG[k]===s)||null; };
+let routing=false;
+function route(pid,push){ if(routing||!P[pid]||P[pid].ov||!(SLUG[pid]||pid==='SGP010')) return; const u=urlOf(pid); if(location.pathname+location.search+location.hash===u) return;
+ try{ history[push===false?'replaceState':'pushState']({nx3:pid},'',u); }catch(e){} }
+addEventListener('popstate',()=>{ const pid=pidOf(location.hash); if(!pid) return; routing=true; try{ if(P[cur]&&P[cur].ov) back(); hist.pop(); show(pid,false); }finally{ routing=false; } });
+
+/* tap a graph: the exact value goes to the message line */
+document.addEventListener('click',e=>{ const v=e.target.closest&&e.target.closest('.nx3-viz'); if(!v||!v._tap) return; const m=v._tap, r=v.getBoundingClientRect(), fp=glob('fmtP')||(x=>x);
+ const col=Math.floor((e.clientX-r.left)/G.cw)-8;
+ if(m.k==='c'){ if(col<0||col>=m.cols) return; const t=m.open+(col+.5)/m.cols*m.span; const p=m.start*Math.pow(2,-(t-m.open)/m.HALF); msg(((glob('miaTime')||(x=>''))(t)||'').toUpperCase()+' MIAMI · '+fp(p)+' ETH',1); }
+ else { if(col<0) return; const d=m.d[Math.floor(col/m.step)]; if(!d) return; msg('DAY '+d[0]+' · '+fp(d[1])+' ETH'+(d[2]?' · BOUGHT BY THE VAULT':''),1); } });
+document.addEventListener('click',e=>{ const tr=e.target.closest&&e.target.closest('#nx-seatTbl tbody tr'); if(!tr||!tr.children[2]) return; const who=(tr.children[0].firstChild&&tr.children[0].firstChild.textContent||tr.children[0].textContent).trim().split(/\s/)[0]; msg(who+' · '+tr.children[1].textContent.trim()+' SEATS · '+tr.children[2].textContent.trim()+' OF ALL SEATS',1); });
+
+/* while the chain answers: a moving bar, never an empty gauge that looks like zero */
+let tick=0; const shim=n=>{ let s=''; for(let i=0;i<n;i++){ const k=(((i-tick)%10)+10)%10; s+=k===0?'█':k===1?'▓':k===2?'▒':'░'; } return s; };
+setInterval(()=>{ tick++; QA('.nx3-load').forEach(e=>{ if(e.offsetParent!==null) e.textContent=shim(+e.dataset.n||12); });
+ QA('#nx-skyRows>div>span:nth-child(3)[data-load]').forEach(s=>{ s.dataset.g=shim(8)+' READING'; }); },150);
+
+/* the transaction: three steps, a moving bar while it waits, a big result */
+const TXS=['confirm','wrong','pending','unknown','done','failed'];
+function txDeco(){ const a=$('ccActs'); if(!a) return; const v=(glob('NX')||{}).tx; const on=TXS.includes(v); if((a.dataset.tx||'')!==(on?v:'')) a.dataset.tx=on?v:''; if(!on||a.querySelector('.nx3-steps')) return;
+ const st={confirm:0,wrong:0,pending:1,unknown:1,done:2,failed:-1}[v];
+ const row=document.createElement('div'); row.className='nx3-steps'; row.setAttribute('aria-hidden','true');
+ row.innerHTML=['1 CONFIRM','2 SENT','3 COLLECTED'].map((l,i)=>'<span class="'+(i<st?'dn':i===st?'on':'')+'">'+l+'</span>').join('');
+ a.prepend(row);
+ if(v==='pending'||v==='confirm'||v==='unknown'){ const b=document.createElement('div'); b.className='nx3-viz nx3-txbar'; b.setAttribute('aria-hidden','true'); b.innerHTML='<div class="vl"><span class="nx3-load" data-n="38"></span></div>'; row.after(b); } }
+if($('ccActs')) new MutationObserver(txDeco).observe($('ccActs'),{childList:true});
+
+/* PRICE: the curve fills page 1; the list of halvings starts on page 2 */
+function pgBreak(){ const el=PRICE; if(!el||cur!=='SGP030') return; const box=el.querySelector('.nx3-viz'); if(!box) return;
+ let sp=el.querySelector('.nx3-brk'); if(!sp){ sp=document.createElement('div'); sp.className='nx3-brk'; sp.setAttribute('aria-hidden','true'); sp.style.height=(pgBreak.h||0)+'px'; box.after(sp); }
+ const ph=G.rh*Math.max(1,Math.round(el.clientHeight/G.rh)); const cur0=sp.offsetHeight;
+ let want=0; if(el.scrollHeight-cur0>ph+2){ const off=Math.round(box.getBoundingClientRect().bottom-el.getBoundingClientRect().top+el.scrollTop), rem=off%ph; if(rem) want=ph-rem; }
+ if(Math.abs(cur0-want)>1) sp.style.height=want+'px'; pgBreak.h=want;
+ let tl=el.querySelector('.nx3-tail'); if(!tl){ tl=document.createElement('div'); tl.className='nx3-tail'; tl.setAttribute('aria-hidden','true'); tl.style.height=(pgBreak.t||0)+'px'; el.appendChild(tl); }
+ const t0=tl.offsetHeight, tot=el.scrollHeight-t0; const tw=want&&tot>ph?(Math.ceil(tot/ph)*ph-tot):0; if(Math.abs(t0-tw)>1) tl.style.height=tw+'px'; pgBreak.t=tw; }
+
+function a11yViz(){ QA('.nx3-viz').forEach(v=>{ if(!v.hasAttribute('aria-label')&&v.getAttribute('aria-hidden')!=='true') v.setAttribute('aria-hidden','true'); }); }
+function viz(){ try{ linkRows(); a11yViz(); pgBreak(); moreRow(); txDeco(); moneyViz(); tlViz(); ledgerViz(); seatViz(); skyViz(); miniViz(); }catch(e){ console.warn('nx3 viz',e); } }
 setInterval(viz,1000);
 
 /* the SMALL WEATHER welcome opens as its own panel when the page shows it */
@@ -2488,7 +2592,8 @@ addEventListener('resize',()=>layout());
 layout(); show('SGP010',false); msg(msgDefault); capPaint(); rowsTabbable(); leaders();
 
 B.style.visibility='hidden'; requestAnimationFrame(()=>{ B.style.visibility=''; });
-const _show=show; show=function(){ const r=_show.apply(this,arguments); try{viz();}catch(e){} return r; };
+const _show=show; show=function(pid,push){ const r=_show.apply(this,arguments); try{ route(pid,push); viz(); }catch(e){ console.warn("nx3 show",e); } return r; };
+{ const p0=pidOf(location.hash); if(p0&&p0!=='SGP010') setTimeout(()=>show(p0,false),0); }
 window.NX3={show,page,help,G:()=>G,cur:()=>cur};
 })();
 
