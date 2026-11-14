@@ -2369,33 +2369,46 @@ const lum=(r,g,b)=>{ const f=c=>{ c/=255; return c<=.03928?c/12.92:Math.pow((c+.
 const GL=lum(2,3,2);
 function hsl2rgb(h,s,l){ const a=s*Math.min(l,1-l), f=n=>{ const k=(n+h/30)%12; return l-a*Math.max(-1,Math.min(k-3,9-k,1)); }; return [f(0),f(8),f(4)].map(x=>Math.round(x*255)); }
 function okColour(rgb){ const c=(lum(...rgb)+.05)/(GL+.05); const d=rgb.map(x=>Math.round(x*.55+2*.45)); const cd=(lum(...d)+.05)/(GL+.05); return c>=7&&cd>=4.5; }
-function sampleHue(){
+/* the day colour: hue weights of the plate on screen, read from several finished frames, then fixed for that plate */
+function sampleBins(){
  try{
-  const fr=[$('plate'),$('plateB')].map(f=>{ try{ return f.contentDocument&&f.contentDocument.querySelector('canvas'); }catch(e){ return null; } }).filter(Boolean);
-  let cv=fr.find(c=>c.width>0); let ctx, w, h;
+  const fs=[$('plate'),$('plateB')].filter(Boolean); const front=fs.find(f=>f.classList.contains('front'))||fs[0];
+  let cv=null; try{ cv=front&&front.contentDocument&&front.contentDocument.querySelector('canvas'); }catch(e){}
+  if(cv&&!cv.width) cv=null;
   const img=$('plateImg');
   if(!cv&&img&&img.complete&&img.naturalWidth){ cv=document.createElement('canvas'); cv.width=64; cv.height=64; cv.getContext('2d').drawImage(img,0,0,64,64); }
   if(!cv) return null;
-  ctx=cv.getContext('2d',{willReadFrequently:true}); w=cv.width; h=cv.height; const d=ctx.getImageData(0,0,w,h).data;
+  const ctx=cv.getContext('2d',{willReadFrequently:true}), w=cv.width, h=cv.height; const d=ctx.getImageData(0,0,w,h).data;
   const bins=new Array(36).fill(0); let n=0; const step=Math.max(4,Math.floor(d.length/4/4000))*4;
   for(let i=0;i<d.length;i+=step){ const r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b),c=mx-mn; if(c<.25||mx<.25) continue;
    let hh=mx===r?((g-b)/c)%6:mx===g?(b-r)/c+2:(r-g)/c+4; hh=(hh*60+360)%360; bins[Math.floor(hh/10)]+=c; n++; }
-  if(n<30) return null;
-  let bi=0; bins.forEach((v,i)=>{ if(v>bins[bi]) bi=i; });
-  /* the accent: the strongest hue at least 60 degrees from the main one, if it carries real weight */
-  const dist=i=>Math.min(Math.abs(i-bi),36-Math.abs(i-bi)); let ai=-1; bins.forEach((v,i)=>{ if(dist(i)>=6&&v>=bins[bi]*.08&&(ai<0||v>bins[ai])) ai=i; });
-  const hue=(ai>=0?ai:bi)*10+5;
-  for(let l=.55;l<=.92;l+=.01){ const rgb=hsl2rgb(hue,1,l); if(okColour(rgb)) return '#'+rgb.map(x=>x.toString(16).padStart(2,'0')).join(''); }
-  return null;
+  return n<30?null:bins;
  }catch(e){ return null; }
+}
+function colourOf(bins){
+ let bi=0; bins.forEach((v,i)=>{ if(v>bins[bi]) bi=i; });
+ const dist=i=>Math.min(Math.abs(i-bi),36-Math.abs(i-bi)); let ai=-1; bins.forEach((v,i)=>{ if(dist(i)>=6&&v>=bins[bi]*.08&&(ai<0||v>bins[ai])) ai=i; });
+ const hue=(ai>=0?ai:bi)*10+5;
+ for(let l=.55;l<=.8;l+=.01){ const rgb=hsl2rgb(hue,1,l); if(okColour(rgb)) return '#'+rgb.map(x=>x.toString(16).padStart(2,'0')).join(''); }
+ return null;
 }
 let lastHue=null;
 function hexRgb(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(x=>x+x).join(''); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); }
 function lumC(c){ return c.map(x=>x/255).map(x=>x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)).reduce((a,x,i)=>a+x*[.2126,.7152,.0722][i],0); }
 function dimFor(v){ const p=hexRgb(v), g=[2,3,2]; let k=.55, c; for(;k<=1.001;k+=.025){ c=p.map((x,i)=>Math.round(x*k+g[i]*(1-k))); if((lumC(c)+.05)/(lumC(g)+.05)>=4.6) break; } return 'rgb('+c.join(',')+')'; }
-function phosphor(){ const c=sampleHue(); const v=c||'#c8ff3a'; if(v!==lastHue){ lastHue=v; R.style.setProperty('--p',v); R.style.setProperty('--d',dimFor(v)); } }
-let tries=0, phT=0; const phRun=()=>{ clearInterval(phT); tries=0; phT=setInterval(()=>{ phosphor(); if(++tries>40) clearInterval(phT); },1500); }; phRun();
-new MutationObserver(phRun).observe($('state'),{childList:true,characterData:true,subtree:true});
+function setPhos(v){ if(v===lastHue) return; lastHue=v; R.style.setProperty('--p',v); R.style.setProperty('--d',dimFor(v)); }
+let phKey=null, phAcc=null, phN=0, phLock=false;
+function plateKey(){ const t=($('state')&&$('state').textContent)||''; const m=t.match(/DAY\s*(\d+)/i); return m?'d'+m[1]:t.trim(); }
+function phosphor(){
+ const k=plateKey(); if(!k) return;
+ if(k!==phKey){ phKey=k; phAcc=new Array(36).fill(0); phN=0; phLock=false; let c=null; try{ c=localStorage.getItem('nx3p:'+k); }catch(e){} if(c&&/^#[0-9a-f]{6}$/.test(c)){ setPhos(c); phLock=true; } }
+ if(phLock||drawing) return;
+ const b=sampleBins(); if(!b) return; b.forEach((v,i)=>phAcc[i]+=v); phN++;
+ if(phN<5) return;
+ const c=colourOf(phAcc)||'#c8ff3a'; setPhos(c); phLock=true; try{ localStorage.setItem('nx3p:'+k,c); }catch(e){}
+}
+if(!lastHue) setPhos('#c8ff3a');
+setInterval(phosphor,1200);
 
 /* ---------- the plate draws without text on it: its progress goes to the message line ---------- */
 let drawing=false;
