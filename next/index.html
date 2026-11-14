@@ -2437,10 +2437,10 @@ function sampleBins(){
   let cv=null; try{ cv=front&&front.contentDocument&&front.contentDocument.querySelector('canvas'); }catch(e){}
   if(cv&&!cv.width) cv=null;
   const img=$('plateImg');
-  if(!cv&&img&&img.complete&&img.naturalWidth){ cv=document.createElement('canvas'); cv.width=64; cv.height=64; cv.getContext('2d').drawImage(img,0,0,64,64); }
+  if(!cv&&img&&img.complete&&img.naturalWidth){ cv=document.createElement('canvas'); cv.width=160; cv.height=160; cv.getContext('2d').drawImage(img,0,0,160,160); }
   if(!cv) return null;
   const ctx=cv.getContext('2d',{willReadFrequently:true}), w=cv.width, h=cv.height; const d=ctx.getImageData(0,0,w,h).data;
-  const bins=new Array(36).fill(0); let n=0; const step=Math.max(4,Math.floor(d.length/4/4000))*4;
+  const bins=new Array(36).fill(0); let n=0; const step=Math.max(1,Math.floor(d.length/4/6000))*4;
   for(let i=0;i<d.length;i+=step){ const r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b),c=mx-mn; if(c<.25||mx<.25) continue;
    let hh=mx===r?((g-b)/c)%6:mx===g?(b-r)/c+2:(r-g)/c+4; hh=(hh*60+360)%360; bins[Math.floor(hh/10)]+=c; n++; }
   return n<30?null:bins;
@@ -2463,11 +2463,11 @@ let phKey=null, phAcc=null, phN=0, phLock=false;
 function plateKey(){ const t=($('state')&&$('state').textContent)||''; const m=t.match(/DAY\s*(\d+)/i); return m?'d'+m[1]:t.trim(); }
 function phosphor(){
  const k=plateKey(); if(!k) return;
- if(k!==phKey){ phKey=k; phAcc=new Array(36).fill(0); phN=0; phLock=false; let c=null; try{ c=localStorage.getItem('nx3p2:'+k); }catch(e){} if(c&&/^#[0-9a-f]{6},#[0-9a-f]{6}$/.test(c)){ const [a,b]=c.split(','); setPhos(a,b); phLock=true; } }
+ if(k!==phKey){ phKey=k; phAcc=new Array(36).fill(0); phN=0; phLock=false; let c=null; try{ c=localStorage.getItem('nx3p3:'+k); }catch(e){} if(c&&/^#[0-9a-f]{6},#[0-9a-f]{6}$/.test(c)){ const [a,b]=c.split(','); setPhos(a,b); phLock=true; } }
  if(phLock||drawing) return;
  const b=sampleBins(); if(!b) return; b.forEach((v,i)=>phAcc[i]+=v); phN++;
  if(phN<5) return;
- const c=colourOf(phAcc)||{p:'#c8ff3a',q:'#c8ff3a'}; setPhos(c.p,c.q); phLock=true; try{ localStorage.setItem('nx3p2:'+k,c.p+','+c.q); }catch(e){}
+ const c=colourOf(phAcc); if(!c){ if(phN>=12){ phLock=true; } return; } setPhos(c.p,c.q); phLock=true; try{ localStorage.setItem('nx3p3:'+k,c.p+','+c.q); }catch(e){}
 }
 /* the browser tab: a small dithered tile in the day colour */
 function favicon(v){ try{ const c=document.createElement('canvas'); c.width=c.height=32; const x=c.getContext('2d'); x.fillStyle='#020302'; x.fillRect(0,0,32,32); x.fillStyle=v;
