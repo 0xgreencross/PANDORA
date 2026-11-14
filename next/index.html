@@ -463,6 +463,19 @@ body[data-mode=desk] #nx3-go .nx3-b,body[data-mode=desk] #nx3-act .nx3-b{margin:
 body:not([data-mode=desk]) .nx3-steps{height:var(--rh);line-height:var(--rh);margin:0}
 body:not([data-mode=desk]) .nx3-txbar{margin:0}
 
+/* ===== v7: phones, the plate scrolls away with its panel instead of leaving a slit ===== */
+.nx3-pan.nx3-on.nx3-under{padding-top:var(--ptop)!important;background:transparent!important}
+body[data-mode=tall] #plateBox,body[data-mode=tall] #nx-pv,body[data-mode=tall] #pcard .pv{transform:translateY(calc(var(--pscroll,0px) * -1));clip-path:inset(var(--pscroll,0px) 0 0 0)}
+/* short phones: panel buttons in one row of six, actions in one row of five */
+body[data-nav=compact] #nx3-go{height:calc(var(--rh)*2)!important;grid-template-rows:calc(var(--rh)*2)!important}
+body[data-nav=compact] #nx3-act{top:calc(var(--b1) + var(--rh)*2)!important;grid-template-columns:repeat(5,1fr)!important}
+body[data-nav=compact] #nx3-go .nx3-b{grid-column:span 1!important;padding:0!important;text-align:center}
+body[data-nav=compact] #nx3-act .nx3-b,body[data-nav=compact] #nx3-act .nx3-b[data-a=wallet]{grid-column:span 1!important;padding:0!important;text-align:center}
+
+/* MORE is a small tag at the right end of the last row, so it never hides a number */
+#nx3-more{width:calc(var(--cw)*9)!important;box-shadow:none!important;text-align:right;padding-right:1ch!important;letter-spacing:0}
+body[data-nav=compact] #nx3-go .nx3-b,body[data-nav=compact] #nx3-act .nx3-b{font-size:calc(var(--fs)*.86)}
+
 </style></head>
 <body>
 <header class="top"><div class="bar"><a class="brand" href="/">DITHERVOID // STORMGLASS</a><span class="chip" id="nx-chip"><b id="nx-pre">[..]</b> <span id="state">READING THE CHAIN</span></span><nav><a href="/" aria-current="page">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a></nav><button id="wallet" class="act">CONNECT</button></div></header>
@@ -2054,19 +2067,19 @@ function layout(){
   cw=fit(1080); if(!cw){ PL=540; for(cw=13.5;cw>=9;cw=Math.round((cw-.1)*10)/10){ rh=Math.round(cw*2.074); const pc=Math.ceil(540/cw); cols=pc+1+39; if(cols*cw<=W-16&&540+5*rh<=H-8) break; } }
   rh=Math.round(cw*2.074); const pc=Math.ceil(PL/cw); cols=pc+1+39; rows=Math.floor(H/rh);
   x0=Math.floor((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
-  Object.assign(s,{plx:x0,ply:y0+rh,pls:PL,bx:x0+(pc+1)*cw,by:y0+rh,bw:39*cw,bh:(rows-4)*rh,
+  B.dataset.nav=''; Object.assign(s,{plx:x0,ply:y0+rh,pls:PL,bx:x0+(pc+1)*cw,by:y0+rh,bw:39*cw,bh:(rows-4)*rh,
    ux:x0+(pc+1)*cw,uy:y0+rh,uw:39*cw,uh:(rows-4)*rh,tx:x0,ty:y0,tw:cols*cw,sx:x0,sw:cols*cw,bot:3});
  } else if(mode==='tall'){
   cw=Math.min(W/42,13.5); rh=Math.round(Math.max(20,Math.min(28,cw*2.37))); cols=42; rows=Math.floor(H/rh);
   x0=Math.floor((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
   const pls=W<=600?W:540, plx=W<=600?0:Math.round(x0+(cols*cw-540)/2), prow=Math.ceil(pls/rh);
-  const bot=8, body=rows-1-bot;
-  Object.assign(s,{plx,ply:y0+rh,pls,bx:x0+cw,by:y0+rh,bw:40*cw,bh:body*rh,ux:x0+cw,uy:y0+rh+prow*rh,uw:40*cw,uh:(body-prow)*rh,
+  const compact=rows-1-8-prow<8, bot=compact?6:8, body=rows-1-bot; B.dataset.nav=compact?'compact':'';
+  Object.assign(s,{plx,ply:y0+rh,pls,prow,bx:x0+cw,by:y0+rh,bw:40*cw,bh:body*rh,ux:x0+cw,uy:y0+rh+prow*rh,uw:40*cw,uh:(body-prow)*rh,
    tx:x0,ty:y0,tw:cols*cw,sx:x0,sw:cols*cw,bot});
  } else {
   rows=Math.max(14,Math.floor(H/21)); rh=H/rows; const pls=Math.floor(Math.min(H,W*0.56)); const rest=W-pls;
   cw=Math.min(12,rest/42); cols=42; x0=pls+Math.floor((rest-cols*cw)/2); y0=0;
-  const bot=8, body=rows-1-bot;
+  const bot=6, body=rows-1-bot; B.dataset.nav='compact';
   Object.assign(s,{plx:0,ply:0,pls,bx:x0+cw,by:rh,bw:40*cw,bh:body*rh,ux:x0+cw,uy:rh,uw:40*cw,uh:body*rh,tx:x0,ty:0,tw:cols*cw,sx:x0,sw:cols*cw,bot});
  }
  const fs=cw/0.54;
@@ -2084,10 +2097,20 @@ function layout(){
  R.style.setProperty('--thw',tw+'ch'); R.style.setProperty('--thn',tn); R.style.setProperty('--thh',th+'px');
  region(); paintFrame(); page(0,true);
 }
+function plateFollow(){ const el=cur&&P[cur]&&P[cur].el; const y=el&&el.classList.contains('nx3-under')?Math.min(el.scrollTop,G.pls||0):0; const v=y+'px'; if(R.style.getPropertyValue('--pscroll')!==v) R.style.setProperty('--pscroll',v); }
+document.addEventListener('scroll',e=>{ if(e.target&&e.target.classList&&e.target.classList.contains('nx3-under')) plateFollow(); },true);
+/* on the option panel the plate is under the panel: a sideways swipe over it still changes the option */
+(()=>{ let x0=null,y0=null; document.addEventListener('touchstart',e=>{ const el=e.target.closest&&e.target.closest('.nx3-under'); if(!el||cur!=='SGP071'){ x0=null; return; } const t=e.touches[0]; const top=el.getBoundingClientRect().top; if(t.clientY-top+el.scrollTop>G.prow*G.rh){ x0=null; return; } x0=t.clientX; y0=t.clientY; },{passive:true});
+ document.addEventListener('touchend',e=>{ if(x0==null) return; const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null; if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.5){ const b=$(dx>0?'ccPrev':'ccNext'); if(b) b.click(); } },{passive:true}); })();
 function region(){
  const el=cur&&P[cur]&&P[cur].el; if(!el) return;
  const under=G.mode==='tall'&&(cur==='SGP010'||cur==='SGP071'||cur==='SGP051');
- const r=under?{x:G.ux,y:G.uy,w:G.uw,h:G.uh}:{x:G.bx,y:G.by,w:G.bw,h:G.bh};
+ const r={x:G.bx,y:G.by,w:G.bw,h:G.bh};
+ /* touch the class only when it changes: the page watches class on its overlays */
+ QA('.nx3-under').forEach(e=>{ if(e!==el) e.classList.remove('nx3-under'); });
+ if(under){ if(!el.classList.contains('nx3-under')) el.classList.add('nx3-under'); const v=(G.prow*G.rh)+'px'; if(el.style.getPropertyValue('--ptop')!==v) el.style.setProperty('--ptop',v); }
+ else if(el.classList.contains('nx3-under')) el.classList.remove('nx3-under');
+ plateFollow();
  if(cur==='SGP070'&&G.mode==='desk'){ /* the grid uses the panel region; the option under the cursor plays in the plate area */ }
  el.style.setProperty('--bx',r.x+'px'); el.style.setProperty('--by',r.y+'px'); el.style.setProperty('--bw',r.w+'px'); el.style.setProperty('--bh',r.h+'px');
  el.style.setProperty('--bpad','1ch');
@@ -2536,7 +2559,7 @@ function linkRows(){ QA('.nx-ch .row').forEach(r=>{ if(r.classList.contains('nx3
 const more=document.createElement('button'); more.id='nx3-more'; more.type='button'; more.textContent='▼ MORE'; more.hidden=true; F.appendChild(more);
 more.addEventListener('click',()=>{ const el=P[cur]&&P[cur].el; if(el){ const ph=G.rh*Math.max(1,Math.round(el.clientHeight/G.rh)); el.scrollTo({top:(Math.floor((el.scrollTop+2)/ph)+1)*ph,behavior:'smooth'}); } });
 function moreRow(){ const el=P[cur]&&P[cur].el; let on=false;
- if(el&&el.scrollHeight>el.clientHeight+4&&el.scrollTop+el.clientHeight<el.scrollHeight-4){ const r=el.getBoundingClientRect(); if(r.height>G.rh*3){ on=true; more.style.top=(r.bottom-G.rh)+'px'; more.style.left=(r.left+G.cw)+'px'; } }
+ if(el&&el.scrollHeight>el.clientHeight+4&&el.scrollTop+el.clientHeight<el.scrollHeight-4){ const r=el.getBoundingClientRect(); if(r.height>G.rh*3){ on=true; more.style.top=(r.bottom-G.rh)+'px'; more.style.left=(r.left+G.cw*30)+'px'; } }
  if(more.hidden===on) more.hidden=!on; }
 document.addEventListener('scroll',e=>{ if(e.target&&e.target.classList&&e.target.classList.contains('nx3-on')) moreRow(); },true);
 setInterval(moreRow,700);
@@ -2564,12 +2587,15 @@ setInterval(()=>{ tick++; QA('.nx3-load').forEach(e=>{ if(e.offsetParent!==null)
 
 /* the transaction: three steps, a moving bar while it waits, a big result */
 const TXS=['confirm','wrong','pending','unknown','done','failed'];
-function txDeco(){ const a=$('ccActs'); if(!a) return; const v=(glob('NX')||{}).tx; const on=TXS.includes(v); if((a.dataset.tx||'')!==(on?v:'')) a.dataset.tx=on?v:''; if(!on||a.querySelector('.nx3-steps')) return;
+function txDeco(){ const a=$('ccActs'); if(!a) return; const v=(glob('NX')||{}).tx; const on=TXS.includes(v); if((a.dataset.tx||'')!==(on?v:'')){ a.dataset.tx=on?v:''; if(on) setTimeout(txShow,60); } if(!on||a.querySelector('.nx3-steps')) return;
  const st={confirm:0,wrong:0,pending:1,unknown:1,done:2,failed:-1}[v];
  const row=document.createElement('div'); row.className='nx3-steps'; row.setAttribute('aria-hidden','true');
  row.innerHTML=['1 CONFIRM','2 SENT','3 COLLECTED'].map((l,i)=>'<span class="'+(i<st?'dn':i===st?'on':'')+'">'+l+'</span>').join('');
  a.prepend(row);
  if(v==='pending'||v==='confirm'||v==='unknown'){ const b=document.createElement('div'); b.className='nx3-viz nx3-txbar'; b.setAttribute('aria-hidden','true'); b.innerHTML='<div class="vl"><span class="nx3-load" data-n="38"></span></div>'; row.after(b); } }
+/* on phones the plate sits above the panel text: when a payment changes state, its status scrolls into view */
+function txShow(){ const el=P[cur]&&P[cur].el, a=$('ccActs'); if(!el||!a||!el.contains(a)||!el.classList.contains('nx3-under')) return; const er=el.getBoundingClientRect(), ar=a.getBoundingClientRect();
+ if(ar.top<er.top||ar.top+G.rh*4>er.bottom) el.scrollTo({top:Math.max(0,el.scrollTop+ar.top-er.top-G.rh),behavior:'smooth'}); }
 if($('ccActs')) new MutationObserver(txDeco).observe($('ccActs'),{childList:true});
 
 /* PRICE: the curve fills page 1; the list of halvings starts on page 2 */
