@@ -475,6 +475,9 @@ body[data-nav=compact] #nx3-act .nx3-b,body[data-nav=compact] #nx3-act .nx3-b[da
 /* MORE is a small tag at the right end of the last row, so it never hides a number */
 #nx3-more{width:calc(var(--cw)*9)!important;box-shadow:none!important;text-align:right;padding-right:1ch!important;letter-spacing:0}
 body[data-nav=compact] #nx3-go .nx3-b,body[data-nav=compact] #nx3-act .nx3-b{font-size:calc(var(--fs)*.86)}
+/* phones: the option's preview box is drawn by the plate itself; its wrapper takes no room, so COLLECT sits right under the plate */
+body[data-mode=tall] .nx3-under .pvw{height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:visible!important}
+body[data-mode=tall] .nx3-under .pvw>:not(#nx-pv){display:none!important}
 
 </style></head>
 <body>
@@ -2573,6 +2576,8 @@ const more=document.createElement('button'); more.id='nx3-more'; more.type='butt
 more.addEventListener('click',()=>{ const el=P[cur]&&P[cur].el; if(el){ const ph=G.rh*Math.max(1,Math.round(el.clientHeight/G.rh)); el.scrollTo({top:(Math.floor((el.scrollTop+2)/ph)+1)*ph,behavior:'smooth'}); } });
 function moreRow(){ const el=P[cur]&&P[cur].el; let on=false;
  if(el&&el.scrollHeight>el.clientHeight+4&&el.scrollTop+el.clientHeight<el.scrollHeight-4){ const r=el.getBoundingClientRect(); if(r.height>G.rh*3){ on=true; more.style.top=(r.bottom-G.rh)+'px'; more.style.left=(r.left+G.cw*30)+'px'; } }
+ /* never sit on top of a button: a button cut by the edge already says there is more */
+ if(on){ const x=parseFloat(more.style.left)+G.cw*4.5, y=parseFloat(more.style.top)+G.rh/2; const under=document.elementsFromPoint(x,y).find(n=>n!==more&&!more.contains(n)); if(under&&under.closest&&under.closest('button,a,[role=button],.nx-cta')) on=false; }
  if(more.hidden===on) more.hidden=!on; }
 document.addEventListener('scroll',e=>{ if(e.target&&e.target.classList&&e.target.classList.contains('nx3-on')) moreRow(); },true);
 setInterval(moreRow,700);
