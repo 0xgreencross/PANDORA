@@ -1019,7 +1019,7 @@ function wcNudge(method,P,params){ const app=wcApp(), n={method,app,ev:null,btn:
        waiting screen ("Awaiting request from Dapp"); a second open works. Zerion documents only its app scheme zerion://wc?..., and
        WalletConnect advises the app scheme over web links, so the jump to an already connected Zerion goes by the scheme. */
     const nat=WC_NATIVE[app.name]; const q=n.ev?'wc?requestId='+encodeURIComponent(n.ev.id)+'&sessionTopic='+encodeURIComponent(n.ev.topic):'wc';
-    location.href=nat?nat+q:base+'/'+q; };
+    location.href=typeof nat==='function'?nat(n.ev):nat?nat+q:base+'/'+q; };
   const B=sheet(app?'CONFIRM IN '+app.name:'CONFIRM IN YOUR WALLET','Sending the request to your wallet, one moment…','Nothing is paid until you confirm it in the wallet. You can reject it there too. Closing this box cancels nothing.',app?[['OPEN '+app.name,go,true]]:[]);
   n.btn=app?B.firstChild:null; if(n.btn){ n.btn.disabled=true; n.btn.style.opacity='.4'; }
   n.sg=SHEET.n; n.close=()=>wcNudgeOff(n); SHEET_CLOSE=n.close; NUDGE=n;
@@ -2757,15 +2757,19 @@ window.NX3={show,page,help,G:()=>G,cur:()=>cur};
 })();
 
 </script>
-<script>/* /next/ only, ?linktest: one free signature request (personal_sign) through the page's own wallet path, to test OPEN ZERION */
+<script>/* /next/ only, ?linktest: a free signature request (personal_sign) through the page's own wallet path, to test how OPEN ZERION opens the app */
 (()=>{ if(!/[?&]linktest\b/.test(location.search)) return; const g=n=>(0,eval)(n);
-const b=document.createElement('button'); b.type='button'; b.id='nx3-lt'; b.textContent='TEST THE ZERION LINK';
-b.setAttribute('style','position:fixed;left:8px;right:8px;top:8px;z-index:99999;height:52px;background:#c6ff3a;color:#000;font:16px monospace;border:0;outline:3px solid #000'.split(';').filter(Boolean).map(x=>x+' !important').join(';')+';visibility:visible !important;display:block !important;box-shadow:none');
-document.documentElement.appendChild(b);
-b.onclick=async()=>{ let P,me; try{ P=g('EP'); me=g('me'); }catch(e){} if(!P||!me){ b.textContent='CONNECT ZERION FIRST, THEN TAP HERE'; return; }
- b.textContent='SENDING, WAIT FOR THE BOX';
- try{ const E=g('ethers'), msg=E.hexlify(E.toUtf8Bytes('STORMGLASS link test. Signing this does nothing. Reject it.'));
-  await g('ask')(P,'personal_sign',[msg,me]); b.textContent='IT ARRIVED (SIGNED, NO EFFECT)'; }
- catch(e){ b.textContent='IT ARRIVED IF YOU REJECTED IT · '+String(e&&(e.code||e.message)||'').slice(0,24); } };
+const V={A:['A · OPEN THE APP ONLY',()=>'zerion://'],B:['B · APP LINK, NO REQUEST NUMBER',ev=>ev&&ev.topic?'zerion://wc?uri='+encodeURIComponent('wc:'+ev.topic+'@2'):'zerion://wc']};
+const box=document.createElement('div'); box.setAttribute('style','position:fixed !important;left:8px !important;right:8px !important;top:8px !important;z-index:99999 !important;display:grid !important;gap:6px !important;visibility:visible !important');
+document.documentElement.appendChild(box);
+const S='height:48px !important;background:#c6ff3a !important;color:#000 !important;font:15px monospace !important;border:0 !important;outline:3px solid #000 !important;display:block !important;visibility:visible !important;width:100% !important';
+const KS=(()=>{ try{ g('WC_NATIVE'); return ['A','B']; }catch(e){ V.O=['THE OLD PAGE, AS IT WAS',null]; return ['O']; } })();
+for(const k of KS){ const b=document.createElement('button'); b.type='button'; b.textContent='TEST '+V[k][0]; b.setAttribute('style',S); box.appendChild(b);
+ b.onclick=async()=>{ let P,me; try{ P=g('EP'); me=g('me'); }catch(e){} if(!P||!me){ b.textContent='CONNECT ZERION FIRST, THEN TAP HERE'; return; }
+  if(V[k][1]) try{ g('WC_NATIVE').ZERION=V[k][1]; }catch(e){}
+  b.textContent=k+' · SENDING, WAIT FOR THE BOX';
+  try{ const E=g('ethers'), msg=E.hexlify(E.toUtf8Bytes('STORMGLASS link test '+k+'. Signing this does nothing. Reject it.'));
+   await g('ask')(P,'personal_sign',[msg,me]); b.textContent=k+' · IT ARRIVED (SIGNED, NO EFFECT)'; }
+  catch(e){ b.textContent=k+' · ANSWERED: '+String(e&&(e.code||e.message)||'').slice(0,24); } }; }
 })();</script>
 </body></html>
