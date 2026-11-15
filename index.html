@@ -533,6 +533,9 @@ body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;le
 .nx3-on h3:not(#pcName){display:block;color:var(--p)!important;margin:var(--rh) 0 0!important;letter-spacing:.04em}
 .nx3-on h3:not(#pcName)::before{content:"■ ";color:var(--p)}
 
+/* units keep the button's text colour inside buttons */
+button .nx3-u,.nx3-b .nx3-u,.nx3-tile .nx3-u{color:inherit!important}
+
 </style></head>
 <body>
 <header class="top"><div class="bar"><a class="brand" href="/">DITHERVOID // STORMGLASS</a><span class="chip" id="nx-chip"><b id="nx-pre">[..]</b> <span id="state">READING THE CHAIN</span></span><nav><a href="/" aria-current="page">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a></nav><button id="wallet" class="act">CONNECT</button></div></header>
@@ -2698,7 +2701,7 @@ function unitize(el){ if(!el||el.querySelector('.nx3-u')) return; const w=docume
  ns.forEach(n=>{ const t=n.nodeValue; if(!/(ETH|%|SEATS)/.test(t)) return; const f=document.createDocumentFragment(); let rest=t, m;
   const re=/(\d)(\s*)(ETH|%|SEATS)\b/g; let last=0; while((m=re.exec(t))){ f.appendChild(document.createTextNode(t.slice(last,m.index+1)+m[2])); const u=document.createElement('span'); u.className='nx3-u'; u.textContent=m[3]; f.appendChild(u); last=m.index+m[0].length; }
   if(!last) return; f.appendChild(document.createTextNode(t.slice(last))); n.parentNode.replaceChild(f,n); }); }
-function units(){ ['nx3-c1v','nx3-c3v'].forEach(id=>unitize($(id))); QA('#nx-seatTbl td,#nx3-price .st b,#nx-ccInfo dd,#pcData dd').forEach(unitize);
+function units(){ ['nx3-c1v'].forEach(id=>unitize($(id))); QA('#nx-seatTbl td,#nx3-price .st b,#nx-ccInfo dd,#pcData dd').forEach(unitize);
  /* the SMALL WEATHER mark on ledger captions: dim, with its meaning on hover */
  QA('#ledgerGrid .card i').forEach(i=>{ if(i.querySelector('.nx3-sw')||!/≈/.test(i.textContent)) return; i.innerHTML=i.innerHTML.replace(/≈/g,'<span class="nx3-sw" title="SMALL WEATHER">≈</span>'); }); }
 
