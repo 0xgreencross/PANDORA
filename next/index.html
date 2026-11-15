@@ -2757,4 +2757,15 @@ window.NX3={show,page,help,G:()=>G,cur:()=>cur};
 })();
 
 </script>
+<script>/* /next/ only, ?linktest: one free signature request (personal_sign) through the page's own wallet path, to test OPEN ZERION */
+(()=>{ if(!/[?&]linktest\b/.test(location.search)) return; const g=n=>(0,eval)(n);
+const b=document.createElement('button'); b.type='button'; b.id='nx3-lt'; b.textContent='TEST THE ZERION LINK';
+b.setAttribute('style','position:fixed;left:8px;right:8px;top:8px;z-index:99999;height:52px;background:#c6ff3a;color:#000;font:16px monospace;border:0;outline:3px solid #000'.split(';').filter(Boolean).map(x=>x+' !important').join(';')+';visibility:visible !important;display:block !important;box-shadow:none');
+document.documentElement.appendChild(b);
+b.onclick=async()=>{ let P,me; try{ P=g('EP'); me=g('me'); }catch(e){} if(!P||!me){ b.textContent='CONNECT ZERION FIRST, THEN TAP HERE'; return; }
+ b.textContent='SENDING, WAIT FOR THE BOX';
+ try{ const E=g('ethers'), msg=E.hexlify(E.toUtf8Bytes('STORMGLASS link test. Signing this does nothing. Reject it.'));
+  await g('ask')(P,'personal_sign',[msg,me]); b.textContent='IT ARRIVED (SIGNED, NO EFFECT)'; }
+ catch(e){ b.textContent='IT ARRIVED IF YOU REJECTED IT · '+String(e&&(e.code||e.message)||'').slice(0,24); } };
+})();</script>
 </body></html>
