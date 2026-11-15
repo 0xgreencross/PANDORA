@@ -2449,7 +2449,7 @@ function sampleBins(){
 function colourOf(bins){
  let bi=0; bins.forEach((v,i)=>{ if(v>bins[bi]) bi=i; });
  const dist=i=>Math.min(Math.abs(i-bi),36-Math.abs(i-bi)); let ai=-1; bins.forEach((v,i)=>{ if(dist(i)>=6&&v>=bins[bi]*.08&&(ai<0||v>bins[ai])) ai=i; });
- const pick=(hue,vOnly)=>{ for(let l=.55;l<=.8;l+=.01){ const rgb=hsl2rgb(hue,1,l); if(vOnly?(lum(...rgb)+.05)/(GL+.05)>=7:okColour(rgb)) return '#'+rgb.map(x=>x.toString(16).padStart(2,'0')).join(''); } return null; };
+ const pick=(hue,vOnly)=>{ for(let l=.55;l<=.8;l+=.01){ const rgb=hsl2rgb(hue,1,l); if((lum(...rgb)+.05)/(GL+.05)>=7) return '#'+rgb.map(x=>x.toString(16).padStart(2,'0')).join(''); } return null; };
  const p=pick((ai>=0?ai:bi)*10+5); if(!p) return null;
  const q=ai>=0?pick(bi*10+5,1):null;
  return {p,q:q||p};
