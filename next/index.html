@@ -447,7 +447,7 @@ body[data-mode=desk] #nx3-act .nx3-b:last-child{margin-right:0!important}
 #nx-skyRows>div>span:nth-child(3)[data-load]::before{color:var(--d)}
 /* the transaction */
 .nx3-steps{display:grid!important;grid-template-columns:repeat(3,1fr);width:38ch;height:calc(var(--rh)*2);line-height:calc(var(--rh)*2);margin-bottom:var(--rh)}
-.nx3-steps span{text-align:center;color:var(--d);box-shadow:inset 0 0 0 2px var(--g),inset 0 0 0 4px var(--d)}
+.nx3-steps span{text-align:center;color:var(--d);box-shadow:inset 0 0 0 2px var(--g),inset 0 0 0 4px var(--d)!important}
 .nx3-steps span.dn{background:var(--d);color:var(--g)}
 .nx3-steps span.on{background:var(--p);color:var(--g)}
 .nx3-txbar{margin-bottom:var(--rh)}
@@ -510,7 +510,7 @@ body[data-mode=tall] .nx3-under .pvw>:not(#nx-pv){display:none!important}
 #nx3 .nx3-b:active *,.nx3-on button:not([disabled]):active *{color:var(--p)!important}
 /* desktop: the frame is one object */
 #nx3-box{display:none}
-body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;left:var(--tx);top:var(--ty);width:var(--tw);height:var(--frh);box-shadow:0 0 0 1px var(--d);pointer-events:none;z-index:0}
+body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;left:var(--tx);top:var(--ty);width:var(--tw);height:var(--frh);box-shadow:0 0 0 1px var(--d)!important;pointer-events:none;z-index:0}
 /* the caption bracket under the plate (desktop) */
 #nx3-cap>#nx3-lab{color:var(--d);white-space:pre;overflow:hidden;height:var(--rh)}
 #nx3-cap>#nx3-lab b{color:var(--p)!important}
@@ -521,9 +521,9 @@ body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;le
 #nx3-recent[hidden]{display:none}
 #nx3-recent .nx3-tiles{display:grid;grid-template-columns:repeat(4,calc(var(--rh)*3));justify-content:space-between;width:38ch}
 .nx3-tile{display:block;width:calc(var(--rh)*3);padding:0!important;margin:0!important;background:none!important;outline:0!important;box-shadow:none!important;min-height:0!important;color:var(--q)!important;text-align:left}
-.nx3-tile img{display:block;width:calc(var(--rh)*3);height:calc(var(--rh)*3);object-fit:cover;image-rendering:pixelated;box-shadow:0 0 0 1px var(--d)}
+.nx3-tile img{display:block;width:calc(var(--rh)*3);height:calc(var(--rh)*3);object-fit:cover;image-rendering:pixelated;box-shadow:0 0 0 1px var(--d)!important}
 .nx3-tile i{display:block;font-style:normal;color:var(--q)!important;height:var(--rh);white-space:nowrap;overflow:hidden}
-.nx3-tile:hover img,.nx3-tile:focus-visible img{box-shadow:0 0 0 2px var(--p)}
+.nx3-tile:hover img,.nx3-tile:focus-visible img{box-shadow:0 0 0 2px var(--p)!important}
 /* the ledger grid has no holes: a day without a picture gets a dithered tile */
 #ledgerGrid .card:not(:has(img))::before{content:"";display:block;width:var(--thw,8ch);height:var(--thh,112px);background:var(--d);
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2'/%3E%3Crect x='2' y='2' width='2' height='2'/%3E%3C/svg%3E") 0 0/4px 4px repeat;
@@ -953,6 +953,7 @@ function inWalletApp(){ const e=window.ethereum; if(!e||e.isBraveWallet) return 
   try{ if(navigator.brave) return false; }catch(x){} return !!(e.isMetaMask||e.isCoinbaseWallet||e.isTrust||e.isTrustWallet||e.isZerion||e.isRainbow||e.isPhantom); }
 const WC_PID='9204f8b0f71b2868dece0e6e57a2950a';
 const WC_APPS=[['METAMASK','https://metamask.app.link'],['RAINBOW','https://rnbwapp.com'],['ZERION','https://link.zerion.io']];
+const WC_NATIVE={ZERION:'zerion://'};
 let _WC=null,_WCNS=null; const _wcGlobal=()=>globalThis['@walletconnect/ethereum-provider'];
 function wcLoad(){ if(_WCNS) return Promise.resolve(_WCNS); if(_wcGlobal()) return Promise.resolve(_WCNS=_wcGlobal());
   return new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src='/wc.js'; sc.async=true;
@@ -1014,7 +1015,11 @@ let NUDGE=null;
 const wcTopic=P=>{ try{ const s=P&&P.session, t=s&&s.topic; return typeof t==='string'&&t?t:null; }catch(e){ return null; } };
 function wcNudge(method,P,params){ const app=wcApp(), n={method,app,ev:null,btn:null,timer:null,close:null,P,params:Array.isArray(params)?params:null,topic:wcTopic(P),amb:false};
   const go=()=>{ if(!n.btn||n.btn.disabled) return; const base=app.href.replace(/\/+$/,'');
-    location.href=n.ev?base+'/wc?requestId='+encodeURIComponent(n.ev.id)+'&sessionTopic='+encodeURIComponent(n.ev.topic):base+'/wc'; };
+    /* ZERION (Nov 15): its web link link.zerion.io, opened while Zerion is closed, starts the app but the request does not reach the
+       waiting screen ("Awaiting request from Dapp"); a second open works. Zerion documents only its app scheme zerion://wc?..., and
+       WalletConnect advises the app scheme over web links, so the jump to an already connected Zerion goes by the scheme. */
+    const nat=WC_NATIVE[app.name]; const q=n.ev?'wc?requestId='+encodeURIComponent(n.ev.id)+'&sessionTopic='+encodeURIComponent(n.ev.topic):'wc';
+    location.href=nat?nat+q:base+'/'+q; };
   const B=sheet(app?'CONFIRM IN '+app.name:'CONFIRM IN YOUR WALLET','Sending the request to your wallet, one moment…','Nothing is paid until you confirm it in the wallet. You can reject it there too. Closing this box cancels nothing.',app?[['OPEN '+app.name,go,true]]:[]);
   n.btn=app?B.firstChild:null; if(n.btn){ n.btn.disabled=true; n.btn.style.opacity='.4'; }
   n.sg=SHEET.n; n.close=()=>wcNudgeOff(n); SHEET_CLOSE=n.close; NUDGE=n;
