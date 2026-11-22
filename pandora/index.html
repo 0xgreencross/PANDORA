@@ -1120,6 +1120,10 @@ body:not([data-mode=desk]):not([data-nav=compact]) #nx3-go .nx3-b{font-size:var(
 #stage .ph-block{border-color:var(--p)!important}
 .nx3p .iorow{grid-template-columns:6ch minmax(0,1fr) auto auto!important}
 .nx3p .iorow input{min-width:0!important;width:100%!important}
+/* everything the page adds to the body itself (the wallet picker #wmodal, toasts, download links) stays visible above the frame */
+body>*:not(#shell):not(#legacy-root):not(script):not(style){visibility:visible}
+#wmodal{z-index:110!important;font-family:"3270nx","3270fb",ui-monospace,monospace}
+#wmodal *{font-family:inherit}
 
 </style>
 </head>
