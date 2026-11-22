@@ -1124,6 +1124,13 @@ body:not([data-mode=desk]):not([data-nav=compact]) #nx3-go .nx3-b{font-size:var(
 body>*:not(#shell):not(#legacy-root):not(script):not(style){visibility:visible}
 #wmodal{z-index:110!important;font-family:"3270nx","3270fb",ui-monospace,monospace}
 #wmodal *{font-family:inherit}
+body{--void:var(--g);--panel:var(--g);--pane:var(--g);--well:var(--g);--line:var(--d);--line2:var(--d);--mag:var(--p);--cyan:var(--p);--sulph:var(--q);--txt:var(--p);--mut:var(--d);--faint:var(--d);--ink:var(--p);--hair:var(--d);--bg:var(--g);--ox:var(--p);--oxd:var(--d);--lab:var(--d);--acc:var(--p);--bad:var(--q);--glow:none;--fD:"3270nx","3270fb",monospace;--fT:"3270nx","3270fb",monospace;--mono:"3270nx","3270fb",monospace}
+/* the page's own boxes (mint, X post, wallet picker): its colours mapped onto the 3270 ones */
+#mintmodal,#xmodal,#instrmodal,#wmodal{background:rgba(2,3,2,.96)!important;letter-spacing:0}
+#mintmodal *,#xmodal *,#instrmodal *,#wmodal *{letter-spacing:0!important;font-family:"3270nx","3270fb",monospace!important}
+#mintbox,#wbox,#xbox,#instrbox{background:var(--g)!important;box-shadow:0 0 0 1px var(--d)!important;border:0!important}
+#mintmodal h3,#wttl{background:var(--d);color:var(--g)!important;padding:0 1ch!important}
+#mintmodal input,#xmodal input,#wmodal input{background:transparent!important;color:var(--p)!important;border:0!important;box-shadow:inset 0 0 0 1px var(--d)!important}
 
 </style>
 </head>
