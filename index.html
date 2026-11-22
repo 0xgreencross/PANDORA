@@ -447,7 +447,7 @@ body[data-mode=desk] #nx3-act .nx3-b:last-child{margin-right:0!important}
 #nx-skyRows>div>span:nth-child(3)[data-load]::before{color:var(--d)}
 /* the transaction */
 .nx3-steps{display:grid!important;grid-template-columns:repeat(3,1fr);width:38ch;height:calc(var(--rh)*2);line-height:calc(var(--rh)*2);margin-bottom:var(--rh)}
-.nx3-steps span{text-align:center;color:var(--d);box-shadow:inset 0 0 0 2px var(--g),inset 0 0 0 4px var(--d)}
+.nx3-steps span{text-align:center;color:var(--d);box-shadow:inset 0 0 0 2px var(--g),inset 0 0 0 4px var(--d)!important}
 .nx3-steps span.dn{background:var(--d);color:var(--g)}
 .nx3-steps span.on{background:var(--p);color:var(--g)}
 .nx3-txbar{margin-bottom:var(--rh)}
@@ -510,7 +510,7 @@ body[data-mode=tall] .nx3-under .pvw>:not(#nx-pv){display:none!important}
 #nx3 .nx3-b:active *,.nx3-on button:not([disabled]):active *{color:var(--p)!important}
 /* desktop: the frame is one object */
 #nx3-box{display:none}
-body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;left:var(--tx);top:var(--ty);width:var(--tw);height:var(--frh);box-shadow:0 0 0 1px var(--d);pointer-events:none;z-index:0}
+body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;left:var(--tx);top:var(--ty);width:var(--tw);height:var(--frh);box-shadow:0 0 0 1px var(--d)!important;pointer-events:none;z-index:0}
 /* the caption bracket under the plate (desktop) */
 #nx3-cap>#nx3-lab{color:var(--d);white-space:pre;overflow:hidden;height:var(--rh)}
 #nx3-cap>#nx3-lab b{color:var(--p)!important}
@@ -521,9 +521,9 @@ body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;le
 #nx3-recent[hidden]{display:none}
 #nx3-recent .nx3-tiles{display:grid;grid-template-columns:repeat(4,calc(var(--rh)*3));justify-content:space-between;width:38ch}
 .nx3-tile{display:block;width:calc(var(--rh)*3);padding:0!important;margin:0!important;background:none!important;outline:0!important;box-shadow:none!important;min-height:0!important;color:var(--q)!important;text-align:left}
-.nx3-tile img{display:block;width:calc(var(--rh)*3);height:calc(var(--rh)*3);object-fit:cover;image-rendering:pixelated;box-shadow:0 0 0 1px var(--d)}
+.nx3-tile img{display:block;width:calc(var(--rh)*3);height:calc(var(--rh)*3);object-fit:cover;image-rendering:pixelated;box-shadow:0 0 0 1px var(--d)!important}
 .nx3-tile i{display:block;font-style:normal;color:var(--q)!important;height:var(--rh);white-space:nowrap;overflow:hidden}
-.nx3-tile:hover img,.nx3-tile:focus-visible img{box-shadow:0 0 0 2px var(--p)}
+.nx3-tile:hover img,.nx3-tile:focus-visible img{box-shadow:0 0 0 2px var(--p)!important}
 /* the ledger grid has no holes: a day without a picture gets a dithered tile */
 #ledgerGrid .card:not(:has(img))::before{content:"";display:block;width:var(--thw,8ch);height:var(--thh,112px);background:var(--d);
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2'/%3E%3Crect x='2' y='2' width='2' height='2'/%3E%3C/svg%3E") 0 0/4px 4px repeat;
@@ -535,6 +535,8 @@ body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;le
 
 /* units keep the button's text colour inside buttons */
 button .nx3-u,.nx3-b .nx3-u,.nx3-tile .nx3-u{color:inherit!important}
+/* the page's own fitGrid() writes inline sizes on the option grid (on BACK from an option); the panel grid keeps its own */
+#ledgerGrid,#candGrid{gap:var(--rh) 1ch!important;grid-template-columns:repeat(var(--thn,4),var(--thw,8ch))!important;grid-auto-rows:auto!important}
 
 </style></head>
 <body>
