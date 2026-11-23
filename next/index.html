@@ -545,9 +545,9 @@ button .nx3-u,.nx3-b .nx3-u,.nx3-tile .nx3-u{color:inherit!important}
 .nx-mon .num{display:inline-block}
 /* NEXT ► is bright while the section has more; it blinks until first used */
 #nx3 .nx3-b.nx3-hot{background:var(--p)!important;color:var(--g)!important}
-#nx3 .nx3-b.nx3-hot.nx3-off{background:var(--d)!important}
+#nx3 .nx3-b.nx3-hot.nx3-off{background:var(--g)!important;color:var(--p)!important;box-shadow:inset 0 0 0 2px var(--p)!important}
 /* desktop home: NEXT carries the name of what comes next, so it gets the room */
-body[data-nx3home][data-mode=desk] #nx3-act{grid-template-columns:7fr 7fr 8fr 16fr!important}
+body[data-nxwide][data-mode=desk] #nx3-act{grid-template-columns:7fr 7fr 8fr 16fr!important}
 
 </style></head>
 <body>
@@ -2332,7 +2332,7 @@ let brightUntil=0;
 function msg(t,bright){ if(t===undefined) t=''; if(bright) brightUntil=Date.now()+5000; lastMsg=t; $('nx3-msg').textContent=' '+t; $('nx3-msg').classList.toggle('k',!!bright); clearTimeout(msgT); if(t!==msgDefault) msgT=setTimeout(()=>{ msg(defMsg()); },7000); }
 function defMsg(){
  if($('nx-chainBar')&&!$('nx-chainBar').hidden) return 'YOUR WALLET IS ON ANOTHER NETWORK';
- if(typeof NXD!=='undefined'&&!NXD){ const h=nextHint(); if(h) return h; }
+ if(typeof NXU!=='undefined'&&!NXU.has(nxKey())){ const h=nextHint(); if(h) return h; }
  return {SGP030:'TAP THE CURVE FOR THE PRICE AT ANY TIME',SGP040:'TAP A HOLDER FOR THEIR SHARE',SGP050:'TAP A BAR FOR THAT DAY',SGP033:'TAP A BAR OR A PHASE',SGP020:'TAP A READING TO SEE WHAT IT MEANS',SGP060:'TAP A CHAPTER',SGP070:'TAP ONE TO WATCH IT MOVE',SGP071:'PREV AND NEXT SHOW THE OTHER OPTIONS',SGP090:'TYPE AN AMOUNT'}[cur]||msgDefault;
 }
 /* the page's own toasts land on the message line */
@@ -2762,11 +2762,10 @@ function tlCols(){ const t=$('nx-tl'); if(!t) return; QA('.nd small',t).forEach(
 { const t=$('nx-tl'); if(t){ tlCols(); new MutationObserver(tlCols).observe(t,{childList:true,subtree:true}); } }
 /* MORE IN THIS SECTION: NEXT ► is bright whenever a section has more; it blinks (3270 style, on/off, no fade)
    until the visitor has used it once, and the message line names what comes next */
-const NXK='nx3:nexted'; let NXD=false; try{ NXD=localStorage.getItem(NXK)==='1'; }catch(e){}
-function nexted(){ if(NXD) return; NXD=true; try{ localStorage.setItem(NXK,'1'); }catch(e){} }
-const calmNx=matchMedia('(prefers-reduced-motion: reduce)');
-setInterval(()=>{ const b=Q('#nx3-act [data-a=next].nx3-hot'); if(!b) return; const on=!NXD&&!calmNx.matches&&(Math.floor(Date.now()/600)%2===1); if(b.classList.contains('nx3-off')!==on) b.classList.toggle('nx3-off',on); },150);
-setInterval(()=>{ if(NXD||Date.now()<brightUntil) return; const d=defMsg(); if(d!==lastMsg) msg(d); },700);
+const NXU=new Set(); const nxKey=()=>(P[cur]&&P[cur].grp)||cur;
+function nexted(){ NXU.add(nxKey()); }
+setInterval(()=>{ const b=Q('#nx3-act [data-a=next].nx3-hot'); if(!b) return; const on=!NXU.has(nxKey())&&(Math.floor(Date.now()/600)%2===1); if(b.classList.contains('nx3-off')!==on) b.classList.toggle('nx3-off',on); },150);
+setInterval(()=>{ if(NXU.has(nxKey())||Date.now()<brightUntil) return; const d=defMsg(); if(d!==lastMsg) msg(d); },700);
 function nextName(){ if(!cur||!P[cur]) return ''; const m=pages(), grp=P[cur].grp&&GROUPS[P[cur].grp], gi=grp?grp.indexOf(cur):0;
  if(pg<m-1) return 'PAGE '+(pg+2); if(grp&&gi<grp.length-1){ const n=P[grp[gi+1]]; return n?n.t:''; } return ''; }
 /* phones: a sideways swipe on a section turns its pages, like PREV and NEXT */
@@ -2776,7 +2775,7 @@ function nextName(){ if(!cur||!P[cur]) return ''; const m=pages(), grp=P[cur].gr
 function nextHint(){ if(!cur||!P[cur]) return ''; const m=pages(), grp=P[cur].grp&&GROUPS[P[cur].grp], gi=grp?grp.indexOf(cur):0;
  if(pg<m-1) return 'MORE BELOW · TAP NEXT ►';
  if(grp&&gi<grp.length-1){ const n=P[grp[gi+1]]; return 'TAP NEXT ► FOR '+(n?n.t:'MORE'); } return ''; }
-B.dataset.nx3home='1';
+B.dataset.nxwide='1';
 /* ---------- start ---------- */
 addEventListener('resize',()=>layout());
 layout(); show('SGP010',false); msg(msgDefault); capPaint(); rowsTabbable(); leaders();
