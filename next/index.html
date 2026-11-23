@@ -546,6 +546,8 @@ button .nx3-u,.nx3-b .nx3-u,.nx3-tile .nx3-u{color:inherit!important}
 /* NEXT ► is bright while the section has more; it blinks until first used */
 #nx3 .nx3-b.nx3-hot{background:var(--p)!important;color:var(--g)!important}
 #nx3 .nx3-b.nx3-hot.nx3-off{background:var(--d)!important}
+/* desktop home: NEXT carries the name of what comes next, so it gets the room */
+body[data-nx3home][data-mode=desk] #nx3-act{grid-template-columns:7fr 7fr 8fr 16fr!important}
 
 </style></head>
 <body>
@@ -2284,8 +2286,10 @@ function strip(){
 const pad=(s,n)=>{ s=String(s); return s.length>=n?s.slice(0,n):s+' '.repeat(n-s.length); };
 function titleRight(){
  const m=pages(); const grp=P[cur]&&P[cur].grp;
- if(grp){ const g=GROUPS[grp]; return 'PAGE '+(g.indexOf(cur)+1)+' OF '+g.length; }
- if(m>1) return (G.cols>60?'PAGE ':'')+(pg+1)+' OF '+m;
+ /* page squares: one per page, the one in view filled */
+ const sq=(n,i)=>n>12?(i+1)+' OF '+n:Array.from({length:n},(_,k)=>k===i?'■':'□').join('');
+ if(grp){ const g=GROUPS[grp]; return grp+' '+sq(g.length,g.indexOf(cur)); }
+ if(m>1) return (P[cur]?P[cur].t.replace(/^MANUAL /,'§'):'')+' '+sq(m,pg);
  if(cur==='SGP010'||cur==='SGP051'){ const s=$('state').textContent.trim(); return s.replace(/^DAY /,'PLATE ')||'PLATE'; }
  return P[cur]?P[cur].t:'';
 }
@@ -2304,7 +2308,7 @@ function paintFrame(){
  const m=pages(), grp=P[cur]&&P[cur].grp&&GROUPS[P[cur].grp], gi=grp?grp.indexOf(cur):0;
  const canPrev=pg>0||gi>0, canNext=pg<m-1||(grp&&gi<grp.length-1);
  const walletBtn=wide?'':'<button class="nx3-b" data-a="wallet">'+(walletText()||'WALLET')+'</button>';
- const ah='<button class="nx3-b" data-a="back"'+(cur==='SGP010'&&!hist.length?' disabled':'')+'>BACK</button><button class="nx3-b" data-a="help">HELP</button><button class="nx3-b" data-a="prev"'+(canPrev?'':' disabled')+'>◄ PREV</button><button class="nx3-b'+(canNext?' nx3-hot':'')+'" data-a="next"'+(canNext?'':' disabled')+'>NEXT ►</button>'+walletBtn;
+ const ah='<button class="nx3-b" data-a="back"'+(cur==='SGP010'&&!hist.length?' disabled':'')+'>BACK</button><button class="nx3-b" data-a="help">HELP</button><button class="nx3-b" data-a="prev"'+(canPrev?'':' disabled')+'>◄ PREV</button><button class="nx3-b'+(canNext?' nx3-hot':'')+'" data-a="next"'+(canNext?'':' disabled')+'>'+(wide&&canNext?pad('NEXT ► '+nextName(),16).trim():'NEXT ►')+'</button>'+walletBtn;
  const ac=$('nx3-act'); if(ac.dataset.h!==ah){ ac.innerHTML=ah; ac.dataset.h=ah; }
  status();
 }
@@ -2763,9 +2767,16 @@ function nexted(){ if(NXD) return; NXD=true; try{ localStorage.setItem(NXK,'1');
 const calmNx=matchMedia('(prefers-reduced-motion: reduce)');
 setInterval(()=>{ const b=Q('#nx3-act [data-a=next].nx3-hot'); if(!b) return; const on=!NXD&&!calmNx.matches&&(Math.floor(Date.now()/600)%2===1); if(b.classList.contains('nx3-off')!==on) b.classList.toggle('nx3-off',on); },150);
 setInterval(()=>{ if(NXD||Date.now()<brightUntil) return; const d=defMsg(); if(d!==lastMsg) msg(d); },700);
+function nextName(){ if(!cur||!P[cur]) return ''; const m=pages(), grp=P[cur].grp&&GROUPS[P[cur].grp], gi=grp?grp.indexOf(cur):0;
+ if(pg<m-1) return 'PAGE '+(pg+2); if(grp&&gi<grp.length-1){ const n=P[grp[gi+1]]; return n?n.t:''; } return ''; }
+/* phones: a sideways swipe on a section turns its pages, like PREV and NEXT */
+(()=>{ let x0=null,y0=null,t0=0; document.addEventListener('touchstart',e=>{ const el=e.target.closest&&e.target.closest('.nx3-pan.nx3-on'); if(!el||cur==='SGP071'||cur==='SGP070'||e.touches.length>1||(e.target.closest&&e.target.closest('input,textarea,select'))){ x0=null; return; } x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=Date.now(); },{passive:true});
+ document.addEventListener('touchend',e=>{ if(x0==null) return; const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null; if(Date.now()-t0>700) return;
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.6){ const b=Q('#nx3-act [data-a='+(dx<0?'next':'prev')+']'); if(b&&!b.disabled) b.click(); } },{passive:true}); })();
 function nextHint(){ if(!cur||!P[cur]) return ''; const m=pages(), grp=P[cur].grp&&GROUPS[P[cur].grp], gi=grp?grp.indexOf(cur):0;
  if(pg<m-1) return 'MORE BELOW · TAP NEXT ►';
  if(grp&&gi<grp.length-1){ const n=P[grp[gi+1]]; return 'TAP NEXT ► FOR '+(n?n.t:'MORE'); } return ''; }
+B.dataset.nx3home='1';
 /* ---------- start ---------- */
 addEventListener('resize',()=>layout());
 layout(); show('SGP010',false); msg(msgDefault); capPaint(); rowsTabbable(); leaders();
