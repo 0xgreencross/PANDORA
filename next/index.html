@@ -537,6 +537,12 @@ body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;le
 button .nx3-u,.nx3-b .nx3-u,.nx3-tile .nx3-u{color:inherit!important}
 /* the page's own fitGrid() writes inline sizes on the option grid (on BACK from an option); the panel grid keeps its own */
 #ledgerGrid,#candGrid{gap:var(--rh) 1ch!important;grid-template-columns:repeat(var(--thn,4),var(--thw,8ch))!important;grid-auto-rows:auto!important}
+/* the timeline: name, date and price in three columns (the page writes date<br>price in one <small>) */
+#nx-tl .nd small::before{content:none}
+#nx-tl .nd small .nx3-dt{display:inline-block;width:8ch}
+/* the money: labels wide enough for THE VAULT · LIVE, the value on the same line */
+.nx-mon .k{width:18ch}
+.nx-mon .num{display:inline-block}
 
 </style></head>
 <body>
@@ -2574,7 +2580,7 @@ function moneyViz(){ moneyCh();
  const s=saleData(); let vg='';
  try{ const eth=glob('ethers'); const vault=+eth.formatEther(glob('ST').vault); const ref=parseFloat(($('nx-ref').textContent||'').replace(/[^\d.]/g,''));
   if(vault&&ref){ const k=vault/ref; const cells=Math.min(36,Math.floor(k)); vg='<div class="vl cy">THE VAULT IN REFERENCE PRICES</div><div class="vl"><span class="cf">'+'■'.repeat(cells)+'</span>'+(k>36?'<span class="cy">+</span>':'')+'</div><div class="vl cy">'+esc('×'+k.toFixed(1)+' · EACH ■ BUYS ONE UNSOLD DAY')+'</div>'; } }catch(e){}
- const h='<div class="vl"><span class="cf">'+bar+'</span></div><div class="vl cy">█ 70% ARTIST   ▓ 20% SEATS   ░ 10% VAULT</div><div class="vl"> </div>'+vg+'<div class="vl"> </div>';
+ const h='<div class="vl"><span class="cf">'+bar+'</span></div><div class="vl cy">█ 70% ARTIST  ▓ 20% SEATS  ░ 10% VAULT</div><div class="vl"> </div>'+vg+'<div class="vl"> </div>';
  if(v.dataset.h!==h){ v.innerHTML=h; v.dataset.h=h; }
 }
 function moneyCh(){
@@ -2743,6 +2749,9 @@ setInterval(viz,1000);
 
 /* the SMALL WEATHER welcome opens as its own panel when the page shows it */
 new MutationObserver(()=>{ const w=$('welcome'); if(w&&!w.hidden&&w.textContent.trim()&&cur!=='SGP011') show('SGP011'); }).observe($('welcome'),{attributes:true,attributeFilter:['hidden'],childList:true,subtree:true});
+/* the timeline: the page writes "date<br>price" in one <small>; the date gets its own column so the two never read as one number */
+function tlCols(){ const t=$('nx-tl'); if(!t) return; QA('.nd small',t).forEach(s=>{ const br=s.querySelector('br'); if(!br||s.querySelector('.nx3-dt')) return; const d=document.createElement('span'); d.className='nx3-dt'; while(s.firstChild&&s.firstChild!==br) d.appendChild(s.firstChild); s.insertBefore(d,br); br.remove(); }); }
+{ const t=$('nx-tl'); if(t){ tlCols(); new MutationObserver(tlCols).observe(t,{childList:true,subtree:true}); } }
 /* ---------- start ---------- */
 addEventListener('resize',()=>layout());
 layout(); show('SGP010',false); msg(msgDefault); capPaint(); rowsTabbable(); leaders();
