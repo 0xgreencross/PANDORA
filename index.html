@@ -1,5 +1,6 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#050506">
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><meta name="theme-color" content="#050506">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23050506%22/%3E%3Crect x=%229%22 y=%229%22 width=%2214%22 height=%2214%22 fill=%22none%22 stroke=%22%23c8ff3a%22 stroke-width=%222%22 transform=%22rotate(45 16 16)%22/%3E%3C/svg%3E"><link rel="apple-touch-icon" href="/icon.png">
 <title>DITHERVOID // STORMGLASS</title>
 <meta name="description" content="An art project by GREENCROSS on Ethereum: one artwork a day at a price that halves every 2.4 hours, drawn from live Ethereum data, until a day goes unsold.">
@@ -542,6 +543,11 @@ button .nx3-u,.nx3-b .nx3-u,.nx3-tile .nx3-u{color:inherit!important}
 /* the money: labels wide enough for THE VAULT · LIVE, the value on the same line */
 .nx-mon .k{width:18ch}
 .nx-mon .num{display:inline-block}
+/* NEXT ► is bright while the section has more; it blinks until first used */
+#nx3 .nx3-b.nx3-hot{background:var(--p)!important;color:var(--g)!important}
+#nx3 .nx3-b.nx3-hot.nx3-off{background:var(--d)!important}
+/* desktop home: NEXT carries the name of what comes next, so it gets the room */
+body[data-nx3home][data-mode=desk] #nx3-act{grid-template-columns:7fr 7fr 8fr 16fr!important}
 
 </style></head>
 <body>
@@ -2280,8 +2286,10 @@ function strip(){
 const pad=(s,n)=>{ s=String(s); return s.length>=n?s.slice(0,n):s+' '.repeat(n-s.length); };
 function titleRight(){
  const m=pages(); const grp=P[cur]&&P[cur].grp;
- if(grp){ const g=GROUPS[grp]; return 'PAGE '+(g.indexOf(cur)+1)+' OF '+g.length; }
- if(m>1) return (G.cols>60?'PAGE ':'')+(pg+1)+' OF '+m;
+ /* page squares: one per page, the one in view filled */
+ const sq=(n,i)=>n>12?(i+1)+' OF '+n:Array.from({length:n},(_,k)=>k===i?'■':'□').join('');
+ if(grp){ const g=GROUPS[grp]; return grp+' '+sq(g.length,g.indexOf(cur)); }
+ if(m>1) return (P[cur]?P[cur].t.replace(/^MANUAL /,'§'):'')+' '+sq(m,pg);
  if(cur==='SGP010'||cur==='SGP051'){ const s=$('state').textContent.trim(); return s.replace(/^DAY /,'PLATE ')||'PLATE'; }
  return P[cur]?P[cur].t:'';
 }
@@ -2300,7 +2308,7 @@ function paintFrame(){
  const m=pages(), grp=P[cur]&&P[cur].grp&&GROUPS[P[cur].grp], gi=grp?grp.indexOf(cur):0;
  const canPrev=pg>0||gi>0, canNext=pg<m-1||(grp&&gi<grp.length-1);
  const walletBtn=wide?'':'<button class="nx3-b" data-a="wallet">'+(walletText()||'WALLET')+'</button>';
- const ah='<button class="nx3-b" data-a="back"'+(cur==='SGP010'&&!hist.length?' disabled':'')+'>BACK</button><button class="nx3-b" data-a="help">HELP</button><button class="nx3-b" data-a="prev"'+(canPrev?'':' disabled')+'>PREV</button><button class="nx3-b" data-a="next"'+(canNext?'':' disabled')+'>NEXT</button>'+walletBtn;
+ const ah='<button class="nx3-b" data-a="back"'+(cur==='SGP010'&&!hist.length?' disabled':'')+'>BACK</button><button class="nx3-b" data-a="help">HELP</button><button class="nx3-b" data-a="prev"'+(canPrev?'':' disabled')+'>◄ PREV</button><button class="nx3-b'+(canNext?' nx3-hot':'')+'" data-a="next"'+(canNext?'':' disabled')+'>'+(wide&&canNext?pad('NEXT ► '+nextName(),16).trim():'NEXT ►')+'</button>'+walletBtn;
  const ac=$('nx3-act'); if(ac.dataset.h!==ah){ ac.innerHTML=ah; ac.dataset.h=ah; }
  status();
 }
@@ -2324,6 +2332,7 @@ let brightUntil=0;
 function msg(t,bright){ if(t===undefined) t=''; if(bright) brightUntil=Date.now()+5000; lastMsg=t; $('nx3-msg').textContent=' '+t; $('nx3-msg').classList.toggle('k',!!bright); clearTimeout(msgT); if(t!==msgDefault) msgT=setTimeout(()=>{ msg(defMsg()); },7000); }
 function defMsg(){
  if($('nx-chainBar')&&!$('nx-chainBar').hidden) return 'YOUR WALLET IS ON ANOTHER NETWORK';
+ if(typeof NXD!=='undefined'&&!NXD){ const h=nextHint(); if(h) return h; }
  return {SGP030:'TAP THE CURVE FOR THE PRICE AT ANY TIME',SGP040:'TAP A HOLDER FOR THEIR SHARE',SGP050:'TAP A BAR FOR THAT DAY',SGP033:'TAP A BAR OR A PHASE',SGP020:'TAP A READING TO SEE WHAT IT MEANS',SGP060:'TAP A CHAPTER',SGP070:'TAP ONE TO WATCH IT MOVE',SGP071:'PREV AND NEXT SHOW THE OTHER OPTIONS',SGP090:'TYPE AN AMOUNT'}[cur]||msgDefault;
 }
 /* the page's own toasts land on the message line */
@@ -2400,7 +2409,7 @@ document.addEventListener('keydown',e=>{
 function act(a){
  if(a==='back'){ if(P[cur]&&!P[cur].ov&&history.state&&history.state.nx3&&hist.length) history.back(); else back(); } else if(a==='help') help();
  else if(a==='prev'){ if(cur==='SGP071') $('ccPrev').click(); else page(-1); }
- else if(a==='next'){ if(cur==='SGP071') $('ccNext').click(); else page(1); }
+ else if(a==='next'){ nexted(); if(cur==='SGP071') $('ccNext').click(); else page(1); }
  else if(a==='wallet') clickIf('wallet');
 }
 F.addEventListener('click',e=>{
@@ -2751,6 +2760,23 @@ new MutationObserver(()=>{ const w=$('welcome'); if(w&&!w.hidden&&w.textContent.
 /* the timeline: the page writes "date<br>price" in one <small>; the date gets its own column so the two never read as one number */
 function tlCols(){ const t=$('nx-tl'); if(!t) return; QA('.nd small',t).forEach(s=>{ const br=s.querySelector('br'); if(!br||s.querySelector('.nx3-dt')) return; const d=document.createElement('span'); d.className='nx3-dt'; while(s.firstChild&&s.firstChild!==br) d.appendChild(s.firstChild); s.insertBefore(d,br); br.remove(); }); }
 { const t=$('nx-tl'); if(t){ tlCols(); new MutationObserver(tlCols).observe(t,{childList:true,subtree:true}); } }
+/* MORE IN THIS SECTION: NEXT ► is bright whenever a section has more; it blinks (3270 style, on/off, no fade)
+   until the visitor has used it once, and the message line names what comes next */
+const NXK='nx3:nexted'; let NXD=false; try{ NXD=localStorage.getItem(NXK)==='1'; }catch(e){}
+function nexted(){ if(NXD) return; NXD=true; try{ localStorage.setItem(NXK,'1'); }catch(e){} }
+const calmNx=matchMedia('(prefers-reduced-motion: reduce)');
+setInterval(()=>{ const b=Q('#nx3-act [data-a=next].nx3-hot'); if(!b) return; const on=!NXD&&!calmNx.matches&&(Math.floor(Date.now()/600)%2===1); if(b.classList.contains('nx3-off')!==on) b.classList.toggle('nx3-off',on); },150);
+setInterval(()=>{ if(NXD||Date.now()<brightUntil) return; const d=defMsg(); if(d!==lastMsg) msg(d); },700);
+function nextName(){ if(!cur||!P[cur]) return ''; const m=pages(), grp=P[cur].grp&&GROUPS[P[cur].grp], gi=grp?grp.indexOf(cur):0;
+ if(pg<m-1) return 'PAGE '+(pg+2); if(grp&&gi<grp.length-1){ const n=P[grp[gi+1]]; return n?n.t:''; } return ''; }
+/* phones: a sideways swipe on a section turns its pages, like PREV and NEXT */
+(()=>{ let x0=null,y0=null,t0=0; document.addEventListener('touchstart',e=>{ const el=e.target.closest&&e.target.closest('.nx3-pan.nx3-on'); if(!el||cur==='SGP071'||cur==='SGP070'||e.touches.length>1||(e.target.closest&&e.target.closest('input,textarea,select'))){ x0=null; return; } x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=Date.now(); },{passive:true});
+ document.addEventListener('touchend',e=>{ if(x0==null) return; const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null; if(Date.now()-t0>700) return;
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.6){ const b=Q('#nx3-act [data-a='+(dx<0?'next':'prev')+']'); if(b&&!b.disabled) b.click(); } },{passive:true}); })();
+function nextHint(){ if(!cur||!P[cur]) return ''; const m=pages(), grp=P[cur].grp&&GROUPS[P[cur].grp], gi=grp?grp.indexOf(cur):0;
+ if(pg<m-1) return 'MORE BELOW · TAP NEXT ►';
+ if(grp&&gi<grp.length-1){ const n=P[grp[gi+1]]; return 'TAP NEXT ► FOR '+(n?n.t:'MORE'); } return ''; }
+B.dataset.nx3home='1';
 /* ---------- start ---------- */
 addEventListener('resize',()=>layout());
 layout(); show('SGP010',false); msg(msgDefault); capPaint(); rowsTabbable(); leaders();
