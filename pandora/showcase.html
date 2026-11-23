@@ -669,6 +669,17 @@ body[data-mode=desk] #nx3-box{display:block;position:fixed;visibility:visible;le
 button .nx3-u,.nx3-b .nx3-u,.nx3-tile .nx3-u{color:inherit!important}
 /* the page's own fitGrid() writes inline sizes on the option grid (on BACK from an option); the panel grid keeps its own */
 #ledgerGrid,#candGrid{gap:var(--rh) 1ch!important;grid-template-columns:repeat(var(--thn,4),var(--thw,8ch))!important;grid-auto-rows:auto!important}
+/* the timeline: name, date and price in three columns (the page writes date<br>price in one <small>) */
+#nx-tl .nd small::before{content:none}
+#nx-tl .nd small .nx3-dt{display:inline-block;width:8ch}
+/* the money: labels wide enough for THE VAULT · LIVE, the value on the same line */
+.nx-mon .k{width:18ch}
+.nx-mon .num{display:inline-block}
+/* NEXT ► is bright while the section has more; it blinks until first used */
+#nx3 .nx3-b.nx3-hot{background:var(--p)!important;color:var(--g)!important}
+#nx3 .nx3-b.nx3-hot.nx3-off{background:var(--g)!important;color:var(--p)!important;box-shadow:inset 0 0 0 2px var(--p)!important}
+/* desktop home: NEXT carries the name of what comes next, so it gets the room */
+body[data-nxwide][data-mode=desk] #nx3-act{grid-template-columns:7fr 7fr 8fr 16fr!important}
 
 /* ===== the PANDORA rooms ===== */
 header.top,nav#rooms,nav.nx-strip,footer.site>.wrap>.note+*{display:none!important}
@@ -1205,13 +1216,13 @@ B.addEventListener('wheel',e=>{ const t=e.target; if(t.closest&&t.closest('.nx3-
 /* ---------- the frame text ---------- */
 const count=()=>{ const s=$('status'); return s?s.textContent.trim().toUpperCase():''; };
 function paintFrame(){ if(!G.cols||!cur) return;
- const n=Math.round(G.tw/G.cw), m=pages(), left=' '+cur, right=(m>1?(G.cols>60?'PAGE ':'')+(pg+1)+' OF '+m:P[cur].t)+' ', mid=G.cols>60?'PANDORA · '+RM.t:RM.t; const gap=n-left.length-right.length;
+ const n=Math.round(G.tw/G.cw), m=pages(), left=' '+cur, right=(m>1?(G.cols>60?P[cur].t+' ':'')+sq(m,pg):P[cur].t)+' ', mid=G.cols>60?'PANDORA · '+RM.t:RM.t; const gap=n-left.length-right.length;
  const t=pad(left+pad(' '.repeat(Math.max(0,Math.floor((gap-mid.length)/2)))+mid,Math.max(0,gap))+right,n); if($('nx3-ti').textContent!==t) $('nx3-ti').textContent=t;
  const opts=[['THE BOX','/pandora/'],['GARDENS','gardens'],['SHOWCASE','showcase'],['SEALED','sealed'],['SITE',RM.id+'050'],['HOME','/']];
  const gh=opts.map(x=>'<button class="nx3-b'+((x[1]===ROOM&&cur===HOME)||cur===x[1]?' nx3-p':'')+'" data-go="'+x[1]+'">'+x[0]+'</button>').join('');
  const go=$('nx3-go'); if(go.dataset.h!==gh){ go.innerHTML=gh; go.dataset.h=gh; }
  const extra=P[RM.id+'020']?'<button class="nx3-b'+(cur===RM.id+'020'?' nx3-p':'')+'" data-a="submit">SUBMIT</button>':'';
- const ah='<button class="nx3-b" data-a="back">BACK</button><button class="nx3-b" data-a="help">HELP</button><button class="nx3-b" data-a="prev"'+(pg>0?'':' disabled')+'>PREV</button><button class="nx3-b" data-a="next"'+(pg<m-1?'':' disabled')+'>NEXT</button>'+(G.mode==='desk'?'':extra||'<button class="nx3-b" data-a="top"'+(pg>0?'':' disabled')+'>TOP</button>');
+ const ah='<button class="nx3-b" data-a="back">BACK</button><button class="nx3-b" data-a="help">HELP</button><button class="nx3-b" data-a="prev"'+(pg>0?'':' disabled')+'>◄ PREV</button><button class="nx3-b'+(pg<m-1?' nx3-hot':'')+'" data-a="next"'+(pg<m-1?'':' disabled')+'>'+(pg<m-1&&G.mode==='desk'?'NEXT ► PAGE '+(pg+2):'NEXT ►')+'</button>'+(G.mode==='desk'?'':extra||'<button class="nx3-b" data-a="top"'+(pg>0?'':' disabled')+'>TOP</button>');
  const a=$('nx3-act'); if(a.dataset.h!==ah){ a.innerHTML=ah; a.dataset.h=ah; }
  const wide=G.cols>60, c=count(); const st=' ● READY'+(c?'  '+c:'')+(wide?'   PANDORA · '+RM.t:'');
  const sl=wide?pad(st,n-cur.length-2)+cur+' ':pad(st,n); if($('nx3-st').textContent!==sl) $('nx3-st').textContent=sl; }
@@ -1223,7 +1234,7 @@ F.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b||b.dis
 function act(a){
  if(a==='back'){ if(history.state&&history.state.nx3r&&hist.length) history.back(); else back(); }
  else if(a==='help') location.href='/pandora/#/manual';
- else if(a==='prev') page(-1); else if(a==='next') page(1);
+ else if(a==='prev') page(-1); else if(a==='next'){ NXU.add(cur); page(1); }
  else if(a==='submit') show(RM.id+'020'); else if(a==='top'){ pg=1; page(-1); } }
 document.addEventListener('keydown',e=>{ if(e.defaultPrevented||e.metaKey||e.ctrlKey||e.altKey) return; const t=e.target; if(t&&/INPUT|TEXTAREA|SELECT/.test(t.tagName)) return;
  if(e.key==='Escape'){ e.preventDefault(); act('back'); } else if(e.key==='PageDown'){ e.preventDefault(); page(1); } else if(e.key==='PageUp'){ e.preventDefault(); page(-1); } });
@@ -1250,6 +1261,14 @@ function repaint(el){ if(!el||calm.matches||!el.animate) return; try{ el.animate
 document.addEventListener('touchstart',()=>{},{passive:true});
 document.title='STORMGLASS · '+RM.t;
 
+/* MORE IN THIS SECTION: NEXT ► is bright while there is more and blinks until NEXT is used in that section;
+   the title shows the pages as squares; on phones a sideways swipe turns the pages */
+const NXU=new Set(); const sq=(n,i)=>n>12?(i+1)+' OF '+n:Array.from({length:n},(_,k)=>k===i?'■':'□').join('');
+setInterval(()=>{ const b=Q('#nx3-act [data-a=next].nx3-hot'); if(!b) return; const on=!NXU.has(cur)&&(Math.floor(Date.now()/600)%2===1); if(b.classList.contains('nx3-off')!==on) b.classList.toggle('nx3-off',on); },150);
+(()=>{ let x0=null,y0=null,t0=0; document.addEventListener('touchstart',e=>{ const el=e.target.closest&&e.target.closest('.nx3-pan.nx3-on'); if(!el||e.touches.length>1||(e.target.closest&&e.target.closest('input,textarea,select,canvas'))){ x0=null; return; } x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=Date.now(); },{passive:true});
+ document.addEventListener('touchend',e=>{ if(x0==null) return; const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null; if(Date.now()-t0>700) return;
+  if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.6){ const b=Q('#nx3-act [data-a='+(dx<0?'next':'prev')+']'); if(b&&!b.disabled) b.click(); } },{passive:true}); })();
+B.dataset.nxwide='1';
 addEventListener('resize',()=>layout());
 layout(); show(pidOf(location.hash)||HOME,false);
 B.style.visibility='hidden'; requestAnimationFrame(()=>{ B.style.visibility=''; });
