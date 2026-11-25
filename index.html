@@ -549,6 +549,9 @@ button .nx3-u,.nx3-b .nx3-u,.nx3-tile .nx3-u{color:inherit!important}
 /* desktop home: NEXT carries the name of what comes next, so it gets the room */
 body[data-nxwide][data-mode=desk] #nx3-act{grid-template-columns:7fr 7fr 8fr 16fr!important}
 
+
+/* desktop: panels keep one column clear of the frame's right edge (content 38 ch in a 39-column region) */
+body[data-mode=desk] .nx3-pan.nx3-on{padding-left:0!important;padding-right:var(--cw)!important}
 </style></head>
 <body>
 <header class="top"><div class="bar"><a class="brand" href="/">DITHERVOID // STORMGLASS</a><span class="chip" id="nx-chip"><b id="nx-pre">[..]</b> <span id="state">READING THE CHAIN</span></span><nav><a href="/" aria-current="page">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a></nav><button id="wallet" class="act">CONNECT</button></div></header>
@@ -2140,12 +2143,12 @@ function layout(){
  const s={}; let cw,rh,x0,y0,cols,rows;
  if(mode==='desk'){
   /* the plate at exactly 2x (1080, crisp pixels) when the screen is big enough, else at 1x */
-  let PL=1080; const fit=pl=>{ for(let c=13.5;c>=11;c=Math.round((c-.1)*10)/10){ const r=Math.round(c*2.074); const n=Math.ceil(pl/c)+1+39; if(n*c<=W-16&&pl+5*r<=H-8) return c; } return 0; };
-  cw=fit(1080); if(!cw){ PL=540; for(cw=13.5;cw>=9;cw=Math.round((cw-.1)*10)/10){ rh=Math.round(cw*2.074); const pc=Math.ceil(540/cw); cols=pc+1+39; if(cols*cw<=W-16&&540+5*rh<=H-8) break; } }
-  rh=Math.round(cw*2.074); const pc=Math.ceil(PL/cw); cols=pc+1+39; rows=Math.floor(H/rh);
+  let PL=1080; const fit=pl=>{ for(let c=13.5;c>=11;c=Math.round((c-.1)*10)/10){ const r=Math.round(c*2.074); const n=Math.ceil(pl/c)+2+39; if(n*c<=W-16&&pl+5*r<=H-8) return c; } return 0; };
+  cw=fit(1080); if(!cw){ PL=540; for(cw=13.5;cw>=9;cw=Math.round((cw-.1)*10)/10){ rh=Math.round(cw*2.074); const pc=Math.ceil(540/cw); cols=pc+2+39; if(cols*cw<=W-16&&540+5*rh<=H-8) break; } }
+  rh=Math.round(cw*2.074); const pc=Math.ceil(PL/cw); cols=pc+2+39; rows=Math.floor(H/rh);
   x0=snap((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
-  B.dataset.nav=''; Object.assign(s,{plx:x0,ply:y0+rh,pls:PL,bx:x0+(pc+1)*cw,by:y0+rh,bw:39*cw,bh:(rows-4)*rh,
-   ux:x0+(pc+1)*cw,uy:y0+rh,uw:39*cw,uh:(rows-4)*rh,tx:x0,ty:y0,tw:cols*cw,sx:x0,sw:cols*cw,bot:3});
+  B.dataset.nav=''; Object.assign(s,{plx:x0+cw,ply:y0+rh,pls:PL,bx:x0+(pc+2)*cw,by:y0+rh,bw:39*cw,bh:(rows-4)*rh,
+   ux:x0+(pc+2)*cw,uy:y0+rh,uw:39*cw,uh:(rows-4)*rh,tx:x0,ty:y0,tw:cols*cw,sx:x0,sw:cols*cw,bot:3});
  } else if(mode==='tall'){
   cw=Math.min(W/42,13.5); rh=Math.round(Math.max(20,Math.min(28,cw*2.37))); cols=42; rows=Math.floor(H/rh);
   x0=snap((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
@@ -2162,7 +2165,7 @@ function layout(){
  const fs=cw/0.54;
  G={mode,cw,rh,fs,cols,rows,x0,y0,...s};
  B.dataset.mode=mode;
- const v={cw:cw+'px',rh:rh+'px',fs:fs+'px',frh:(rows*rh)+'px'}; for(const k of ['plx','ply','pls','tx','ty','tw','sx','sw']) v[k]=s[k]+'px'; v.kx=(s.bx+cw)+'px';
+ const v={cw:cw+'px',rh:rh+'px',fs:fs+'px',frh:(rows*rh)+'px'}; for(const k of ['plx','ply','pls','tx','ty','tw','sx','sw']) v[k]=s[k]+'px'; v.kx=(s.bx+(mode==='desk'?0:cw))+'px';
  /* bottom area rows */
  const bottomTop=(mode==='land'?rows:rows)*rh+(mode==='land'?0:y0)-s.bot*rh;
  const navRows=s.bot-2, r=rh;
