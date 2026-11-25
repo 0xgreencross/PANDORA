@@ -1143,6 +1143,10 @@ body{--void:var(--g);--panel:var(--g);--pane:var(--g);--well:var(--g);--line:var
 #mintmodal h3,#wttl{background:var(--d);color:var(--g)!important;padding:0 1ch!important}
 #mintmodal input,#xmodal input,#wmodal input{background:transparent!important;color:var(--p)!important;border:0!important;box-shadow:inset 0 0 0 1px var(--d)!important}
 
+
+/* desktop: panels keep one column clear of the frame's right edge (content 38 ch in a 39-column region) */
+body[data-mode=desk] .nx3-pan.nx3-on{padding-left:0!important;padding-right:var(--cw)!important}
+#nx3p-man .nx-ch p,#nx3p-man .nx-ch .lead,#nx3p-man .nx-ch .nx-l2{width:auto!important;max-width:100%!important;box-sizing:border-box}
 </style>
 </head>
 <body>
@@ -9578,9 +9582,9 @@ function layout(){
  const W=innerWidth, H=innerHeight, DPR=window.devicePixelRatio||1, snap=v=>Math.floor(v*DPR)/DPR; let mode=(W>=1000&&H>=600&&W>H)?'desk':(H<520&&W>H)?'land':'tall';
  const s={}; let cw,rh,x0,y0,cols,rows;
  if(mode==='desk'){ let pls=540;
-  for(const want of [720,540]){ let ok=false; for(cw=13.5;cw>=9;cw=Math.round((cw-.1)*10)/10){ rh=Math.round(cw*2.074); const pc=Math.ceil(want/cw); cols=pc+1+39; if(cols*cw<=W-16&&want+5*rh<=H-8){ ok=true; break; } } if(ok){ pls=want; break; } }
-  rh=Math.round(cw*2.074); const pc=Math.ceil(pls/cw); cols=pc+1+39; rows=Math.floor(H/rh); x0=snap((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
-  Object.assign(s,{plx:x0,ply:y0+rh,pls,bx:x0+(pc+1)*cw,by:y0+rh,bw:39*cw,bh:(rows-4)*rh,tx:x0,ty:y0,tw:cols*cw,sx:x0,sw:cols*cw,bot:3,cy:y0+rh+pls,ch:(rows-4)*rh-pls});
+  for(const want of [720,540]){ let ok=false; for(cw=13.5;cw>=9;cw=Math.round((cw-.1)*10)/10){ rh=Math.round(cw*2.074); const pc=Math.ceil(want/cw); cols=pc+2+39; if(cols*cw<=W-16&&want+5*rh<=H-8){ ok=true; break; } } if(ok){ pls=want; break; } }
+  rh=Math.round(cw*2.074); const pc=Math.ceil(pls/cw); cols=pc+2+39; rows=Math.floor(H/rh); x0=snap((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
+  Object.assign(s,{plx:x0+cw,ply:y0+rh,pls,bx:x0+(pc+2)*cw,by:y0+rh,bw:39*cw,bh:(rows-4)*rh,tx:x0,ty:y0,tw:cols*cw,sx:x0,sw:cols*cw,bot:3,cy:y0+rh+pls,ch:(rows-4)*rh-pls});
  } else if(mode==='tall'){
   cw=Math.min(W/42,13.5); rh=Math.round(Math.max(20,Math.min(28,cw*2.37))); cols=42; rows=Math.floor(H/rh); x0=snap((W-cols*cw)/2); y0=Math.floor((H-rows*rh)/2);
   const bot0=8, compact0=rows-1-bot0<20, bot=compact0?6:8; B.dataset.nav=compact0?'compact':'';
@@ -9594,7 +9598,7 @@ function layout(){
  }
  if(mode==='desk') B.dataset.nav=''; else if(mode==='land') B.dataset.nav='compact';
  const fs=cw/0.54; G={mode,cw,rh,fs,cols,rows,x0,y0,...s}; B.dataset.mode=mode;
- const v={cw:cw+'px',rh:rh+'px',fs:fs+'px',frh:(rows*rh)+'px'}; for(const k of ['plx','ply','pls','tx','ty','tw','sx','sw','bx','by','bw','bh']) v[k]=s[k]+'px'; v.kx=(s.bx+cw)+'px';
+ const v={cw:cw+'px',rh:rh+'px',fs:fs+'px',frh:(rows*rh)+'px'}; for(const k of ['plx','ply','pls','tx','ty','tw','sx','sw','bx','by','bw','bh']) v[k]=s[k]+'px'; v.kx=(s.bx+(mode==='desk'?0:cw))+'px';
  if(mode==='desk'){ v.cy=s.cy+'px'; v.ch=Math.max(0,s.ch)+'px'; }
  const bottomTop=rows*rh+(mode==='land'?0:y0)-s.bot*rh, navRows=s.bot-2;
  Object.assign(v,{b1:bottomTop+'px',nh:(navRows*rh)+'px',b3:(bottomTop+navRows*rh)+'px',b5:(bottomTop+(navRows+1)*rh)+'px',b6:(bottomTop+(navRows+1)*rh)+'px'});
