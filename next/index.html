@@ -558,6 +558,11 @@ body[data-mode=desk] .nx3-pan.nx3-on{padding-left:0!important;padding-right:var(
 #ledgerGrid .card,#candGrid .card{width:auto!important;min-width:0}
 #ledgerGrid .card img,#candGrid .card img{width:100%!important;height:auto!important;aspect-ratio:1/1;object-fit:cover}
 #ledgerGrid .card:not(:has(img))::before{width:100%!important;height:auto!important;aspect-ratio:1/1}
+
+/* latest plates: four squares that fill the 38-column line edge to edge */
+#nx3-recent .nx3-tiles{grid-template-columns:repeat(4,minmax(0,1fr))!important;column-gap:1ch!important;justify-content:stretch!important;width:38ch;max-width:100%}
+#nx3-recent .nx3-tiles>.nx3-tile:not(#z#z){width:auto!important;min-width:0!important;padding:0!important;margin:0!important;height:auto!important}
+#nx3-recent .nx3-tiles>.nx3-tile:not(#z#z) img{width:100%!important;height:auto!important;aspect-ratio:1/1}
 </style></head>
 <body>
 <header class="top"><div class="bar"><a class="brand" href="/">DITHERVOID // STORMGLASS</a><span class="chip" id="nx-chip"><b id="nx-pre">[..]</b> <span id="state">READING THE CHAIN</span></span><nav><a href="/" aria-current="page">STORMGLASS</a><a href="/engines/">ENGINES</a><a href="/pandora/">PANDORA</a></nav><button id="wallet" class="act">CONNECT</button></div></header>
